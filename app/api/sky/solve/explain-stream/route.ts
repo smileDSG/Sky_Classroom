@@ -141,7 +141,10 @@ export async function POST(req: Request) {
 
     if (!problem) {
       return new Response(
-        formatSSEEvent('error', { errorCode: 'MISSING_REQUIRED_FIELD', message: 'Missing required field: problem' }),
+        formatSSEEvent('error', {
+          errorCode: 'MISSING_REQUIRED_FIELD',
+          message: 'Missing required field: problem',
+        }),
         {
           status: 400,
           headers: { 'Content-Type': 'text/event-stream' },
@@ -155,7 +158,11 @@ export async function POST(req: Request) {
         problemSpec = validateProblemSpec(rawProblemSpec);
       } catch (err) {
         return new Response(
-          formatSSEEvent('error', { errorCode: 'INVALID_REQUEST', message: 'Invalid problemSpec', details: err instanceof Error ? err.message : String(err) }),
+          formatSSEEvent('error', {
+            errorCode: 'INVALID_REQUEST',
+            message: 'Invalid problemSpec',
+            details: err instanceof Error ? err.message : String(err),
+          }),
           { status: 400, headers: { 'Content-Type': 'text/event-stream' } },
         );
       }
@@ -177,7 +184,7 @@ export async function POST(req: Request) {
         await write(formatSSEEvent('phase', { phase: 'checking' }));
         const [bankMatches, cacheMatches] = await Promise.all([
           findSimilarQuestions(problem, 0.85),
-          findSolveCacheMatches(problem, 0.70),
+          findSolveCacheMatches(problem, 0.7),
         ]);
 
         // Prefer question bank (higher quality) over solve cache
@@ -186,26 +193,31 @@ export async function POST(req: Request) {
           log.info(`[ExplainStream] Question bank hit (${hit._similarity?.toFixed(2)})`);
 
           const processedAnswer = postProcessMathContent(hit.answer);
-          await write(formatSSEEvent('step', {
-            label: '解答',
-            content: processedAnswer,
-            keyPoints: [],
-          }));
+          await write(
+            formatSSEEvent('step', {
+              label: '解答',
+              content: processedAnswer,
+              keyPoints: [],
+            }),
+          );
           await write(formatSSEEvent('answer', { answer: processedAnswer }));
 
-          const kp = hit.knowledgePoints && hit.knowledgePoints.length > 0
-            ? hit.knowledgePoints.map((k) => ({
-                name: postProcessMathContent(k.name),
-                description: postProcessMathContent(k.description),
-                difficulty: k.difficulty,
-              }))
-            : await generateKnowledgePoints(problem, hit.answer);
+          const kp =
+            hit.knowledgePoints && hit.knowledgePoints.length > 0
+              ? hit.knowledgePoints.map((k) => ({
+                  name: postProcessMathContent(k.name),
+                  description: postProcessMathContent(k.description),
+                  difficulty: k.difficulty,
+                }))
+              : await generateKnowledgePoints(problem, hit.answer);
           await write(formatSSEEvent('knowledge', { points: kp }));
           await write(formatSSEEvent('similar', { questions: [] }));
-          await write(formatSSEEvent('done', {
-            fromQuestionBank: true,
-            solvingTime: 0,
-          }));
+          await write(
+            formatSSEEvent('done', {
+              fromQuestionBank: true,
+              solvingTime: 0,
+            }),
+          );
           await writer.close();
           return;
         }
@@ -215,20 +227,24 @@ export async function POST(req: Request) {
           log.info(`[ExplainStream] Solve cache hit`);
 
           const processedSolution = postProcessMathContent(hit.solution);
-          await write(formatSSEEvent('step', {
-            label: '解答',
-            content: processedSolution,
-            keyPoints: [],
-          }));
+          await write(
+            formatSSEEvent('step', {
+              label: '解答',
+              content: processedSolution,
+              keyPoints: [],
+            }),
+          );
           await write(formatSSEEvent('answer', { answer: processedSolution }));
 
           const kp = await generateKnowledgePoints(problem, hit.solution);
           await write(formatSSEEvent('knowledge', { points: kp }));
           await write(formatSSEEvent('similar', { questions: [] }));
-          await write(formatSSEEvent('done', {
-            fromSolveCache: true,
-            solvingTime: 0,
-          }));
+          await write(
+            formatSSEEvent('done', {
+              fromSolveCache: true,
+              solvingTime: 0,
+            }),
+          );
           await writer.close();
           return;
         }
@@ -251,7 +267,12 @@ export async function POST(req: Request) {
         let streamedQuestionType: 'choice' | 'fill' | 'solve' | 'judge' | undefined = undefined;
         let streamedOptions: string[] | undefined = undefined;
 
-        for await (const event of streamSolve(agentType, problem, problemImage ?? null, problemSpec ?? null)) {
+        for await (const event of streamSolve(
+          agentType,
+          problem,
+          problemImage ?? null,
+          problemSpec ?? null,
+        )) {
           let processedEvent = event;
           if (event.type === 'step') {
             processedEvent = {
@@ -280,10 +301,24 @@ export async function POST(req: Request) {
             };
           }
           await write(formatStreamEvent(processedEvent));
-          if (processedEvent.type === 'answer') { hasAnswer = true; streamedAnswer = processedEvent.answer; }
-          if (processedEvent.type === 'step') streamedSteps.push({ label: processedEvent.label, content: processedEvent.content, keyPoints: processedEvent.keyPoints });
-          if (processedEvent.type === 'knowledge') { hasKnowledge = true; streamedKnowledge = processedEvent.points; }
-          if (processedEvent.type === 'similar') { hasSimilar = true; streamedSimilar = processedEvent.questions; }
+          if (processedEvent.type === 'answer') {
+            hasAnswer = true;
+            streamedAnswer = processedEvent.answer;
+          }
+          if (processedEvent.type === 'step')
+            streamedSteps.push({
+              label: processedEvent.label,
+              content: processedEvent.content,
+              keyPoints: processedEvent.keyPoints,
+            });
+          if (processedEvent.type === 'knowledge') {
+            hasKnowledge = true;
+            streamedKnowledge = processedEvent.points;
+          }
+          if (processedEvent.type === 'similar') {
+            hasSimilar = true;
+            streamedSimilar = processedEvent.questions;
+          }
           if (processedEvent.type === 'metadata') {
             streamedQuestionType = processedEvent.questionType;
             streamedOptions = processedEvent.options;
@@ -303,7 +338,8 @@ export async function POST(req: Request) {
         // Phase 4b: Query KB for real similar questions by knowledge point overlap
         if (streamedKnowledge.length > 0) {
           try {
-            const { findSimilarByKnowledgePoints, hashProblemText } = await import('@/lib/solve/question-bank');
+            const { findSimilarByKnowledgePoints, hashProblemText } =
+              await import('@/lib/solve/question-bank');
             const currentHash = hashProblemText(problem);
             const kbSimilar = await findSimilarByKnowledgePoints(
               problem,
@@ -332,14 +368,17 @@ export async function POST(req: Request) {
 
         // Phase 5: Done
         await recordUsage(quota.userId, quota.planType, 'llmCalls');
-        await write(formatSSEEvent('done', {
-          fromQuestionBank: false,
-          agentType,
-        }));
+        await write(
+          formatSSEEvent('done', {
+            fromQuestionBank: false,
+            agentType,
+          }),
+        );
 
         // Auto-save to question bank and solve cache
         try {
-          const { saveToQuestionBank, isProblemInBank, hashProblemText } = await import('@/lib/solve/question-bank');
+          const { saveToQuestionBank, isProblemInBank, hashProblemText } =
+            await import('@/lib/solve/question-bank');
           const { saveToSolveCache } = await import('@/lib/solve/solve-cache');
           const alreadyInBank = await isProblemInBank(problem);
           if (!alreadyInBank && streamedAnswer) {
@@ -374,10 +413,12 @@ export async function POST(req: Request) {
       } catch (err) {
         log.error('ExplainStream error:', err);
         try {
-          await write(formatSSEEvent('error', {
-            errorCode: 'INTERNAL_ERROR',
-            message: err instanceof Error ? err.message : '解题失败',
-          }));
+          await write(
+            formatSSEEvent('error', {
+              errorCode: 'INTERNAL_ERROR',
+              message: err instanceof Error ? err.message : '解题失败',
+            }),
+          );
           await writer.close();
         } catch {
           // already closed

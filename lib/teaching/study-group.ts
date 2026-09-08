@@ -69,10 +69,7 @@ export function buildStudyGroupContext(job: TeachingJob): StudyGroupContext {
  * Create student persona agents for the study group.
  * When a profile is provided, agents are tuned to the student's weak/strong points.
  */
-export function createStudyGroupAgents(
-  topic: string,
-  profile?: StudentProfile,
-): AgentConfig[] {
+export function createStudyGroupAgents(topic: string, profile?: StudentProfile): AgentConfig[] {
   const now = new Date();
   const base: Omit<AgentConfig, 'id' | 'persona'> = {
     name: '',
@@ -88,9 +85,8 @@ export function createStudyGroupAgents(
   };
 
   const weakPoints = profile?.weakPoints.slice(0, 3) ?? [];
-  const errorPatterns = profile?.errorPatterns
-    .sort((a, b) => b.frequency - a.frequency)
-    .slice(0, 2) ?? [];
+  const errorPatterns =
+    profile?.errorPatterns.sort((a, b) => b.frequency - a.frequency).slice(0, 2) ?? [];
 
   const weakHint =
     weakPoints.length > 0
@@ -100,10 +96,9 @@ export function createStudyGroupAgents(
     errorPatterns.length > 0
       ? `TA 容易在 ${errorPatterns.map((e) => `${e.knowledgePoint}（${e.errorType}）`).join('、')} 上出错，讨论中请针对性提醒。`
       : '';
-  const strongHint =
-    profile?.strongPoints.length
-      ? `TA 已经掌握：${profile.strongPoints.slice(0, 3).join('、')}，可以适度关联已学内容。`
-      : '';
+  const strongHint = profile?.strongPoints.length
+    ? `TA 已经掌握：${profile.strongPoints.slice(0, 3).join('、')}，可以适度关联已学内容。`
+    : '';
 
   const contextHints = [weakHint, errorHint, strongHint].filter(Boolean).join('\n');
 
@@ -178,10 +173,7 @@ export function buildDiscussionPrompt(
 /**
  * Build a complete study group setup from a teaching job.
  */
-export function buildStudyGroupSetup(
-  job: TeachingJob,
-  profile?: StudentProfile,
-): StudyGroupSetup {
+export function buildStudyGroupSetup(job: TeachingJob, profile?: StudentProfile): StudyGroupSetup {
   const context = buildStudyGroupContext(job);
   const agents = createStudyGroupAgents(context.topic, profile);
   const discussionPrompt = buildDiscussionPrompt(context, profile);

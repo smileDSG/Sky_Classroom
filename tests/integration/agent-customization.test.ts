@@ -158,8 +158,5 @@ describe('P6-001 Test 8: 智能体自定义 → 创建 → 使用', () => {
 });
 
 function createAgentFactory(): AgentConfig[] {
-  return [
-    createAgentFromTemplate('teacher'),
-    createAgentFromTemplate('assistant'),
-  ];
+  return [createAgentFromTemplate('teacher'), createAgentFromTemplate('assistant')];
 }

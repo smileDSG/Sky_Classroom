@@ -60,7 +60,8 @@ interface APIError {
 
 function createError(message: string, statusCode: number, details?: unknown): APIError {
   return {
-    error: statusCode >= 500 ? 'Internal Server Error' : statusCode >= 400 ? 'Client Error' : 'Error',
+    error:
+      statusCode >= 500 ? 'Internal Server Error' : statusCode >= 400 ? 'Client Error' : 'Error',
     message,
     statusCode,
     details,

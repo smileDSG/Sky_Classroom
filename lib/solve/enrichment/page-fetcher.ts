@@ -199,9 +199,7 @@ export async function fetchPage(opts: FetchPageOptions): Promise<FetchedPage | n
   }
 
   // Check domain against allowed list
-  const isAllowed = ALLOWED_DOMAINS.some(
-    (d) => domain === d || domain.endsWith('.' + d),
-  );
+  const isAllowed = ALLOWED_DOMAINS.some((d) => domain === d || domain.endsWith('.' + d));
   if (!isAllowed) {
     log.info(`[Fetcher] Domain not in allowlist: ${domain}`);
     return null;
@@ -212,7 +210,14 @@ export async function fetchPage(opts: FetchPageOptions): Promise<FetchedPage | n
     const robotsOk = await checkRobots(domain, path);
     if (!robotsOk) {
       log.info(`[Fetcher] Blocked by robots.txt: ${domain}${path}`);
-      return { url, domain, title: '', textContent: '', fetchedAt: Date.now(), robotsAllowed: false };
+      return {
+        url,
+        domain,
+        title: '',
+        textContent: '',
+        fetchedAt: Date.now(),
+        robotsAllowed: false,
+      };
     }
   }
 
@@ -225,7 +230,7 @@ export async function fetchPage(opts: FetchPageOptions): Promise<FetchedPage | n
       signal: AbortSignal.timeout(15_000),
       headers: {
         'User-Agent': 'SkyClassroom-EnrichBot/1.0 (educational research; contact@skyclassroom.app)',
-        'Accept': 'text/html,application/xhtml+xml',
+        Accept: 'text/html,application/xhtml+xml',
         'Accept-Language': 'zh-CN,zh;q=0.9',
       },
     });

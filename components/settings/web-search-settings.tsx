@@ -13,7 +13,8 @@ interface WebSearchSettingsProps {
   selectedProviderId: WebSearchProviderId;
 }
 
-export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps) {const [showApiKey, setShowApiKey] = useState(false);
+export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps) {
+  const [showApiKey, setShowApiKey] = useState(false);
 
   const webSearchProvidersConfig = useSettingsStore((state) => state.webSearchProvidersConfig);
   const setWebSearchProviderConfig = useSettingsStore((state) => state.setWebSearchProviderConfig);
@@ -90,7 +91,9 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
                   {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground">{'从所选搜索服务商获取 API Key，用于网络搜索'}</p>
+              <p className="text-xs text-muted-foreground">
+                {'从所选搜索服务商获取 API Key，用于网络搜索'}
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -134,9 +137,7 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
         <div className="space-y-3">
           <div className="space-y-1">
             <Label className="text-sm">{'百度搜索源'}</Label>
-            <p className="text-xs text-muted-foreground">
-              {'选择至少一个百度数据源参与搜索。'}
-            </p>
+            <p className="text-xs text-muted-foreground">{'选择至少一个百度数据源参与搜索。'}</p>
           </div>
 
           <div className="space-y-2">

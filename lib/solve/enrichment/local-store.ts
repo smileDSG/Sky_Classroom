@@ -31,7 +31,11 @@ async function readStore(): Promise<QuestionBankEntry[]> {
 
     // Ensure directory exists
     const dir = '.data';
-    try { await fs.mkdir(dir); } catch { /* exists */ }
+    try {
+      await fs.mkdir(dir);
+    } catch {
+      /* exists */
+    }
 
     try {
       const data = await fs.readFile(path, 'utf-8');
@@ -57,7 +61,11 @@ async function writeStore(entries: QuestionBankEntry[]): Promise<void> {
   try {
     const fs = await import('fs/promises');
     const dir = '.data';
-    try { await fs.mkdir(dir); } catch { /* exists */ }
+    try {
+      await fs.mkdir(dir);
+    } catch {
+      /* exists */
+    }
     await fs.writeFile(getStorePath(), JSON.stringify(entries, null, 2), 'utf-8');
     log.info(`[LocalStore] Wrote ${entries.length} entries`);
   } catch {
@@ -75,7 +83,9 @@ let writeMutex: Promise<void> = Promise.resolve();
  */
 async function acquireWriteLock(): Promise<() => void> {
   let release: () => void;
-  const next = new Promise<void>((resolve) => { release = resolve; });
+  const next = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   const prev = writeMutex;
   writeMutex = writeMutex.then(() => next);
   await prev;

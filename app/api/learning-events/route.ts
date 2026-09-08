@@ -30,7 +30,9 @@ function mapKnowledgePointsToNodeIds(labels: string[]): string[] {
   const pack = getCurriculumPack('gaokao-math-2026.1');
   const nodeByLabel = new Map(
     pack.nodes.flatMap((node) =>
-      [node.id, node.name, ...node.aliases].map((label) => [normalizeLabel(label), node.id] as const),
+      [node.id, node.name, ...node.aliases].map(
+        (label) => [normalizeLabel(label), node.id] as const,
+      ),
     ),
   );
   return [...new Set(labels.map((label) => nodeByLabel.get(normalizeLabel(label))))].filter(

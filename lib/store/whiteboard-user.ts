@@ -5,8 +5,11 @@
 import { create } from 'zustand';
 import { createSelectors } from '@/lib/utils/create-selectors';
 import type {
-  WhiteboardTool, ShapeSubType, LineSubType,
-  PenStroke, PenPoint,
+  WhiteboardTool,
+  ShapeSubType,
+  LineSubType,
+  PenStroke,
+  PenPoint,
   UserWhiteboardSnapshot,
 } from '@/lib/types/whiteboard-tools';
 import type { PPTElement } from '@/lib/types/slides';
@@ -218,12 +221,18 @@ const useUserWhiteboardStoreBase = create<UserWhiteboardStore>((set, get) => ({
     const y = Math.min(start.y, end.y);
     const w = Math.abs(end.x - start.x);
     const h = Math.abs(end.y - start.y);
-    if (w < 5 || h < 5) { set({ drawingShape: null }); return; }
+    if (w < 5 || h < 5) {
+      set({ drawingShape: null });
+      return;
+    }
 
     const element = {
       id: nextStrokeId(),
       type: 'shape',
-      left: x, top: y, width: w, height: h,
+      left: x,
+      top: y,
+      width: w,
+      height: h,
       viewBox: '0 0 200 200',
       path: generateShapePath(type, '0 0 200 200'),
       fill: shapeFill ? shapeColor : 'transparent',
@@ -241,16 +250,20 @@ const useUserWhiteboardStoreBase = create<UserWhiteboardStore>((set, get) => ({
     const { type, start, end } = drawingLine;
     const dx = end.x - start.x;
     const dy = end.y - start.y;
-    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) { set({ drawingLine: null }); return; }
+    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) {
+      set({ drawingLine: null });
+      return;
+    }
     const element = {
       id: nextStrokeId(),
       type: 'line',
-      left: start.x, top: start.y,
+      left: start.x,
+      top: start.y,
       width: lineWidth,
       start: [0, 0] as [number, number],
       end: [dx, dy] as [number, number],
       style: type === 'dashed' ? 'dashed' : 'solid',
-      points: type === 'arrow' ? ['', 'arrow'] as ['', 'arrow'] : ['', ''] as ['', ''],
+      points: type === 'arrow' ? (['', 'arrow'] as ['', 'arrow']) : (['', ''] as ['', '']),
       color: shapeColor,
     } as unknown as PPTElement;
     get().pushSnapshot();
@@ -345,9 +358,7 @@ const useUserWhiteboardStoreBase = create<UserWhiteboardStore>((set, get) => ({
 
   updateTextContent: (id, content) => {
     set({
-      userElements: get().userElements.map((e) =>
-        e.id === id ? { ...e, content } : e,
-      ),
+      userElements: get().userElements.map((e) => (e.id === id ? { ...e, content } : e)),
     });
   },
 }));

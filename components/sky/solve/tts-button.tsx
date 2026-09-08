@@ -129,11 +129,7 @@ export function TTSButton({ text, className }: TTSButtonProps) {
       size="sm"
       onClick={handlePlay}
       disabled={isLoading}
-      className={cn(
-        'h-7 w-7 p-0',
-        isPlaying && 'text-sky-500',
-        className,
-      )}
+      className={cn('h-7 w-7 p-0', isPlaying && 'text-sky-500', className)}
       title={isPlaying ? '停止朗读' : '朗读内容'}
     >
       {isLoading ? (

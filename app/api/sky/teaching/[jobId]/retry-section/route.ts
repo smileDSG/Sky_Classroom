@@ -19,26 +19,17 @@ export async function POST(
     const { sectionId } = body;
 
     if (!sectionId) {
-      return NextResponse.json(
-        { error: 'Missing sectionId parameter' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Missing sectionId parameter' }, { status: 400 });
     }
 
     // Verify job exists and belongs to user
     const job = await readTeachingJob(jobId);
     if (!job) {
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
     if (job.userId !== quota.userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     log.info(`Retrying section ${sectionId} for job ${jobId}`);
@@ -46,10 +37,7 @@ export async function POST(
     const result = await retrySection(jobId, sectionId);
 
     if (!result) {
-      return NextResponse.json(
-        { error: 'Failed to retry section' },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: 'Failed to retry section' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -59,9 +47,6 @@ export async function POST(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Retry section failed:', error);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

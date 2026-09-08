@@ -79,7 +79,11 @@ export function PBLWorkspace({
             className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted md:hidden"
             aria-label={issuesExpanded ? '收起任务看板' : '展开任务看板'}
           >
-            {issuesExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {issuesExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
           </button>
         </div>
 

@@ -52,10 +52,7 @@ describe('getWeakPoints', () => {
   });
 
   it('custom threshold', () => {
-    const nodes = [
-      makeNode({ id: 'a', mastery: 60 }),
-      makeNode({ id: 'b', mastery: 40 }),
-    ];
+    const nodes = [makeNode({ id: 'a', mastery: 60 }), makeNode({ id: 'b', mastery: 40 })];
     expect(getWeakPoints(nodes, 70)).toHaveLength(2);
     expect(getWeakPoints(nodes, 30)).toHaveLength(0);
   });
@@ -87,10 +84,7 @@ describe('buildRecommendations', () => {
 
 describe('overallMastery', () => {
   it('average across nodes', () => {
-    const nodes = [
-      makeNode({ mastery: 100 }),
-      makeNode({ mastery: 0 }),
-    ];
+    const nodes = [makeNode({ mastery: 100 }), makeNode({ mastery: 0 })];
     expect(overallMastery(nodes)).toBe(50);
   });
 

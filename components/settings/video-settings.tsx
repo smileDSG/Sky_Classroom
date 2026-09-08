@@ -25,7 +25,8 @@ interface VideoSettingsProps {
   selectedProviderId: VideoProviderId;
 }
 
-export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {const videoModelId = useSettingsStore((state) => state.videoModelId);
+export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
+  const videoModelId = useSettingsStore((state) => state.videoModelId);
   const videoProvidersConfig = useSettingsStore((state) => state.videoProvidersConfig);
   const setVideoProviderConfig = useSettingsStore((state) => state.setVideoProviderConfig);
 
@@ -223,9 +224,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {cons
           value={currentConfig?.baseUrl || ''}
           onChange={(e) => handleBaseUrlChange(e.target.value)}
           placeholder={
-            currentConfig?.serverBaseUrl ||
-            currentProvider?.defaultBaseUrl ||
-            '输入自定义 Base URL'
+            currentConfig?.serverBaseUrl || currentProvider?.defaultBaseUrl || '输入自定义 Base URL'
           }
           className="h-8"
         />
@@ -306,9 +305,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {cons
       {/* Add/Edit Model Dialog */}
       <Dialog open={showModelDialog} onOpenChange={setShowModelDialog}>
         <DialogContent className="sm:max-w-md">
-          <DialogTitle>
-            {editingModelIndex !== null ? '编辑模型' : '新建模型'}
-          </DialogTitle>
+          <DialogTitle>{editingModelIndex !== null ? '编辑模型' : '新建模型'}</DialogTitle>
           <DialogDescription className="sr-only">
             {editingModelIndex !== null ? '编辑模型' : '新建模型'}
           </DialogDescription>

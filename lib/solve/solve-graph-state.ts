@@ -74,7 +74,9 @@ export const SolveGraphAnnotation = Annotation.Root({
     value: (_prev, next) => next,
     default: () => [],
   }),
-  parsedSimilarQuestions: Annotation<{ problem: string; difficulty: number; knowledgePoint: string }[]>({
+  parsedSimilarQuestions: Annotation<
+    { problem: string; difficulty: number; knowledgePoint: string }[]
+  >({
     value: (_prev, next) => next,
     default: () => [],
   }),

@@ -27,11 +27,16 @@ export const coverContentSchema = z.object({
 
 export const tocContentSchema = z.object({
   title: z.string().max(15),
-  items: z.array(z.object({
-    num: z.string().max(4),
-    title: z.string().max(15),
-    desc: z.string().max(30),
-  })).min(2).max(6),
+  items: z
+    .array(
+      z.object({
+        num: z.string().max(4),
+        title: z.string().max(15),
+        desc: z.string().max(30),
+      }),
+    )
+    .min(2)
+    .max(6),
 });
 
 export const endContentSchema = z.object({
@@ -53,20 +58,30 @@ export const formulaItemSchema = z.object({
 
 export const conceptContentSchema = z.object({
   title: z.string().min(1).max(25),
-  cards: z.array(z.object({
-    title: z.string().min(1).max(28),
-    desc: z.string().min(1).max(200),
-  })).min(1).max(6),
+  cards: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(28),
+        desc: z.string().min(1).max(200),
+      }),
+    )
+    .min(1)
+    .max(6),
   formulas: z.array(formulaItemSchema).max(3).optional(),
   summary: z.string().min(1).max(150),
 });
 
 export const caseContentSchema = z.object({
   title: z.string().min(1).max(25),
-  scenarios: z.array(z.object({
-    problem: z.string().min(1).max(400),
-    solution: z.string().min(1).max(400),
-  })).min(1).max(3),
+  scenarios: z
+    .array(
+      z.object({
+        problem: z.string().min(1).max(400),
+        solution: z.string().min(1).max(400),
+      }),
+    )
+    .min(1)
+    .max(3),
   formulas: z.array(formulaItemSchema).max(3).optional(),
   highlight: z.string().max(60).optional(),
 });
@@ -86,17 +101,25 @@ export const compareContentSchema = z.object({
 
 export const processContentSchema = z.object({
   title: z.string().min(1).max(25),
-  steps: z.array(z.object({
-    num: z.string().max(5),
-    title: z.string().max(25),
-    desc: z.string().min(1).max(200),
-  })).min(1).max(8),
+  steps: z
+    .array(
+      z.object({
+        num: z.string().max(5),
+        title: z.string().max(25),
+        desc: z.string().min(1).max(200),
+      }),
+    )
+    .min(1)
+    .max(8),
 });
 
 export const tableContentSchema = z.object({
   title: z.string().min(1).max(25),
   headers: z.array(z.string().max(20)).min(1).max(6),
-  rows: z.array(z.array(z.string().max(120))).min(1).max(8),
+  rows: z
+    .array(z.array(z.string().max(120)))
+    .min(1)
+    .max(8),
   summary: z.string().min(1).max(150),
 });
 
@@ -109,10 +132,15 @@ export const formulaContentSchema = z.object({
 
 export const timelineContentSchema = z.object({
   title: z.string().min(1).max(28),
-  events: z.array(z.object({
-    date: z.string().max(25),
-    content: z.string().min(1).max(120),
-  })).min(1).max(8),
+  events: z
+    .array(
+      z.object({
+        date: z.string().max(25),
+        content: z.string().min(1).max(120),
+      }),
+    )
+    .min(1)
+    .max(8),
 });
 
 export const summaryContentSchema = z.object({
@@ -124,11 +152,16 @@ export const summaryContentSchema = z.object({
 
 export const quizContentSchema = z.object({
   title: z.string().min(1).max(25),
-  questions: z.array(z.object({
-    q: z.string().min(1).max(200),
-    options: z.array(z.string().max(100)).min(2).max(6),
-    answer: z.string().max(2),
-  })).min(1).max(5),
+  questions: z
+    .array(
+      z.object({
+        q: z.string().min(1).max(200),
+        options: z.array(z.string().max(100)).min(2).max(6),
+        answer: z.string().max(2),
+      }),
+    )
+    .min(1)
+    .max(5),
 });
 
 // ── Schema Registry ───────────────────────────────────────────────
@@ -173,28 +206,37 @@ export function autoFixContent(
 
   // Fill missing required fields with defaults
   if (!fixed.title || typeof fixed.title !== 'string') fixed.title = '本节内容';
-  if (pageType === 'concept' && (!fixed.summary || typeof fixed.summary !== 'string')) fixed.summary = '核心要点总结';
+  if (pageType === 'concept' && (!fixed.summary || typeof fixed.summary !== 'string'))
+    fixed.summary = '核心要点总结';
   if (pageType === 'case' && !fixed.highlight) fixed.highlight = '';
-  if (pageType === 'compare' && (!fixed.conclusion || typeof fixed.conclusion !== 'string')) fixed.conclusion = '以上对比展示了两个概念的核心差异。';
+  if (pageType === 'compare' && (!fixed.conclusion || typeof fixed.conclusion !== 'string'))
+    fixed.conclusion = '以上对比展示了两个概念的核心差异。';
   if (pageType === 'table' && !Array.isArray(fixed.headers)) fixed.headers = ['项目', '说明'];
   if (pageType === 'table' && !Array.isArray(fixed.rows)) fixed.rows = [['—', '—']];
   if (pageType === 'formula') {
     if (!fixed.mainFormula || typeof fixed.mainFormula !== 'string') fixed.mainFormula = 'E = mc^2';
-    if (!fixed.derivation || typeof fixed.derivation !== 'string') fixed.derivation = '推导过程详见教材。';
+    if (!fixed.derivation || typeof fixed.derivation !== 'string')
+      fixed.derivation = '推导过程详见教材。';
   }
   if (pageType === 'summary' && !Array.isArray(fixed.keyPoints)) fixed.keyPoints = ['本节核心内容'];
   if (pageType === 'end' && !fixed.slogan) fixed.slogan = '谢谢';
   // Ensure every formula item has both label and latex, and reject placeholder text
   if (Array.isArray(fixed.formulas)) {
-    fixed.formulas = (fixed.formulas as Array<Record<string, unknown>>).map((f) => {
-      const label = typeof f.label === 'string' && f.label.trim() ? f.label.trim() : '相关方程式';
-      let latex = typeof f.latex === 'string' && f.latex.trim() ? f.latex.trim() : '';
-      // Reject [Formula] / [formula] / 【公式】 placeholders — treat as empty so fallback kicks in
-      if (/\[\s*formula\s*\]/i.test(latex) || /【\s*公式\s*】/.test(latex) || latex.trim() === '') {
-        latex = `\\text{${label}}`;
-      }
-      return { label, latex };
-    }).filter((f) => f.latex && f.latex !== '\\text{}');
+    fixed.formulas = (fixed.formulas as Array<Record<string, unknown>>)
+      .map((f) => {
+        const label = typeof f.label === 'string' && f.label.trim() ? f.label.trim() : '相关方程式';
+        let latex = typeof f.latex === 'string' && f.latex.trim() ? f.latex.trim() : '';
+        // Reject [Formula] / [formula] / 【公式】 placeholders — treat as empty so fallback kicks in
+        if (
+          /\[\s*formula\s*\]/i.test(latex) ||
+          /【\s*公式\s*】/.test(latex) ||
+          latex.trim() === ''
+        ) {
+          latex = `\\text{${label}}`;
+        }
+        return { label, latex };
+      })
+      .filter((f) => f.latex && f.latex !== '\\text{}');
   }
 
   // Aggressive fallback: re-parse and truncate ANY too_big string field
@@ -208,8 +250,10 @@ export function autoFixContent(
     let changed = false;
     for (const issue of check.error.issues) {
       // Zod v4 uses `origin`, v3 uses `type` — support both
-      const issueOrigin = ((issue as unknown) as Record<string, unknown>).origin as string | undefined;
-      const issueType = ((issue as unknown) as Record<string, unknown>).type as string | undefined;
+      const issueOrigin = (issue as unknown as Record<string, unknown>).origin as
+        | string
+        | undefined;
+      const issueType = (issue as unknown as Record<string, unknown>).type as string | undefined;
       const isStringIssue = issueOrigin === 'string' || issueType === 'string';
       if (issue.code === 'too_big' && isStringIssue && typeof issue.maximum === 'number') {
         const maxLen = issue.maximum;
@@ -233,7 +277,9 @@ export function autoFixContent(
               changed = true;
             }
           }
-        } catch { /* ignore path traversal errors */ }
+        } catch {
+          /* ignore path traversal errors */
+        }
       }
     }
     if (!changed) break;
@@ -242,7 +288,10 @@ export function autoFixContent(
   return finalFixed;
 }
 
-export function deepRepairContent(pageType: string, content: Record<string, unknown>): Record<string, unknown> {
+export function deepRepairContent(
+  pageType: string,
+  content: Record<string, unknown>,
+): Record<string, unknown> {
   const fixed = { ...content } as Record<string, unknown>;
 
   // DEBUG: verify Turbopack has loaded this version (write to file so we can check via API)
@@ -252,7 +301,9 @@ export function deepRepairContent(pageType: string, content: Record<string, unkn
     const logPath = path.join(process.cwd(), 'logs', 'pipeline-diagnostic.log');
     const line = `[${new Date().toISOString()}] [DEBUG] [deepRepairContent] v2.1 called pageType=${pageType} keys=${Object.keys(fixed).join(',')}\n`;
     fs.appendFileSync(logPath, line);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   // Type coercion: convert numbers/booleans/null to strings
   for (const [key, value] of Object.entries(fixed)) {
@@ -276,41 +327,63 @@ export function deepRepairContent(pageType: string, content: Record<string, unkn
   if (typeof fixed.mainFormula === 'string') fixed.mainFormula = trunc(fixed.mainFormula, 200);
 
   // Fix arrays: cap at max + type coercion inside arrays
-  const arrayCaps: Record<string, number> = { cards: 6, items: 6, scenarios: 3, steps: 8, rows: 8, questions: 5, events: 8, keyPoints: 6, options: 6, formulas: 3 };
+  const arrayCaps: Record<string, number> = {
+    cards: 6,
+    items: 6,
+    scenarios: 3,
+    steps: 8,
+    rows: 8,
+    questions: 5,
+    events: 8,
+    keyPoints: 6,
+    options: 6,
+    formulas: 3,
+  };
   for (const [key, cap] of Object.entries(arrayCaps)) {
     if (Array.isArray(fixed[key])) {
-      fixed[key] = (fixed[key] as unknown[]).slice(0, cap).map((item: unknown) => {
-        if (Array.isArray(item)) return item; // preserve nested arrays (e.g. table rows)
-        if (typeof item === 'object' && item !== null) {
-          const obj = { ...item as Record<string, unknown> };
-          // Type coercion for nested object fields
-          for (const [k, v] of Object.entries(obj)) {
-            if (v === null || v === undefined) obj[k] = '';
-            else if (typeof v === 'number' || typeof v === 'boolean') obj[k] = String(v);
-          }
-          const titleMax = pageType === 'toc' ? 15 : 20;
-          if (typeof obj.title === 'string') obj.title = trunc(obj.title, titleMax);
-          if (typeof obj.desc === 'string') obj.desc = trunc(obj.desc, 200);
-          if (typeof obj.problem === 'string') obj.problem = trunc(obj.problem, 400);
-          if (typeof obj.solution === 'string') obj.solution = trunc(obj.solution, 400);
-          if (typeof obj.content === 'string') obj.content = trunc(obj.content, 120);
-          if (typeof obj.date === 'string') obj.date = trunc(obj.date, 20);
-          if (typeof obj.q === 'string') obj.q = trunc(obj.q, 200);
-          if (typeof obj.answer === 'string') obj.answer = trunc(obj.answer, 2);
-          if (typeof obj.num === 'string') obj.num = trunc(obj.num, 5);
-          // Ensure formula items always have both label and latex
-          if (key === 'formulas') {
-            if (!obj.label || typeof obj.label !== 'string' || (obj.label as string).trim() === '') {
-              obj.label = '相关方程式';
+      fixed[key] = (fixed[key] as unknown[])
+        .slice(0, cap)
+        .map((item: unknown) => {
+          if (Array.isArray(item)) return item; // preserve nested arrays (e.g. table rows)
+          if (typeof item === 'object' && item !== null) {
+            const obj = { ...(item as Record<string, unknown>) };
+            // Type coercion for nested object fields
+            for (const [k, v] of Object.entries(obj)) {
+              if (v === null || v === undefined) obj[k] = '';
+              else if (typeof v === 'number' || typeof v === 'boolean') obj[k] = String(v);
             }
-            if (!obj.latex || typeof obj.latex !== 'string' || (obj.latex as string).trim() === '') {
-              obj.latex = `\\text{${obj.label as string}}`;
+            const titleMax = pageType === 'toc' ? 15 : 20;
+            if (typeof obj.title === 'string') obj.title = trunc(obj.title, titleMax);
+            if (typeof obj.desc === 'string') obj.desc = trunc(obj.desc, 200);
+            if (typeof obj.problem === 'string') obj.problem = trunc(obj.problem, 400);
+            if (typeof obj.solution === 'string') obj.solution = trunc(obj.solution, 400);
+            if (typeof obj.content === 'string') obj.content = trunc(obj.content, 120);
+            if (typeof obj.date === 'string') obj.date = trunc(obj.date, 20);
+            if (typeof obj.q === 'string') obj.q = trunc(obj.q, 200);
+            if (typeof obj.answer === 'string') obj.answer = trunc(obj.answer, 2);
+            if (typeof obj.num === 'string') obj.num = trunc(obj.num, 5);
+            // Ensure formula items always have both label and latex
+            if (key === 'formulas') {
+              if (
+                !obj.label ||
+                typeof obj.label !== 'string' ||
+                (obj.label as string).trim() === ''
+              ) {
+                obj.label = '相关方程式';
+              }
+              if (
+                !obj.latex ||
+                typeof obj.latex !== 'string' ||
+                (obj.latex as string).trim() === ''
+              ) {
+                obj.latex = `\\text{${obj.label as string}}`;
+              }
             }
+            return obj;
           }
-          return obj;
-        }
-        return typeof item === 'string' ? trunc(item, 100) : String(item);
-      }).filter((item) => item !== undefined && item !== null && item !== '');
+          return typeof item === 'string' ? trunc(item, 100) : String(item);
+        })
+        .filter((item) => item !== undefined && item !== null && item !== '');
     }
   }
 
@@ -318,14 +391,18 @@ export function deepRepairContent(pageType: string, content: Record<string, unkn
   if (fixed.left && typeof fixed.left === 'object') {
     const l = fixed.left as Record<string, unknown>;
     if (Array.isArray(l.items)) {
-      l.items = (l.items as unknown[]).map((s) => typeof s === 'string' ? trunc(s, 100) : String(s)).slice(0, 6);
+      l.items = (l.items as unknown[])
+        .map((s) => (typeof s === 'string' ? trunc(s, 100) : String(s)))
+        .slice(0, 6);
     }
     if (typeof l.title === 'string') l.title = trunc(l.title, 15);
   }
   if (fixed.right && typeof fixed.right === 'object') {
     const r = fixed.right as Record<string, unknown>;
     if (Array.isArray(r.items)) {
-      r.items = (r.items as unknown[]).map((s) => typeof s === 'string' ? trunc(s, 100) : String(s)).slice(0, 6);
+      r.items = (r.items as unknown[])
+        .map((s) => (typeof s === 'string' ? trunc(s, 100) : String(s)))
+        .slice(0, 6);
     }
     if (typeof r.title === 'string') r.title = trunc(r.title, 15);
   }
@@ -394,8 +471,30 @@ export function convertInlineLatexToUnicode(text: string): string {
   // We handle all variants with flexible patterns.
 
   // Unicode digit maps
-  const subDigits: Record<string, string> = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉' };
-  const superDigits: Record<string, string> = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹' };
+  const subDigits: Record<string, string> = {
+    '0': '₀',
+    '1': '₁',
+    '2': '₂',
+    '3': '₃',
+    '4': '₄',
+    '5': '₅',
+    '6': '₆',
+    '7': '₇',
+    '8': '₈',
+    '9': '₉',
+  };
+  const superDigits: Record<string, string> = {
+    '0': '⁰',
+    '1': '¹',
+    '2': '²',
+    '3': '³',
+    '4': '⁴',
+    '5': '⁵',
+    '6': '⁶',
+    '7': '⁷',
+    '8': '⁸',
+    '9': '⁹',
+  };
 
   let result = text;
 
@@ -449,45 +548,63 @@ export function convertInlineLatexToUnicode(text: string): string {
   // Only matches simple patterns (no operators inside), e.g. $C_3$, $P_i$
   result = result.replace(
     /\$([A-Z][a-z]?)_(\d+)\$/g,
-    (_, el: string, num: string) => el + num.split('').map((d: string) => subDigits[d] || d).join(''),
+    (_, el: string, num: string) =>
+      el +
+      num
+        .split('')
+        .map((d: string) => subDigits[d] || d)
+        .join(''),
   );
 
   // ── Phase 3: Generic single-element superscript $X^n$ → Xⁿ ──
   // e.g. $C^{14}$ → C¹⁴ (radioactive isotope notation)
   result = result.replace(
     /\$([A-Z][a-z]?)\^\{(\d+)\}\$/g,
-    (_, el: string, num: string) => el + num.split('').map((d: string) => superDigits[d] || d).join(''),
+    (_, el: string, num: string) =>
+      el +
+      num
+        .split('')
+        .map((d: string) => superDigits[d] || d)
+        .join(''),
   );
 
   // ── Phase 4: Remaining inline $...$ — convert sub/sup inside ──
   // Handles chemical equations with operators: $6CO_2 + 6H_2O -> C_6H_{12}O_6 + 6O_2$
   // Also handles edge cases like $(CH_2O)$, $HCO_3^-$, etc.
-  result = result.replace(
-    /\$([^$]{1,80})\$/g,
-    (_, inner: string) => {
-      let s = inner;
-      // Convert common LaTeX arrows first
-      s = s.replace(/\\rightarrow/g, '→').replace(/\\to/g, '→').replace(/\\leftarrow/g, '←').replace(/\\leftrightarrow/g, '↔');
-      // Also handle plain ASCII arrows used in chemical equations
-      s = s.replace(/->/g, '→').replace(/<-/g, '←');
-      // Convert _n → subscript unicode
-      s = s.replace(/_(\d+)/g, (_m: string, num: string) =>
-        num.split('').map((d: string) => subDigits[d] || d).join(''),
-      );
-      s = s.replace(/_\{(\d+)\}/g, (_m: string, num: string) =>
-        num.split('').map((d: string) => subDigits[d] || d).join(''),
-      );
-      // Convert ^{n} or ^{n+} or ^{n-} → superscript unicode
-      s = s.replace(/\^\{(\d+[+-]?)\}/g, (_m: string, content: string) =>
-        content.split('').map((ch: string) =>
-          superDigits[ch] || (ch === '+' ? '⁺' : ch === '-' ? '⁻' : ch)
-        ).join(''),
-      );
-      // Convert ^+ / ^- → superscript unicode
-      s = s.replace(/\^(-|\+)/g, (_m: string, ch: string) => ch === '+' ? '⁺' : '⁻');
-      return s;
-    },
-  );
+  result = result.replace(/\$([^$]{1,80})\$/g, (_, inner: string) => {
+    let s = inner;
+    // Convert common LaTeX arrows first
+    s = s
+      .replace(/\\rightarrow/g, '→')
+      .replace(/\\to/g, '→')
+      .replace(/\\leftarrow/g, '←')
+      .replace(/\\leftrightarrow/g, '↔');
+    // Also handle plain ASCII arrows used in chemical equations
+    s = s.replace(/->/g, '→').replace(/<-/g, '←');
+    // Convert _n → subscript unicode
+    s = s.replace(/_(\d+)/g, (_m: string, num: string) =>
+      num
+        .split('')
+        .map((d: string) => subDigits[d] || d)
+        .join(''),
+    );
+    s = s.replace(/_\{(\d+)\}/g, (_m: string, num: string) =>
+      num
+        .split('')
+        .map((d: string) => subDigits[d] || d)
+        .join(''),
+    );
+    // Convert ^{n} or ^{n+} or ^{n-} → superscript unicode
+    s = s.replace(/\^\{(\d+[+-]?)\}/g, (_m: string, content: string) =>
+      content
+        .split('')
+        .map((ch: string) => superDigits[ch] || (ch === '+' ? '⁺' : ch === '-' ? '⁻' : ch))
+        .join(''),
+    );
+    // Convert ^+ / ^- → superscript unicode
+    s = s.replace(/\^(-|\+)/g, (_m: string, ch: string) => (ch === '+' ? '⁺' : '⁻'));
+    return s;
+  });
 
   return result;
 }
@@ -501,21 +618,45 @@ export function unicodeMathToLatex(text: string): string {
   let result = text;
 
   const superMap: Record<string, string> = {
-    '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5',
-    '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁺': '+', '⁻': '-',
+    '⁰': '0',
+    '¹': '1',
+    '²': '2',
+    '³': '3',
+    '⁴': '4',
+    '⁵': '5',
+    '⁶': '6',
+    '⁷': '7',
+    '⁸': '8',
+    '⁹': '9',
+    '⁺': '+',
+    '⁻': '-',
   };
   const subMap: Record<string, string> = {
-    '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5',
-    '₆': '6', '₇': '7', '₈': '8', '₉': '9',
+    '₀': '0',
+    '₁': '1',
+    '₂': '2',
+    '₃': '3',
+    '₄': '4',
+    '₅': '5',
+    '₆': '6',
+    '₇': '7',
+    '₈': '8',
+    '₉': '9',
   };
 
   result = result.replace(/([A-Za-z)])([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]+)/g, (_, base: string, sup: string) => {
-    const digits = sup.split('').map((c: string) => superMap[c] || c).join('');
+    const digits = sup
+      .split('')
+      .map((c: string) => superMap[c] || c)
+      .join('');
     return `${base}^{${digits}}`;
   });
 
   result = result.replace(/([A-Za-z)])([₀₁₂₃₄₅₆₇₈₉]+)/g, (_, base: string, sub: string) => {
-    const digits = sub.split('').map((c: string) => subMap[c] || c).join('');
+    const digits = sub
+      .split('')
+      .map((c: string) => subMap[c] || c)
+      .join('');
     return `${base}_{${digits}}`;
   });
 
@@ -525,14 +666,37 @@ export function unicodeMathToLatex(text: string): string {
   result = result.replace(/↔/g, ' \\leftrightarrow ');
 
   const greekMap: Record<string, string> = {
-    'Δ': '\\Delta', 'α': '\\alpha', 'β': '\\beta', 'γ': '\\gamma',
-    'δ': '\\delta', 'ε': '\\epsilon', 'ζ': '\\zeta', 'η': '\\eta',
-    'θ': '\\theta', 'ι': '\\iota', 'κ': '\\kappa', 'λ': '\\lambda',
-    'μ': '\\mu', 'ν': '\\nu', 'ξ': '\\xi', 'π': '\\pi', 'ρ': '\\rho',
-    'σ': '\\sigma', 'τ': '\\tau', 'υ': '\\upsilon', 'φ': '\\phi',
-    'χ': '\\chi', 'ψ': '\\psi', 'ω': '\\omega', 'Γ': '\\Gamma',
-    'Θ': '\\Theta', 'Λ': '\\Lambda', 'Σ': '\\Sigma', 'Φ': '\\Phi',
-    'Ψ': '\\Psi', 'Ω': '\\Omega',
+    Δ: '\\Delta',
+    α: '\\alpha',
+    β: '\\beta',
+    γ: '\\gamma',
+    δ: '\\delta',
+    ε: '\\epsilon',
+    ζ: '\\zeta',
+    η: '\\eta',
+    θ: '\\theta',
+    ι: '\\iota',
+    κ: '\\kappa',
+    λ: '\\lambda',
+    μ: '\\mu',
+    ν: '\\nu',
+    ξ: '\\xi',
+    π: '\\pi',
+    ρ: '\\rho',
+    σ: '\\sigma',
+    τ: '\\tau',
+    υ: '\\upsilon',
+    φ: '\\phi',
+    χ: '\\chi',
+    ψ: '\\psi',
+    ω: '\\omega',
+    Γ: '\\Gamma',
+    Θ: '\\Theta',
+    Λ: '\\Lambda',
+    Σ: '\\Sigma',
+    Φ: '\\Phi',
+    Ψ: '\\Psi',
+    Ω: '\\Omega',
   };
   for (const [u, l] of Object.entries(greekMap)) {
     result = result.split(u).join(` ${l} `);
@@ -549,7 +713,8 @@ export function extractFormulasFromText(text: string): string[] {
   if (!text || text.length < 3) return [];
   const formulas: string[] = [];
 
-  const eqPattern = /[A-Za-z0-9Δαβγδεζηθικλμνξπρστυφχψω⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉⁺⁻]+[^。，；\n]{0,100}[=→←⇌↔][^。，；\n]{0,100}[A-Za-z0-9Δαβγδεζηθικλμνξπρστυφχψω⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉⁺⁻]+/g;
+  const eqPattern =
+    /[A-Za-z0-9Δαβγδεζηθικλμνξπρστυφχψω⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉⁺⁻]+[^。，；\n]{0,100}[=→←⇌↔][^。，；\n]{0,100}[A-Za-z0-9Δαβγδεζηθικλμνξπρστυφχψω⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉⁺⁻]+/g;
   const eqMatches = text.match(eqPattern);
   if (eqMatches) {
     for (const m of eqMatches) {
@@ -824,8 +989,10 @@ function escapeUnescapedQuotes(text: string): string {
 /** Strip markdown fences, trailing commas, comments, and control chars from LLM JSON output. */
 export function cleanJsonText(text: string): string {
   let cleaned = text.trim();
-  if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  else if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  if (cleaned.startsWith('```json'))
+    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+  else if (cleaned.startsWith('```'))
+    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
 
   // Remove single-line comments (// ...) — not valid in JSON
   cleaned = cleaned.replace(/\/\/[^\n\r]*/g, '');
@@ -912,8 +1079,14 @@ function tryRepairJson(text: string): string {
   let esc = false;
   for (let i = 0; i < s.length; i++) {
     const c = s[i];
-    if (esc) { esc = false; continue; }
-    if (c === '\\') { esc = true; continue; }
+    if (esc) {
+      esc = false;
+      continue;
+    }
+    if (c === '\\') {
+      esc = true;
+      continue;
+    }
     if (c === '"') inStr = !inStr;
   }
   if (inStr) s += '"';
@@ -932,9 +1105,18 @@ function tryRepairJson(text: string): string {
   let escape2 = false;
   for (let i = 0; i < s.length; i++) {
     const c = s[i];
-    if (escape2) { escape2 = false; continue; }
-    if (c === '\\') { escape2 = true; continue; }
-    if (c === '"') { inString2 = !inString2; continue; }
+    if (escape2) {
+      escape2 = false;
+      continue;
+    }
+    if (c === '\\') {
+      escape2 = true;
+      continue;
+    }
+    if (c === '"') {
+      inString2 = !inString2;
+      continue;
+    }
     if (!inString2) {
       if (c === '{') openBraces++;
       else if (c === '}') openBraces--;

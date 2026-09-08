@@ -154,13 +154,15 @@ describe('settings-audio — 音频设置', () => {
   describe('addCustomTTSProvider & removeCustomTTSProvider', () => {
     it('添加自定义 TTS 引擎', async () => {
       const store = await getStore();
-      store.getState().addCustomTTSProvider(
-        'custom-tts-1' as any,
-        '我的 TTS',
-        'http://localhost:8080',
-        false,
-        'my-model',
-      );
+      store
+        .getState()
+        .addCustomTTSProvider(
+          'custom-tts-1' as any,
+          '我的 TTS',
+          'http://localhost:8080',
+          false,
+          'my-model',
+        );
 
       const cfg = store.getState().ttsProvidersConfig['custom-tts-1' as any];
       expect(cfg).toBeDefined();
@@ -171,12 +173,9 @@ describe('settings-audio — 音频设置', () => {
 
     it('添加后自动切换为当前 provider', async () => {
       const store = await getStore();
-      store.getState().addCustomTTSProvider(
-        'custom-tts-2' as any,
-        '测试',
-        'http://localhost:9090',
-        false,
-      );
+      store
+        .getState()
+        .addCustomTTSProvider('custom-tts-2' as any, '测试', 'http://localhost:9090', false);
 
       expect(store.getState().ttsProviderId).toBe('custom-tts-2');
     });
@@ -185,12 +184,7 @@ describe('settings-audio — 音频设置', () => {
       const store = await getStore();
       // 先添加一个自定义 provider（addCustomTTSProvider 会自动切换为它）
       const customId = 'custom-tts-del' as any;
-      store.getState().addCustomTTSProvider(
-        customId,
-        '待删除',
-        'http://localhost:7070',
-        false,
-      );
+      store.getState().addCustomTTSProvider(customId, '待删除', 'http://localhost:7070', false);
       // 确认当前是它（addCustomTTSProvider 会 set ttsProviderId）
       expect(store.getState().ttsProviderId).toBe(customId);
 

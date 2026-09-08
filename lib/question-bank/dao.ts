@@ -82,8 +82,13 @@ function toRow(r: QBRow): QuestionBankRow {
     knowledgePoints: safeParseJson<string[]>(r.knowledge_points, []),
     image: r.image,
     options: safeParseJson<string[] | null>(r.options, null),
-    steps: safeParseJson<{ label: string; content: string; keyPoints?: string[] }[] | null>(r.steps, null),
-    similarQuestions: safeParseJson<{ problem: string; difficulty: number; knowledgePoint: string }[] | null>(r.similar_questions, null),
+    steps: safeParseJson<{ label: string; content: string; keyPoints?: string[] }[] | null>(
+      r.steps,
+      null,
+    ),
+    similarQuestions: safeParseJson<
+      { problem: string; difficulty: number; knowledgePoint: string }[] | null
+    >(r.similar_questions, null),
     source: r.source,
     tags: safeParseJson<string[]>(r.tags, []),
     problemHash: r.problem_hash,
@@ -107,7 +112,13 @@ function safeParseJson<T>(raw: string | unknown | null, fallback: T): T {
 function isConnectionError(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
   const code = 'code' in err ? String((err as { code?: unknown }).code ?? '') : '';
-  return ['ER_ACCESS_DENIED_ERROR', 'ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT', 'PROTOCOL_CONNECTION_LOST'].includes(code);
+  return [
+    'ER_ACCESS_DENIED_ERROR',
+    'ECONNREFUSED',
+    'ENOTFOUND',
+    'ETIMEDOUT',
+    'PROTOCOL_CONNECTION_LOST',
+  ].includes(code);
 }
 
 function markFallback(err: unknown): void {
@@ -161,13 +172,19 @@ function matchesFilter(row: QuestionBankRow, filter: QuestionBankFilter): boolea
   if (filter.verified !== undefined && row.verified !== filter.verified) return false;
   if (filter.keyword) {
     const keyword = filter.keyword.toLowerCase();
-    if (!row.content.toLowerCase().includes(keyword) && !row.explanation.toLowerCase().includes(keyword)) return false;
+    if (
+      !row.content.toLowerCase().includes(keyword) &&
+      !row.explanation.toLowerCase().includes(keyword)
+    )
+      return false;
   }
   if (filter.knowledgePoint) {
     const knowledgePoint = filter.knowledgePoint.toLowerCase();
-    if (!row.knowledgePoints.some((point) => point.toLowerCase().includes(knowledgePoint))) return false;
+    if (!row.knowledgePoints.some((point) => point.toLowerCase().includes(knowledgePoint)))
+      return false;
   }
-  if (filter.tags && filter.tags.length > 0 && !filter.tags.some((tag) => row.tags.includes(tag))) return false;
+  if (filter.tags && filter.tags.length > 0 && !filter.tags.some((tag) => row.tags.includes(tag)))
+    return false;
   return true;
 }
 
@@ -286,7 +303,10 @@ export async function ensureTable(): Promise<void> {
     // duplicate-column error is the expected benign outcome.
     const columnMigrations: [string, string][] = [
       ['steps', 'ALTER TABLE question_bank ADD COLUMN steps JSON NULL AFTER options'],
-      ['similar_questions', 'ALTER TABLE question_bank ADD COLUMN similar_questions JSON NULL AFTER steps'],
+      [
+        'similar_questions',
+        'ALTER TABLE question_bank ADD COLUMN similar_questions JSON NULL AFTER steps',
+      ],
     ];
     for (const [, ddl] of columnMigrations) {
       try {
@@ -294,7 +314,10 @@ export async function ensureTable(): Promise<void> {
       } catch (err) {
         const e = err as { code?: string; errno?: number; message?: string };
         const duplicate =
-          e.code === 'ER_DUP_FIELDNAME' || e.code === 'ER_DUP_FIELD' || e.errno === 1060 || /duplicate column/i.test(e.message ?? '');
+          e.code === 'ER_DUP_FIELDNAME' ||
+          e.code === 'ER_DUP_FIELD' ||
+          e.errno === 1060 ||
+          /duplicate column/i.test(e.message ?? '');
         if (!duplicate) throw err;
       }
     }
@@ -472,7 +495,9 @@ export async function findById(id: string): Promise<QuestionBankRow | null> {
   }
   const pool = await getPool();
   try {
-    const [rows] = await pool.query<QBRow[]>('SELECT * FROM question_bank WHERE id = ? LIMIT 1', [id]);
+    const [rows] = await pool.query<QBRow[]>('SELECT * FROM question_bank WHERE id = ? LIMIT 1', [
+      id,
+    ]);
     return rows.length > 0 ? toRow(rows[0]) : null;
   } catch (err) {
     if (!isConnectionError(err)) throw err;
@@ -484,28 +509,50 @@ export async function findById(id: string): Promise<QuestionBankRow | null> {
 
 export async function findAdjacentIds(
   id: string,
-  filter: Pick<QuestionBankFilter, 'subject' | 'grade' | 'difficulty' | 'questionType' | 'verified' | 'keyword'> = {},
+  filter: Pick<
+    QuestionBankFilter,
+    'subject' | 'grade' | 'difficulty' | 'questionType' | 'verified' | 'keyword'
+  > = {},
 ): Promise<{ prevId: string | null; nextId: string | null }> {
   await ensureTable();
   const pool = await getPool();
 
   // Get current row's created_at
-  const [curRows] = await pool.query<QBRow[]>('SELECT created_at FROM question_bank WHERE id = ?', [id]);
+  const [curRows] = await pool.query<QBRow[]>('SELECT created_at FROM question_bank WHERE id = ?', [
+    id,
+  ]);
   if (curRows.length === 0) return { prevId: null, nextId: null };
   const createdAt = curRows[0].created_at;
 
   const conditions: string[] = [];
   const params: any[] = [];
 
-  if (filter.subject) { conditions.push('subject = ?'); params.push(filter.subject); }
-  if (filter.grade) { conditions.push('grade = ?'); params.push(filter.grade); }
-  if (filter.difficulty) { conditions.push('difficulty = ?'); params.push(filter.difficulty); }
-  if (filter.questionType) { conditions.push('question_type = ?'); params.push(filter.questionType); }
-  if (filter.verified !== undefined) { conditions.push('verified = ?'); params.push(filter.verified ? 1 : 0); }
+  if (filter.subject) {
+    conditions.push('subject = ?');
+    params.push(filter.subject);
+  }
+  if (filter.grade) {
+    conditions.push('grade = ?');
+    params.push(filter.grade);
+  }
+  if (filter.difficulty) {
+    conditions.push('difficulty = ?');
+    params.push(filter.difficulty);
+  }
+  if (filter.questionType) {
+    conditions.push('question_type = ?');
+    params.push(filter.questionType);
+  }
+  if (filter.verified !== undefined) {
+    conditions.push('verified = ?');
+    params.push(filter.verified ? 1 : 0);
+  }
   if (filter.keyword) {
     if (needsLikeFallback(filter.keyword)) {
       const like = `%${escapeLike(filter.keyword)}%`;
-      conditions.push('(content LIKE ? ESCAPE \'\\\\\' OR explanation LIKE ? ESCAPE \'\\\\\' OR knowledge_points LIKE ? ESCAPE \'\\\\\')');
+      conditions.push(
+        "(content LIKE ? ESCAPE '\\\\' OR explanation LIKE ? ESCAPE '\\\\' OR knowledge_points LIKE ? ESCAPE '\\\\')",
+      );
       params.push(like, like, like);
     } else {
       conditions.push('MATCH(content, explanation) AGAINST(? IN BOOLEAN MODE)');
@@ -542,9 +589,10 @@ export async function findByHash(problemHash: string): Promise<QuestionBankRow |
   }
   const pool = await getPool();
   try {
-    const [rows] = await pool.query<QBRow[]>('SELECT * FROM question_bank WHERE problem_hash = ? LIMIT 1', [
-      problemHash,
-    ]);
+    const [rows] = await pool.query<QBRow[]>(
+      'SELECT * FROM question_bank WHERE problem_hash = ? LIMIT 1',
+      [problemHash],
+    );
     return rows.length > 0 ? toRow(rows[0]) : null;
   } catch (err) {
     if (!isConnectionError(err)) throw err;
@@ -598,7 +646,7 @@ export async function search(filter: QuestionBankFilter = {}): Promise<QuestionB
     params.push(`%${filter.keyword}%`, `%${filter.keyword}%`);
   }
   if (filter.knowledgePoint) {
-    conditions.push('JSON_SEARCH(knowledge_points, \'one\', ?) IS NOT NULL');
+    conditions.push("JSON_SEARCH(knowledge_points, 'one', ?) IS NOT NULL");
     params.push(`%${filter.knowledgePoint}%`);
   }
   if (filter.tags && filter.tags.length > 0) {
@@ -693,10 +741,10 @@ export async function update(id: string, patch: QuestionBankUpdate): Promise<boo
   if (sets.length === 0) return false;
 
   try {
-    const [res] = await pool.query<ResultSetHeader>(`UPDATE question_bank SET ${sets.join(', ')} WHERE id = ?`, [
-      ...params,
-      id,
-    ]);
+    const [res] = await pool.query<ResultSetHeader>(
+      `UPDATE question_bank SET ${sets.join(', ')} WHERE id = ?`,
+      [...params, id],
+    );
     return (res.affectedRows ?? 0) > 0;
   } catch (err) {
     if (!isConnectionError(err)) throw err;
@@ -767,7 +815,7 @@ export async function count(
     params.push(`%${filter.keyword}%`, `%${filter.keyword}%`);
   }
   if (filter.knowledgePoint) {
-    conditions.push('JSON_SEARCH(knowledge_points, \'one\', ?) IS NOT NULL');
+    conditions.push("JSON_SEARCH(knowledge_points, 'one', ?) IS NOT NULL");
     params.push(`%${filter.knowledgePoint}%`);
   }
 

@@ -3,7 +3,10 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { replayAbilityResponses, type AbilityReplayResponse } from '@/lib/adaptive-learning/profile/ability-replay';
+import {
+  replayAbilityResponses,
+  type AbilityReplayResponse,
+} from '@/lib/adaptive-learning/profile/ability-replay';
 
 interface NormalizedRow extends AbilityReplayResponse {
   timestampMode: string;

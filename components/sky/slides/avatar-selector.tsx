@@ -12,8 +12,18 @@ export function AvatarSelector({ avatars, selectedId, onSelect }: AvatarSelector
   return (
     <div className="flex flex-col gap-2">
       <span className="flex items-center gap-1.5 px-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        <svg
+          className="h-3.5 w-3.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+          />
         </svg>
         讲解形象
       </span>
@@ -43,16 +53,24 @@ export function AvatarSelector({ avatars, selectedId, onSelect }: AvatarSelector
                 />
                 {active && (
                   <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-500 ring-2 ring-white shadow-sm">
-                    <svg className="h-2 w-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <svg
+                      className="h-2 w-2 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={3}
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </span>
                 )}
               </div>
               <div className="flex min-w-0 flex-col">
-                <span className={`truncate text-[13px] font-bold transition-colors ${
-                  active ? 'text-blue-700' : 'text-slate-600'
-                }`}>
+                <span
+                  className={`truncate text-[13px] font-bold transition-colors ${
+                    active ? 'text-blue-700' : 'text-slate-600'
+                  }`}
+                >
                   {avatar.name}
                 </span>
                 <span className="truncate text-[10px] text-slate-400">

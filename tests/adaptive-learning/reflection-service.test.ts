@@ -55,7 +55,10 @@ describe('learner reflection service', () => {
     expect(reflection).toMatchObject({ modelId: 'rules-v1', inputEventWatermark: 3 });
     expect(reflection?.hypotheses).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ dimension: 'knowledge', evidenceEventIds: ['answer-1', 'answer-2'] }),
+        expect.objectContaining({
+          dimension: 'knowledge',
+          evidenceEventIds: ['answer-1', 'answer-2'],
+        }),
         expect.objectContaining({ dimension: 'error-pattern' }),
         expect.objectContaining({ dimension: 'persistence' }),
       ]),
@@ -64,7 +67,9 @@ describe('learner reflection service', () => {
   });
 
   it('runs again after ten new events, stays idle when up to date', async () => {
-    const initialEvents = [event('answer-1', 'answer-submitted', '2026-08-13T09:00:00.000Z', { correct: true })];
+    const initialEvents = [
+      event('answer-1', 'answer-submitted', '2026-08-13T09:00:00.000Z', { correct: true }),
+    ];
     await runLearnerReflection({
       storage,
       userId: 'reflection-user',
@@ -74,7 +79,12 @@ describe('learner reflection service', () => {
     const nextEvents = [
       ...initialEvents,
       ...Array.from({ length: 10 }, (_, index) =>
-        event(`answer-${index + 2}`, 'answer-submitted', `2026-08-13T09:${String(index + 2).padStart(2, '0')}:00.000Z`, { correct: true }),
+        event(
+          `answer-${index + 2}`,
+          'answer-submitted',
+          `2026-08-13T09:${String(index + 2).padStart(2, '0')}:00.000Z`,
+          { correct: true },
+        ),
       ),
     ];
     await expect(

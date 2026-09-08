@@ -6,11 +6,7 @@
  */
 
 import type { StudentProfile } from './profile-types';
-import {
-  getDifficultyForMastery,
-  resolveSubject,
-  QUIZ_COUNT_OPTIONS,
-} from './profile-config';
+import { getDifficultyForMastery, resolveSubject, QUIZ_COUNT_OPTIONS } from './profile-config';
 
 export interface AutoQuizParams {
   subject: string;
@@ -44,16 +40,11 @@ export function deriveQuizParamsFromProfile(
   // 3. Difficulty: based on average mastery of weak points
   let avgMastery = 0;
   if (profile.weakPoints.length > 0) {
-    const sum = profile.weakPoints.reduce(
-      (s, kp) => s + (profile.masteryByKnowledge[kp] ?? 0),
-      0,
-    );
+    const sum = profile.weakPoints.reduce((s, kp) => s + (profile.masteryByKnowledge[kp] ?? 0), 0);
     avgMastery = sum / profile.weakPoints.length;
   } else {
     avgMastery =
-      profile.totalQuestions > 0
-        ? (profile.totalCorrect / profile.totalQuestions) * 100
-        : 50;
+      profile.totalQuestions > 0 ? (profile.totalCorrect / profile.totalQuestions) * 100 : 50;
   }
 
   let difficulty = getDifficultyForMastery(avgMastery);

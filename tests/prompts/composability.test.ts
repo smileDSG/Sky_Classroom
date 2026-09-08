@@ -66,9 +66,20 @@ describe('PromptComposer', () => {
 
   describe('composition', () => {
     test('composes fragments in priority order', () => {
-      composer.register(makeFragment({ id: 'core', category: 'core', priority: 10, content: 'Core content.' }));
-      composer.register(makeFragment({ id: 'role', category: 'role', priority: 30, content: 'Role content.' }));
-      composer.register(makeFragment({ id: 'user-override', category: 'user', priority: 100, content: 'User override.' }));
+      composer.register(
+        makeFragment({ id: 'core', category: 'core', priority: 10, content: 'Core content.' }),
+      );
+      composer.register(
+        makeFragment({ id: 'role', category: 'role', priority: 30, content: 'Role content.' }),
+      );
+      composer.register(
+        makeFragment({
+          id: 'user-override',
+          category: 'user',
+          priority: 100,
+          content: 'User override.',
+        }),
+      );
 
       const result = composer.compose({
         fragments: ['core', 'role', 'user-override'],
@@ -93,11 +104,13 @@ describe('PromptComposer', () => {
     });
 
     test('variable interpolation replaces {{varName}}', () => {
-      composer.register(makeFragment({
-        id: 'with-vars',
-        category: 'core',
-        content: 'Hello {{name}}, your score is {{score}}.',
-      }));
+      composer.register(
+        makeFragment({
+          id: 'with-vars',
+          category: 'core',
+          content: 'Hello {{name}}, your score is {{score}}.',
+        }),
+      );
 
       const result = composer.compose({
         fragments: ['with-vars'],
@@ -110,10 +123,12 @@ describe('PromptComposer', () => {
     });
 
     test('unknown variables are left unchanged (silent passthrough)', () => {
-      composer.register(makeFragment({
-        id: 'vars',
-        content: 'Hello {{name}}, {{missing}}.',
-      }));
+      composer.register(
+        makeFragment({
+          id: 'vars',
+          content: 'Hello {{name}}, {{missing}}.',
+        }),
+      );
 
       const result = composer.compose({
         fragments: ['vars'],
@@ -125,10 +140,12 @@ describe('PromptComposer', () => {
     });
 
     test('object values are JSON-stringified', () => {
-      composer.register(makeFragment({
-        id: 'obj-vars',
-        content: 'Data: {{items}}',
-      }));
+      composer.register(
+        makeFragment({
+          id: 'obj-vars',
+          content: 'Data: {{items}}',
+        }),
+      );
 
       const result = composer.compose({
         fragments: ['obj-vars'],
@@ -142,10 +159,12 @@ describe('PromptComposer', () => {
     });
 
     test('conditional blocks include content when flag is truthy', () => {
-      composer.register(makeFragment({
-        id: 'conditional',
-        content: 'Start. {{#if showSecret}}SECRET{{/if}} End.',
-      }));
+      composer.register(
+        makeFragment({
+          id: 'conditional',
+          content: 'Start. {{#if showSecret}}SECRET{{/if}} End.',
+        }),
+      );
 
       const withFlag = composer.compose({
         fragments: ['conditional'],
@@ -161,10 +180,12 @@ describe('PromptComposer', () => {
     });
 
     test('multiple conditional blocks work independently', () => {
-      composer.register(makeFragment({
-        id: 'multi-if',
-        content: '{{#if a}}A{{/if}} {{#if b}}B{{/if}} {{#if c}}C{{/if}}',
-      }));
+      composer.register(
+        makeFragment({
+          id: 'multi-if',
+          content: '{{#if a}}A{{/if}} {{#if b}}B{{/if}} {{#if c}}C{{/if}}',
+        }),
+      );
 
       const result = composer.compose({
         fragments: ['multi-if'],
@@ -177,10 +198,12 @@ describe('PromptComposer', () => {
     });
 
     test('conditional blocks do not nest', () => {
-      composer.register(makeFragment({
-        id: 'no-nest',
-        content: '{{#if outer}}before{{#if inner}}inside{{/if}}after{{/if}}',
-      }));
+      composer.register(
+        makeFragment({
+          id: 'no-nest',
+          content: '{{#if outer}}before{{#if inner}}inside{{/if}}after{{/if}}',
+        }),
+      );
 
       const result = composer.compose({
         fragments: ['no-nest'],
@@ -239,8 +262,12 @@ describe('PromptComposer', () => {
 
   describe('user overrides', () => {
     test('user fragments have highest priority by default', () => {
-      composer.register(makeFragment({ id: 'core', category: 'core', priority: 10, content: 'core' }));
-      composer.register(makeFragment({ id: 'custom', category: 'user', priority: 100, content: 'custom' }));
+      composer.register(
+        makeFragment({ id: 'core', category: 'core', priority: 10, content: 'core' }),
+      );
+      composer.register(
+        makeFragment({ id: 'custom', category: 'user', priority: 100, content: 'custom' }),
+      );
 
       const result = composer.compose({
         fragments: ['core', 'custom'],
@@ -308,10 +335,12 @@ describe('PromptComposer', () => {
     });
 
     test('fragment with markdown formatting is preserved', () => {
-      composer.register(makeFragment({
-        id: 'md',
-        content: '# Heading\n\n**bold** and `code`\n\n- list item',
-      }));
+      composer.register(
+        makeFragment({
+          id: 'md',
+          content: '# Heading\n\n**bold** and `code`\n\n- list item',
+        }),
+      );
       const result = composer.compose({ fragments: ['md'], variables: {} });
       expect(result.system).toContain('# Heading');
       expect(result.system).toContain('**bold**');
@@ -323,18 +352,22 @@ describe('PromptComposer', () => {
 
   describe('hot reload', () => {
     test('re-registered fragments replace prior content', () => {
-      composer.register(makeFragment({
-        id: 'reloadable',
-        category: 'core',
-        content: 'original',
-      }));
+      composer.register(
+        makeFragment({
+          id: 'reloadable',
+          category: 'core',
+          content: 'original',
+        }),
+      );
 
       // Re-register with new content (simulating file reload)
-      composer.register(makeFragment({
-        id: 'reloadable',
-        category: 'core',
-        content: 'updated-content-v2',
-      }));
+      composer.register(
+        makeFragment({
+          id: 'reloadable',
+          category: 'core',
+          content: 'updated-content-v2',
+        }),
+      );
 
       const result = composer.compose({
         fragments: ['reloadable'],

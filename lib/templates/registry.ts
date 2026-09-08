@@ -51,17 +51,11 @@ export function getTemplateById(id: string): CourseTemplate | null {
 /** Search templates by query (matches name, description, subject — locale-aware) */
 export function searchTemplates(query: string, locale = 'zh-CN'): CourseTemplate[] {
   const q = query.toLowerCase();
-  return BUILT_IN.filter(
-    (t) => {
-      const name = getTemplateName(t, locale).toLowerCase();
-      const desc = getTemplateDescription(t, locale).toLowerCase();
-      return (
-        name.includes(q) ||
-        desc.includes(q) ||
-        t.subject.includes(q)
-      );
-    },
-  );
+  return BUILT_IN.filter((t) => {
+    const name = getTemplateName(t, locale).toLowerCase();
+    const desc = getTemplateDescription(t, locale).toLowerCase();
+    return name.includes(q) || desc.includes(q) || t.subject.includes(q);
+  });
 }
 
 /** Filter templates by subject */

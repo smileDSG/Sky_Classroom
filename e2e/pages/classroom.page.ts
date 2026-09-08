@@ -37,9 +37,7 @@ export class ClassroomPage {
 
   async getSlideRenderQaIssues(): Promise<SlideRenderQaIssue[]> {
     return this.page
-      .locator(
-        '[data-slide-qa-overflow="true"], [data-slide-qa-status="scale-down"]',
-      )
+      .locator('[data-slide-qa-overflow="true"], [data-slide-qa-status="scale-down"]')
       .evaluateAll((nodes) =>
         nodes.map((node) => {
           const element = node as HTMLElement;

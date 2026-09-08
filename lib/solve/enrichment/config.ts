@@ -65,13 +65,7 @@ export const SUBJECTS: SubjectConfig[] = [
     id: 'chinese',
     label: '语文',
     labelEn: 'Chinese',
-    searchKeywords: [
-      '高中语文题',
-      '高考语文真题',
-      '文言文阅读题',
-      '现代文阅读题',
-      '作文题目',
-    ],
+    searchKeywords: ['高中语文题', '高考语文真题', '文言文阅读题', '现代文阅读题', '作文题目'],
     gradeLevels: ['senior'],
     priority: 4,
   },
@@ -79,13 +73,7 @@ export const SUBJECTS: SubjectConfig[] = [
     id: 'english',
     label: '英语',
     labelEn: 'English',
-    searchKeywords: [
-      '高中英语题',
-      '高考英语真题',
-      '英语阅读题',
-      '英语完形填空',
-      '英语语法题',
-    ],
+    searchKeywords: ['高中英语题', '高考英语真题', '英语阅读题', '英语完形填空', '英语语法题'],
     gradeLevels: ['senior'],
     priority: 5,
   },
@@ -93,12 +81,7 @@ export const SUBJECTS: SubjectConfig[] = [
     id: 'biology',
     label: '生物',
     labelEn: 'Biology',
-    searchKeywords: [
-      '高中生物题',
-      '高考生物真题',
-      '遗传学题',
-      '细胞生物学题',
-    ],
+    searchKeywords: ['高中生物题', '高考生物真题', '遗传学题', '细胞生物学题'],
     gradeLevels: ['senior'],
     priority: 6,
   },
@@ -106,10 +89,7 @@ export const SUBJECTS: SubjectConfig[] = [
     id: 'history',
     label: '历史',
     labelEn: 'History',
-    searchKeywords: [
-      '高中历史题',
-      '高考历史真题',
-    ],
+    searchKeywords: ['高中历史题', '高考历史真题'],
     gradeLevels: ['senior'],
     priority: 7,
   },
@@ -117,10 +97,7 @@ export const SUBJECTS: SubjectConfig[] = [
     id: 'geography',
     label: '地理',
     labelEn: 'Geography',
-    searchKeywords: [
-      '高中地理题',
-      '高考地理真题',
-    ],
+    searchKeywords: ['高中地理题', '高考地理真题'],
     gradeLevels: ['senior'],
     priority: 8,
   },
@@ -128,10 +105,7 @@ export const SUBJECTS: SubjectConfig[] = [
     id: 'politics',
     label: '政治',
     labelEn: 'Politics',
-    searchKeywords: [
-      '高中政治题',
-      '高考政治真题',
-    ],
+    searchKeywords: ['高中政治题', '高考政治真题'],
     gradeLevels: ['senior'],
     priority: 9,
   },
@@ -162,10 +136,10 @@ export const ALLOWED_DOMAINS: string[] = [
   // Public exam question banks
   'easylearn.baidu.com',
   'wenku.baidu.com',
-  'jyeoo.com',           // 菁优网 — public question bank
-  'zujuan.xkw.com',      // 组卷网
-  '21cnjy.com',          // 21世纪教育网
-  'zxxk.com',            // 学科网
+  'jyeoo.com', // 菁优网 — public question bank
+  'zujuan.xkw.com', // 组卷网
+  '21cnjy.com', // 21世纪教育网
+  'zxxk.com', // 学科网
   'doc88.com',
   'docin.com',
   // GitHub (open-source datasets)

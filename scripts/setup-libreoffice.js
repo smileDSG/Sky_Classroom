@@ -27,9 +27,7 @@ const CANDIDATES = {
     'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
     'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
   ],
-  darwin: [
-    '/Applications/LibreOffice.app/Contents/MacOS/soffice',
-  ],
+  darwin: ['/Applications/LibreOffice.app/Contents/MacOS/soffice'],
   linux: [
     '/usr/lib/libreoffice/program/soffice',
     '/usr/bin/soffice',
@@ -103,10 +101,7 @@ function main() {
   }
 
   // 2. Auto-detect
-  const candidates = [
-    ...(CANDIDATES[PLATFORM] || []),
-    ...getWindowsRegistryCandidates(),
-  ];
+  const candidates = [...(CANDIDATES[PLATFORM] || []), ...getWindowsRegistryCandidates()];
   for (const candidate of candidates) {
     if (fileExists(candidate)) {
       console.log(`✅ LibreOffice found:`);

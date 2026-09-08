@@ -152,16 +152,20 @@ function generateTeacherSVG(config) {
 function generateStudentSVG(config) {
   const { colors, features } = config;
   const id = config.id.replace(/-/g, '');
-  const hasQuestion = features.question ? `
+  const hasQuestion = features.question
+    ? `
     <text x="215" y="65" font-family="Arial, sans-serif" font-size="42" fill="${colors.primary}" font-weight="bold">?</text>
-  ` : '';
-  const hasBow = features.bow ? `
+  `
+    : '';
+  const hasBow = features.bow
+    ? `
     <g transform="translate(140, 50)">
       <path d="M-15 0c-5 0-10 5-10 10s5 10 10 10c5 0 8-3 10-5-2-5-5-15-10-15z" fill="#ef4444"/>
       <path d="M15 0c5 0 10 5 10 10s-5 10-10 10c-5 0-8-3-10-5 2-5 5-15 10-15z" fill="#ef4444"/>
       <circle r="5" fill="#dc2626"/>
     </g>
-  ` : '';
+  `
+    : '';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" fill="none">
   <defs>
@@ -192,7 +196,9 @@ function generateStudentSVG(config) {
 
   ${hasBow}
 
-  ${features.bigEyes ? `
+  ${
+    features.bigEyes
+      ? `
   <!-- 大眼睛 -->
   <circle cx="124" cy="98" r="10" fill="white"/>
   <circle cx="124" cy="98" r="5" fill="#1f2937"/>
@@ -200,11 +206,13 @@ function generateStudentSVG(config) {
   <circle cx="156" cy="98" r="5" fill="#1f2937"/>
   <circle cx="126" cy="96" r="2" fill="white"/>
   <circle cx="158" cy="96" r="2" fill="white"/>
-  ` : `
+  `
+      : `
   <!-- 眼睛 -->
   <circle cx="124" cy="98" r="4" fill="#1f2937"/>
   <circle cx="156" cy="98" r="4" fill="#1f2937"/>
-  `}
+  `
+  }
 
   <!-- 眉毛 - 好奇上扬 -->
   <path d="M115 85q9-8 18-3" stroke="#1f2937" stroke-width="2.5" fill="none" stroke-linecap="round"/>
@@ -353,7 +361,7 @@ function main() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('在项目中引用新头像:\n');
 
-  AVATARS_CONFIG.forEach(config => {
+  AVATARS_CONFIG.forEach((config) => {
     console.log(`  ${config.name.padEnd(8)} /avatars/${config.filename}`);
   });
 

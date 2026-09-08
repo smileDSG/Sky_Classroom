@@ -329,15 +329,18 @@ export function PersonalizationLab() {
                     </div>
                     {shadowReport.status === 'insufficient-data' ? (
                       <p className="mt-1 text-sm text-slate-400">
-                        已收集 {shadowReport.eligibleResponses}/{shadowReport.minimumResponses} 条有效答题记录；达到门槛后才显示模型结论。
+                        已收集 {shadowReport.eligibleResponses}/{shadowReport.minimumResponses}{' '}
+                        条有效答题记录；达到门槛后才显示模型结论。
                       </p>
                     ) : (
                       <div className="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
                         <div className="rounded-lg bg-black/20 p-3 text-slate-200">
-                          新模型：Brier {shadowReport.report?.newModel.brier.toFixed(3)} · AUC {shadowReport.report?.newModel.auc.toFixed(3)}
+                          新模型：Brier {shadowReport.report?.newModel.brier.toFixed(3)} · AUC{' '}
+                          {shadowReport.report?.newModel.auc.toFixed(3)}
                         </div>
                         <div className="rounded-lg bg-black/20 p-3 text-slate-200">
-                          Beta 基线：Brier {shadowReport.report?.baseline.brier.toFixed(3)} · AUC {shadowReport.report?.baseline.auc.toFixed(3)}
+                          Beta 基线：Brier {shadowReport.report?.baseline.brier.toFixed(3)} · AUC{' '}
+                          {shadowReport.report?.baseline.auc.toFixed(3)}
                         </div>
                       </div>
                     )}

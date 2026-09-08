@@ -87,7 +87,8 @@ function normalizeOrder(outlines: SceneOutline[]): SceneOutline[] {
   }));
 }
 
-function useSceneTypeLabel() {return (type: SceneType) => {
+function useSceneTypeLabel() {
+  return (type: SceneType) => {
     switch (type) {
       case 'quiz':
         return '测验';
@@ -112,7 +113,8 @@ export function OutlinesEditor({
   isLoading = false,
   isStreaming = false,
   onCollapse,
-}: OutlinesEditorProps) {const sceneTypeLabel = useSceneTypeLabel();
+}: OutlinesEditorProps) {
+  const sceneTypeLabel = useSceneTypeLabel();
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const lastScrollTargetRef = useRef<string | null>(null);
@@ -221,9 +223,7 @@ export function OutlinesEditor({
             <Sparkles className="size-3 text-blue-500" />
             {'AI 生成的大纲'}
           </div>
-          <h2 className="text-2xl font-semibold tracking-tight md:text-[28px]">
-            {'场景大纲'}
-          </h2>
+          <h2 className="text-2xl font-semibold tracking-tight md:text-[28px]">{'场景大纲'}</h2>
           <p className="flex min-h-[1.5rem] items-center gap-2 text-sm text-muted-foreground">
             {isStreaming && (
               <motion.span
@@ -419,7 +419,8 @@ function SceneRow({
   onDragEnd,
   onDragEnter,
   onDrop,
-}: SceneRowProps) {const theme = TYPE_THEME[outline.type] ?? TYPE_THEME.slide;
+}: SceneRowProps) {
+  const theme = TYPE_THEME[outline.type] ?? TYPE_THEME.slide;
   const [keyPointDraft, setKeyPointDraft] = useState('');
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
@@ -650,7 +651,8 @@ function EmptyState({
   isStreaming: boolean;
   disabled: boolean;
   onAdd: () => void;
-}) {if (isStreaming) {
+}) {
+  if (isStreaming) {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 px-6 py-12 text-center">
         <motion.div
@@ -660,9 +662,7 @@ function EmptyState({
         >
           <Loader2 className="size-6" />
         </motion.div>
-        <p className="text-sm text-muted-foreground">
-          {'正在等待第一个场景到达…'}
-        </p>
+        <p className="text-sm text-muted-foreground">{'正在等待第一个场景到达…'}</p>
       </div>
     );
   }
@@ -690,7 +690,8 @@ function TypePill({
   disabled: boolean;
   label: string;
   theme: (typeof TYPE_THEME)[SceneType];
-}) {return (
+}) {
+  return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={disabled}>
         <button
@@ -717,7 +718,13 @@ function TypePill({
             >
               <span className="flex items-center gap-2">
                 <span className={cn('size-2 rounded-full', optionTheme.accent)} />
-                {option === 'slide' ? '幻灯片' : option === 'quiz' ? '测验' : option === 'interactive' ? '互动' : '项目式学习'}
+                {option === 'slide'
+                  ? '幻灯片'
+                  : option === 'quiz'
+                    ? '测验'
+                    : option === 'interactive'
+                      ? '互动'
+                      : '项目式学习'}
               </span>
               {option === type && <Check className="size-3.5 text-muted-foreground" />}
             </DropdownMenuItem>
@@ -728,7 +735,8 @@ function TypePill({
   );
 }
 
-function DeleteSceneButton({ onConfirm }: { onConfirm: () => void }) {const [open, setOpen] = useState(false);
+function DeleteSceneButton({ onConfirm }: { onConfirm: () => void }) {
+  const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -749,9 +757,7 @@ function DeleteSceneButton({ onConfirm }: { onConfirm: () => void }) {const [op
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={4} className="w-56 p-3">
         <p className="text-sm font-medium">{'删除该场景？'}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {'该场景及其关键要点将从大纲中移除。'}
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{'该场景及其关键要点将从大纲中移除。'}</p>
         <div className="mt-3 flex justify-end gap-2">
           <Button
             type="button"
@@ -780,7 +786,8 @@ function DeleteSceneButton({ onConfirm }: { onConfirm: () => void }) {const [op
   );
 }
 
-function StreamingPlaceholder({ nextIndex }: { nextIndex: number }) {return (
+function StreamingPlaceholder({ nextIndex }: { nextIndex: number }) {
+  return (
     <motion.li
       layout
       initial={{ opacity: 0, y: 8 }}
@@ -816,9 +823,7 @@ function StreamingPlaceholder({ nextIndex }: { nextIndex: number }) {return (
       </div>
 
       {/* Hidden but exposed to screen readers */}
-      <span className="sr-only">
-        {`生成中 · 已就位 ${nextIndex - 1} 个场景`}
-      </span>
+      <span className="sr-only">{`生成中 · 已就位 ${nextIndex - 1} 个场景`}</span>
     </motion.li>
   );
 }
@@ -832,7 +837,8 @@ function InsertDivider({
   disabled: boolean;
   /** Edge dividers (before first / after last) keep a faint hint to invite adding. */
   position?: 'between' | 'edge';
-}) {const isEdge = position === 'edge';
+}) {
+  const isEdge = position === 'edge';
   return (
     <li
       role="presentation"
@@ -928,7 +934,8 @@ function QuizConfigDisclosure({
 }: {
   outline: SceneOutline;
   onUpdate: (updates: Partial<SceneOutline>) => void;
-}) {const config = outline.quizConfig ?? {
+}) {
+  const config = outline.quizConfig ?? {
     questionCount: 3,
     difficulty: 'medium' as const,
     questionTypes: ['single' as const],
@@ -962,9 +969,7 @@ function QuizConfigDisclosure({
       <PopoverContent align="start" sideOffset={6} className="w-64 space-y-2.5 p-3">
         {/* Count: label left, stepper right */}
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs font-medium text-muted-foreground">
-            {'题目数量'}
-          </span>
+          <span className="text-xs font-medium text-muted-foreground">{'题目数量'}</span>
           <Stepper
             value={config.questionCount ?? 3}
             min={1}
@@ -974,9 +979,7 @@ function QuizConfigDisclosure({
         </div>
         {/* Difficulty: label left, segmented right */}
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs font-medium text-muted-foreground">
-            {'难度'}
-          </span>
+          <span className="text-xs font-medium text-muted-foreground">{'难度'}</span>
           <SegmentedControl
             value={config.difficulty ?? 'medium'}
             onChange={(value) => updateConfig({ difficulty: value as 'easy' | 'medium' | 'hard' })}
@@ -989,9 +992,7 @@ function QuizConfigDisclosure({
         </div>
         {/* Type: label above, multi-select pills below */}
         <div className="space-y-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            {'题型'}
-          </span>
+          <span className="text-xs font-medium text-muted-foreground">{'题型'}</span>
           <div className="flex gap-1">
             {(
               [

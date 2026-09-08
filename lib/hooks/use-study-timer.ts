@@ -11,7 +11,7 @@ import { useEffect, useRef } from 'react';
 const REPORT_INTERVAL_MS = 30_000; // 30 seconds
 
 export function useStudyTimer(enabled: boolean = true) {
-  const accumulatedRef = useRef(0);    // seconds since last report
+  const accumulatedRef = useRef(0); // seconds since last report
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {

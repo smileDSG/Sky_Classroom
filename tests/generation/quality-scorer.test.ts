@@ -448,7 +448,8 @@ describe('scoreSlideContent', () => {
           top: 460,
           width: 760,
           height: 42,
-          content: '<p style="font-size:18px;">Takeaway: list operations change sequence state.</p>',
+          content:
+            '<p style="font-size:18px;">Takeaway: list operations change sequence state.</p>',
         },
       ] as GeneratedSlideContent['elements'],
       background: { type: 'solid', color: '#ffffff' },

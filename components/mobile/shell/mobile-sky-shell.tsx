@@ -16,7 +16,9 @@ export function MobileSkyShell({ children, backHref, title }: MobileSkyShellProp
       className="flex min-h-dvh flex-col overflow-x-hidden bg-slate-50 text-slate-950 antialiased dark:bg-slate-950 dark:text-slate-50"
     >
       <MobileTopBar backHref={backHref} title={title} />
-      <main data-sky-responsive-mobile-main className="flex flex-1 flex-col">{children}</main>
+      <main data-sky-responsive-mobile-main className="flex flex-1 flex-col">
+        {children}
+      </main>
       <MobileBottomNav />
     </div>
   );

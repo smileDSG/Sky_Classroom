@@ -38,10 +38,7 @@ describe('migration — 数据格式升级', () => {
     };
 
     // 写入 localStorage，version: 0
-    storage.set(
-      'settings-storage',
-      JSON.stringify({ state: v0State, version: 0 }),
-    );
+    storage.set('settings-storage', JSON.stringify({ state: v0State, version: 0 }));
 
     // 加载 store（zustand persist 会自动触发 migrate）
     const store = await getStore();
@@ -62,10 +59,7 @@ describe('migration — 数据格式升级', () => {
       modelId: 'gpt-4o-mini', // 旧的硬编码默认值
     };
 
-    storage.set(
-      'settings-storage',
-      JSON.stringify({ state: v0State, version: 0 }),
-    );
+    storage.set('settings-storage', JSON.stringify({ state: v0State, version: 0 }));
 
     const store = await getStore();
     // v0 → v1 迁移会清空这个硬编码默认值
@@ -99,10 +93,7 @@ describe('migration — 数据格式升级', () => {
       modelId: '',
     };
 
-    storage.set(
-      'settings-storage',
-      JSON.stringify({ state, version: 2 }),
-    );
+    storage.set('settings-storage', JSON.stringify({ state, version: 2 }));
 
     // 不应抛错
     const store = await getStore();

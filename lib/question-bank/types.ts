@@ -14,26 +14,26 @@ export interface QuestionBankRow {
   grade: string;
   difficulty: 'easy' | 'medium' | 'hard';
   questionType: 'choice' | 'fill' | 'solve' | 'judge';
-  content: string;               // question text (may contain LaTeX)
+  content: string; // question text (may contain LaTeX)
   answer: string;
   explanation: string;
-  knowledgePoints: string[];     // stored as JSON array
-  image: string | null;          // base64 or URL
-  options: string[] | null;      // for choice/judge questions
+  knowledgePoints: string[]; // stored as JSON array
+  image: string | null; // base64 or URL
+  options: string[] | null; // for choice/judge questions
   steps?: { label: string; content: string; keyPoints?: string[] }[] | null; // solve step breakdown
   similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string }[] | null;
-  source: string | null;         // e.g. "2024高考真题"
-  tags: string[];                // arbitrary tags
-  problemHash: string;           // dedup hash of content
+  source: string | null; // e.g. "2024高考真题"
+  tags: string[]; // arbitrary tags
+  problemHash: string; // dedup hash of content
   verified: boolean;
-  createdAt: string;             // ISO datetime
-  updatedAt: string;             // ISO datetime
+  createdAt: string; // ISO datetime
+  updatedAt: string; // ISO datetime
 }
 
 // ── Insert / Update types ───────────────────────────────────────────
 
 export interface QuestionBankInsert {
-  id?: string;                   // auto-generated if omitted
+  id?: string; // auto-generated if omitted
   subject: string;
   grade: string;
   difficulty: 'easy' | 'medium' | 'hard';
@@ -79,10 +79,10 @@ export interface QuestionBankFilter {
   difficulty?: 'easy' | 'medium' | 'hard';
   questionType?: 'choice' | 'fill' | 'solve' | 'judge';
   verified?: boolean;
-  keyword?: string;              // FULLTEXT search on content
-  knowledgePoint?: string;       // match knowledge_points
-  tags?: string[];               // match any tag
-  ids?: string[];                // exact id list
+  keyword?: string; // FULLTEXT search on content
+  knowledgePoint?: string; // match knowledge_points
+  tags?: string[]; // match any tag
+  ids?: string[]; // exact id list
   limit?: number;
   offset?: number;
 }

@@ -10,7 +10,7 @@ export interface MobileCapabilities {
 }
 
 export function getMobileCapabilities(): MobileCapabilities {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return {
       touch: false,
       standalone: false,
@@ -20,9 +20,9 @@ export function getMobileCapabilities(): MobileCapabilities {
   }
 
   return {
-    touch: "ontouchstart" in window || navigator.maxTouchPoints > 0,
-    standalone: window.matchMedia("(display-mode: standalone)").matches,
-    visualViewport: "visualViewport" in window && window.visualViewport != null,
-    share: "share" in navigator,
+    touch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+    standalone: window.matchMedia('(display-mode: standalone)').matches,
+    visualViewport: 'visualViewport' in window && window.visualViewport != null,
+    share: 'share' in navigator,
   };
 }

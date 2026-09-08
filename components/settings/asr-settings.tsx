@@ -37,7 +37,8 @@ interface ASRSettingsProps {
   selectedProviderId: ASRProviderId;
 }
 
-export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {const asrLanguage = useSettingsStore((state) => state.asrLanguage);
+export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
+  const asrLanguage = useSettingsStore((state) => state.asrLanguage);
   const asrProvidersConfig = useSettingsStore((state) => state.asrProvidersConfig);
   const setASRProviderConfig = useSettingsStore((state) => state.setASRProviderConfig);
   const removeCustomASRProvider = useSettingsStore((state) => state.removeCustomASRProvider);
@@ -222,9 +223,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {const as
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  placeholder={
-                    isServerConfigured ? '可选，留空则使用服务端配置' : '输入 API Key'
-                  }
+                  placeholder={isServerConfigured ? '可选，留空则使用服务端配置' : '输入 API Key'}
                   value={asrProvidersConfig[selectedProviderId]?.apiKey || ''}
                   onChange={(e) =>
                     setASRProviderConfig(selectedProviderId, {
@@ -515,7 +514,8 @@ function AddModelRow({
 }: {
   onAdd: (id: string, name: string) => void;
   existingIds: string[];
-}) {const [modelId, setModelId] = useState('');
+}) {
+  const [modelId, setModelId] = useState('');
   const [modelName, setModelName] = useState('');
 
   const handleAdd = () => {

@@ -23,7 +23,9 @@ describe('importFromPdf', () => {
   });
 
   it('imports low-confidence questions directly', async () => {
-    const insertBatch = vi.fn().mockResolvedValue({ total: 1, inserted: 1, duplicates: 0, errors: [] });
+    const insertBatch = vi
+      .fn()
+      .mockResolvedValue({ total: 1, inserted: 1, duplicates: 0, errors: [] });
     const deps: PdfImportDeps = {
       parsePdf: vi.fn().mockResolvedValue({ text: '题目1' }),
       splitQuestions: vi.fn().mockResolvedValue([{ text: '题1', confidence: 0.7 }]),
@@ -37,9 +39,7 @@ describe('importFromPdf', () => {
     const result = await importFromPdf(Buffer.from('pdf'), {}, deps);
     expect(result.total).toBe(1);
     expect(result.inserted).toBe(1);
-    expect(insertBatch).toHaveBeenCalledWith([
-      expect.objectContaining({ verified: true }),
-    ]);
+    expect(insertBatch).toHaveBeenCalledWith([expect.objectContaining({ verified: true })]);
   });
 
   it('handles extraction failures gracefully', async () => {
@@ -49,7 +49,8 @@ describe('importFromPdf', () => {
         { text: '题1', confidence: 0.9 },
         { text: '题2', confidence: 0.9 },
       ]),
-      extractStructure: vi.fn()
+      extractStructure: vi
+        .fn()
         .mockResolvedValueOnce({
           data: { subject: '数学', content: '1+1=?', answer: '2' },
           confidence: 0.92,

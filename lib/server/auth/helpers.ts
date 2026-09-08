@@ -20,7 +20,11 @@ export async function getCurrentUser(): Promise<UserEntry | null> {
   } catch (error) {
     // Vitest invokes route handlers without a Next request scope. Keep this
     // escape hatch test-only; production must always have request cookies.
-    if (process.env.NODE_ENV === 'test' && error instanceof Error && error.message.includes('outside a request scope')) {
+    if (
+      process.env.NODE_ENV === 'test' &&
+      error instanceof Error &&
+      error.message.includes('outside a request scope')
+    ) {
       return {
         id: 'default-user',
         email: 'demo@example.com',

@@ -1,7 +1,16 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Maximize2, Minimize2, ChevronLeft, ChevronRight, Download, RotateCcw, FileCheck, Presentation } from 'lucide-react';
+import {
+  Maximize2,
+  Minimize2,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  RotateCcw,
+  FileCheck,
+  Presentation,
+} from 'lucide-react';
 
 /* Celestial action button */
 function ActionButton({
@@ -83,7 +92,7 @@ export function SlideViewer({
       if (index < 0 || index >= total) return;
       onIndexChange(index);
     },
-    [total, onIndexChange]
+    [total, onIndexChange],
   );
 
   const goNext = useCallback(() => {
@@ -133,7 +142,9 @@ export function SlideViewer({
       } else {
         await document.exitFullscreen();
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const touchStartX = useRef<number | null>(null);
@@ -149,7 +160,7 @@ export function SlideViewer({
       }
       touchStartX.current = null;
     },
-    [goNext, goPrev]
+    [goNext, goPrev],
   );
 
   const prevIndex = activeIndex > 0 ? activeIndex - 1 : null;
@@ -163,7 +174,10 @@ export function SlideViewer({
     <div
       ref={containerRef}
       className="relative flex h-full w-full flex-col overflow-hidden"
-      style={{ background: 'linear-gradient(180deg, var(--celestial-void) 0%, var(--celestial-horizon) 100%)' }}
+      style={{
+        background:
+          'linear-gradient(180deg, var(--celestial-void) 0%, var(--celestial-horizon) 100%)',
+      }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onDoubleClick={toggleFullscreen}
@@ -179,8 +193,10 @@ export function SlideViewer({
       </div>
 
       {/* Main stage */}
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden" style={{ perspective: '1200px' }}>
-
+      <div
+        className="relative flex flex-1 items-center justify-center overflow-hidden"
+        style={{ perspective: '1200px' }}
+      >
         {/* Left preview */}
         {prevIndex !== null && (
           <button
@@ -247,7 +263,8 @@ export function SlideViewer({
           <div
             className="absolute -inset-[1px] rounded-xl pointer-events-none"
             style={{
-              background: 'linear-gradient(135deg, rgba(245,230,200,0.08), transparent, rgba(139,92,246,0.06))',
+              background:
+                'linear-gradient(135deg, rgba(245,230,200,0.08), transparent, rgba(139,92,246,0.06))',
             }}
           />
 
@@ -255,7 +272,8 @@ export function SlideViewer({
             className="relative overflow-hidden rounded-xl border border-[var(--celestial-starlight)]/8"
             style={{
               background: 'var(--celestial-horizon)',
-              boxShadow: '0 24px 48px -12px rgba(0,0,0,0.5), inset 0 1px 0 0 rgba(245,230,200,0.05)',
+              boxShadow:
+                '0 24px 48px -12px rgba(0,0,0,0.5), inset 0 1px 0 0 rgba(245,230,200,0.05)',
             }}
           >
             <img
@@ -302,7 +320,8 @@ export function SlideViewer({
                 className="h-full rounded-full transition-all duration-300 ease-out"
                 style={{
                   width: `${((activeIndex + 1) / total) * 100}%`,
-                  background: 'linear-gradient(90deg, var(--celestial-nebula), var(--celestial-dawn))',
+                  background:
+                    'linear-gradient(90deg, var(--celestial-nebula), var(--celestial-dawn))',
                 }}
               />
             </div>
@@ -343,10 +362,18 @@ export function SlideViewer({
                     style={{
                       width: isActive ? 44 : 28,
                       height: isActive ? 25 : 16,
-                      transform: isActive ? 'scale(1.1)' : `scale(${Math.max(0.7, 1 - dist * 0.05)})`,
+                      transform: isActive
+                        ? 'scale(1.1)'
+                        : `scale(${Math.max(0.7, 1 - dist * 0.05)})`,
                     }}
                   >
-                    <img src={src} alt="" className="h-full w-full object-cover" draggable={false} loading="lazy" />
+                    <img
+                      src={src}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      draggable={false}
+                      loading="lazy"
+                    />
                     {isActive && (
                       <div className="absolute inset-0 border border-[var(--celestial-dawn)]/40 rounded" />
                     )}
@@ -359,15 +386,32 @@ export function SlideViewer({
           {/* Right: action buttons */}
           <div className="flex items-center gap-1 flex-shrink-0">
             {hasQaReport && onShowQaReport && (
-              <ActionButton onClick={onShowQaReport} icon={<FileCheck size={13} />} label="质检报告" />
+              <ActionButton
+                onClick={onShowQaReport}
+                icon={<FileCheck size={13} />}
+                label="质检报告"
+              />
             )}
             {onRegenerate && (
-              <ActionButton onClick={onRegenerate} icon={<RotateCcw size={13} />} label="重新生成" />
+              <ActionButton
+                onClick={onRegenerate}
+                icon={<RotateCcw size={13} />}
+                label="重新生成"
+              />
             )}
             {onDownload && (
-              <ActionButton onClick={onDownload} icon={<Download size={13} />} label="导出 PPT" primary />
+              <ActionButton
+                onClick={onDownload}
+                icon={<Download size={13} />}
+                label="导出 PPT"
+                primary
+              />
             )}
-            <ActionButton onClick={toggleFullscreen} icon={isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />} label={isFullscreen ? '退出全屏' : '全屏'} />
+            <ActionButton
+              onClick={toggleFullscreen}
+              icon={isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+              label={isFullscreen ? '退出全屏' : '全屏'}
+            />
           </div>
         </div>
       </div>

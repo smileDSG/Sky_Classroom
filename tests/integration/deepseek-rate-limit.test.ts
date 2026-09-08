@@ -39,10 +39,7 @@ interface TestResult {
   body?: unknown;
 }
 
-async function callDeepSeek(
-  apiKey: string,
-  signal?: AbortSignal,
-): Promise<TestResult> {
+async function callDeepSeek(apiKey: string, signal?: AbortSignal): Promise<TestResult> {
   const start = Date.now();
   try {
     const response = await fetch(BASE_URL, {
@@ -84,9 +81,7 @@ function summarize(results: TestResult[]): string {
   const success = results.filter((r) => r.status === 200).length;
   const rateLimited = results.filter((r) => r.status === 429).length;
   const errors = results.filter((r) => r.status >= 500 || r.status === 0).length;
-  const avgDuration = Math.round(
-    results.reduce((sum, r) => sum + r.durationMs, 0) / total,
-  );
+  const avgDuration = Math.round(results.reduce((sum, r) => sum + r.durationMs, 0) / total);
   const maxDuration = Math.max(...results.map((r) => r.durationMs));
 
   return `
@@ -116,9 +111,7 @@ describe('DeepSeek Rate Limit 隔离粒度测试', () => {
       console.log(`[RateLimitTest] Test A: ${testKeys.length} keys 并发`);
 
       const results = await Promise.all(
-        testKeys.map((key, i) =>
-          callDeepSeek(key).then((r) => ({ ...r, keyIndex: i })),
-        ),
+        testKeys.map((key, i) => callDeepSeek(key).then((r) => ({ ...r, keyIndex: i }))),
       );
 
       const summary = summarize(results);
@@ -150,9 +143,7 @@ describe('DeepSeek Rate Limit 隔离粒度测试', () => {
       console.log(`[RateLimitTest] Test B: 单 key 并发 6 次`);
 
       const results = await Promise.all(
-        Array.from({ length: 6 }, (_, i) =>
-          callDeepSeek(key).then((r) => ({ ...r, keyIndex: i })),
-        ),
+        Array.from({ length: 6 }, (_, i) => callDeepSeek(key).then((r) => ({ ...r, keyIndex: i }))),
       );
 
       const summary = summarize(results);

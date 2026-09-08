@@ -30,12 +30,13 @@ export async function PATCH(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Request body must be valid JSON');
   }
 
-  const parsed = z
-    .object({ status: taskStatusSchema })
-    .strict()
-    .safeParse(body);
+  const parsed = z.object({ status: taskStatusSchema }).strict().safeParse(body);
   if (!parsed.success) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'status must be in-progress, completed, or skipped');
+    return apiError(
+      API_ERROR_CODES.INVALID_REQUEST,
+      400,
+      'status must be in-progress, completed, or skipped',
+    );
   }
 
   try {
@@ -56,15 +57,21 @@ export async function PATCH(
       return apiSuccess({ data: { plan, task, event: null } });
     }
     if (task.status === 'completed' || task.status === 'skipped') {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Completed or skipped tasks cannot be changed');
+      return apiError(
+        API_ERROR_CODES.INVALID_REQUEST,
+        409,
+        'Completed or skipped tasks cannot be changed',
+      );
     }
 
     const tasks = plan.tasks.map((candidate) =>
       candidate.id === taskId ? { ...candidate, status } : candidate,
     );
-    const allFinished = tasks.length > 0 && tasks.every(
-      (candidate) => candidate.status === 'completed' || candidate.status === 'skipped',
-    );
+    const allFinished =
+      tasks.length > 0 &&
+      tasks.every(
+        (candidate) => candidate.status === 'completed' || candidate.status === 'skipped',
+      );
     const updatedPlan = await planDAO.update(plan.id, {
       tasks,
       weeklyTargets: buildWeeklyTargets(tasks),

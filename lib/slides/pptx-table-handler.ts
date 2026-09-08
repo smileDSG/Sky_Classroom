@@ -79,9 +79,15 @@ export function addTableToSlide(
   }
 
   // Data rows with alternating colors
-  const normalizedBg = theme.contentBg.startsWith('#') ? toPptxHex(theme.contentBg) : theme.contentBg;
+  const normalizedBg = theme.contentBg.startsWith('#')
+    ? toPptxHex(theme.contentBg)
+    : theme.contentBg;
   const isDarkContent = normalizedBg.length === 6 && parseInt(normalizedBg, 16) < 0x808080;
-  const altRowColor = isDarkContent ? '#334155' : (normalizedBg === 'ffffff' ? '#f8fafc' : theme.contentBg);
+  const altRowColor = isDarkContent
+    ? '#334155'
+    : normalizedBg === 'ffffff'
+      ? '#f8fafc'
+      : theme.contentBg;
   const baseRowColor = theme.contentBg;
 
   for (let ri = 0; ri < rows.length; ri++) {

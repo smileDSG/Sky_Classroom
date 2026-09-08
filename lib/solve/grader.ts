@@ -130,9 +130,8 @@ function ruleBasedGrade(correctAnswer: string, userAnswer: string): GradeResult 
     score,
     correctAnswer,
     userAnswer,
-    errorAnalysis: similarity > 0.3
-      ? '答案思路部分正确，但结果有误，请核对计算过程'
-      : '答案不正确，请重新审题',
+    errorAnalysis:
+      similarity > 0.3 ? '答案思路部分正确，但结果有误，请核对计算过程' : '答案不正确，请重新审题',
     cause,
   };
 }
@@ -167,8 +166,7 @@ export async function gradeAnswer(
       ? `## 标准答案步骤\n${correctAnswerSteps.map((s, i) => `步骤${i + 1}: ${s}`).join('\n')}`
       : '';
 
-    const prompt = GRADING_PROMPT
-      .replace('{problemText}', problemText)
+    const prompt = GRADING_PROMPT.replace('{problemText}', problemText)
       .replace('{correctAnswer}', correctAnswer)
       .replace('{userAnswer}', userAnswer)
       .replace('{stepsContext}', stepsContext);

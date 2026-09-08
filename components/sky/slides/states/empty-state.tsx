@@ -263,103 +263,103 @@ export function EmptyState({
         <div className="slides-generation-form w-full">
           {/* Topic input — focus ring style */}
           <div className="slides-topic-control w-full">
-          <label className="mb-2 block text-[11px] font-medium uppercase tracking-[0.15em] text-[var(--celestial-starlight)]/40">
-            课件主题
-          </label>
-          <div className="group relative">
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => onTopicChange(e.target.value)}
-              placeholder="例如：导数与函数单调性"
-              className="slides-topic-input w-full bg-transparent px-1 py-3 text-sm text-[var(--celestial-starlight)] placeholder:text-[var(--celestial-starlight)]/20 focus:outline-none"
-            />
-            {/* Bottom line */}
-            <div className="slides-topic-underline absolute bottom-0 left-0 right-0 h-px bg-[var(--celestial-starlight)]/15 transition-colors duration-300 group-focus-within:bg-[var(--celestial-dawn)]/60" />
-            {/* Glow on focus */}
-            <div className="slides-topic-glow absolute bottom-0 left-1/2 h-px w-0 -translate-x-1/2 bg-[var(--celestial-dawn)] shadow-[0_0_20px_rgba(255,140,105,0.3)] transition-all duration-500 group-focus-within:w-full" />
-            {/* Blinking cursor simulation via placeholder */}
-            {!topic && (
-              <div className="pointer-events-none absolute bottom-3.5 left-1 h-4 w-px bg-[var(--celestial-dawn)]/60 animate-pulse" />
-            )}
+            <label className="mb-2 block text-[11px] font-medium uppercase tracking-[0.15em] text-[var(--celestial-starlight)]/40">
+              课件主题
+            </label>
+            <div className="group relative">
+              <input
+                type="text"
+                value={topic}
+                onChange={(e) => onTopicChange(e.target.value)}
+                placeholder="例如：导数与函数单调性"
+                className="slides-topic-input w-full bg-transparent px-1 py-3 text-sm text-[var(--celestial-starlight)] placeholder:text-[var(--celestial-starlight)]/20 focus:outline-none"
+              />
+              {/* Bottom line */}
+              <div className="slides-topic-underline absolute bottom-0 left-0 right-0 h-px bg-[var(--celestial-starlight)]/15 transition-colors duration-300 group-focus-within:bg-[var(--celestial-dawn)]/60" />
+              {/* Glow on focus */}
+              <div className="slides-topic-glow absolute bottom-0 left-1/2 h-px w-0 -translate-x-1/2 bg-[var(--celestial-dawn)] shadow-[0_0_20px_rgba(255,140,105,0.3)] transition-all duration-500 group-focus-within:w-full" />
+              {/* Blinking cursor simulation via placeholder */}
+              {!topic && (
+                <div className="pointer-events-none absolute bottom-3.5 left-1 h-4 w-px bg-[var(--celestial-dawn)]/60 animate-pulse" />
+              )}
+            </div>
           </div>
-        </div>
 
           {/* Difficulty selector — observatory bands */}
           <div className="slides-difficulty-control w-full">
-          <label className="mb-3 block text-[11px] font-medium uppercase tracking-[0.15em] text-[var(--celestial-starlight)]/40">
-            目标学段（决定语言与知识范围）
-          </label>
-          <div className="slides-difficulty-options flex items-center justify-center gap-10">
-            {DIFFICULTIES.map((d) => {
-              const Icon = d.icon;
-              const isActive = difficulty === d.value;
-              return (
-                <button
-                  key={d.value}
-                  onClick={() => onDifficultyChange(d.value)}
-                  aria-pressed={isActive}
-                  className={`slides-difficulty-option group flex flex-col items-center gap-2.5 ${
-                    isActive ? 'slides-difficulty-option--active' : ''
-                  }`}
-                >
-                  {/* Orb dot */}
-                  <div className="relative flex h-5 w-5 items-center justify-center">
-                    {isActive && (
-                      <>
-                        <span className="absolute inset-0 rounded-full bg-[var(--celestial-dawn)] animate-ping opacity-40" />
-                        <span className="absolute inset-[-4px] rounded-full border border-[var(--celestial-dawn)]/30 animate-[ring-expand_2s_ease-out_infinite]" />
-                      </>
-                    )}
-                    <div
-                      className={`relative h-3 w-3 rounded-full transition-all duration-300 ${
-                        isActive
-                          ? 'bg-[var(--celestial-dawn)] shadow-[0_0_8px_rgba(255,140,105,0.5)]'
-                          : 'border border-[var(--celestial-haze)] bg-transparent group-hover:border-[var(--celestial-starlight)]/30'
-                      }`}
-                    />
-                  </div>
-                  {/* Label */}
-                  <div className="flex items-center gap-1.5">
-                    <Icon
-                      className={`h-3.5 w-3.5 transition-colors duration-300 ${isActive ? 'text-[var(--celestial-dawn)]' : 'text-[var(--celestial-starlight)]/25 group-hover:text-[var(--celestial-starlight)]/50'}`}
-                    />
-                    <span
-                      className={`text-xs font-medium transition-colors duration-300 ${
-                        isActive
-                          ? 'text-[var(--celestial-starlight)]'
-                          : 'text-[var(--celestial-starlight)]/30 group-hover:text-[var(--celestial-starlight)]/60'
-                      }`}
-                    >
-                      {d.label}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+            <label className="mb-3 block text-[11px] font-medium uppercase tracking-[0.15em] text-[var(--celestial-starlight)]/40">
+              目标学段（决定语言与知识范围）
+            </label>
+            <div className="slides-difficulty-options flex items-center justify-center gap-10">
+              {DIFFICULTIES.map((d) => {
+                const Icon = d.icon;
+                const isActive = difficulty === d.value;
+                return (
+                  <button
+                    key={d.value}
+                    onClick={() => onDifficultyChange(d.value)}
+                    aria-pressed={isActive}
+                    className={`slides-difficulty-option group flex flex-col items-center gap-2.5 ${
+                      isActive ? 'slides-difficulty-option--active' : ''
+                    }`}
+                  >
+                    {/* Orb dot */}
+                    <div className="relative flex h-5 w-5 items-center justify-center">
+                      {isActive && (
+                        <>
+                          <span className="absolute inset-0 rounded-full bg-[var(--celestial-dawn)] animate-ping opacity-40" />
+                          <span className="absolute inset-[-4px] rounded-full border border-[var(--celestial-dawn)]/30 animate-[ring-expand_2s_ease-out_infinite]" />
+                        </>
+                      )}
+                      <div
+                        className={`relative h-3 w-3 rounded-full transition-all duration-300 ${
+                          isActive
+                            ? 'bg-[var(--celestial-dawn)] shadow-[0_0_8px_rgba(255,140,105,0.5)]'
+                            : 'border border-[var(--celestial-haze)] bg-transparent group-hover:border-[var(--celestial-starlight)]/30'
+                        }`}
+                      />
+                    </div>
+                    {/* Label */}
+                    <div className="flex items-center gap-1.5">
+                      <Icon
+                        className={`h-3.5 w-3.5 transition-colors duration-300 ${isActive ? 'text-[var(--celestial-dawn)]' : 'text-[var(--celestial-starlight)]/25 group-hover:text-[var(--celestial-starlight)]/50'}`}
+                      />
+                      <span
+                        className={`text-xs font-medium transition-colors duration-300 ${
+                          isActive
+                            ? 'text-[var(--celestial-starlight)]'
+                            : 'text-[var(--celestial-starlight)]/30 group-hover:text-[var(--celestial-starlight)]/60'
+                        }`}
+                      >
+                        {d.label}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
           <div className="slides-generate-action">
             {/* Generate button */}
             <motion.button
-          onClick={() => onGenerate()}
-          disabled={generating || !topic.trim()}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+              onClick={() => onGenerate()}
+              disabled={generating || !topic.trim()}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className="slides-generate-button group relative h-11 w-full overflow-hidden rounded-xl border border-[var(--celestial-starlight)]/20 bg-transparent text-sm font-semibold text-[var(--celestial-starlight)] transition-all duration-300 hover:border-[var(--celestial-starlight)]/40 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-[var(--celestial-starlight)]/20"
             >
-          {/* Sweep effect on hover */}
-          <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-[var(--celestial-dawn)]/10 to-transparent transition-transform duration-700 group-hover:translate-x-[100%]" />
-          <span className="relative z-10 flex items-center justify-center gap-2">
-            <Sparkles className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
-            {generating
-              ? '生成引擎启动中...'
-              : adaptivePolicy
-                ? '按你的情况生成课件'
-                : '启动生成引擎'}
-            {!generating && <ArrowRight className="h-4 w-4" />}
-          </span>
+              {/* Sweep effect on hover */}
+              <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-[var(--celestial-dawn)]/10 to-transparent transition-transform duration-700 group-hover:translate-x-[100%]" />
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <Sparkles className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
+                {generating
+                  ? '生成引擎启动中...'
+                  : adaptivePolicy
+                    ? '按你的情况生成课件'
+                    : '启动生成引擎'}
+                {!generating && <ArrowRight className="h-4 w-4" />}
+              </span>
             </motion.button>
           </div>
         </div>

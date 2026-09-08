@@ -66,7 +66,11 @@ describe('postProcessContent', () => {
     const content = {
       title: '光反应步骤',
       steps: [
-        { num: '1', title: '光吸收', desc: '光能被叶绿素吸收，发生光化学反应，总反应式为 $2H_2O \\rightarrow O_2 + 4H^+ + 4e^-$' },
+        {
+          num: '1',
+          title: '光吸收',
+          desc: '光能被叶绿素吸收，发生光化学反应，总反应式为 $2H_2O \\rightarrow O_2 + 4H^+ + 4e^-$',
+        },
         { num: '2', title: '电子传递', desc: '电子沿传递链移动' },
       ],
     };
@@ -86,12 +90,26 @@ describe('generateSectionContent num enforcement', () => {
       text: JSON.stringify({
         sectionId: 2,
         pages: [
-          { pageNum: 5, pageType: 'chapter', content: { num: '05', title: '光反应', subtitle: '从光能到化学能' } },
-          { pageNum: 6, pageType: 'concept', content: { title: '光系统', cards: [{ title: 'PSII', desc: '水裂解' }], summary: '总结' } },
+          {
+            pageNum: 5,
+            pageType: 'chapter',
+            content: { num: '05', title: '光反应', subtitle: '从光能到化学能' },
+          },
+          {
+            pageNum: 6,
+            pageType: 'concept',
+            content: {
+              title: '光系统',
+              cards: [{ title: 'PSII', desc: '水裂解' }],
+              summary: '总结',
+            },
+          },
         ],
       }),
     };
-    mockedCallLLM.mockResolvedValue(mockLLMResponse as unknown as Awaited<ReturnType<typeof callLLM>>);
+    mockedCallLLM.mockResolvedValue(
+      mockLLMResponse as unknown as Awaited<ReturnType<typeof callLLM>>,
+    );
 
     const section: SectionPlan = {
       sectionId: 2,
@@ -109,10 +127,32 @@ describe('generateSectionContent num enforcement', () => {
       {
         styleName: '测试',
         recommended: false,
-        colors: { coverBg: '000000', contentBg: 'FFFFFF', accent: '000000', accentSecondary: '000000', accentLight: '000000', textPrimary: '000000', textBody: '000000', textMuted: '000000', textOnDark: '000000' },
-        fonts: { heading: 'SimSun', body: 'SimSun', en: 'Georgia', headingSize: 48, pageTitleSize: 32, bodySize: 14, captionSize: 10 },
+        colors: {
+          coverBg: '000000',
+          contentBg: 'FFFFFF',
+          accent: '000000',
+          accentSecondary: '000000',
+          accentLight: '000000',
+          textPrimary: '000000',
+          textBody: '000000',
+          textMuted: '000000',
+          textOnDark: '000000',
+        },
+        fonts: {
+          heading: 'SimSun',
+          body: 'SimSun',
+          en: 'Georgia',
+          headingSize: 48,
+          pageTitleSize: 32,
+          bodySize: 14,
+          captionSize: 10,
+        },
         decoration: { motif: 'geometric-lines', density: 'moderate', cornerWeight: 'top-right' },
-        components: { cardStyle: 'accent-left-bar', bulletStyle: 'dot', pageNumberStyle: 'number-slash-total' },
+        components: {
+          cardStyle: 'accent-left-bar',
+          bulletStyle: 'dot',
+          pageNumberStyle: 'number-slash-total',
+        },
         mood: '测试',
         bestFor: ['测试'],
       } as DesignDNA,

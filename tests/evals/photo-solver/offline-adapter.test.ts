@@ -18,7 +18,13 @@ describe('OfflineAdapter', () => {
     expect(first).toEqual(second);
     expect(() => adapterResultSchema.parse(first)).not.toThrow();
     expect(first.timing).toEqual({ recognitionMs: 0, retrievalMs: 0, generationMs: 0, totalMs: 0 });
-    expect(first.usage).toEqual({ inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0, currency: 'USD' });
+    expect(first.usage).toEqual({
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      estimatedCost: 0,
+      currency: 'USD',
+    });
     expect(first.retrievedDocuments.map((doc) => doc.id)).toEqual(cases[0].goldDocumentIds);
   });
 
@@ -47,7 +53,9 @@ describe('OfflineAdapter', () => {
     const rejected = cases.find((item) => item.shouldReject);
     const adapter = new OfflineAdapter();
     expect(realCase?.imagePath).toBeTruthy();
-    expect((await adapter.run({ ...realCase!, imagePath: 'images/definitely-missing.png' })).skipped).toBe(false);
+    expect(
+      (await adapter.run({ ...realCase!, imagePath: 'images/definitely-missing.png' })).skipped,
+    ).toBe(false);
     expect((await adapter.run(rejected!)).answer).toBeUndefined();
   });
 
@@ -59,6 +67,8 @@ describe('OfflineAdapter', () => {
     const cases = await loadPhotoSolverCases(casesPath);
     await expect(adapter.run(cases[0])).rejects.toThrow(/duplicate/);
     const validFile = path.resolve('evals/photo-solver/dataset/documents.jsonl');
-    await expect(new OfflineAdapter(validFile).run({ ...cases[0], goldDocumentIds: ['missing'] })).rejects.toThrow(/missing/);
+    await expect(
+      new OfflineAdapter(validFile).run({ ...cases[0], goldDocumentIds: ['missing'] }),
+    ).rejects.toThrow(/missing/);
   });
 });

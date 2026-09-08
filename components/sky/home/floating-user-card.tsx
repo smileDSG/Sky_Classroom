@@ -28,11 +28,8 @@ function isCustomAvatar(src: string) {
 }
 
 // 浮动用户卡片组件 - 全新设计
-export function FloatingUserCard({
-  onUpgradeOpen,
-}: {
-  onUpgradeOpen: () => void;
-}) {const router = useRouter();
+export function FloatingUserCard({ onUpgradeOpen }: { onUpgradeOpen: () => void }) {
+  const router = useRouter();
   const { user, logout } = useOptionalAuth();
   const avatar = useUserProfileStore((s) => s.avatar);
   const nickname = useUserProfileStore((s) => s.nickname);
@@ -158,7 +155,7 @@ export function FloatingUserCard({
               'border border-white/50 dark:border-slate-700/50',
               'shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30',
               'hover:shadow-xl hover:bg-white/90 dark:hover:bg-slate-800/90',
-              isPremium && 'ring-2 ring-amber-400/50'
+              isPremium && 'ring-2 ring-amber-400/50',
             )}
           >
             {/* 头像容器 - 带呼吸动画 */}
@@ -172,7 +169,7 @@ export function FloatingUserCard({
                   'w-10 h-10 rounded-xl overflow-hidden',
                   isPremium
                     ? 'ring-2 ring-amber-400 shadow-lg shadow-amber-400/30'
-                    : 'ring-2 ring-sky-400/50'
+                    : 'ring-2 ring-sky-400/50',
                 )}
               >
                 <img src={avatar} alt="" className="w-full h-full object-cover" />
@@ -190,9 +187,7 @@ export function FloatingUserCard({
               <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                 {displayName}
               </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                点击展开
-              </span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">点击展开</span>
             </div>
 
             <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -215,7 +210,7 @@ export function FloatingUserCard({
                 'rounded-3xl overflow-hidden',
                 'bg-white/95 dark:bg-slate-800/95 backdrop-blur-2xl',
                 'border border-white/60 dark:border-slate-700/60',
-                'shadow-2xl shadow-slate-300/50 dark:shadow-slate-900/50'
+                'shadow-2xl shadow-slate-300/50 dark:shadow-slate-900/50',
               )}
             >
               {/* 顶部背景 */}
@@ -255,7 +250,7 @@ export function FloatingUserCard({
                         'ring-4 ring-white dark:ring-slate-700',
                         isPremium
                           ? 'shadow-lg shadow-amber-400/30'
-                          : 'shadow-lg shadow-slate-300/50'
+                          : 'shadow-lg shadow-slate-300/50',
                       )}
                     >
                       <img src={avatar} alt="" className="w-full h-full object-cover" />
@@ -289,16 +284,11 @@ export function FloatingUserCard({
                         </button>
                       </div>
                     ) : (
-                      <button
-                        onClick={startEditName}
-                        className="group flex items-center gap-2"
-                      >
+                      <button onClick={startEditName} className="group flex items-center gap-2">
                         <span className="text-lg font-bold text-slate-800 dark:text-slate-100">
                           {displayName}
                         </span>
-                        <Pencil
-                          className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                        />
+                        <Pencil className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     )}
                     {isPremium && (
@@ -323,9 +313,7 @@ export function FloatingUserCard({
                       className="mt-4 overflow-hidden"
                     >
                       <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-700/50">
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                          选择头像
-                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">选择头像</p>
                         <div className="flex flex-wrap gap-2">
                           {AVATAR_OPTIONS.map((url) => (
                             <button
@@ -336,7 +324,7 @@ export function FloatingUserCard({
                                 'hover:scale-110 active:scale-95',
                                 avatar === url
                                   ? 'ring-2 ring-sky-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-800'
-                                  : 'opacity-70 hover:opacity-100'
+                                  : 'opacity-70 hover:opacity-100',
                               )}
                             >
                               <img src={url} alt="" className="w-full h-full" />
@@ -350,7 +338,7 @@ export function FloatingUserCard({
                               'text-slate-400 hover:text-sky-500 hover:border-sky-400',
                               'transition-all duration-200 hover:scale-110 active:scale-95',
                               isCustomAvatar(avatar) &&
-                                'border-sky-400 bg-sky-50 dark:bg-sky-900/30'
+                                'border-sky-400 bg-sky-50 dark:bg-sky-900/30',
                             )}
                           >
                             <ImagePlus className="w-5 h-5" />
@@ -378,13 +366,14 @@ export function FloatingUserCard({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={() => { setIsExpanded(false); router.push('/account'); }}
+                        onClick={() => {
+                          setIsExpanded(false);
+                          router.push('/account');
+                        }}
                         className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
                       >
                         <User className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-                        <span className="text-xs text-slate-600 dark:text-slate-300">
-                          个人中心
-                        </span>
+                        <span className="text-xs text-slate-600 dark:text-slate-300">个人中心</span>
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>个人中心</TooltipContent>
@@ -410,7 +399,10 @@ export function FloatingUserCard({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={logout}
+                        onClick={async () => {
+                          await logout();
+                          router.push('/');
+                        }}
                         className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors group"
                       >
                         <LogOut className="w-5 h-5 text-slate-600 dark:text-slate-300 group-hover:text-red-500 transition-colors" />

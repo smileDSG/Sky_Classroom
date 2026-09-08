@@ -88,9 +88,7 @@ describe('GET /api/sky/knowledge-graph', () => {
 
   it('GET includes overallMastery in response', async () => {
     mockList.mockResolvedValue({
-      items: [
-        makeEntry({ id: 'm1', knowledgePoints: ['一元一次方程'] }),
-      ],
+      items: [makeEntry({ id: 'm1', knowledgePoints: ['一元一次方程'] })],
       total: 1,
     });
 
@@ -102,9 +100,7 @@ describe('GET /api/sky/knowledge-graph', () => {
 
   it('GET returns application/json Content-Type', async () => {
     mockList.mockResolvedValue({
-      items: [
-        makeEntry({ id: 'm1', knowledgePoints: ['几何'] }),
-      ],
+      items: [makeEntry({ id: 'm1', knowledgePoints: ['几何'] })],
       total: 1,
     });
 

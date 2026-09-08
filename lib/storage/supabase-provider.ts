@@ -44,15 +44,16 @@ export class SupabaseStorageProvider implements StorageProvider {
 
   async set<T>(table: string, entry: StorageEntry<T>): Promise<void> {
     const client = getClient();
-    const { error } = await client
-      .from(this.tableName)
-      .upsert({
+    const { error } = await client.from(this.tableName).upsert(
+      {
         id: entry.id,
         table_name: table,
         data: entry.data,
         created_at: new Date(entry.createdAt).toISOString(),
         updated_at: new Date(entry.updatedAt).toISOString(),
-      }, { onConflict: 'id,table_name' });
+      },
+      { onConflict: 'id,table_name' },
+    );
 
     if (error) {
       log.error('Supabase set error:', error);
@@ -101,12 +102,12 @@ export class SupabaseStorageProvider implements StorageProvider {
     };
   }
 
-  async getAll<T>(table: string, filter?: (entry: StorageEntry<T>) => boolean): Promise<StorageEntry<T>[]> {
+  async getAll<T>(
+    table: string,
+    filter?: (entry: StorageEntry<T>) => boolean,
+  ): Promise<StorageEntry<T>[]> {
     const client = getClient();
-    const { data, error } = await client
-      .from(this.tableName)
-      .select('*')
-      .eq('table_name', table);
+    const { data, error } = await client.from(this.tableName).select('*').eq('table_name', table);
 
     if (error) {
       log.error('Supabase getAll error:', error);
@@ -141,10 +142,7 @@ export class SupabaseStorageProvider implements StorageProvider {
 
   async clear(table: string): Promise<void> {
     const client = getClient();
-    const { error } = await client
-      .from(this.tableName)
-      .delete()
-      .eq('table_name', table);
+    const { error } = await client.from(this.tableName).delete().eq('table_name', table);
 
     if (error) {
       log.error('Supabase clear error:', error);
@@ -218,22 +216,14 @@ export function createSupabaseUserDAO() {
     },
 
     async getById(id: string) {
-      const { data, error } = await client
-        .from('users')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const { data, error } = await client.from('users').select('*').eq('id', id).single();
 
       if (error) return null;
       return mapRowToUserEntry(data);
     },
 
     async getByEmail(email: string) {
-      const { data, error } = await client
-        .from('users')
-        .select('*')
-        .ilike('email', email)
-        .single();
+      const { data, error } = await client.from('users').select('*').ilike('email', email).single();
 
       if (error) return null;
       return mapRowToUserEntry(data);
@@ -273,7 +263,8 @@ export function createSupabaseUserDAO() {
       if (updates.nickname !== undefined) mapped.nickname = updates.nickname;
       if (updates.bio !== undefined) mapped.bio = updates.bio;
       if (updates.emailVerified !== undefined) mapped.email_verified = updates.emailVerified;
-      if (updates.emailVerifyToken !== undefined) mapped.email_verify_token = updates.emailVerifyToken;
+      if (updates.emailVerifyToken !== undefined)
+        mapped.email_verify_token = updates.emailVerifyToken;
       if (updates.resetToken !== undefined) mapped.reset_token = updates.resetToken;
       if (updates.resetTokenExpiry !== undefined) {
         mapped.reset_token_expiry = toIsoOrNull(updates.resetTokenExpiry);
@@ -326,6 +317,8 @@ function mapRowToUserEntry(row: Record<string, unknown>) {
     emailVerified: row.email_verified as boolean,
     emailVerifyToken: row.email_verify_token as string | null,
     resetToken: row.reset_token as string | null,
-    resetTokenExpiry: row.reset_token_expiry ? new Date(row.reset_token_expiry as string).getTime() : null,
+    resetTokenExpiry: row.reset_token_expiry
+      ? new Date(row.reset_token_expiry as string).getTime()
+      : null,
   };
 }

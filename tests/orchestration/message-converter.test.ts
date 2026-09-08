@@ -17,7 +17,10 @@ import type { ChatMessageMetadata } from '@/lib/types/chat';
 
 // ─── Helpers ───
 
-function userMsg(text: string, metadata?: Partial<ChatMessageMetadata>): UIMessage<ChatMessageMetadata> {
+function userMsg(
+  text: string,
+  metadata?: Partial<ChatMessageMetadata>,
+): UIMessage<ChatMessageMetadata> {
   return {
     id: `user-${Date.now()}`,
     role: 'user',
@@ -47,7 +50,10 @@ function assistantMsg(
   };
 }
 
-function lectureMsg(texts: string[], metadata?: Partial<ChatMessageMetadata>): UIMessage<ChatMessageMetadata> {
+function lectureMsg(
+  texts: string[],
+  metadata?: Partial<ChatMessageMetadata>,
+): UIMessage<ChatMessageMetadata> {
   return {
     id: `lecture-${Date.now()}`,
     role: 'assistant',
@@ -206,7 +212,9 @@ describe('convertMessagesToOpenAI', () => {
       expect(result).toHaveLength(1);
       expect(result[0].role).toBe('assistant');
       // Should be plain text, NOT JSON array format
-      expect(result[0].content).toBe('光合作用是植物利用光能将二氧化碳和水转化为葡萄糖和氧气的过程。');
+      expect(result[0].content).toBe(
+        '光合作用是植物利用光能将二氧化碳和水转化为葡萄糖和氧气的过程。',
+      );
       // Should NOT start with '[' (JSON array format used by QA responses)
       expect(result[0].content).not.toMatch(/^\[/);
     });
@@ -232,7 +240,10 @@ describe('convertMessagesToOpenAI', () => {
         role: 'assistant',
         parts: [
           { type: 'text', text: '请看这个公式' },
-          { type: 'action-spotlight', elementId: 'img_1' } as unknown as UIMessage<ChatMessageMetadata>['parts'][number],
+          {
+            type: 'action-spotlight',
+            elementId: 'img_1',
+          } as unknown as UIMessage<ChatMessageMetadata>['parts'][number],
           { type: 'text', text: '这是光合作用的方程式' },
         ],
         metadata: {
@@ -257,7 +268,10 @@ describe('convertMessagesToOpenAI', () => {
         id: 'lecture-1',
         role: 'assistant',
         parts: [
-          { type: 'action-spotlight', elementId: 'img_1' } as unknown as UIMessage<ChatMessageMetadata>['parts'][number],
+          {
+            type: 'action-spotlight',
+            elementId: 'img_1',
+          } as unknown as UIMessage<ChatMessageMetadata>['parts'][number],
         ],
         metadata: {
           senderName: 'Teacher',
@@ -286,10 +300,10 @@ describe('convertMessagesToOpenAI', () => {
 
   describe('cross-agent attribution', () => {
     test('converts different-agent message to user role with attribution', () => {
-      const msg = assistantMsg(
-        [{ type: 'text', text: '我觉得这个问题很好' }],
-        { agentId: 'student-1', senderName: '小明' },
-      );
+      const msg = assistantMsg([{ type: 'text', text: '我觉得这个问题很好' }], {
+        agentId: 'student-1',
+        senderName: '小明',
+      });
       const result = convertMessagesToOpenAI([msg], 'teacher-1');
 
       expect(result).toHaveLength(1);
@@ -299,10 +313,9 @@ describe('convertMessagesToOpenAI', () => {
     });
 
     test('keeps same-agent message as assistant role', () => {
-      const msg = assistantMsg(
-        [{ type: 'text', text: '好的，让我解释一下' }],
-        { agentId: 'teacher-1' },
-      );
+      const msg = assistantMsg([{ type: 'text', text: '好的，让我解释一下' }], {
+        agentId: 'teacher-1',
+      });
       const result = convertMessagesToOpenAI([msg], 'teacher-1');
 
       expect(result).toHaveLength(1);

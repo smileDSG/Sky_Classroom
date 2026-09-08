@@ -27,10 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -60,9 +57,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Failed to record feedback:', error);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

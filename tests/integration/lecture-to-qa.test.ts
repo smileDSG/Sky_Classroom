@@ -94,7 +94,10 @@ describe('Lecture → QA Context Injection', () => {
         role: 'assistant',
         parts: [
           { type: 'text', text: '请看这个图片' },
-          { type: 'action-spotlight', elementId: 'img_1' } as unknown as UIMessage<ChatMessageMetadata>['parts'][number],
+          {
+            type: 'action-spotlight',
+            elementId: 'img_1',
+          } as unknown as UIMessage<ChatMessageMetadata>['parts'][number],
           { type: 'text', text: '这是叶绿体的结构图' },
         ],
         metadata: {

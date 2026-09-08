@@ -29,8 +29,4 @@ export {
 export type { ComboRule, RecommendedCombo } from './combination-rules';
 
 // Templates
-export {
-  ALL_DEFAULT_TEMPLATES,
-  DEFAULT_AGENT_IDS,
-  DEFAULT_AGENT_TEMPLATE_MAP,
-} from './templates';
+export { ALL_DEFAULT_TEMPLATES, DEFAULT_AGENT_IDS, DEFAULT_AGENT_TEMPLATE_MAP } from './templates';

@@ -83,7 +83,7 @@ function normalizeSteps(
     // Use full solution derivation when steps are absent (common for complex
     // problems like series/calculation, or salvaged prose answers). Split it
     // into paragraphs so the report reads as a derivation, not one blob.
-    const content = (rawSolution && rawSolution.trim()) ? rawSolution : fallbackAnswer;
+    const content = rawSolution && rawSolution.trim() ? rawSolution : fallbackAnswer;
     const split = splitProseIntoSteps(content);
     if (split.length > 1) return split;
     return [{ label: '解答', content, keyPoints: [] }];
@@ -102,7 +102,8 @@ function splitProseIntoSteps(solution: string): FourPartOutput['steps'] {
   if (!text) return [];
 
   // Preferred: explicit step markers (第一步 / 第1步 / Step 1 / **步骤N** …).
-  const markerRegex = /(?:^|\n)\s*(?:\*\*)?(第[一二三四五六七八九十\d]+步|Step\s*\d+|步骤\s*\d+)(?:\*\*)?[：:.、\s]*/g;
+  const markerRegex =
+    /(?:^|\n)\s*(?:\*\*)?(第[一二三四五六七八九十\d]+步|Step\s*\d+|步骤\s*\d+)(?:\*\*)?[：:.、\s]*/g;
   const matches = [...text.matchAll(markerRegex)];
   if (matches.length >= 2 && matches.length <= 8) {
     const steps: FourPartOutput['steps'] = [];
@@ -150,7 +151,9 @@ function normalizeDifficulty(raw?: string): 'easy' | 'medium' | 'hard' {
 }
 
 function normalizeSimilarQuestions(
-  questions: { problem: string; difficulty?: number; knowledgePoint?: string; answer?: string }[] | undefined,
+  questions:
+    | { problem: string; difficulty?: number; knowledgePoint?: string; answer?: string }[]
+    | undefined,
 ): FourPartOutput['similarQuestions'] {
   if (!questions || questions.length === 0) {
     return [];
@@ -164,17 +167,12 @@ function normalizeSimilarQuestions(
   }));
 }
 
-function normalizeQuestionType(
-  raw?: string,
-): FourPartOutput['questionType'] {
+function normalizeQuestionType(raw?: string): FourPartOutput['questionType'] {
   if (raw === 'choice' || raw === 'fill' || raw === 'solve' || raw === 'judge') return raw;
   return undefined;
 }
 
-function normalizeOptions(
-  raw?: string[],
-  questionType?: string,
-): string[] | undefined {
+function normalizeOptions(raw?: string[], questionType?: string): string[] | undefined {
   if (!raw || raw.length === 0) return undefined;
   if (questionType === 'judge') {
     return ['正确', '错误'];

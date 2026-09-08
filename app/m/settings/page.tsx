@@ -64,9 +64,7 @@ export default function MobileSettingsPage() {
                 onClick={() => setActiveTab(id)}
                 className={cn(
                   'flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[12px] font-extrabold transition-colors',
-                  active
-                    ? 'bg-cyan-300/15 text-cyan-100'
-                    : 'text-slate-400 active:bg-white/8',
+                  active ? 'bg-cyan-300/15 text-cyan-100' : 'text-slate-400 active:bg-white/8',
                 )}
               >
                 <Icon className="size-3.5" />

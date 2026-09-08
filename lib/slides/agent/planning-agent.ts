@@ -31,9 +31,19 @@ const contentOutlineSchema = z.object({
 const pagePlanSchema = z.object({
   pageNum: z.number(),
   type: z.enum([
-    'cover', 'toc', 'end', 'chapter',
-    'concept', 'case', 'compare', 'process', 'table', 'formula', 'timeline',
-    'summary', 'quiz',
+    'cover',
+    'toc',
+    'end',
+    'chapter',
+    'concept',
+    'case',
+    'compare',
+    'process',
+    'table',
+    'formula',
+    'timeline',
+    'summary',
+    'quiz',
   ]),
   title: z.string().max(28),
   contentOutline: contentOutlineSchema,
@@ -80,14 +90,17 @@ export function buildLayer1SystemPrompt(
   let styleInjection = '';
   if (designDNA) {
     const densityHint =
-      designDNA.decoration.density === 'sparse' ? '每章节3-5页，精炼简洁。' :
-      designDNA.decoration.density === 'rich' ? '每章节6-10页，详细展开。' :
-      '每章节5-7页，内容均衡。';
+      designDNA.decoration.density === 'sparse'
+        ? '每章节3-5页，精炼简洁。'
+        : designDNA.decoration.density === 'rich'
+          ? '每章节6-10页，详细展开。'
+          : '每章节5-7页，内容均衡。';
 
-    const moodHint =
-      /活泼|轻快|生动|趣味/i.test(designDNA.mood) ? '多用 quiz、case 等互动页型。' :
-      /严谨|学术|专业|沉稳/i.test(designDNA.mood) ? '多用 formula、concept 等知识密度高的页型。' :
-      '页型均衡搭配，按内容自然递进。';
+    const moodHint = /活泼|轻快|生动|趣味/i.test(designDNA.mood)
+      ? '多用 quiz、case 等互动页型。'
+      : /严谨|学术|专业|沉稳/i.test(designDNA.mood)
+        ? '多用 formula、concept 等知识密度高的页型。'
+        : '页型均衡搭配，按内容自然递进。';
 
     styleInjection = `
 ## 风格偏好
@@ -165,7 +178,12 @@ export async function planSections(
 ): Promise<SectionSkeletonResult> {
   try {
     const subjectCtx = getSubjectContext(topic);
-    const system = buildLayer1SystemPrompt(subjectCtx.pageTypes, subjectCtx.preference, designDNA, educationLevel);
+    const system = buildLayer1SystemPrompt(
+      subjectCtx.pageTypes,
+      subjectCtx.preference,
+      designDNA,
+      educationLevel,
+    );
     const user = buildLayer1UserPrompt(topic, difficulty, minPages, maxPages, educationLevel);
 
     log.info(`[Layer1] Planning sections for "${topic}" [${minPages}-${maxPages}p]`);
@@ -175,7 +193,14 @@ export async function planSections(
         const parsed = JSON.parse(cleanJsonText(text));
         const skeletons = parsed.sectionSkeletons;
         if (!Array.isArray(skeletons) || skeletons.length === 0) return false;
-        const computedTotal = 1 + 1 + skeletons.reduce((sum: number, s: { suggestedPages?: number }) => sum + (s.suggestedPages || 0), 0) + 1;
+        const computedTotal =
+          1 +
+          1 +
+          skeletons.reduce(
+            (sum: number, s: { suggestedPages?: number }) => sum + (s.suggestedPages || 0),
+            0,
+          ) +
+          1;
         // Only enforce lower bound here; upper-bound trimming happens in planOutline
         return computedTotal >= minPages;
       } catch {
@@ -307,7 +332,9 @@ export async function planSectionPages(
     const system = buildLayer2SystemPrompt();
     const user = buildLayer2UserPrompt(skeleton, topic, difficulty, startPageNum, educationLevel);
 
-    log.info(`[Layer2] Planning pages for section ${skeleton.sectionId} "${skeleton.title}" [${skeleton.suggestedPages} pages, start=${startPageNum}]`);
+    log.info(
+      `[Layer2] Planning pages for section ${skeleton.sectionId} "${skeleton.title}" [${skeleton.suggestedPages} pages, start=${startPageNum}]`,
+    );
 
     const validatePages = (text: string): boolean => {
       try {
@@ -315,15 +342,23 @@ export async function planSectionPages(
         if (!Array.isArray(parsed)) return false;
         // Allow ±2 page deviation — LLMs often miss by 1-2 pages.
         // Rigid exact-match causes callLLM to waste retries on trivial count errors.
-        if (parsed.length < skeleton.suggestedPages - 2 || parsed.length > skeleton.suggestedPages + 2) {
+        if (
+          parsed.length < skeleton.suggestedPages - 2 ||
+          parsed.length > skeleton.suggestedPages + 2
+        ) {
           return false;
         }
-        return parsed.every((page: { pageNum?: number; type?: string; title?: string; contentOutline?: unknown }) => {
-          return typeof page.pageNum === 'number' &&
-                 typeof page.type === 'string' &&
-                 typeof page.title === 'string' &&
-                 page.contentOutline && typeof (page.contentOutline as Record<string, unknown>).focus === 'string';
-        });
+        return parsed.every(
+          (page: { pageNum?: number; type?: string; title?: string; contentOutline?: unknown }) => {
+            return (
+              typeof page.pageNum === 'number' &&
+              typeof page.type === 'string' &&
+              typeof page.title === 'string' &&
+              page.contentOutline &&
+              typeof (page.contentOutline as Record<string, unknown>).focus === 'string'
+            );
+          },
+        );
       } catch {
         return false;
       }
@@ -346,7 +381,9 @@ export async function planSectionPages(
       if (Math.abs(diff) <= 2) {
         if (diff > 0) {
           // Too many pages: truncate from the middle, never chapter/summary
-          log.warn(`[Layer2] Section ${skeleton.sectionId} 页数过多 (${pages.length} vs ${skeleton.suggestedPages})，截断 ${diff} 页`);
+          log.warn(
+            `[Layer2] Section ${skeleton.sectionId} 页数过多 (${pages.length} vs ${skeleton.suggestedPages})，截断 ${diff} 页`,
+          );
           let toRemove = diff;
           while (toRemove > 0) {
             let removeIdx = -1;
@@ -362,16 +399,19 @@ export async function planSectionPages(
           }
         } else {
           // Too few pages: pad with a generic concept page derived from neighbour
-          log.warn(`[Layer2] Section ${skeleton.sectionId} 页数过少 (${pages.length} vs ${skeleton.suggestedPages})，补充 ${-diff} 页`);
+          log.warn(
+            `[Layer2] Section ${skeleton.sectionId} 页数过少 (${pages.length} vs ${skeleton.suggestedPages})，补充 ${-diff} 页`,
+          );
           let toAdd = -diff;
           while (toAdd > 0) {
             const insertPos = Math.max(1, pages.length - 1);
             const refPage = pages[insertPos - 1] || pages[0];
             const suffix = '（续）';
             const maxTitleLen = 28 - suffix.length;
-            const baseTitle = refPage.title.length > maxTitleLen
-              ? refPage.title.slice(0, maxTitleLen - 1) + '…'
-              : refPage.title;
+            const baseTitle =
+              refPage.title.length > maxTitleLen
+                ? refPage.title.slice(0, maxTitleLen - 1) + '…'
+                : refPage.title;
             pages.splice(insertPos, 0, {
               pageNum: -1,
               type: 'concept',
@@ -390,7 +430,10 @@ export async function planSectionPages(
           pages[i].pageNum = startPageNum + i;
         }
       } else {
-        return { success: false, error: `页数偏差过大: 期望 ${skeleton.suggestedPages}, 实际 ${pages.length}` };
+        return {
+          success: false,
+          error: `页数偏差过大: 期望 ${skeleton.suggestedPages}, 实际 ${pages.length}`,
+        };
       }
     }
 
@@ -503,7 +546,15 @@ export async function planOutline(
 ): Promise<PlanningResult> {
   try {
     // ══ Step 1: Layer 1 — Section Skeleton ══
-    const skeletonResult = await planSections(topic, difficulty, minPages, maxPages, designDNA, languageModel, educationLevel);
+    const skeletonResult = await planSections(
+      topic,
+      difficulty,
+      minPages,
+      maxPages,
+      designDNA,
+      languageModel,
+      educationLevel,
+    );
     if (!skeletonResult.success || !skeletonResult.skeleton) {
       return { success: false, error: skeletonResult.error || '大纲骨架规划失败' };
     }
@@ -512,9 +563,12 @@ export async function planOutline(
 
     // Use code-computed total (1 cover + 1 toc + Σ sections + 1 end)
     // LLM-reported totalPages may be inconsistent with actual suggestedPages
-    let plannedTotalPages = 1 + 1 + sectionSkeletons.reduce((sum, s) => sum + s.suggestedPages, 0) + 1;
+    let plannedTotalPages =
+      1 + 1 + sectionSkeletons.reduce((sum, s) => sum + s.suggestedPages, 0) + 1;
     if (reportedTotalPages !== plannedTotalPages) {
-      log.warn(`[Planning] LLM reported ${reportedTotalPages} pages but computed ${plannedTotalPages}, using computed value`);
+      log.warn(
+        `[Planning] LLM reported ${reportedTotalPages} pages but computed ${plannedTotalPages}, using computed value`,
+      );
     }
 
     // Trim excess pages before Layer 2
@@ -542,7 +596,9 @@ export async function planOutline(
 
     // ══ Step 3: Layer 2 — Concurrent section page planning ══
     // Concurrency=3 to avoid provider-side connection saturation / termination
-    log.info(`[Planning] Starting Layer 2 for ${sectionSkeletons.length} sections with concurrency=3`);
+    log.info(
+      `[Planning] Starting Layer 2 for ${sectionSkeletons.length} sections with concurrency=3`,
+    );
     const sectionResults = await withConcurrencyLimit(
       sectionSkeletons,
       3,
@@ -574,7 +630,22 @@ export async function planOutline(
 
     // Auto-fix: smart-truncate any title exceeding 28 chars before validation
     // LLM sometimes ignores the length rule; we'd rather smart-truncate than fail.
-    const REDUNDANT_SUFFIXES = ['及应用场景分析', '原理概述', '概述及', '概述', '及分析', '与分析', '分析', '探讨', '详解', '方法总结', '总结', '介绍', '的原理', '的设计'];
+    const REDUNDANT_SUFFIXES = [
+      '及应用场景分析',
+      '原理概述',
+      '概述及',
+      '概述',
+      '及分析',
+      '与分析',
+      '分析',
+      '探讨',
+      '详解',
+      '方法总结',
+      '总结',
+      '介绍',
+      '的原理',
+      '的设计',
+    ];
     let truncatedCount = 0;
     for (const section of outline.sections) {
       for (const page of section.pages) {
@@ -604,15 +675,23 @@ export async function planOutline(
     const validated = outlineSchema.safeParse(outline);
     if (!validated.success) {
       log.error(`[Planning] Merged outline validation failed: ${validated.error.message}`);
-      return { success: false, error: `大纲格式校验失败: ${validated.error.message.slice(0, 200)}` };
+      return {
+        success: false,
+        error: `大纲格式校验失败: ${validated.error.message.slice(0, 200)}`,
+      };
     }
 
     const actualTotalPages = validated.data.sections.reduce((sum, s) => sum + s.pages.length, 0);
     if (actualTotalPages < minPages || actualTotalPages > maxPages) {
-      return { success: false, error: `大纲页数 ${actualTotalPages} 不在范围 ${minPages}-${maxPages} 内` };
+      return {
+        success: false,
+        error: `大纲页数 ${actualTotalPages} 不在范围 ${minPages}-${maxPages} 内`,
+      };
     }
 
-    log.info(`[Planning] Outline complete: ${validated.data.sections.length} sections, ${actualTotalPages} pages`);
+    log.info(
+      `[Planning] Outline complete: ${validated.data.sections.length} sections, ${actualTotalPages} pages`,
+    );
     return { success: true, outline: validated.data, totalPages: actualTotalPages };
   } catch (err) {
     const rawMsg = err instanceof Error ? err.message : String(err);

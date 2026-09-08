@@ -76,8 +76,7 @@ export class ErrorTracker {
         entry.lastTimestamp = e.timestamp;
       }
       if (e.statusCode) {
-        entry.statusCodes[e.statusCode] =
-          (entry.statusCodes[e.statusCode] ?? 0) + 1;
+        entry.statusCodes[e.statusCode] = (entry.statusCodes[e.statusCode] ?? 0) + 1;
       }
 
       bySource[e.source] = entry;

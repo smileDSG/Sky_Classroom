@@ -201,7 +201,8 @@ export function PresentationBubbleCard({
   readonly audioIndicatorState?: AudioIndicatorState;
   readonly buttonState?: 'play' | 'bars' | 'restart' | 'none';
   readonly isPaused?: boolean;
-}) {return (
+}) {
+  return (
     <div
       aria-live="polite"
       onClick={onClick}
@@ -239,11 +240,7 @@ export function PresentationBubbleCard({
                   : 'text-purple-500 dark:text-purple-300',
             )}
           >
-            {bubble.role === 'user'
-              ? '你'
-              : bubble.role === 'agent'
-                ? '学生'
-                : '教师'}
+            {bubble.role === 'user' ? '你' : bubble.role === 'agent' ? '学生' : '教师'}
           </div>
           <div className="flex items-center gap-1.5">
             <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -393,7 +390,8 @@ export function PresentationSpeechOverlay({
   audioIndicatorState,
   buttonState,
   isPaused,
-}: PresentationSpeechOverlayProps) {const bubble = buildPresentationBubbleModel({
+}: PresentationSpeechOverlayProps) {
+  const bubble = buildPresentationBubbleModel({
     playbackView,
     participants,
     speakingAgentId,

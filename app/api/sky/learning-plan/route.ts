@@ -1,17 +1,12 @@
 import { NextRequest } from 'next/server';
 
-import type {
-  LearningPlan,
-  PlanningProfileProjection,
-} from '@/lib/adaptive-learning/contracts';
+import type { LearningPlan, PlanningProfileProjection } from '@/lib/adaptive-learning/contracts';
 import {
   projectLearningPlan,
   type LearningPlanViewKind,
 } from '@/lib/adaptive-learning/planning/learning-plan-view';
 import { replanLearningPlan } from '@/lib/adaptive-learning/planning/replan-learning-plan';
-import {
-  buildScheduledLearningPlan,
-} from '@/lib/adaptive-learning/planning/scheduled-learning-plan';
+import { buildScheduledLearningPlan } from '@/lib/adaptive-learning/planning/scheduled-learning-plan';
 import { buildPlanningEvidence } from '@/lib/adaptive-learning/profile/planning-evidence';
 import { buildPlanningProjection } from '@/lib/adaptive-learning/profile/projection-builder';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
@@ -107,7 +102,8 @@ function shouldAutoReplan(
         (task.status === 'in-progress' || task.status === 'pending'),
     )
     .sort(
-      (left, right) => Number(right.status === 'in-progress') - Number(left.status === 'in-progress'),
+      (left, right) =>
+        Number(right.status === 'in-progress') - Number(left.status === 'in-progress'),
     )[0];
 
   return Boolean(

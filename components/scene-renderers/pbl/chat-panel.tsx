@@ -21,7 +21,8 @@ export function ChatPanel({
   userRole,
   isLoading,
   onSendMessage,
-}: ChatPanelProps) {const [input, setInput] = useState('');
+}: ChatPanelProps) {
+  const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const composingRef = useRef(false);

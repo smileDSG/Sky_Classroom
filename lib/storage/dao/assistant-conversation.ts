@@ -8,11 +8,7 @@
 // Re-export for convenience
 export type { AssistantConversationRecord } from '@/lib/utils/database';
 
-import {
-  db,
-  type AssistantConversationRecord,
-  type AssistantMessage,
-} from '@/lib/utils/database';
+import { db, type AssistantConversationRecord, type AssistantMessage } from '@/lib/utils/database';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('AssistantConversationDAO');
@@ -28,9 +24,7 @@ export async function createConversation(input: {
   firstMessage?: string;
 }): Promise<AssistantConversationRecord> {
   const now = Date.now();
-  const title = input.firstMessage
-    ? input.firstMessage.slice(0, 50).replace(/\n/g, ' ')
-    : '新对话';
+  const title = input.firstMessage ? input.firstMessage.slice(0, 50).replace(/\n/g, ' ') : '新对话';
 
   const record: AssistantConversationRecord = {
     id: `conv-${now}-${Math.random().toString(36).slice(2, 8)}`,
@@ -89,10 +83,7 @@ export async function appendMessages(
 }
 
 /** Update conversation summary */
-export async function updateSummary(
-  conversationId: string,
-  summary: string,
-): Promise<void> {
+export async function updateSummary(conversationId: string, summary: string): Promise<void> {
   await db.assistantConversations.update(conversationId, {
     summary,
     updatedAt: Date.now(),

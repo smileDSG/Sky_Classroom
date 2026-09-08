@@ -22,13 +22,24 @@ import type { PathGenerationContext } from '@/lib/teaching/learning-path-types';
 function makeProfile(overrides?: Partial<StudentProfile>): StudentProfile {
   return {
     userId: 'user-1',
-    masteryBySubject: { math: 60, physics: 50, chemistry: 40, biology: 50, chinese: 70, english: 60, history: 50, geography: 50, politics: 50, unknown: 50 },
+    masteryBySubject: {
+      math: 60,
+      physics: 50,
+      chemistry: 40,
+      biology: 50,
+      chinese: 70,
+      english: 60,
+      history: 50,
+      geography: 50,
+      politics: 50,
+      unknown: 50,
+    },
     masteryByKnowledge: {
-      '二次函数': 30,
-      '一元二次方程': 50,
-      '函数概念': 70,
-      '因式分解': 80,
-      '一元一次方程': 90,
+      二次函数: 30,
+      一元二次方程: 50,
+      函数概念: 70,
+      因式分解: 80,
+      一元一次方程: 90,
     },
     weakPoints: ['二次函数'],
     strongPoints: ['因式分解', '一元一次方程'],
@@ -136,19 +147,19 @@ describe('buildInitialPath', () => {
   it('caps nodes at maxNodes', () => {
     const profile = makeProfile({
       masteryByKnowledge: {
-        '二次函数': 30,
-        '一元二次方程': 50,
-        '函数概念': 70,
-        '因式分解': 80,
-        '一元一次方程': 90,
-        '三角形': 40,
-        '全等三角形': 30,
-        '相似三角形': 20,
-        '圆': 35,
-        '三角函数': 25,
-        '数列': 45,
-        '等差数列': 40,
-        '等比数列': 35,
+        二次函数: 30,
+        一元二次方程: 50,
+        函数概念: 70,
+        因式分解: 80,
+        一元一次方程: 90,
+        三角形: 40,
+        全等三角形: 30,
+        相似三角形: 20,
+        圆: 35,
+        三角函数: 25,
+        数列: 45,
+        等差数列: 40,
+        等比数列: 35,
       },
     });
     const path = buildInitialPath(profile);
@@ -158,19 +169,19 @@ describe('buildInitialPath', () => {
   it('limits path length to maxNodes', () => {
     const profile = makeProfile({
       masteryByKnowledge: {
-        '二次函数': 30,
-        '一元二次方程': 50,
-        '函数概念': 70,
-        '因式分解': 80,
-        '一元一次方程': 90,
-        '三角形': 40,
-        '全等三角形': 30,
-        '相似三角形': 20,
-        '圆': 35,
-        '三角函数': 25,
-        '数列': 45,
-        '等差数列': 40,
-        '等比数列': 35,
+        二次函数: 30,
+        一元二次方程: 50,
+        函数概念: 70,
+        因式分解: 80,
+        一元一次方程: 90,
+        三角形: 40,
+        全等三角形: 30,
+        相似三角形: 20,
+        圆: 35,
+        三角函数: 25,
+        数列: 45,
+        等差数列: 40,
+        等比数列: 35,
       },
     });
     const path = buildInitialPath(profile);
@@ -202,12 +213,34 @@ describe('updatePathAfterJob', () => {
     const job = makeJob({
       topic: path.nodes[0].topic,
       sectionFeedbacks: [
-        { sectionId: 's1', feedbackType: 'mastered', knowledgePoints: ['二次函数'], timestamp: Date.now() },
-        { sectionId: 's2', feedbackType: 'mastered', knowledgePoints: ['二次函数'], timestamp: Date.now() },
+        {
+          sectionId: 's1',
+          feedbackType: 'mastered',
+          knowledgePoints: ['二次函数'],
+          timestamp: Date.now(),
+        },
+        {
+          sectionId: 's2',
+          feedbackType: 'mastered',
+          knowledgePoints: ['二次函数'],
+          timestamp: Date.now(),
+        },
       ],
       quizResults: [
-        { sectionId: 's1', chunkOrder: 0, knowledgePoints: ['二次函数'], isCorrect: true, timestamp: Date.now() },
-        { sectionId: 's1', chunkOrder: 1, knowledgePoints: ['二次函数'], isCorrect: true, timestamp: Date.now() },
+        {
+          sectionId: 's1',
+          chunkOrder: 0,
+          knowledgePoints: ['二次函数'],
+          isCorrect: true,
+          timestamp: Date.now(),
+        },
+        {
+          sectionId: 's1',
+          chunkOrder: 1,
+          knowledgePoints: ['二次函数'],
+          isCorrect: true,
+          timestamp: Date.now(),
+        },
       ],
     });
 
@@ -231,11 +264,27 @@ describe('updatePathAfterJob', () => {
     const job = makeJob({
       topic: path.nodes[0].topic,
       sectionFeedbacks: [
-        { sectionId: 's1', feedbackType: 'needs_review', knowledgePoints: ['二次函数'], timestamp: Date.now() },
-        { sectionId: 's2', feedbackType: 'needs_review', knowledgePoints: ['二次函数'], timestamp: Date.now() },
+        {
+          sectionId: 's1',
+          feedbackType: 'needs_review',
+          knowledgePoints: ['二次函数'],
+          timestamp: Date.now(),
+        },
+        {
+          sectionId: 's2',
+          feedbackType: 'needs_review',
+          knowledgePoints: ['二次函数'],
+          timestamp: Date.now(),
+        },
       ],
       quizResults: [
-        { sectionId: 's1', chunkOrder: 0, knowledgePoints: ['二次函数'], isCorrect: false, timestamp: Date.now() },
+        {
+          sectionId: 's1',
+          chunkOrder: 0,
+          knowledgePoints: ['二次函数'],
+          isCorrect: false,
+          timestamp: Date.now(),
+        },
       ],
     });
 
@@ -268,10 +317,21 @@ describe('updatePathAfterJob', () => {
     const job = makeJob({
       topic: path.nodes[0].topic,
       sectionFeedbacks: [
-        { sectionId: 's1', feedbackType: 'mastered', knowledgePoints: ['二次函数'], timestamp: Date.now() },
+        {
+          sectionId: 's1',
+          feedbackType: 'mastered',
+          knowledgePoints: ['二次函数'],
+          timestamp: Date.now(),
+        },
       ],
       quizResults: [
-        { sectionId: 's1', chunkOrder: 0, knowledgePoints: ['二次函数'], isCorrect: true, timestamp: Date.now() },
+        {
+          sectionId: 's1',
+          chunkOrder: 0,
+          knowledgePoints: ['二次函数'],
+          isCorrect: true,
+          timestamp: Date.now(),
+        },
       ],
     });
 
@@ -323,7 +383,16 @@ describe('getNextRecommendedTopic', () => {
 
 describe('getPathProgress', () => {
   it('returns 0 for empty path', () => {
-    expect(getPathProgress({ id: 'p1', userId: 'u1', title: 'T', nodes: [], createdAt: 0, updatedAt: 0 })).toBe(0);
+    expect(
+      getPathProgress({
+        id: 'p1',
+        userId: 'u1',
+        title: 'T',
+        nodes: [],
+        createdAt: 0,
+        updatedAt: 0,
+      }),
+    ).toBe(0);
   });
 
   it('returns correct percentage', () => {
@@ -332,10 +401,38 @@ describe('getPathProgress', () => {
       userId: 'u1',
       title: 'T',
       nodes: [
-        { id: 'n1', topic: 'A', knowledgePoints: [], estimatedSections: 2, prerequisites: [], status: 'completed' as const },
-        { id: 'n2', topic: 'B', knowledgePoints: [], estimatedSections: 2, prerequisites: [], status: 'completed' as const },
-        { id: 'n3', topic: 'C', knowledgePoints: [], estimatedSections: 2, prerequisites: [], status: 'pending' as const },
-        { id: 'n4', topic: 'D', knowledgePoints: [], estimatedSections: 2, prerequisites: [], status: 'pending' as const },
+        {
+          id: 'n1',
+          topic: 'A',
+          knowledgePoints: [],
+          estimatedSections: 2,
+          prerequisites: [],
+          status: 'completed' as const,
+        },
+        {
+          id: 'n2',
+          topic: 'B',
+          knowledgePoints: [],
+          estimatedSections: 2,
+          prerequisites: [],
+          status: 'completed' as const,
+        },
+        {
+          id: 'n3',
+          topic: 'C',
+          knowledgePoints: [],
+          estimatedSections: 2,
+          prerequisites: [],
+          status: 'pending' as const,
+        },
+        {
+          id: 'n4',
+          topic: 'D',
+          knowledgePoints: [],
+          estimatedSections: 2,
+          prerequisites: [],
+          status: 'pending' as const,
+        },
       ],
       createdAt: 0,
       updatedAt: 0,
@@ -427,11 +524,11 @@ describe('buildInitialPathFromContext', () => {
     const context = makeContext({
       profile: makeProfile({
         masteryByKnowledge: {
-          '二次函数': 20,
-          '一元二次方程': 50,
-          '函数概念': 80,
-          '因式分解': 90,
-          '一元一次方程': 95,
+          二次函数: 20,
+          一元二次方程: 50,
+          函数概念: 80,
+          因式分解: 90,
+          一元一次方程: 95,
         },
       }),
     });
@@ -454,19 +551,19 @@ describe('buildInitialPathFromContext', () => {
     const context = makeContext({
       profile: makeProfile({
         masteryByKnowledge: {
-          '二次函数': 30,
-          '一元二次方程': 50,
-          '函数概念': 70,
-          '因式分解': 80,
-          '一元一次方程': 90,
-          '三角形': 40,
-          '全等三角形': 30,
-          '相似三角形': 20,
-          '圆': 35,
-          '三角函数': 25,
-          '数列': 45,
-          '等差数列': 40,
-          '等比数列': 35,
+          二次函数: 30,
+          一元二次方程: 50,
+          函数概念: 70,
+          因式分解: 80,
+          一元一次方程: 90,
+          三角形: 40,
+          全等三角形: 30,
+          相似三角形: 20,
+          圆: 35,
+          三角函数: 25,
+          数列: 45,
+          等差数列: 40,
+          等比数列: 35,
         },
       }),
     });

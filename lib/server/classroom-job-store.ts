@@ -238,7 +238,9 @@ export async function updateClassroomGenerationJob(
 
     const safePatch: Partial<ClassroomGenerationJob> = {
       ...patch,
-      ...(patch.modelConfig !== undefined ? { modelConfig: sanitizeModelConfig(patch.modelConfig) } : {}),
+      ...(patch.modelConfig !== undefined
+        ? { modelConfig: sanitizeModelConfig(patch.modelConfig) }
+        : {}),
       ...(patch.input !== undefined ? { input: sanitizeInputForPersistence(patch.input) } : {}),
     };
 

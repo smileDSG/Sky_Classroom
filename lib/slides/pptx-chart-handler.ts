@@ -30,10 +30,7 @@ const CHART_TYPE_MAP: Record<string, string> = {
 /**
  * Convert PPTChartElement to pptxgenjs chart data and render it.
  */
-export function addChartToSlide(
-  ctx: ChartRenderContext,
-  el: PPTChartElement,
-): void {
+export function addChartToSlide(ctx: ChartRenderContext, el: PPTChartElement): void {
   const { pptxSlide, theme, ratioPx2Inch } = ctx;
   const x = el.left / ratioPx2Inch;
   const y = el.top / ratioPx2Inch;
@@ -57,14 +54,19 @@ export function addChartToSlide(
     ...(el.textColor ? { titleColor: toPptxHex(el.textColor) } : {}),
     ...(el.lineColor ? { gridLineColor: toPptxHex(el.lineColor) } : {}),
     ...(el.fill ? { fill: toPptxHex(el.fill) } : {}),
-    ...(el.options?.lineSmooth && chartType === 'line' ? { lineDataSymbol: 'circle', lineDataSymbolSize: 6 } : {}),
+    ...(el.options?.lineSmooth && chartType === 'line'
+      ? { lineDataSymbol: 'circle', lineDataSymbolSize: 6 }
+      : {}),
   };
 
   // @ts-expect-error pptxgenjs addChart type is loosely typed
   pptxSlide.addChart(chartType as pptxgen.ChartType, data, options);
 }
 
-function buildChartData(el: PPTChartElement, theme: ThemeToken): Array<{ name: string; labels: string[]; values: number[] }> {
+function buildChartData(
+  el: PPTChartElement,
+  theme: ThemeToken,
+): Array<{ name: string; labels: string[]; values: number[] }> {
   const { labels, legends, series } = el.data;
   if (!series || series.length === 0) {
     return [{ name: '', labels: labels || [], values: [] }];

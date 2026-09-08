@@ -65,9 +65,7 @@ export async function trackMistake(record: MistakeRecord): Promise<void> {
 /**
  * Retrieve all mistakes, optionally filtered.
  */
-export async function getMistakes(
-  filter?: MistakeFilter,
-): Promise<MistakeRecord[]> {
+export async function getMistakes(filter?: MistakeFilter): Promise<MistakeRecord[]> {
   const raw = await getAllMistakes();
   const records = deserializeRecords(raw);
   if (!filter) return records;
@@ -114,9 +112,7 @@ export async function getMistakeStats(): Promise<MistakeStats> {
 
   const now = Date.now();
   const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-  const recentCount = records.filter(
-    (r) => now - r.solvedAt.getTime() <= sevenDaysMs,
-  ).length;
+  const recentCount = records.filter((r) => now - r.solvedAt.getTime() <= sevenDaysMs).length;
 
   return { totalCount, reviewedCount, causeDistribution, recentCount };
 }
@@ -124,9 +120,7 @@ export async function getMistakeStats(): Promise<MistakeStats> {
 /**
  * Export mistakes matching an optional filter.
  */
-export async function exportMistakes(
-  filter?: MistakeFilter,
-): Promise<MistakeRecord[]> {
+export async function exportMistakes(filter?: MistakeFilter): Promise<MistakeRecord[]> {
   const raw = await getAllMistakes();
   const records = deserializeRecords(raw);
   const filtered = filter ? applyFilter(records, filter) : records;

@@ -147,8 +147,14 @@ async function loadProfile(options: CliOptions): Promise<RawLearnerProfile> {
 
   return {
     grade: options.grade,
-    subjects: options.subject.split(',').map((s) => s.trim()).filter(Boolean),
-    weakPoints: options.weak.split(',').map((s) => s.trim()).filter(Boolean),
+    subjects: options.subject
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+    weakPoints: options.weak
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
     goals: options.goal,
     weeklyHours: options.hours,
     weeks: options.weeks ?? 4,
@@ -156,7 +162,10 @@ async function loadProfile(options: CliOptions): Promise<RawLearnerProfile> {
   };
 }
 
-function mapGradeToEducationStage(grade: string): { educationStage: DomainLearnerProfile['educationStage']; gradeLevel: string } {
+function mapGradeToEducationStage(grade: string): {
+  educationStage: DomainLearnerProfile['educationStage'];
+  gradeLevel: string;
+} {
   const g = grade.toLowerCase();
   if (g.includes('primary') || g.includes('小学')) {
     return { educationStage: 'primary', gradeLevel: grade };
@@ -251,7 +260,11 @@ function buildDomainProfile(raw: RawLearnerProfile): DomainLearnerProfile {
 function formatPlanAsMarkdown(plan: {
   goal: string;
   strategy: string;
-  weeklyPlans: { week: number; goal: string; dailyTasks: { day: string; topic: string; materials: string[]; minutes: number }[] }[];
+  weeklyPlans: {
+    week: number;
+    goal: string;
+    dailyTasks: { day: string; topic: string; materials: string[]; minutes: number }[];
+  }[];
   materials: { title: string; source: string }[];
 }): string {
   const lines: string[] = [];

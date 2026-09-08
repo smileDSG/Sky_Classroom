@@ -13,7 +13,10 @@ function readText(file) {
 }
 
 const chapterDir = path.join(courseRoot, 'chapters');
-const chapters = fs.readdirSync(chapterDir).filter((file) => file.endsWith('.md')).sort();
+const chapters = fs
+  .readdirSync(chapterDir)
+  .filter((file) => file.endsWith('.md'))
+  .sort();
 const graph = readJson('knowledge-graph.json');
 const bank = readJson('question-bank.json');
 
@@ -46,8 +49,14 @@ function hits(query) {
 }
 
 const queryChecks = [
-  ['search 过拟合 includes chapter 04', hits('过拟合').some((file) => file.includes('04-machine-learning-basics'))],
-  ['search RAG includes chapter 10 or case', hits('RAG').some((file) => /10-large-models|rag-course-assistant|knowledge-graph/.test(file))],
+  [
+    'search 过拟合 includes chapter 04',
+    hits('过拟合').some((file) => file.includes('04-machine-learning-basics')),
+  ],
+  [
+    'search RAG includes chapter 10 or case',
+    hits('RAG').some((file) => /10-large-models|rag-course-assistant|knowledge-graph/.test(file)),
+  ],
   ['search 智能体 has hit', hits('智能体').length > 0],
 ];
 

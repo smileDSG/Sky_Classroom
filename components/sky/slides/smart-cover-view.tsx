@@ -66,11 +66,9 @@ export function SmartCoverView({
     : `#${draftDNA.colors.coverBg}`;
 
   return (
-    <div className="relative flex h-full flex-col"
-    >
+    <div className="relative flex h-full flex-col">
       {/* ── Background layers — deep space ── */}
-      <div className="pointer-events-none absolute inset-0"
-      >
+      <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute inset-0"
           style={{
@@ -94,22 +92,21 @@ export function SmartCoverView({
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.15) 100%)',
+            background:
+              'radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.15) 100%)',
           }}
         />
       </div>
 
       {/* ── Main: Cover + Drawer ── */}
-      <div className="relative z-10 flex flex-1 min-h-0"
-      >
+      <div className="relative z-10 flex flex-1 min-h-0">
         {/* Cover stage */}
         <div
           className={`flex flex-1 items-center justify-center px-8 pt-4 transition-all duration-300 ${
             showStyleLab ? 'pr-4' : ''
           }`}
         >
-          <div className="relative w-full max-w-5xl"
-          >
+          <div className="relative w-full max-w-5xl">
             {/* Corner brackets — observational viewport */}
             <div className="absolute -top-2 -left-2 h-4 w-4 border-t border-l border-[var(--celestial-starlight)]/15 rounded-tl pointer-events-none" />
             <div className="absolute -top-2 -right-2 h-4 w-4 border-t border-r border-[var(--celestial-starlight)]/15 rounded-tr pointer-events-none" />
@@ -124,15 +121,17 @@ export function SmartCoverView({
               }}
             >
               <CoverSVGRenderer designDNA={draftDNA} title={topic} subtitle={subtitle} />
-              <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)' }} />
+              <div
+                className="absolute inset-0 rounded-2xl pointer-events-none"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)' }}
+              />
             </div>
 
             {/* Coordinate readout */}
-            <div className="mt-2 flex justify-center"
-            >
-              <span className="text-[10px] font-mono text-[var(--celestial-starlight)]/15 tracking-widest"
-              >
-                RA: {draftDNA.layoutType?.slice(0, 4).toUpperCase() || 'HERO'} / DEC: +{draftDNA.decoration?.density?.toUpperCase().slice(0, 3) || 'MED'}
+            <div className="mt-2 flex justify-center">
+              <span className="text-[10px] font-mono text-[var(--celestial-starlight)]/15 tracking-widest">
+                RA: {draftDNA.layoutType?.slice(0, 4).toUpperCase() || 'HERO'} / DEC: +
+                {draftDNA.decoration?.density?.toUpperCase().slice(0, 3) || 'MED'}
               </span>
             </div>
           </div>
@@ -147,15 +146,17 @@ export function SmartCoverView({
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
               className="flex flex-col border-l border-[var(--celestial-haze)]/15 overflow-hidden shrink-0"
-              style={{ background: 'linear-gradient(180deg, rgba(11,16,33,0.95), rgba(19,24,50,0.98))' }}
+              style={{
+                background: 'linear-gradient(180deg, rgba(11,16,33,0.95), rgba(19,24,50,0.98))',
+              }}
             >
               {/* Drawer header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--celestial-haze)]/10 shrink-0"
-              >
-                <div className="flex items-center gap-2"
-                >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--celestial-haze)]/10 shrink-0">
+                <div className="flex items-center gap-2">
                   <Palette size={14} className="text-[var(--celestial-starlight)]/30" />
-                  <span className="text-xs font-semibold text-[var(--celestial-starlight)]/50">风格调整</span>
+                  <span className="text-xs font-semibold text-[var(--celestial-starlight)]/50">
+                    风格调整
+                  </span>
                 </div>
                 <button
                   onClick={onToggleStyleLab}
@@ -166,8 +167,7 @@ export function SmartCoverView({
               </div>
 
               {/* Drawer content */}
-              <div className="flex-1 overflow-y-auto p-4"
-              >
+              <div className="flex-1 overflow-y-auto p-4">
                 <StyleLabPanel
                   draftDNA={draftDNA}
                   onUpdatePalette={onUpdatePalette}
@@ -182,8 +182,7 @@ export function SmartCoverView({
       </div>
 
       {/* ── Control deck (bottom) ── */}
-      <div className="relative z-10 flex flex-col items-center gap-3 px-6 pb-8 pt-2"
-      >
+      <div className="relative z-10 flex flex-col items-center gap-3 px-6 pb-8 pt-2">
         {/* Style badge + quick palettes */}
         <div className="flex items-center gap-4">
           {/* Spectral classification badge */}
@@ -196,9 +195,7 @@ export function SmartCoverView({
           >
             {draftDNA.styleName}
           </span>
-          <span className="text-[11px] text-[var(--celestial-starlight)]/25">
-            {draftDNA.mood}
-          </span>
+          <span className="text-[11px] text-[var(--celestial-starlight)]/25">{draftDNA.mood}</span>
           <div className="h-3 w-px bg-[var(--celestial-haze)]/20" />
           {/* Quick palette dots */}
           <AnimatePresence>
@@ -213,22 +210,25 @@ export function SmartCoverView({
                 {QUICK_PALETTES.map((pid) => {
                   const palette = COLOR_PALETTES[pid];
                   if (!palette) return null;
-                  const isActive = (
+                  const isActive =
                     palette.coverBg.toUpperCase() === draftDNA.colors.coverBg.toUpperCase() &&
-                    palette.accent.toUpperCase() === draftDNA.colors.accent.toUpperCase()
-                  );
+                    palette.accent.toUpperCase() === draftDNA.colors.accent.toUpperCase();
                   return (
                     <button
                       key={pid}
                       onClick={() => onUpdatePalette(pid)}
                       className={`relative h-4 w-4 rounded-full transition-all duration-200 ${
-                        isActive ? 'ring-2 ring-offset-1 scale-110' : 'hover:scale-110 opacity-50 hover:opacity-90'
+                        isActive
+                          ? 'ring-2 ring-offset-1 scale-110'
+                          : 'hover:scale-110 opacity-50 hover:opacity-90'
                       }`}
-                      style={{
-                        background: `linear-gradient(135deg, ${palette.coverBg}, ${palette.accent})`,
-                        '--tw-ring-color': palette.accent,
-                        boxShadow: isActive ? `0 0 6px ${palette.accent}40` : 'none',
-                      } as React.CSSProperties}
+                      style={
+                        {
+                          background: `linear-gradient(135deg, ${palette.coverBg}, ${palette.accent})`,
+                          '--tw-ring-color': palette.accent,
+                          boxShadow: isActive ? `0 0 6px ${palette.accent}40` : 'none',
+                        } as React.CSSProperties
+                      }
                       title={pid}
                     />
                   );

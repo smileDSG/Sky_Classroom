@@ -38,7 +38,14 @@ export function TemplateElement({ element, resolver, scale = 1 }: Props) {
 
   switch (element.elementType) {
     case 'text':
-      return <TemplateTextElement element={element} resolver={resolver} style={baseStyle} scale={scale} />;
+      return (
+        <TemplateTextElement
+          element={element}
+          resolver={resolver}
+          style={baseStyle}
+          scale={scale}
+        />
+      );
     case 'shape':
       return <TemplateShapeElement element={element} resolver={resolver} style={baseStyle} />;
     case 'icon':
@@ -144,7 +151,9 @@ function TemplateIconElement({
   style: React.CSSProperties;
 }) {
   const iconName = element.iconName ?? '';
-  const color = element.fill ? resolver.resolveColor(element.fill.color) : resolver.resolveColor('$accent');
+  const color = element.fill
+    ? resolver.resolveColor(element.fill.color)
+    : resolver.resolveColor('$accent');
   const [prefix, name] = iconName.split(':') as [string, string];
 
   const size = Math.min(style.width as number, style.height as number);
@@ -169,7 +178,11 @@ function FontAwesomeIconWrapper({ prefix, iconName }: { prefix: string; iconName
   const iconDef = findIconDefinition({ prefix: prefix as any, iconName: iconName as any });
 
   if (!iconDef) {
-    return <span style={{ fontSize: '0.5em', opacity: 0.5 }}>[{prefix}:{iconName}]</span>;
+    return (
+      <span style={{ fontSize: '0.5em', opacity: 0.5 }}>
+        [{prefix}:{iconName}]
+      </span>
+    );
   }
 
   return <FontAwesomeIcon icon={iconDef} />;

@@ -130,7 +130,9 @@ function normalizeGivens(value: unknown): Record<string, string>[] {
 }
 
 /** Keep only ambiguities matching {field, candidates: string[], reason}. */
-function normalizeAmbiguities(value: unknown): { field: string; candidates: string[]; reason: string }[] {
+function normalizeAmbiguities(
+  value: unknown,
+): { field: string; candidates: string[]; reason: string }[] {
   if (!Array.isArray(value)) return [];
   return value.filter(
     (item): item is { field: string; candidates: string[]; reason: string } =>
@@ -138,7 +140,9 @@ function normalizeAmbiguities(value: unknown): { field: string; candidates: stri
       typeof item === 'object' &&
       typeof (item as Record<string, unknown>).field === 'string' &&
       Array.isArray((item as Record<string, unknown>).candidates) &&
-      ((item as Record<string, unknown>).candidates as unknown[]).every((c) => typeof c === 'string') &&
+      ((item as Record<string, unknown>).candidates as unknown[]).every(
+        (c) => typeof c === 'string',
+      ) &&
       typeof (item as Record<string, unknown>).reason === 'string',
   );
 }
@@ -187,7 +191,12 @@ function parseRelaxedProblemSpecs(raw: string): ProblemSpec[] {
             if (option && typeof option === 'object') {
               const key = (option as Record<string, unknown>).key;
               const content = (option as Record<string, unknown>).content;
-              if (typeof key === 'string' && key.trim() && typeof content === 'string' && content.trim()) {
+              if (
+                typeof key === 'string' &&
+                key.trim() &&
+                typeof content === 'string' &&
+                content.trim()
+              ) {
                 return [{ key: key.trim(), content: content.trim() }];
               }
               return [];

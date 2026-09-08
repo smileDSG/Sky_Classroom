@@ -5,5 +5,9 @@
  */
 
 export type { SlideImageRequest, SlideImageResult } from './types';
-export { buildCoverPrompt, buildConceptPrompt, buildSlideImagePrompt } from './cover-prompt-builder';
+export {
+  buildCoverPrompt,
+  buildConceptPrompt,
+  buildSlideImagePrompt,
+} from './cover-prompt-builder';
 export { generateSlideImages } from './slide-image-service';

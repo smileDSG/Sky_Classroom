@@ -48,7 +48,15 @@ describe('GET /api/sky/slides/avatars', () => {
   it('all styles are valid enum values', async () => {
     const res = await GET();
     const data = await res.json();
-    const validStyles = ['academic', 'friendly', 'humorous', 'curious', 'analytical', 'creative', 'organized'];
+    const validStyles = [
+      'academic',
+      'friendly',
+      'humorous',
+      'curious',
+      'analytical',
+      'creative',
+      'organized',
+    ];
     for (const avatar of data.avatars) {
       expect(validStyles).toContain(avatar.style);
     }

@@ -66,7 +66,10 @@ function coerceValue(key: string, value: unknown): unknown {
         } catch {
           // fall through
         }
-        return value.split(/[,，;；]/).map((s) => s.trim()).filter(Boolean);
+        return value
+          .split(/[,，;；]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
       }
       if (Array.isArray(value)) return value;
       return value;

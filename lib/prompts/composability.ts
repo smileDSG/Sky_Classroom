@@ -69,8 +69,7 @@ class FragmentRegistry {
     if (language || version) {
       const exact = candidates.find(
         (f) =>
-          (language ? f.language === language : true) &&
-          (version ? f.version === version : true),
+          (language ? f.language === language : true) && (version ? f.version === version : true),
       );
       if (exact) return exact;
     }
@@ -293,10 +292,7 @@ export class PromptComposer implements IPromptComposer {
     });
   }
 
-  private processConditionals(
-    template: string,
-    conditions: Record<string, unknown>,
-  ): string {
+  private processConditionals(template: string, conditions: Record<string, unknown>): string {
     return template.replace(
       /\{\{#if (\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g,
       (_match, conditionName: string, content: string) => {
@@ -305,10 +301,7 @@ export class PromptComposer implements IPromptComposer {
     );
   }
 
-  private interpolateVariables(
-    template: string,
-    variables: Record<string, unknown>,
-  ): string {
+  private interpolateVariables(template: string, variables: Record<string, unknown>): string {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
       const value = variables[key];
       if (value === undefined) return match;

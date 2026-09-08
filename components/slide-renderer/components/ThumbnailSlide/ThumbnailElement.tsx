@@ -1,5 +1,10 @@
 import { useMemo } from 'react';
-import { ElementTypes, type PPTElement, type PPTVideoElement, type PPTLineElement } from '@/lib/types/slides';
+import {
+  ElementTypes,
+  type PPTElement,
+  type PPTVideoElement,
+  type PPTLineElement,
+} from '@/lib/types/slides';
 import { isMediaPlaceholder } from '@/lib/store/media-generation';
 import { Play } from 'lucide-react';
 

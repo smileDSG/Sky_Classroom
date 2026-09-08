@@ -14,8 +14,20 @@ vi.mock('@/lib/media/image-providers', () => ({
 describe('slide-image-service', () => {
   test('generates images for all requests', async () => {
     const requests: SlideImageRequest[] = [
-      { slideIndex: 0, pageRole: 'cover', topic: '勾股定理', contentSummary: '', themeId: 'sky-blue' },
-      { slideIndex: 2, pageRole: 'concept', topic: '勾股定理', contentSummary: '直角三角形', themeId: 'sky-blue' },
+      {
+        slideIndex: 0,
+        pageRole: 'cover',
+        topic: '勾股定理',
+        contentSummary: '',
+        themeId: 'sky-blue',
+      },
+      {
+        slideIndex: 2,
+        pageRole: 'concept',
+        topic: '勾股定理',
+        contentSummary: '直角三角形',
+        themeId: 'sky-blue',
+      },
     ];
     const config: ImageGenerationConfig = { providerId: 'openai-image', apiKey: 'test-key' };
 

@@ -52,7 +52,7 @@ function estimateTimeRemaining(
   progress: number,
   totalPages: number,
   stageTimings?: Record<string, StageTiming>,
-  startedAt?: number
+  startedAt?: number,
 ): string {
   if (progress >= 100) return '即将完成';
   if (!startedAt) return '计算中...';
@@ -69,7 +69,14 @@ function estimateTimeRemaining(
   const currentRange = STAGE_RANGES[stage];
   if (!currentRange) return '计算中...';
 
-  const allStages = ['planning', 'sections_generating', 'pages_designing', 'qa_reviewing', 'repairing', 'merging'];
+  const allStages = [
+    'planning',
+    'sections_generating',
+    'pages_designing',
+    'qa_reviewing',
+    'repairing',
+    'merging',
+  ];
   const currentIdx = allStages.indexOf(stage);
 
   function defaultDuration(s: string): number {
@@ -106,7 +113,10 @@ function estimateTimeRemaining(
       const stageStartAt = timing?.startAt || startedAt;
       const stageElapsed = now - stageStartAt;
       const [startProg, endProg] = currentRange;
-      const stageRatio = endProg === startProg ? 1 : Math.min(1, Math.max(0, (progress - startProg) / (endProg - startProg)));
+      const stageRatio =
+        endProg === startProg
+          ? 1
+          : Math.min(1, Math.max(0, (progress - startProg) / (endProg - startProg)));
 
       let estimatedTotalMs: number;
       if (stageRatio > 0.05 && stageElapsed > 2000) {
@@ -163,9 +173,7 @@ function ConstellationLines({
       {/* Base constellation path between completed pages */}
       {sorted.length > 1 && (
         <path
-          d={sorted
-            .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
-            .join(' ')}
+          d={sorted.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')}
           fill="none"
           stroke="url(#constellation-gradient)"
           strokeWidth={1}
@@ -181,9 +189,7 @@ function ConstellationLines({
       {/* Flowing dash overlay along the same path */}
       {sorted.length > 1 && (
         <path
-          d={sorted
-            .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
-            .join(' ')}
+          d={sorted.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')}
           fill="none"
           stroke="rgba(255,140,105,0.35)"
           strokeWidth={1.5}
@@ -254,13 +260,18 @@ export function GeneratingState({
   function sizeRoughlyEqual(
     a: { width: number; height: number },
     b: { width: number; height: number },
-    tolerance = 2
+    tolerance = 2,
   ) {
     return Math.abs(a.width - b.width) <= tolerance && Math.abs(a.height - b.height) <= tolerance;
   }
 
   const { allThumbs, completedCount } = useMemo(() => {
-    const thumbs: Array<{ pageNum: number; title: string; type: string; state: 'completed' | 'active' | 'pending' }> = [];
+    const thumbs: Array<{
+      pageNum: number;
+      title: string;
+      type: string;
+      state: 'completed' | 'active' | 'pending';
+    }> = [];
 
     const completedMap = new Map(completedSlides.map((s) => [s.pageNum, s]));
     const outlineMap = new Map((outline || []).map((s) => [s.pageNum, s]));
@@ -300,7 +311,10 @@ export function GeneratingState({
     }
 
     thumbs.sort((a, b) => a.pageNum - b.pageNum);
-    return { allThumbs: thumbs, completedCount: thumbs.filter((t) => t.state === 'completed').length };
+    return {
+      allThumbs: thumbs,
+      completedCount: thumbs.filter((t) => t.state === 'completed').length,
+    };
   }, [completedSlides, currentPage, totalPages, outline]);
 
   // Measure thumb centers for constellation lines
@@ -346,8 +360,12 @@ export function GeneratingState({
   }, [allThumbs]);
 
   const completedPoints = useMemo(
-    () => allThumbs.filter((t) => t.state === 'completed').map((t) => centers.get(t.pageNum)).filter(Boolean) as Point[],
-    [allThumbs, centers]
+    () =>
+      allThumbs
+        .filter((t) => t.state === 'completed')
+        .map((t) => centers.get(t.pageNum))
+        .filter(Boolean) as Point[],
+    [allThumbs, centers],
   );
 
   const activePoint = useMemo(() => {
@@ -378,7 +396,10 @@ export function GeneratingState({
       {/* Ambient void overlay */}
       <div
         className="pointer-events-none absolute inset-0"
-        style={{ background: 'radial-gradient(ellipse at 30% 50%, rgba(139,92,246,0.04) 0%, transparent 60%)' }}
+        style={{
+          background:
+            'radial-gradient(ellipse at 30% 50%, rgba(139,92,246,0.04) 0%, transparent 60%)',
+        }}
       />
 
       {/* Left Panel — Star Almanac */}
@@ -434,7 +455,10 @@ export function GeneratingState({
                   transform: isActive ? 'scale(1.02)' : 'scale(1)',
                 }}
               >
-                <StageIcon stage={s.key} state={isDone ? 'done' : isActive ? 'active' : 'pending'} />
+                <StageIcon
+                  stage={s.key}
+                  state={isDone ? 'done' : isActive ? 'active' : 'pending'}
+                />
                 <span
                   className={`text-xs font-medium transition-colors duration-300 ${
                     isActive
@@ -454,7 +478,11 @@ export function GeneratingState({
                         background: isDone
                           ? 'linear-gradient(90deg, rgba(245,230,200,0.35), rgba(245,230,200,0.1))'
                           : 'rgba(45,53,97,0.3)',
-                        width: isDone ? '100%' : isActive ? `${Math.min((progress % 15) / 15 * 100, 100)}%` : '0%',
+                        width: isDone
+                          ? '100%'
+                          : isActive
+                            ? `${Math.min(((progress % 15) / 15) * 100, 100)}%`
+                            : '0%',
                       }}
                     />
                   </div>
@@ -471,7 +499,8 @@ export function GeneratingState({
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${progress}%`,
-                background: 'linear-gradient(90deg, var(--celestial-nebula), var(--celestial-dawn))',
+                background:
+                  'linear-gradient(90deg, var(--celestial-nebula), var(--celestial-dawn))',
                 boxShadow: '0 0 8px rgba(255,140,105,0.25)',
               }}
             />
@@ -551,7 +580,10 @@ export function GeneratingState({
           >
             {allThumbs.map((thumb, idx) => {
               const isChapter = thumb.type === 'chapter' || thumb.type === 'cover';
-              const prevIsChapter = idx > 0 ? allThumbs[idx - 1].type === 'chapter' || allThumbs[idx - 1].type === 'cover' : false;
+              const prevIsChapter =
+                idx > 0
+                  ? allThumbs[idx - 1].type === 'chapter' || allThumbs[idx - 1].type === 'cover'
+                  : false;
               const showSeparator = isChapter && idx > 0 && !prevIsChapter;
               return (
                 <motion.div
@@ -564,7 +596,10 @@ export function GeneratingState({
                       <div className="flex flex-1 items-center gap-2">
                         <div
                           className="h-1.5 w-1.5 rounded-full"
-                          style={{ background: 'var(--celestial-dawn)', boxShadow: '0 0 6px var(--celestial-dawn)' }}
+                          style={{
+                            background: 'var(--celestial-dawn)',
+                            boxShadow: '0 0 6px var(--celestial-dawn)',
+                          }}
                         />
                         <div className="h-px flex-1 bg-[var(--celestial-haze)]/30" />
                       </div>
@@ -580,7 +615,10 @@ export function GeneratingState({
                         <div className="h-px flex-1 bg-[var(--celestial-haze)]/30" />
                         <div
                           className="h-1.5 w-1.5 rounded-full"
-                          style={{ background: 'var(--celestial-dawn)', boxShadow: '0 0 6px var(--celestial-dawn)' }}
+                          style={{
+                            background: 'var(--celestial-dawn)',
+                            boxShadow: '0 0 6px var(--celestial-dawn)',
+                          }}
                         />
                       </div>
                     </div>

@@ -19,11 +19,11 @@ export interface CourseInfo {
 }
 
 export interface RecommendedCombo {
-  teacher: number;       // Always 1
-  assistant: number;     // 0-2
+  teacher: number; // Always 1
+  assistant: number; // 0-2
   students: {
-    count: number;        // 1-4
-    preferredTypes: string[];  // Persona type IDs
+    count: number; // 1-4
+    preferredTypes: string[]; // Persona type IDs
   };
 }
 
@@ -56,7 +56,8 @@ export const DEFAULT_COMBO_RULES: ComboRule[] = [
     description:
       'For interactive/practical courses. More assistants to support hands-on work, creative students to energize.',
     appliesTo: (c) =>
-      (c.sceneTypes?.some((t) => t === 'interactive' || t === 'pbl') ?? false) || (c.hasPBL ?? false),
+      (c.sceneTypes?.some((t) => t === 'interactive' || t === 'pbl') ?? false) ||
+      (c.hasPBL ?? false),
     recommendedCombo: {
       teacher: 1,
       assistant: 2,
@@ -83,9 +84,9 @@ export const DEFAULT_COMBO_RULES: ComboRule[] = [
   {
     id: 'discussion-heavy',
     name: 'Discussion Seminar',
-    description:
-      'For discussion-oriented courses. No assistant, more diverse student voices.',
-    appliesTo: (c) => (c.sceneTypes?.every((t) => t === 'slide') ?? false) && (c.sceneCount ?? 0) > 5,
+    description: 'For discussion-oriented courses. No assistant, more diverse student voices.',
+    appliesTo: (c) =>
+      (c.sceneTypes?.every((t) => t === 'slide') ?? false) && (c.sceneCount ?? 0) > 5,
     recommendedCombo: {
       teacher: 1,
       assistant: 0,
@@ -98,8 +99,9 @@ export const DEFAULT_COMBO_RULES: ComboRule[] = [
   {
     id: 'assessment',
     name: 'Quiz/Assessment Focus',
-    description: 'For courses with quizzes. Assistant helps with grading context, analytical student promotes critical thinking.',
-    appliesTo: (c) => c.hasQuiz ?? (c.sceneTypes?.includes('quiz') ?? false),
+    description:
+      'For courses with quizzes. Assistant helps with grading context, analytical student promotes critical thinking.',
+    appliesTo: (c) => c.hasQuiz ?? c.sceneTypes?.includes('quiz') ?? false,
     recommendedCombo: {
       teacher: 1,
       assistant: 1,
@@ -192,8 +194,7 @@ export class CombinationRuleEngine {
 
     // Assign preferred student persona types, cycling if needed
     for (let i = 0; i < combo.students.count; i++) {
-      const preferred =
-        combo.students.preferredTypes[i % combo.students.preferredTypes.length];
+      const preferred = combo.students.preferredTypes[i % combo.students.preferredTypes.length];
       // Verify this persona type actually exists in available templates
       const exists = studentTemplates.some((t) => t.personaType === preferred);
       plan.push({ role: 'student', personaType: exists ? preferred : undefined });

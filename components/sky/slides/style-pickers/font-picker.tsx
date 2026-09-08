@@ -56,7 +56,9 @@ const FONT_META: Record<string, FontMeta> = {
 export function FontPicker({ selectedFontId, onSelect }: FontPickerProps) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">字体气质</span>
+      <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
+        字体气质
+      </span>
       <div className="grid grid-cols-5 gap-1.5">
         {Object.entries(FONT_PAIRS).map(([id, font]) => {
           const meta = FONT_META[id];
@@ -94,9 +96,11 @@ export function FontPicker({ selectedFontId, onSelect }: FontPickerProps) {
                 </span>
               </div>
 
-              <span className={`text-[10px] font-semibold ${
-                isSelected ? 'text-primary' : 'text-slate-500 dark:text-gray-500'
-              }`}>
+              <span
+                className={`text-[10px] font-semibold ${
+                  isSelected ? 'text-primary' : 'text-slate-500 dark:text-gray-500'
+                }`}
+              >
                 {meta?.label ?? id}
               </span>
 

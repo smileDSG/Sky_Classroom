@@ -54,14 +54,14 @@ async function main() {
   const [cleanRes] = await pool.query(
     `DELETE FROM question_bank
      WHERE question_type IN ('choice', 'judge')
-       AND (options IS NULL OR JSON_LENGTH(options) = 0)`
+       AND (options IS NULL OR JSON_LENGTH(options) = 0)`,
   );
   console.log(`Cleaned dirty data: ${cleanRes.affectedRows ?? 0} rows deleted`);
 
   const [cleanRes2] = await pool.query(
     `DELETE FROM question_bank
      WHERE question_type NOT IN ('choice', 'judge')
-       AND options IS NOT NULL`
+       AND options IS NOT NULL`,
   );
   console.log(`Cleaned inconsistent data: ${cleanRes2.affectedRows ?? 0} rows deleted`);
 
@@ -78,9 +78,15 @@ async function main() {
       questionType: 'choice',
       content: '下列关于辛亥革命历史意义的叙述，不正确的是',
       answer: 'B',
-      explanation: '辛亥革命结束的是封建君主专制制度，而非封建制度。封建制度的彻底废除是在新中国成立后的土地改革完成之后。',
+      explanation:
+        '辛亥革命结束的是封建君主专制制度，而非封建制度。封建制度的彻底废除是在新中国成立后的土地改革完成之后。',
       knowledgePoints: ['辛亥革命', '中国近代史', '封建制度'],
-      options: ['推翻了清王朝的统治', '结束了中国两千多年的封建制度', '使民主共和观念深入人心', '为民族资本主义发展创造了条件'],
+      options: [
+        '推翻了清王朝的统治',
+        '结束了中国两千多年的封建制度',
+        '使民主共和观念深入人心',
+        '为民族资本主义发展创造了条件',
+      ],
       tags: ['测试数据', '高考真题'],
       verified: true,
     },
@@ -104,9 +110,11 @@ async function main() {
       grade: '高一',
       difficulty: 'medium',
       questionType: 'choice',
-      content: '一物体做匀加速直线运动，初速度为 2 m/s，加速度为 1 m/s\\(^2\\)，则第 3 s 内的位移为',
+      content:
+        '一物体做匀加速直线运动，初速度为 2 m/s，加速度为 1 m/s\\(^2\\)，则第 3 s 内的位移为',
       answer: 'C',
-      explanation: '前 3 s 位移 s_3 = v_0t + 1/2 at^2 = 6 + 4.5 = 10.5 m；前 2 s 位移 s_2 = 4 + 2 = 6 m；第 3 s 内位移 = 10.5 - 6 = 4.5 m。',
+      explanation:
+        '前 3 s 位移 s_3 = v_0t + 1/2 at^2 = 6 + 4.5 = 10.5 m；前 2 s 位移 s_2 = 4 + 2 = 6 m；第 3 s 内位移 = 10.5 - 6 = 4.5 m。',
       knowledgePoints: ['匀变速直线运动', '位移公式'],
       options: ['3 m', '3.5 m', '4.5 m', '5 m'],
       tags: ['测试数据', '经典例题'],
@@ -120,7 +128,8 @@ async function main() {
       questionType: 'choice',
       content: '下列离子方程式书写正确的是',
       answer: 'D',
-      explanation: 'A 项中 CaCO3 难溶不应拆；B 项电荷不守恒；C 项漏写 H2O 的生成；D 项 Cl2 与 NaOH 反应生成 NaCl、NaClO 和 H2O，正确。',
+      explanation:
+        'A 项中 CaCO3 难溶不应拆；B 项电荷不守恒；C 项漏写 H2O 的生成；D 项 Cl2 与 NaOH 反应生成 NaCl、NaClO 和 H2O，正确。',
       knowledgePoints: ['离子方程式', '氧化还原反应'],
       options: [
         'CaCO3 + 2H+ = Ca2+ + H2O + CO2\\uparrow',
@@ -137,7 +146,8 @@ async function main() {
       grade: '高一',
       difficulty: 'easy',
       questionType: 'choice',
-      content: "— How was your trip to London, Jane?\n— _______. I saw many interesting things there.",
+      content:
+        '— How was your trip to London, Jane?\n— _______. I saw many interesting things there.',
       answer: 'A',
       explanation: '"It was great" 表示"很棒"，与后文"看到很多有趣的事物"语义连贯。',
       knowledgePoints: ['情景交际', '日常对话'],
@@ -153,7 +163,8 @@ async function main() {
       questionType: 'solve',
       content: '已知函数 f(x) = x^3 - 3x^2 + 2，求函数的极值。',
       answer: 'f(x) 在 x=0 处取得极大值 2，在 x=2 处取得极小值 -2。',
-      explanation: "求导得 f'(x)=3x^2-6x=3x(x-2)。令 f'(x)=0 得 x=0 或 x=2。当 x<0 时 f'(x)>0；当 0<x<2 时 f'(x)<0；当 x>2 时 f'(x)>0。故 x=0 为极大值点，f(0)=2；x=2 为极小值点，f(2)=-2。",
+      explanation:
+        "求导得 f'(x)=3x^2-6x=3x(x-2)。令 f'(x)=0 得 x=0 或 x=2。当 x<0 时 f'(x)>0；当 0<x<2 时 f'(x)<0；当 x>2 时 f'(x)>0。故 x=0 为极大值点，f(0)=2；x=2 为极小值点，f(2)=-2。",
       knowledgePoints: ['导数', '极值', '函数分析'],
       options: null,
       tags: ['测试数据', '解答题'],
@@ -197,7 +208,7 @@ async function main() {
 
     const [existing] = await pool.query(
       'SELECT id FROM question_bank WHERE problem_hash = ? LIMIT 1',
-      [problemHash]
+      [problemHash],
     );
     if (existing.length > 0) {
       skipped++;
@@ -228,7 +239,7 @@ async function main() {
         q.verified,
         now,
         now,
-      ]
+      ],
     );
     inserted++;
     console.log(`Inserted: ${q.subject} — ${q.content.slice(0, 30)}...`);

@@ -62,14 +62,10 @@ function isOrderOfMagnitudeOff(a: number, b: number): boolean {
  * Check whether `user` contains the key digits of `correct` but in a
  * different arrangement (reversed order, wrong sign, etc.).
  */
-function hasKeyDigitsButWrongStructure(
-  correctNums: number[],
-  userNums: number[],
-): boolean {
+function hasKeyDigitsButWrongStructure(correctNums: number[], userNums: number[]): boolean {
   if (correctNums.length === 0 || userNums.length === 0) return false;
 
-  const sortNums = (nums: number[]) =>
-    [...nums].sort((x, y) => x - y).map(String);
+  const sortNums = (nums: number[]) => [...nums].sort((x, y) => x - y).map(String);
 
   const sortedCorrect = sortNums(correctNums);
   const sortedUser = sortNums(userNums);
@@ -89,10 +85,7 @@ function hasKeyDigitsButWrongStructure(
   // Check sign flips
   const correctAbs = correctNums.map(Math.abs).sort((x, y) => x - y);
   const userAbs = userNums.map(Math.abs).sort((x, y) => x - y);
-  if (
-    correctAbs.length === userAbs.length &&
-    correctAbs.every((v, i) => v === userAbs[i])
-  ) {
+  if (correctAbs.length === userAbs.length && correctAbs.every((v, i) => v === userAbs[i])) {
     const correctSigns = correctNums.map((n) => (n >= 0 ? 1 : -1));
     const userSigns = userNums.map((n) => (n >= 0 ? 1 : -1));
     if (correctSigns.join(',') !== userSigns.join(',')) {

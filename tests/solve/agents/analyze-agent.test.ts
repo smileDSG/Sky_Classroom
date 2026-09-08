@@ -29,7 +29,7 @@ describe('analyzeProblem', () => {
     } as any);
 
     const result = await analyzeProblem('已知二次函数y=x²-2x+3，求顶点坐标');
-    expect(result.subject).toBe('math');  // Chinese '数学' mapped to 'math'
+    expect(result.subject).toBe('math'); // Chinese '数学' mapped to 'math'
     expect(result.knowledgePoints).toContain('二次函数');
     expect(result.difficulty).toBe('medium');
     expect(result.questionType).toBe('solve');
@@ -82,8 +82,8 @@ describe('analyzeProblem', () => {
     } as any);
 
     const result = await analyzeProblem('problem');
-    expect(result.difficulty).toBe('medium');  // default fallback
-    expect(result.questionType).toBe('solve');  // default fallback
+    expect(result.difficulty).toBe('medium'); // default fallback
+    expect(result.questionType).toBe('solve'); // default fallback
   });
 
   it('clamps confidence to 0-1 range', async () => {
@@ -94,7 +94,7 @@ describe('analyzeProblem', () => {
         knowledgePoints: ['概率'],
         difficulty: 'medium',
         questionType: 'solve',
-        confidence: 1.5,  // > 1, should clamp
+        confidence: 1.5, // > 1, should clamp
       }),
     } as any);
 

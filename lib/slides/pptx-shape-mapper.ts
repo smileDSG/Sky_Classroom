@@ -55,12 +55,8 @@ const SHAPE_PATTERNS: Array<{
     name: 'ellipse',
     test: (path, vb) => {
       // Circle/ellipse path: M cx-r cy a r r 0 1 1 ...
-      const ellipseRe =
-        /M\s*[\d.]+\s+[\d.]+\s+A\s+[\d.]+\s+[\d.]+\s+0\s+1\s+1/.test(path);
-      const circleRe =
-        /M\s*[\d.]+\s+[\d.]+\s+A\s+[\d.]+\s+[\d.]+\s+0\s+[\d.]+\s+[\d.]+/.test(
-          path,
-        );
+      const ellipseRe = /M\s*[\d.]+\s+[\d.]+\s+A\s+[\d.]+\s+[\d.]+\s+0\s+1\s+1/.test(path);
+      const circleRe = /M\s*[\d.]+\s+[\d.]+\s+A\s+[\d.]+\s+[\d.]+\s+0\s+[\d.]+\s+[\d.]+/.test(path);
       // Nearly square viewBox with circle path
       const isSquareish = Math.abs(vb[0] - vb[1]) < Math.max(vb[0], vb[1]) * 0.1;
       return (ellipseRe || circleRe) && isSquareish;
@@ -113,11 +109,7 @@ const SHAPE_PATTERNS: Array<{
     name: 'donut',
     test: (path) => {
       // Donut has two concentric circles or a circle with hole
-      return (
-        path.includes('M') &&
-        path.split('A').length >= 3 &&
-        /M.*A.*A/.test(path)
-      );
+      return path.includes('M') && path.split('A').length >= 3 && /M.*A.*A/.test(path);
     },
   },
   {
@@ -139,10 +131,7 @@ const SHAPE_PATTERNS: Array<{
  * Map an SVG path to the best pptxgenjs native shape.
  * Returns null if the path is too complex and should use custGeom fallback.
  */
-export function mapShapeToPptx(
-  path: string,
-  viewBox: string,
-): PptxShapeMapping | null {
+export function mapShapeToPptx(path: string, viewBox: string): PptxShapeMapping | null {
   if (!path || typeof viewBox !== 'string') return null;
 
   const vbParts = viewBox.split(/\s+/).map(Number);
@@ -311,10 +300,8 @@ function isChevronShape(points: Point[]): boolean {
 function hasIntersectingAxes(points: Point[]): boolean {
   if (points.length < 8) return false;
   // Cross/plus should have points distributed in 4 quadrants around center
-  const centerX =
-    points.reduce((sum, p) => sum + p.x, 0) / points.length;
-  const centerY =
-    points.reduce((sum, p) => sum + p.y, 0) / points.length;
+  const centerX = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+  const centerY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
 
   let quadrants = 0;
   if (points.some((p) => p.x > centerX && p.y < centerY)) quadrants++;

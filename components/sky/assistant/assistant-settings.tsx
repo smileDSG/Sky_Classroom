@@ -40,24 +40,43 @@ const FONT_SIZES = [
 
 export function AssistantSettings({ mode, onModeChange, onThemeChange }: AssistantSettingsProps) {
   const [selectedTheme, setSelectedTheme] = useState(() => {
-    try { return localStorage.getItem('assistant-theme') || 'sky'; } catch { return 'sky'; }
+    try {
+      return localStorage.getItem('assistant-theme') || 'sky';
+    } catch {
+      return 'sky';
+    }
   });
   const [selectedFontSize, setSelectedFontSize] = useState(() => {
-    try { return localStorage.getItem('assistant-font-size') || 'base'; } catch { return 'base'; }
+    try {
+      return localStorage.getItem('assistant-font-size') || 'base';
+    } catch {
+      return 'base';
+    }
   });
   const [clearingData, setClearingData] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [cleared, setCleared] = useState(false);
 
-  const handleThemeChange = useCallback((themeId: string) => {
-    setSelectedTheme(themeId);
-    try { localStorage.setItem('assistant-theme', themeId); } catch { /* ignore */ }
-    onThemeChange?.(themeId);
-  }, [onThemeChange]);
+  const handleThemeChange = useCallback(
+    (themeId: string) => {
+      setSelectedTheme(themeId);
+      try {
+        localStorage.setItem('assistant-theme', themeId);
+      } catch {
+        /* ignore */
+      }
+      onThemeChange?.(themeId);
+    },
+    [onThemeChange],
+  );
 
   const handleFontSizeChange = useCallback((sizeId: string) => {
     setSelectedFontSize(sizeId);
-    try { localStorage.setItem('assistant-font-size', sizeId); } catch { /* ignore */ }
+    try {
+      localStorage.setItem('assistant-font-size', sizeId);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const handleClearAllData = useCallback(async () => {
@@ -71,7 +90,9 @@ export function AssistantSettings({ mode, onModeChange, onThemeChange }: Assista
         localStorage.removeItem('kagami-mode');
         localStorage.removeItem('assistant-theme');
         localStorage.removeItem('assistant-font-size');
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       setCleared(true);
       setTimeout(() => {
         setCleared(false);
@@ -148,11 +169,13 @@ export function AssistantSettings({ mode, onModeChange, onThemeChange }: Assista
                   : 'border-slate-200 dark:border-slate-600 hover:border-sky-200'
               }`}
             >
-              <span className={`${size.sample} font-medium ${
-                selectedFontSize === size.id
-                  ? 'text-sky-700 dark:text-sky-300'
-                  : 'text-slate-700 dark:text-slate-200'
-              }`}>
+              <span
+                className={`${size.sample} font-medium ${
+                  selectedFontSize === size.id
+                    ? 'text-sky-700 dark:text-sky-300'
+                    : 'text-slate-700 dark:text-slate-200'
+                }`}
+              >
                 {size.label}
               </span>
               <span className="text-[10px] text-slate-400">{size.desc}</span>
@@ -180,7 +203,9 @@ export function AssistantSettings({ mode, onModeChange, onThemeChange }: Assista
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-rose-700 dark:text-rose-300">确认清空数据？</p>
+                <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
+                  确认清空数据？
+                </p>
                 <p className="text-xs text-rose-500/80 mt-1">
                   此操作将删除所有对话历史、记忆数据和个性化设置，且无法恢复。
                 </p>
@@ -259,9 +284,11 @@ function ModeCard({
     >
       <span className="text-2xl">{emoji}</span>
       <div>
-        <p className={`text-sm font-semibold ${
-          isActive ? 'text-sky-700 dark:text-sky-300' : 'text-slate-700 dark:text-slate-200'
-        }`}>
+        <p
+          className={`text-sm font-semibold ${
+            isActive ? 'text-sky-700 dark:text-sky-300' : 'text-slate-700 dark:text-slate-200'
+          }`}
+        >
           {label}
         </p>
         <p className="text-[10px] text-slate-400 mt-0.5">{desc}</p>

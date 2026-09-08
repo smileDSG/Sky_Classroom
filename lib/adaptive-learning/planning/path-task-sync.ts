@@ -5,7 +5,10 @@ import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
 import type { StorageProvider } from '@/lib/storage/storage-types';
 import type { LearningPath, LearningPathNode } from '@/lib/teaching/learning-path-types';
 
-export type PathTaskStatus = Extract<LearningTask['status'], 'in-progress' | 'completed' | 'skipped'>;
+export type PathTaskStatus = Extract<
+  LearningTask['status'],
+  'in-progress' | 'completed' | 'skipped'
+>;
 
 export interface PathTaskSyncResult {
   path: LearningPath;
@@ -28,9 +31,9 @@ function findKnowledgeState(states: KnowledgeState[], task: LearningTask): Knowl
   return (
     states.find((state) => state.nodeId === task.nodeId) ??
     states.find((state) =>
-      [state.nodeId, state.displayName].filter(Boolean).some((label) =>
-        sameKnowledgePoint(String(label), task.nodeId),
-      ),
+      [state.nodeId, state.displayName]
+        .filter(Boolean)
+        .some((label) => sameKnowledgePoint(String(label), task.nodeId)),
     ) ??
     null
   );

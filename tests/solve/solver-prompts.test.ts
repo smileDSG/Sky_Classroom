@@ -22,36 +22,22 @@ describe('buildSolverPrompt', () => {
   });
 
   test('includes image context when problemImage is provided', () => {
-    const prompt = buildSolverPrompt(
-      'universal',
-      '这道题是什么？',
-      'data:image/png;base64,abc123',
-    );
+    const prompt = buildSolverPrompt('universal', '这道题是什么？', 'data:image/png;base64,abc123');
     expect(prompt).toContain('图片');
   });
 
   test('includes user answer for grade mode', () => {
-    const prompt = buildSolverPrompt(
-      'grading',
-      '2+2=?',
-      undefined,
-      '4',
-      undefined,
-      '2+2=4',
-    );
+    const prompt = buildSolverPrompt('grading', '2+2=?', undefined, '4', undefined, '2+2=4');
     expect(prompt).toContain('4');
     expect(prompt).toContain('批改');
     expect(prompt).toContain('2+2=4');
   });
 
   test('includes knowledge points context when provided', () => {
-    const prompt = buildSolverPrompt(
-      'universal',
-      '求导: f(x) = x^2',
-      undefined,
-      undefined,
-      ['微积分', '导数'],
-    );
+    const prompt = buildSolverPrompt('universal', '求导: f(x) = x^2', undefined, undefined, [
+      '微积分',
+      '导数',
+    ]);
     expect(prompt).toContain('微积分');
   });
 
@@ -62,36 +48,18 @@ describe('buildSolverPrompt', () => {
   });
 
   test('grading mode uses standardAnswer parameter', () => {
-    const prompt = buildSolverPrompt(
-      'grading',
-      '2+2=?',
-      undefined,
-      '5',
-      undefined,
-      '等于4',
-    );
+    const prompt = buildSolverPrompt('grading', '2+2=?', undefined, '5', undefined, '等于4');
     expect(prompt).toContain('等于4');
     expect(prompt).toContain('5');
   });
 
   test('grading without standardAnswer shows 未提供', () => {
-    const prompt = buildSolverPrompt(
-      'grading',
-      '2+2=?',
-      undefined,
-      '5',
-    );
+    const prompt = buildSolverPrompt('grading', '2+2=?', undefined, '5');
     expect(prompt).toContain('标准答案：未提供');
   });
 
   test('empty knowledge points array does not add context', () => {
-    const prompt = buildSolverPrompt(
-      'universal',
-      'test',
-      undefined,
-      undefined,
-      [],
-    );
+    const prompt = buildSolverPrompt('universal', 'test', undefined, undefined, []);
     expect(prompt).not.toContain('附加信息');
   });
 
@@ -106,19 +74,43 @@ describe('buildSolverPrompt', () => {
       givens: [{ name: '高度', symbol: 'h', value: '5', unit: 'm' }],
       asks: ['求末速度'],
       formulas: ['v^2=2gh'],
-      diagram: { type: '斜面图', description: '小球沿斜面下滑', labels: ['A', 'B'], relations: ['A高于B'] },
+      diagram: {
+        type: '斜面图',
+        description: '小球沿斜面下滑',
+        labels: ['A', 'B'],
+        relations: ['A高于B'],
+      },
       ambiguities: [{ field: 'g', candidates: ['9.8', '10'], reason: '题图不清晰' }],
       materials: [],
       subQuestions: [],
       confidence: 0.88,
     };
 
-    const prompt = buildSolverPrompt('science', problemSpec.stem, 'data:image/png;base64,abc', undefined, undefined, undefined, undefined, problemSpec);
+    const prompt = buildSolverPrompt(
+      'science',
+      problemSpec.stem,
+      'data:image/png;base64,abc',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      problemSpec,
+    );
 
-    for (const expected of ['高中', '物理', '选择题', '小球从斜面顶端静止释放', 'A: 2 m/s', '高度(h)=5 m', '求末速度', 'v^2=2gh', '斜面图', '题图不清晰']) {
+    for (const expected of [
+      '高中',
+      '物理',
+      '选择题',
+      '小球从斜面顶端静止释放',
+      'A: 2 m/s',
+      '高度(h)=5 m',
+      '求末速度',
+      'v^2=2gh',
+      '斜面图',
+      '题图不清晰',
+    ]) {
       expect(prompt).toContain(expected);
     }
     expect(prompt).toContain('原始题图优先');
   });
-
 });

@@ -1,13 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-import type {
-  DomainLearnerProfile,
-  LearnerPreferences,
-} from '@/lib/adaptive-learning/contracts';
-import {
-  buildScheduledLearningPlan,
-} from '@/lib/adaptive-learning/planning/scheduled-learning-plan';
+import type { DomainLearnerProfile, LearnerPreferences } from '@/lib/adaptive-learning/contracts';
+import { buildScheduledLearningPlan } from '@/lib/adaptive-learning/planning/scheduled-learning-plan';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
 import { buildPlanningProjection } from '@/lib/adaptive-learning/profile/projection-builder';
 import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';

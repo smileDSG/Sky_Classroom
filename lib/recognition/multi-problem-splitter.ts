@@ -16,9 +16,7 @@ export interface ProblemRegion {
  * Split an image containing multiple problems into separate problem regions.
  * Uses horizontal projection profiling to detect gaps between problems.
  */
-export async function splitProblems(
-  imageBlob: Blob,
-): Promise<ProblemRegion[]> {
+export async function splitProblems(imageBlob: Blob): Promise<ProblemRegion[]> {
   const img = await createImageFromBlob(imageBlob);
   const canvas = document.createElement('canvas');
   canvas.width = img.width;
@@ -35,10 +33,12 @@ export async function splitProblems(
 
   if (regions.length <= 1) {
     // Single problem, return original image
-    return [{
-      imageData: imageBlob,
-      bounds: { x: 0, y: 0, width: img.width, height: img.height },
-    }];
+    return [
+      {
+        imageData: imageBlob,
+        bounds: { x: 0, y: 0, width: img.width, height: img.height },
+      },
+    ];
   }
 
   log.debug(`Split image into ${regions.length} problem regions`);
@@ -54,8 +54,14 @@ export async function splitProblems(
 
     regionCtx.drawImage(
       canvas,
-      0, region.y, img.width, region.height,
-      0, 0, img.width, region.height,
+      0,
+      region.y,
+      img.width,
+      region.height,
+      0,
+      0,
+      img.width,
+      region.height,
     );
 
     const blob = await new Promise<Blob>((resolve) => {
@@ -80,11 +86,7 @@ function createImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
   });
 }
 
-function computeRowDensity(
-  imageData: ImageData,
-  width: number,
-  height: number,
-): number[] {
+function computeRowDensity(imageData: ImageData, width: number, height: number): number[] {
   const data = imageData.data;
   const densities: number[] = [];
   const threshold = 240;
@@ -106,8 +108,8 @@ function findContentRegions(
   rowDensity: number[],
   height: number,
 ): Array<{ y: number; height: number }> {
-  const minDensity = 0.02;   // 2% dark pixels threshold
-  const minGap = 30;          // minimum gap between problems (pixels)
+  const minDensity = 0.02; // 2% dark pixels threshold
+  const minGap = 30; // minimum gap between problems (pixels)
   const minRegionHeight = 50; // minimum problem height
 
   const regions: Array<{ y: number; height: number }> = [];

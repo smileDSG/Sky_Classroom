@@ -248,7 +248,8 @@ function StreamingOutlineVisualizer({
 }: {
   outlines: SceneOutline[];
   onExpand?: () => void;
-}) {const isInteractive = !!onExpand;
+}) {
+  const isInteractive = !!onExpand;
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!isInteractive) return;

@@ -31,29 +31,20 @@ import { apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 export async function validateBody<T extends z.ZodType>(
   req: Request,
   schema: T,
-): Promise<
-  | { success: true; data: z.infer<T> }
-  | { success: false; response: NextResponse }
-> {
+): Promise<{ success: true; data: z.infer<T> } | { success: false; response: NextResponse }> {
   let body: unknown;
   try {
     body = await req.json();
   } catch {
     return {
       success: false,
-      response: apiError(
-        API_ERROR_CODES.INVALID_REQUEST,
-        400,
-        'Invalid JSON body',
-      ),
+      response: apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid JSON body'),
     };
   }
 
   const result = schema.safeParse(body);
   if (!result.success) {
-    const errors = result.error.issues.map(
-      (issue) => `${issue.path.join('.')}: ${issue.message}`,
-    );
+    const errors = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
     return {
       success: false,
       response: apiError(
@@ -77,10 +68,7 @@ export async function validateFormData<T extends z.ZodType>(
   req: Request,
   schema: T,
   fields: string[],
-): Promise<
-  | { success: true; data: z.infer<T> }
-  | { success: false; response: NextResponse }
-> {
+): Promise<{ success: true; data: z.infer<T> } | { success: false; response: NextResponse }> {
   const formData = await req.formData();
   const obj: Record<string, unknown> = {};
   for (const field of fields) {
@@ -89,9 +77,7 @@ export async function validateFormData<T extends z.ZodType>(
 
   const result = schema.safeParse(obj);
   if (!result.success) {
-    const errors = result.error.issues.map(
-      (issue) => `${issue.path.join('.')}: ${issue.message}`,
-    );
+    const errors = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
     return {
       success: false,
       response: apiError(

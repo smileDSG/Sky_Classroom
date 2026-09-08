@@ -71,8 +71,7 @@ export async function buildPathGenerationContext(userId: string): Promise<PathGe
 
   // Use profile's recent quiz summary or compute fresh fallback
   const quizSummary =
-    profile.recentQuizPerformance ??
-    (await analyzeQuizPerformance(userId, { recentDays: 7 }));
+    profile.recentQuizPerformance ?? (await analyzeQuizPerformance(userId, { recentDays: 7 }));
 
   return {
     profile,

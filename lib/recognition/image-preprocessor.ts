@@ -11,8 +11,8 @@ export interface PreprocessOptions {
   crop?: boolean;
   removeShadow?: boolean;
   enhance?: boolean;
-  brightness?: number;   // -100 to 100
-  contrast?: number;     // -100 to 100
+  brightness?: number; // -100 to 100
+  contrast?: number; // -100 to 100
 }
 
 /**
@@ -75,7 +75,12 @@ function createImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
   });
 }
 
-interface ContentBounds { x: number; y: number; width: number; height: number; }
+interface ContentBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 function detectContentBounds(
   ctx: CanvasRenderingContext2D,
@@ -86,7 +91,10 @@ function detectContentBounds(
   const data = imageData.data;
   const threshold = 240; // near-white = background
 
-  let minX = width, minY = height, maxX = 0, maxY = 0;
+  let minX = width,
+    minY = height,
+    maxX = 0,
+    maxY = 0;
   const step = 4; // sample every 4th pixel for performance
 
   for (let y = 0; y < height; y += step) {

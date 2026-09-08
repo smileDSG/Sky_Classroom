@@ -10,10 +10,10 @@ export interface GraphNode {
   id: string;
   name: string;
   category: string;
-  mastery: number;        // 0–100
+  mastery: number; // 0–100
   problemCount: number;
   mistakeCount: number;
-  children: string[];     // child knowledge-point IDs
+  children: string[]; // child knowledge-point IDs
   /** Average review progress (0-1), for tooltip display */
   reviewProgress: number;
 }
@@ -44,6 +44,6 @@ export interface MasterySummary {
 export interface LearningRecommendation {
   knowledgePoint: string;
   currentMastery: number;
-  suggestedPractice: number;  // number of practice problems recommended
+  suggestedPractice: number; // number of practice problems recommended
   priority: 'high' | 'medium' | 'low';
 }

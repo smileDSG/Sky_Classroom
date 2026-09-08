@@ -7,7 +7,11 @@
  */
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { combinePrompts } from '@/lib/prompts/composability';
-import { getVersionedPrompt, switchPromptVersion, listAvailableVersions } from '@/lib/prompts/version-manager';
+import {
+  getVersionedPrompt,
+  switchPromptVersion,
+  listAvailableVersions,
+} from '@/lib/prompts/version-manager';
 
 // ─── Hot-reload simulation ───
 
@@ -163,29 +167,23 @@ describe('P6-001 Test 7: 提示词热更新', () => {
 
   describe('prompt composition with hot-reload', () => {
     test('combinePrompts works with updated templates', () => {
-      const system = combinePrompts(
-        ['You are a teacher.'],
-        { subject: 'Math' },
-      );
+      const system = combinePrompts(['You are a teacher.'], { subject: 'Math' });
 
       expect(system).toContain('You are a teacher.');
     });
 
     test('combinePrompts replaces variables', () => {
-      const result = combinePrompts(
-        ['Subject: {{subject}}, Grade: {{grade}}'],
-        { subject: 'Physics', grade: '10' },
-      );
+      const result = combinePrompts(['Subject: {{subject}}, Grade: {{grade}}'], {
+        subject: 'Physics',
+        grade: '10',
+      });
 
       expect(result).toContain('Subject: Physics');
       expect(result).toContain('Grade: 10');
     });
 
     test('combinePrompts handles missing variables gracefully', () => {
-      const result = combinePrompts(
-        ['Hello {{name}}'],
-        {},
-      );
+      const result = combinePrompts(['Hello {{name}}'], {});
 
       expect(result).toBe('Hello {{name}}');
     });

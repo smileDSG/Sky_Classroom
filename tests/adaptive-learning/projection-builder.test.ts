@@ -174,7 +174,10 @@ describe('buildPlanningProjection', () => {
     });
 
     expect(projection.data.planningMode).toBe('mastery');
-    expect(projection.data.activeDomain.targetNodeIds).toEqual(['functions-basic', 'derivative-concept']);
+    expect(projection.data.activeDomain.targetNodeIds).toEqual([
+      'functions-basic',
+      'derivative-concept',
+    ]);
     expect(projection.data.activeDomain.horizonDays).toBe(30);
   });
 });

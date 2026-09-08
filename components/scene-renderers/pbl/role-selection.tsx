@@ -30,7 +30,9 @@ export function PBLRoleSelection({ projectInfo, agents, onSelectRole }: PBLRoleS
         </p>
 
         <div className="mt-8 w-full max-w-[680px] sm:mt-12">
-          <h2 className="text-xl font-bold text-slate-950 dark:text-slate-50 sm:text-2xl">选择你的角色</h2>
+          <h2 className="text-xl font-bold text-slate-950 dark:text-slate-50 sm:text-2xl">
+            选择你的角色
+          </h2>
           <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 sm:mt-4">
             选择一个角色开始协作项目
           </p>

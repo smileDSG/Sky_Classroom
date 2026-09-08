@@ -28,10 +28,7 @@ export async function POST(
     // Get job data
     const job = await readTeachingJob(jobId);
     if (!job) {
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
     if (job.userId !== userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -68,10 +65,7 @@ export async function POST(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Generate share token failed:', error);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -127,10 +121,7 @@ export async function GET(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Get share info failed:', error);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

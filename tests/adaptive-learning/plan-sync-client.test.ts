@@ -62,7 +62,9 @@ describe('completeLearningPlanTaskFromEvidence', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(completeLearningPlanTaskFromEvidence(['hs-physics-electromagnetic-induction'])).resolves.toBe(false);
+    await expect(
+      completeLearningPlanTaskFromEvidence(['hs-physics-electromagnetic-induction']),
+    ).resolves.toBe(false);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

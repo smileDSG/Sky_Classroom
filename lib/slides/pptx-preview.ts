@@ -15,7 +15,16 @@ const PREVIEW_BASE_DIR = path.join(process.cwd(), 'public', 'temp', 'preview');
 const PREVIEW_TTL_MS = 120 * 60 * 1000; // 2 hours
 
 const PYTHON_PATHS = [
-  path.join(os.homedir(), 'AppData', 'Local', 'hermes', 'hermes-agent', 'venv', 'Scripts', 'python.exe'),
+  path.join(
+    os.homedir(),
+    'AppData',
+    'Local',
+    'hermes',
+    'hermes-agent',
+    'venv',
+    'Scripts',
+    'python.exe',
+  ),
   path.join(process.cwd(), '.venv', 'Scripts', 'python.exe'),
   path.join(process.cwd(), '.venv', 'bin', 'python'),
   'python3',
@@ -32,7 +41,9 @@ async function findPython(): Promise<string | null> {
       await new Promise<void>((resolve, reject) => {
         const proc = spawn(p, ['-c', 'import pptx, fitz; print(pptx.__version__)']);
         let stdout = '';
-        proc.stdout.on('data', (d) => { stdout += d; });
+        proc.stdout.on('data', (d) => {
+          stdout += d;
+        });
         proc.on('close', (code) => {
           if (code === 0 && stdout.includes('1.')) resolve();
           else reject();
@@ -89,7 +100,12 @@ export async function generatePreviewFromPptx(
       return { success: false, previewId: '', slideImages: [], error: 'Invalid pptxUrl' };
     }
     if (!fs.existsSync(absPptxPath)) {
-      return { success: false, previewId: '', slideImages: [], error: `PPTX not found: ${pptxUrl}` };
+      return {
+        success: false,
+        previewId: '',
+        slideImages: [],
+        error: `PPTX not found: ${pptxUrl}`,
+      };
     }
 
     const previewId = existingPreviewId || randomUUID().replace(/-/g, '').slice(0, 16);
@@ -118,12 +134,22 @@ export async function generatePreviewFromPptx(
 
     const pythonPath = await findPython();
     if (!pythonPath) {
-      return { success: false, previewId: '', slideImages: [], error: 'Python with pptx not available' };
+      return {
+        success: false,
+        previewId: '',
+        slideImages: [],
+        error: 'Python with pptx not available',
+      };
     }
 
     const scriptPath = path.join(process.cwd(), 'scripts', 'pptx-to-images.py');
     if (!fs.existsSync(scriptPath)) {
-      return { success: false, previewId: '', slideImages: [], error: 'pptx-to-images script not found' };
+      return {
+        success: false,
+        previewId: '',
+        slideImages: [],
+        error: 'pptx-to-images script not found',
+      };
     }
 
     // Resolve optional sidecar path
@@ -157,8 +183,12 @@ export async function generatePreviewFromPptx(
         setTimeout(() => proc.kill('SIGKILL'), 5000);
       }, PREVIEW_SPAWN_TIMEOUT_MS);
 
-      proc.stdout.on('data', (d) => { stdout += d; });
-      proc.stderr.on('data', (d) => { stderr += d; });
+      proc.stdout.on('data', (d) => {
+        stdout += d;
+      });
+      proc.stderr.on('data', (d) => {
+        stderr += d;
+      });
 
       proc.on('close', (code, signal) => {
         clearTimeout(timeoutId);
@@ -195,6 +225,11 @@ export async function generatePreviewFromPptx(
     return { success: true, previewId, slideImages };
   } catch (err: any) {
     log.error('PPTX preview generation failed:', err);
-    return { success: false, previewId: '', slideImages: [], error: err.message || 'Preview generation failed' };
+    return {
+      success: false,
+      previewId: '',
+      slideImages: [],
+      error: err.message || 'Preview generation failed',
+    };
   }
 }

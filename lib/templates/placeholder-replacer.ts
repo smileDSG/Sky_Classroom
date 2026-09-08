@@ -4,20 +4,14 @@ export interface PlaceholderValues {
   [placeholder: string]: string;
 }
 
-export function replacePlaceholders(
-  page: TemplatePage,
-  values: PlaceholderValues,
-): TemplatePage {
+export function replacePlaceholders(page: TemplatePage, values: PlaceholderValues): TemplatePage {
   return {
     ...page,
     elements: page.elements.map((el) => replaceInElement(el, values)),
   };
 }
 
-function replaceInElement(
-  el: TemplateElement,
-  values: PlaceholderValues,
-): TemplateElement {
+function replaceInElement(el: TemplateElement, values: PlaceholderValues): TemplateElement {
   if (!el.content?.placeholder) return el;
 
   const placeholder = el.content.placeholder;
@@ -26,9 +20,7 @@ function replaceInElement(
   if (newValue === undefined) return el;
 
   // If value already contains HTML tags, use it directly; otherwise wrap in <p>
-  const text = newValue.trim().startsWith('<')
-    ? newValue
-    : `<p>${escapeHtml(newValue)}</p>`;
+  const text = newValue.trim().startsWith('<') ? newValue : `<p>${escapeHtml(newValue)}</p>`;
 
   return {
     ...el,
@@ -70,8 +62,7 @@ export function extractPlaceholderValues(
   if (content.chapter_desc) values.chapter_desc = String(content.chapter_desc);
   if (content.conclusion) values.conclusion = String(content.conclusion);
   if (content.formula_main) values.formula_main = String(content.formula_main);
-  if (content.formula_derivation)
-    values.formula_derivation = String(content.formula_derivation);
+  if (content.formula_derivation) values.formula_derivation = String(content.formula_derivation);
   if (content.table_summary) values.table_summary = String(content.table_summary);
   if (content.image_url) values.image_url = String(content.image_url);
   if (content.image_caption) values.image_caption = String(content.image_caption);
@@ -106,14 +97,13 @@ export function extractPlaceholderValues(
       if (cards.length > 0 && !values.body) {
         // Merge cards into body HTML for text.page
         values.body = cards
-          .map(
-            (c) =>
-              `<p><strong>${escapeHtml(c.title)}</strong></p><p>${escapeHtml(c.desc)}</p>`,
-          )
+          .map((c) => `<p><strong>${escapeHtml(c.title)}</strong></p><p>${escapeHtml(c.desc)}</p>`)
           .join('');
       }
       if (content.summary && !values.body) {
-        values.body = (values.body || '') + `<p style="margin-top:16px"><em>${escapeHtml(String(content.summary))}</em></p>`;
+        values.body =
+          (values.body || '') +
+          `<p style="margin-top:16px"><em>${escapeHtml(String(content.summary))}</em></p>`;
       }
       // Also fill card_1..4 placeholders for cards.page fallback
       for (let i = 0; i < Math.min(cards.length, 4); i++) {
@@ -218,7 +208,8 @@ export function extractPlaceholderValues(
 
     case 'sidebar': {
       if (!values.left_body) values.left_body = content.body ? String(content.body) : '';
-      if (!values.right_body) values.right_body = content.main_body ? String(content.main_body) : '';
+      if (!values.right_body)
+        values.right_body = content.main_body ? String(content.main_body) : '';
       break;
     }
 

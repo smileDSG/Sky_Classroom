@@ -20,36 +20,24 @@ export async function GET(
     // Find share token
     const shareInfo = shareTokens.get(token);
     if (!shareInfo) {
-      return NextResponse.json(
-        { error: 'Share link not found or expired' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Share link not found or expired' }, { status: 404 });
     }
 
     // Check if token is expired (7 days)
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     if (shareInfo.createdAt < sevenDaysAgo) {
       shareTokens.delete(token);
-      return NextResponse.json(
-        { error: 'Share link has expired' },
-        { status: 410 },
-      );
+      return NextResponse.json({ error: 'Share link has expired' }, { status: 410 });
     }
 
     // Get job data
     const job = await readTeachingJob(shareInfo.jobId);
     if (!job) {
-      return NextResponse.json(
-        { error: 'Teaching job not found' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Teaching job not found' }, { status: 404 });
     }
 
     if (!job.plan || !job.sections) {
-      return NextResponse.json(
-        { error: 'Teaching job not completed' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Teaching job not completed' }, { status: 400 });
     }
 
     // Get user info (simplified - in production, fetch from user database)
@@ -68,9 +56,6 @@ export async function GET(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Get shared teaching failed:', error);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

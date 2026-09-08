@@ -114,9 +114,9 @@ export async function runPhotoSolverEvaluation(
           ? 'failed'
           : answer.needsHumanReview
             ? 'human-review'
-          : (testCase.shouldReject ? answer.rejectionAccuracy === 1 : answer.answerMatch === 1)
-            ? 'passed'
-            : 'failed';
+            : (testCase.shouldReject ? answer.rejectionAccuracy === 1 : answer.answerMatch === 1)
+              ? 'passed'
+              : 'failed';
       scores.push({
         caseId: testCase.id,
         status,

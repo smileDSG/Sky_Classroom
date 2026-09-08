@@ -41,19 +41,31 @@ export async function POST(req: NextRequest) {
     };
 
     if (!pptxUrl) {
-      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing required field: pptxUrl');
+      return apiError(
+        API_ERROR_CODES.MISSING_REQUIRED_FIELD,
+        400,
+        'Missing required field: pptxUrl',
+      );
     }
 
     // Validate pptxUrl format: must start with /temp/pptx/ and end with .pptx
     // Decode first to prevent %2e%2e bypass, then normalize separators
     const decodedUrl = decodeURIComponent(pptxUrl).replace(/\\/g, '/').replace(/\/+/g, '/');
-    if (!decodedUrl.startsWith('/temp/pptx/') || !decodedUrl.endsWith('.pptx') || decodedUrl.includes('..')) {
+    if (
+      !decodedUrl.startsWith('/temp/pptx/') ||
+      !decodedUrl.endsWith('.pptx') ||
+      decodedUrl.includes('..')
+    ) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid pptxUrl format');
     }
 
     const result = await generatePreviewFromPptx(pptxUrl);
     if (!result.success) {
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, result.error || 'Preview generation failed');
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        result.error || 'Preview generation failed',
+      );
     }
 
     scheduleCleanup(path.join(PREVIEW_BASE_DIR, result.previewId));
@@ -67,7 +79,11 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     log.error('Preview generation failed:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, err.message || 'Preview generation failed');
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      err.message || 'Preview generation failed',
+    );
   }
 }
 

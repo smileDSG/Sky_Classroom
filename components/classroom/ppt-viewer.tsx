@@ -20,7 +20,15 @@ interface PptViewerProps {
   isFullscreen?: boolean;
 }
 
-export function PptViewer({ scenes, currentSlideIndex, onSlideChange, visible, onClose, onToggleFullscreen, isFullscreen }: PptViewerProps) {
+export function PptViewer({
+  scenes,
+  currentSlideIndex,
+  onSlideChange,
+  visible,
+  onClose,
+  onToggleFullscreen,
+  isFullscreen,
+}: PptViewerProps) {
   if (!visible) return null;
 
   const slideScenes = scenes.filter((s) => s.type === 'slide');
@@ -30,7 +38,9 @@ export function PptViewer({ scenes, currentSlideIndex, onSlideChange, visible, o
     <div
       className={cn(
         'flex flex-col bg-slate-50 dark:bg-black text-slate-800 dark:text-white transition-all duration-300',
-        isFullscreen ? 'fixed inset-0 z-[200]' : 'w-80 shrink-0 border-l border-sky-200/50 dark:border-slate-700',
+        isFullscreen
+          ? 'fixed inset-0 z-[200]'
+          : 'w-80 shrink-0 border-l border-sky-200/50 dark:border-slate-700',
       )}
     >
       {/* Header */}
@@ -38,11 +48,21 @@ export function PptViewer({ scenes, currentSlideIndex, onSlideChange, visible, o
         <span className="text-sm font-medium">Slides</span>
         <div className="flex items-center gap-1">
           {onToggleFullscreen && (
-            <Button variant="ghost" size="icon" className="w-7 h-7 text-slate-600 dark:text-white hover:bg-sky-100 dark:hover:bg-white/10" onClick={onToggleFullscreen}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-7 h-7 text-slate-600 dark:text-white hover:bg-sky-100 dark:hover:bg-white/10"
+              onClick={onToggleFullscreen}
+            >
               {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="w-7 h-7 text-slate-600 dark:text-white hover:bg-sky-100 dark:hover:bg-white/10" onClick={onClose}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-7 h-7 text-slate-600 dark:text-white hover:bg-sky-100 dark:hover:bg-white/10"
+            onClick={onClose}
+          >
             <X className="w-4 h-4" />
           </Button>
         </div>
@@ -53,8 +73,12 @@ export function PptViewer({ scenes, currentSlideIndex, onSlideChange, visible, o
         {activeSlide ? (
           <div className="w-full aspect-video bg-white dark:bg-slate-900 rounded-lg flex items-center justify-center text-center p-4 shadow-sm border border-sky-200/50 dark:border-slate-700">
             <div>
-              <h3 className="text-lg font-semibold mb-2 text-slate-800 dark:text-white">{activeSlide.title}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Slide {currentSlideIndex + 1} of {slideScenes.length}</p>
+              <h3 className="text-lg font-semibold mb-2 text-slate-800 dark:text-white">
+                {activeSlide.title}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Slide {currentSlideIndex + 1} of {slideScenes.length}
+              </p>
             </div>
           </div>
         ) : (

@@ -33,8 +33,22 @@ describe('P6-001 Test 16: 生成缓存', () => {
     });
 
     test('cache key includes scene type', () => {
-      const outline1: SceneOutline = { id: 's1', type: 'slide', title: 'A', description: '', keyPoints: [], order: 0 };
-      const outline2: SceneOutline = { id: 's1', type: 'quiz', title: 'A', description: '', keyPoints: [], order: 0 };
+      const outline1: SceneOutline = {
+        id: 's1',
+        type: 'slide',
+        title: 'A',
+        description: '',
+        keyPoints: [],
+        order: 0,
+      };
+      const outline2: SceneOutline = {
+        id: 's1',
+        type: 'quiz',
+        title: 'A',
+        description: '',
+        keyPoints: [],
+        order: 0,
+      };
 
       const key1 = generateCacheKey({ outline: outline1 } as UserRequirements);
       const key2 = generateCacheKey({ outline: outline2 } as UserRequirements);
@@ -117,7 +131,10 @@ describe('P6-001 Test 16: 生成缓存', () => {
 
     test('max size is respected', () => {
       for (let i = 0; i < 10; i++) {
-        cache.set({ topic: `T${i}`, grade: '初中' }, { elements: [], background: undefined, remark: '' });
+        cache.set(
+          { topic: `T${i}`, grade: '初中' },
+          { elements: [], background: undefined, remark: '' },
+        );
       }
 
       const stats = cache.getStats();
@@ -154,7 +171,10 @@ describe('P6-001 Test 16: 生成缓存', () => {
 
     test('clear resets all statistics', () => {
       const cache = new GenerationCache();
-      cache.set({ topic: 'Clear', grade: '初中' }, { elements: [], background: undefined, remark: '' });
+      cache.set(
+        { topic: 'Clear', grade: '初中' },
+        { elements: [], background: undefined, remark: '' },
+      );
       cache.clear();
 
       const stats = cache.getStats();

@@ -79,14 +79,21 @@ export async function generateQuizContent(
   const response = await aiCall(prompts.system, prompts.user);
 
   // Parse response — may be an array (legacy) or an object with questions + knowledgePoints
-  const parsed = parseJsonResponse<QuizQuestion[] | { questions: QuizQuestion[]; knowledgePoints?: string[] }>(response);
+  const parsed = parseJsonResponse<
+    QuizQuestion[] | { questions: QuizQuestion[]; knowledgePoints?: string[] }
+  >(response);
 
   let generatedQuestions: QuizQuestion[];
   let knowledgePoints: string[] | undefined;
 
   if (Array.isArray(parsed)) {
     generatedQuestions = parsed;
-  } else if (parsed && typeof parsed === 'object' && 'questions' in parsed && Array.isArray(parsed.questions)) {
+  } else if (
+    parsed &&
+    typeof parsed === 'object' &&
+    'questions' in parsed &&
+    Array.isArray(parsed.questions)
+  ) {
     generatedQuestions = parsed.questions;
     knowledgePoints = parsed.knowledgePoints;
   } else {

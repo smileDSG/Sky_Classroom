@@ -3,13 +3,28 @@
 import { useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  MousePointer2, Pencil, Eraser, Square, Minus,
-  Type, Highlighter, CircleDot,
-  Undo2, Redo2, ChevronUp, ChevronDown, Trash2,
+  MousePointer2,
+  Pencil,
+  Eraser,
+  Square,
+  Minus,
+  Type,
+  Highlighter,
+  CircleDot,
+  Undo2,
+  Redo2,
+  ChevronUp,
+  ChevronDown,
+  Trash2,
 } from 'lucide-react';
 import { useUserWhiteboardStore } from '@/lib/store/whiteboard-user';
 import type { WhiteboardTool, ShapeSubType, LineSubType } from '@/lib/types/whiteboard-tools';
-import { SHAPE_SUB_TYPES, LINE_SUB_TYPES, PEN_COLORS, PEN_WIDTHS } from '@/lib/types/whiteboard-tools';
+import {
+  SHAPE_SUB_TYPES,
+  LINE_SUB_TYPES,
+  PEN_COLORS,
+  PEN_WIDTHS,
+} from '@/lib/types/whiteboard-tools';
 
 // ── Tool definitions ──────────────────────────────────────────────────
 
@@ -301,9 +316,7 @@ export function WhiteboardToolbar() {
                   type="button"
                   onClick={() => handleToolClick(tool)}
                   className={`relative flex flex-col items-center justify-center w-11 h-11 rounded-xl transition-all hover:bg-white/10 ${
-                    activeTool === tool
-                      ? 'bg-indigo-500/20 text-indigo-400'
-                      : 'text-gray-400'
+                    activeTool === tool ? 'bg-indigo-500/20 text-indigo-400' : 'text-gray-400'
                   }`}
                   title={label}
                 >

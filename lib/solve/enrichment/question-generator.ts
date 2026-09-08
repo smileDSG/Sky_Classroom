@@ -151,8 +151,9 @@ export async function generateQuestions(
   const gradeConfig = GRADE_MAP[gradeLevel];
   if (!subjectConfig) return [];
 
-  const subjectContext = SUBJECT_PROMPT_CONTEXT[subject]
-    ?? `请生成${gradeConfig?.label ?? ''}${subjectConfig.label}题目。`;
+  const subjectContext =
+    SUBJECT_PROMPT_CONTEXT[subject] ??
+    `请生成${gradeConfig?.label ?? ''}${subjectConfig.label}题目。`;
 
   const batches = Math.ceil(count / 5);
   const allQuestions: ExtractedQuestion[] = [];
@@ -186,7 +187,9 @@ export async function generateQuestions(
         { retries: 2, timeoutMs: 60000 },
       );
 
-      log.info(`[Generator] Raw response length: ${result.text?.length ?? 0}, first 200: ${result.text?.slice(0, 200) ?? '(empty)'}`);
+      log.info(
+        `[Generator] Raw response length: ${result.text?.length ?? 0}, first 200: ${result.text?.slice(0, 200) ?? '(empty)'}`,
+      );
 
       let parsed = parseJsonResponse<GenerationResponse>(result.text);
 
@@ -196,17 +199,23 @@ export async function generateQuestions(
         const jsonEnd = result.text.lastIndexOf('}');
         if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
           try {
-            const candidate = JSON.parse(result.text.slice(jsonStart, jsonEnd + 1)) as GenerationResponse;
+            const candidate = JSON.parse(
+              result.text.slice(jsonStart, jsonEnd + 1),
+            ) as GenerationResponse;
             if (candidate?.questions?.length) {
               parsed = candidate;
               log.info('[Generator] Batch recovered via regex fallback');
             }
-          } catch { /* not valid JSON — will be caught by next guard */ }
+          } catch {
+            /* not valid JSON — will be caught by next guard */
+          }
         }
       }
 
       if (!parsed?.questions?.length) {
-        log.warn(`[Generator] Batch ${batch + 1}: no valid questions — raw text: ${result.text?.slice(0, 500) ?? '(null)'}`);
+        log.warn(
+          `[Generator] Batch ${batch + 1}: no valid questions — raw text: ${result.text?.slice(0, 500) ?? '(null)'}`,
+        );
         continue;
       }
 
@@ -237,7 +246,9 @@ export async function generateQuestions(
     }
   }
 
-  log.info(`[Generator] Total: ${allQuestions.length} questions generated for ${subject}/${gradeLevel}`);
+  log.info(
+    `[Generator] Total: ${allQuestions.length} questions generated for ${subject}/${gradeLevel}`,
+  );
   return allQuestions;
 }
 

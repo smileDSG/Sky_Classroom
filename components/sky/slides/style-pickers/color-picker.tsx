@@ -26,8 +26,18 @@ export function ColorPicker({ selectedPaletteId, onSelect }: ColorPickerProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-1.5">
-        <svg className="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+        <svg
+          className="h-3.5 w-3.5 text-slate-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+          />
         </svg>
         <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
           配色方案
@@ -40,7 +50,9 @@ export function ColorPicker({ selectedPaletteId, onSelect }: ColorPickerProps) {
           const isSelected = selectedPaletteId === id;
           const coverBg = palette.coverBg.startsWith('#') ? palette.coverBg : `#${palette.coverBg}`;
           const accent = palette.accent.startsWith('#') ? palette.accent : `#${palette.accent}`;
-          const contentBg = palette.contentBg.startsWith('#') ? palette.contentBg : `#${palette.contentBg}`;
+          const contentBg = palette.contentBg.startsWith('#')
+            ? palette.contentBg
+            : `#${palette.contentBg}`;
 
           return (
             <button
@@ -81,7 +93,9 @@ export function ColorPicker({ selectedPaletteId, onSelect }: ColorPickerProps) {
               </div>
               <span
                 className={`text-[10px] font-semibold truncate w-full text-center ${
-                  isSelected ? 'text-slate-700 dark:text-gray-200' : 'text-slate-500 dark:text-gray-500'
+                  isSelected
+                    ? 'text-slate-700 dark:text-gray-200'
+                    : 'text-slate-500 dark:text-gray-500'
                 }`}
               >
                 {meta.label}

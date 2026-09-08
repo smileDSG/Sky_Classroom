@@ -22,7 +22,8 @@ export type ImportPhase =
 export function useImportClassroom(onSuccess?: () => void) {
   const [importing, setImporting] = useState(false);
   const [phase, setPhase] = useState<ImportPhase>('idle');
-  const fileInputRef = useRef<HTMLInputElement>(null);const triggerFileSelect = useCallback(() => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
@@ -235,9 +236,14 @@ export function useImportClassroom(onSuccess?: () => void) {
       } catch (error) {
         log.error('Classroom ZIP import failed:', error);
         const isQuotaError = error instanceof DOMException && error.name === 'QuotaExceededError';
-        toast.error(isQuotaError ? '导入失败：浏览器存储空间已满，请清理旧课堂后重试。' : '无效文件，请选择有效的 .maic.zip 文件。', {
-          id: toastId,
-        });
+        toast.error(
+          isQuotaError
+            ? '导入失败：浏览器存储空间已满，请清理旧课堂后重试。'
+            : '无效文件，请选择有效的 .maic.zip 文件。',
+          {
+            id: toastId,
+          },
+        );
       } finally {
         setImporting(false);
         setPhase('idle');

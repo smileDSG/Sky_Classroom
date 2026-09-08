@@ -42,7 +42,10 @@ export function getAllTemplates(): CourseTemplate[] {
 }
 
 /** Convert a template to course requirements (for generation) */
-export function templateToGenerationParams(template: CourseTemplate, locale = 'zh-CN'): Record<string, unknown> {
+export function templateToGenerationParams(
+  template: CourseTemplate,
+  locale = 'zh-CN',
+): Record<string, unknown> {
   return {
     requirement: `${resolveLocale(template.name as LocalizedString, locale)} — ${resolveLocale(template.description as LocalizedString, locale)}`,
     subject: template.subject,

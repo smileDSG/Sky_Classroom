@@ -9,11 +9,11 @@ import type { StorageProvider, StorageEntry } from '../storage-types';
 
 /** Error type classification */
 export type ErrorType =
-  | 'calculation'     // Arithmetic / algebraic mistake
-  | 'concept'         // Misunderstood concept
-  | 'reasoning'       // Logical reasoning error
-  | 'reading'         // Misread the question
-  | 'careless';       // Simple oversight
+  | 'calculation' // Arithmetic / algebraic mistake
+  | 'concept' // Misunderstood concept
+  | 'reasoning' // Logical reasoning error
+  | 'reading' // Misread the question
+  | 'careless'; // Simple oversight
 
 /** Ebbinghaus review intervals (in days) */
 export const EBBINGHAUS_INTERVALS = [1, 2, 4, 7, 15, 30];
@@ -65,7 +65,10 @@ function calcNextReview(entry: MistakeBookEntry): { nextReview: number; masteryL
   const intervalIndex = Math.min(entry.reviewCount, EBBINGHAUS_INTERVALS.length - 1);
   const daysUntilReview = EBBINGHAUS_INTERVALS[intervalIndex];
   const nextReview = Date.now() + daysUntilReview * 24 * 60 * 60 * 1000;
-  const masteryLevel = entry.reviewCount >= EBBINGHAUS_INTERVALS.length ? EBBINGHAUS_INTERVALS.length : entry.reviewCount;
+  const masteryLevel =
+    entry.reviewCount >= EBBINGHAUS_INTERVALS.length
+      ? EBBINGHAUS_INTERVALS.length
+      : entry.reviewCount;
   return { nextReview, masteryLevel };
 }
 
@@ -162,13 +165,16 @@ export function createMistakeBookDAO(storage: StorageProvider) {
     },
 
     /** List mistakes with optional filtering */
-    async list(userId: string, opts?: {
-      errorType?: ErrorType;
-      reviewed?: boolean;
-      masteryBelow?: number;
-      page?: number;
-      pageSize?: number;
-    }): Promise<{ items: MistakeBookEntry[]; total: number }> {
+    async list(
+      userId: string,
+      opts?: {
+        errorType?: ErrorType;
+        reviewed?: boolean;
+        masteryBelow?: number;
+        page?: number;
+        pageSize?: number;
+      },
+    ): Promise<{ items: MistakeBookEntry[]; total: number }> {
       if (!userId) throw new Error('Authenticated userId is required');
       const all = await storage.getAll<MistakeBookEntry>(TABLE);
       let filtered = all.filter((entry) => entry.data.userId === userId);
@@ -203,10 +209,7 @@ export function createMistakeBookDAO(storage: StorageProvider) {
         .filter((e) => {
           const d = e.data;
           return (
-            d.userId === userId &&
-            !d.reviewed &&
-            d.nextReview !== undefined &&
-            d.nextReview <= now
+            d.userId === userId && !d.reviewed && d.nextReview !== undefined && d.nextReview <= now
           );
         })
         .sort((a, b) => (a.data.nextReview ?? 0) - (b.data.nextReview ?? 0))
@@ -218,9 +221,10 @@ export function createMistakeBookDAO(storage: StorageProvider) {
       if (!userId) throw new Error('Authenticated userId is required');
       const all = await storage.getAll<MistakeBookEntry>(TABLE);
       return all
-        .filter((e) =>
-          e.data.userId === userId &&
-          e.data.knowledgePoints.some((kp) => kp.toLowerCase().includes(point.toLowerCase())),
+        .filter(
+          (e) =>
+            e.data.userId === userId &&
+            e.data.knowledgePoints.some((kp) => kp.toLowerCase().includes(point.toLowerCase())),
         )
         .map((e) => e.data);
     },

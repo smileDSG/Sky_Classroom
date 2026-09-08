@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { replayAbilityResponses, type AbilityReplayResponse } from '@/lib/adaptive-learning/profile/ability-replay';
+import {
+  replayAbilityResponses,
+  type AbilityReplayResponse,
+} from '@/lib/adaptive-learning/profile/ability-replay';
 
 interface NormalizedAssistmentsRow extends AbilityReplayResponse {
   timestampMode: string;

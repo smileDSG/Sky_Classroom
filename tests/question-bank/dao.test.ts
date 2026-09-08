@@ -112,9 +112,30 @@ describe('QuestionBank DAO', () => {
     const { insertBatch } = await import('@/lib/question-bank/dao');
 
     const result = await insertBatch([
-      { subject: '数学', grade: '高一', difficulty: 'easy', questionType: 'fill', content: '2+2=?', answer: '4' },
-      { subject: '数学', grade: '高一', difficulty: 'medium', questionType: 'choice', content: '3*3=?', answer: '9' },
-      { subject: '英语', grade: '高二', difficulty: 'hard', questionType: 'solve', content: 'Translate: hello', answer: '你好' },
+      {
+        subject: '数学',
+        grade: '高一',
+        difficulty: 'easy',
+        questionType: 'fill',
+        content: '2+2=?',
+        answer: '4',
+      },
+      {
+        subject: '数学',
+        grade: '高一',
+        difficulty: 'medium',
+        questionType: 'choice',
+        content: '3*3=?',
+        answer: '9',
+      },
+      {
+        subject: '英语',
+        grade: '高二',
+        difficulty: 'hard',
+        questionType: 'solve',
+        content: 'Translate: hello',
+        answer: '你好',
+      },
     ]);
 
     expect(result.total).toBe(3);
@@ -130,8 +151,22 @@ describe('QuestionBank DAO', () => {
     const { insertBatch } = await import('@/lib/question-bank/dao');
 
     const result = await insertBatch([
-      { subject: '数学', grade: '高一', difficulty: 'easy', questionType: 'fill', content: '1+1=?', answer: '2' },
-      { subject: '数学', grade: '高一', difficulty: 'easy', questionType: 'fill', content: '', answer: '' }, // invalid
+      {
+        subject: '数学',
+        grade: '高一',
+        difficulty: 'easy',
+        questionType: 'fill',
+        content: '1+1=?',
+        answer: '2',
+      },
+      {
+        subject: '数学',
+        grade: '高一',
+        difficulty: 'easy',
+        questionType: 'fill',
+        content: '',
+        answer: '',
+      }, // invalid
     ]);
 
     expect(result.total).toBe(2);
@@ -299,9 +334,30 @@ describe('QuestionBank DAO', () => {
     const { insertBatch } = await import('@/lib/question-bank/dao');
 
     const result = await insertBatch([
-      { subject: '数学', grade: '高一', difficulty: 'easy', questionType: 'fill', content: 'same', answer: 'x' },
-      { subject: '数学', grade: '高一', difficulty: 'easy', questionType: 'fill', content: 'same', answer: 'x' },
-      { subject: '数学', grade: '高一', difficulty: 'easy', questionType: 'fill', content: 'same', answer: 'x' },
+      {
+        subject: '数学',
+        grade: '高一',
+        difficulty: 'easy',
+        questionType: 'fill',
+        content: 'same',
+        answer: 'x',
+      },
+      {
+        subject: '数学',
+        grade: '高一',
+        difficulty: 'easy',
+        questionType: 'fill',
+        content: 'same',
+        answer: 'x',
+      },
+      {
+        subject: '数学',
+        grade: '高一',
+        difficulty: 'easy',
+        questionType: 'fill',
+        content: 'same',
+        answer: 'x',
+      },
     ]);
 
     expect(result.inserted).toBe(1);

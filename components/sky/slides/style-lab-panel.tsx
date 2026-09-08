@@ -18,11 +18,10 @@ interface StyleLabPanelProps {
 
 function findPaletteId(colors: DesignDNA['colors']): string {
   for (const [id, palette] of Object.entries(COLOR_PALETTES)) {
-    const match = (
+    const match =
       palette.coverBg.toUpperCase() === colors.coverBg.toUpperCase() &&
       palette.contentBg.toUpperCase() === colors.contentBg.toUpperCase() &&
-      palette.accent.toUpperCase() === colors.accent.toUpperCase()
-    );
+      palette.accent.toUpperCase() === colors.accent.toUpperCase();
     if (match) return id;
   }
   return 'midnight-executive';
@@ -49,7 +48,10 @@ export function StyleLabPanel({
     <div className="w-full">
       <div className="flex flex-col gap-5">
         <ColorPicker selectedPaletteId={currentPaletteId} onSelect={onUpdatePalette} />
-        <LayoutPicker selectedLayout={draftDNA.layoutType || 'hero-left'} onSelect={onUpdateLayout} />
+        <LayoutPicker
+          selectedLayout={draftDNA.layoutType || 'hero-left'}
+          onSelect={onUpdateLayout}
+        />
         <FontPicker selectedFontId={currentFontId} onSelect={onUpdateFont} />
         <DensityPicker selectedDensity={draftDNA.decoration.density} onSelect={onUpdateDensity} />
       </div>

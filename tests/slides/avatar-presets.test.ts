@@ -4,7 +4,15 @@
 import { describe, it, expect } from 'vitest';
 import { AVATAR_PRESETS, getAvatarPresetById } from '@/lib/slides/avatar-presets';
 
-const VALID_STYLES = ['academic', 'friendly', 'humorous', 'curious', 'analytical', 'creative', 'organized'];
+const VALID_STYLES = [
+  'academic',
+  'friendly',
+  'humorous',
+  'curious',
+  'analytical',
+  'creative',
+  'organized',
+];
 
 describe('AVATAR_PRESETS', () => {
   it('has exactly 7 presets', () => {

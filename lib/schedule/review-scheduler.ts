@@ -52,9 +52,15 @@ export function buildReviewSchedule(mistakes: MistakeBookEntry[]): ReviewSchedul
       count: items.length,
     }));
 
-  const today: DailyReviewPlan | null = dueItems.length > 0
-    ? { date: new Date().toISOString().slice(0, 10), dayLabel: '今天', items: dueItems, count: dueItems.length }
-    : null;
+  const today: DailyReviewPlan | null =
+    dueItems.length > 0
+      ? {
+          date: new Date().toISOString().slice(0, 10),
+          dayLabel: '今天',
+          items: dueItems,
+          count: dueItems.length,
+        }
+      : null;
 
   const completed = mistakes.filter((m) => m.reviewed).length;
 
@@ -97,10 +103,7 @@ export function getMasteryProgress(mistakes: MistakeBookEntry[]): MasteryProgres
   const maxRounds = EBBINGHAUS_INTERVALS.length;
 
   // Sum up completed rounds per item (capped at maxRounds)
-  const completedRounds = mistakes.reduce(
-    (sum, m) => sum + Math.min(m.reviewCount, maxRounds),
-    0,
-  );
+  const completedRounds = mistakes.reduce((sum, m) => sum + Math.min(m.reviewCount, maxRounds), 0);
   const totalRounds = totalCount * maxRounds;
   const percentComplete = totalRounds > 0 ? Math.round((completedRounds / totalRounds) * 100) : 100;
 

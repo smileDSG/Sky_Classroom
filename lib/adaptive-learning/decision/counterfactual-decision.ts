@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
 import type { KnowledgeState } from '@/lib/adaptive-learning/contracts';
-import { interventionPlanSchema, type InterventionPlan } from '@/lib/adaptive-learning/data/intervention-decisions';
+import {
+  interventionPlanSchema,
+  type InterventionPlan,
+} from '@/lib/adaptive-learning/data/intervention-decisions';
 import type { LearnerDecision } from './learner-decision';
 import type { ProviderId } from '@/lib/types/provider';
 
@@ -116,7 +119,8 @@ async function tryLLMPlans(
             repeatedErrorCount: state.repeatedErrorCount,
           })),
           reflection: input.reflection ?? null,
-          requiredShape: '{"plans":[{"id","action","topic","difficulty","format","expectedEffects","risks","rationale"}]}',
+          requiredShape:
+            '{"plans":[{"id","action","topic","difficulty","format","expectedEffects","risks","rationale"}]}',
         }),
         temperature: 0.2,
         maxOutputTokens: 1800,
@@ -149,8 +153,7 @@ export async function generateCounterfactualDecision(
   const generated = await tryLLMPlans(input, fallbackPlans);
   const plans = filterPlans(generated.plans, input);
   const selected =
-    [...plans].sort((left, right) => (right.score ?? 0) - (left.score ?? 0))[0] ??
-    fallbackPlans[0];
+    [...plans].sort((left, right) => (right.score ?? 0) - (left.score ?? 0))[0] ?? fallbackPlans[0];
   if (!selected) throw new Error('Counterfactual decision produced no plan');
   return {
     stateSummary: `基线动作 ${input.baseline.action}，目标 ${input.explicitTopic?.trim() || input.baseline.topic || '当前知识点'}`,

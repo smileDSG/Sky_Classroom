@@ -103,18 +103,14 @@ export function TeachingHistoryPanel({
         <div
           className="px-5 pt-4 pb-3"
           style={{
-            background:
-              'linear-gradient(135deg, rgba(45, 212, 191, 0.08) 0%, transparent 100%)',
+            background: 'linear-gradient(135deg, rgba(45, 212, 191, 0.08) 0%, transparent 100%)',
             borderBottom: '1px solid var(--teaching-border)',
           }}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-[var(--teaching-primary)]" />
-              <h3
-                className="text-base font-semibold"
-                style={{ color: 'var(--teaching-text)' }}
-              >
+              <h3 className="text-base font-semibold" style={{ color: 'var(--teaching-text)' }}>
                 历史星图
               </h3>
             </div>
@@ -191,10 +187,7 @@ export function TeachingHistoryPanel({
                         border: '1px solid rgba(45, 212, 191, 0.15)',
                       }}
                     >
-                      <BookOpen
-                        className="h-4 w-4"
-                        style={{ color: 'var(--teaching-primary)' }}
-                      />
+                      <BookOpen className="h-4 w-4" style={{ color: 'var(--teaching-primary)' }} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p
@@ -250,17 +243,13 @@ export function TeachingHistoryPanel({
           }}
         >
           <AlertDialogHeader>
-            <AlertDialogTitle style={{ color: 'var(--teaching-text)' }}>
-              确认删除
-            </AlertDialogTitle>
+            <AlertDialogTitle style={{ color: 'var(--teaching-text)' }}>确认删除</AlertDialogTitle>
             <AlertDialogDescription style={{ color: 'var(--teaching-muted)' }}>
               删除后无法恢复，确定要删除这份教案吗？
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              className="border-[var(--teaching-border)] text-[var(--teaching-muted)] hover:bg-[var(--teaching-primary)]/10 hover:text-[var(--teaching-text)]"
-            >
+            <AlertDialogCancel className="border-[var(--teaching-border)] text-[var(--teaching-muted)] hover:bg-[var(--teaching-primary)]/10 hover:text-[var(--teaching-text)]">
               取消
             </AlertDialogCancel>
             <AlertDialogAction

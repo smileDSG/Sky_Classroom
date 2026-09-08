@@ -18,8 +18,8 @@ export function buildSystemPrompt(designDNA: DesignDNA, educationLevel?: string)
     decoration.density === 'sparse'
       ? '页面元素极少，大量留白，简洁克制。每页最多2-3个元素。标题+简短正文+1个装饰形状即可。'
       : decoration.density === 'rich'
-      ? '页面元素丰富充实，充分利用空间。每页可包含4-8个元素：标题+多段正文+多个形状装饰+表格/图表。'
-      : '页面元素均衡，适度留白。每页3-5个元素：标题+正文+2-3个装饰形状。';
+        ? '页面元素丰富充实，充分利用空间。每页可包含4-8个元素：标题+多段正文+多个形状装饰+表格/图表。'
+        : '页面元素均衡，适度留白。每页3-5个元素：标题+正文+2-3个装饰形状。';
 
   return `## 角色
 你是一位 pptxgenjs 渲染专家，将教学内容转换为幻灯片渲染指令。
@@ -122,15 +122,22 @@ function buildContentCompletenessHint(pageType: string, content: Record<string, 
   if (pageType === 'concept') {
     const cards = (content.cards as Array<{ title?: string; desc?: string }>) || [];
     if (cards.length > 0) {
-      hints.push(`本页有 ${cards.length} 个概念卡片(cards)，必须全部渲染为独立的文本块。每个卡片包含标题(title)和描述(desc)，不能只渲染卡片标题而忽略描述。`);
+      hints.push(
+        `本页有 ${cards.length} 个概念卡片(cards)，必须全部渲染为独立的文本块。每个卡片包含标题(title)和描述(desc)，不能只渲染卡片标题而忽略描述。`,
+      );
       cards.forEach((c, i) => hints.push(`  卡片${i + 1}: ${c.title || ''}`));
     }
     if (content.summary) hints.push(`本页有总结(summary)，必须在卡片下方渲染。`);
   } else if (pageType === 'case') {
-    const scenarios = (content.scenarios as Array<{ problem?: string; answer?: string; analysis?: string }>) || [];
+    const scenarios =
+      (content.scenarios as Array<{ problem?: string; answer?: string; analysis?: string }>) || [];
     if (scenarios.length > 0) {
-      hints.push(`本页有 ${scenarios.length} 个案例场景(scenarios)，必须全部渲染。每个场景包含问题(problem)和解答(answer)，不能只渲染标题。`);
-      scenarios.forEach((s, i) => hints.push(`  场景${i + 1}问题: ${(s.problem || '').slice(0, 40)}...`));
+      hints.push(
+        `本页有 ${scenarios.length} 个案例场景(scenarios)，必须全部渲染。每个场景包含问题(problem)和解答(answer)，不能只渲染标题。`,
+      );
+      scenarios.forEach((s, i) =>
+        hints.push(`  场景${i + 1}问题: ${(s.problem || '').slice(0, 40)}...`),
+      );
     }
     if (content.highlight) hints.push(`本页有高亮文本(highlight)，必须渲染。`);
   } else if (pageType === 'compare') {
@@ -145,25 +152,39 @@ function buildContentCompletenessHint(pageType: string, content: Record<string, 
   } else if (pageType === 'process') {
     const steps = (content.steps as Array<{ title?: string; desc?: string }>) || [];
     if (steps.length > 0) {
-      hints.push(`本页有 ${steps.length} 个流程步骤(steps)，必须全部渲染。每个步骤包含标题(title)和描述(desc)。`);
+      hints.push(
+        `本页有 ${steps.length} 个流程步骤(steps)，必须全部渲染。每个步骤包含标题(title)和描述(desc)。`,
+      );
       steps.forEach((s, i) => hints.push(`  步骤${i + 1}: ${s.title || ''}`));
     }
   } else if (pageType === 'summary') {
     const keyPoints = (content.keyPoints as string[]) || [];
-    if (keyPoints.length > 0) hints.push(`本页有 ${keyPoints.length} 个要点(keyPoints)，必须全部逐条渲染。`);
+    if (keyPoints.length > 0)
+      hints.push(`本页有 ${keyPoints.length} 个要点(keyPoints)，必须全部逐条渲染。`);
   } else if (pageType === 'table') {
     const headers = (content.headers as string[]) || [];
     const rows = (content.rows as unknown[]) || [];
     if (headers.length > 0) {
-      hints.push(`本页是表格(table)，headers=[${headers.join(', ')}]，rows=${rows.length}行，必须用 addTable 渲染。`);
-      hints.push(`表格渲染提示：系统会根据内容长度自动调整列宽、字体大小和行高，支持复杂表格。如某单元格无内容可填"—"。`);
+      hints.push(
+        `本页是表格(table)，headers=[${headers.join(', ')}]，rows=${rows.length}行，必须用 addTable 渲染。`,
+      );
+      hints.push(
+        `表格渲染提示：系统会根据内容长度自动调整列宽、字体大小和行高，支持复杂表格。如某单元格无内容可填"—"。`,
+      );
     }
   }
 
-  const formulaCount = Array.isArray(content.formulas) ? (content.formulas as Array<unknown>).length : 0;
-  if (formulaCount > 0) hints.push(`本页有 ${formulaCount} 个公式(formulas)，必须用 addText(label)+addFormula(latex) 渲染。`);
+  const formulaCount = Array.isArray(content.formulas)
+    ? (content.formulas as Array<unknown>).length
+    : 0;
+  if (formulaCount > 0)
+    hints.push(
+      `本页有 ${formulaCount} 个公式(formulas)，必须用 addText(label)+addFormula(latex) 渲染。`,
+    );
 
-  return hints.length > 0 ? '\n## 内容完整性要求（必须全部渲染，不可省略）\n' + hints.join('\n') : '';
+  return hints.length > 0
+    ? '\n## 内容完整性要求（必须全部渲染，不可省略）\n' + hints.join('\n')
+    : '';
 }
 
 export function buildUserPrompt(
@@ -174,16 +195,22 @@ export function buildUserPrompt(
   designDNA: DesignDNA,
   educationLevel?: string,
 ): string {
-  const formulaCount = Array.isArray(content.formulas) ? (content.formulas as Array<unknown>).length : 0;
-  const formulaHint = formulaCount > 0
-    ? `\n⚠️ 重要：本页 content 包含 ${formulaCount} 个公式（formulas 数组），必须在 instructions 中为每个公式生成 addText(label) + addFormula(latex) 指令，不可省略。`
-    : '';
-  const mainFormulaHint = typeof (content as { mainFormula?: string }).mainFormula === 'string' && (content as { mainFormula?: string }).mainFormula!.length > 0
-    ? `\n⚠️ 重要：本页 content 包含主公式 mainFormula，必须用 addFormula 指令渲染，不可省略。`
-    : '';
-  const tableHint = pageType === 'table' && Array.isArray(content.headers) && Array.isArray(content.rows)
-    ? `\n⚠️ 重要：本页是 table 类型，必须使用 addTable 指令渲染表格。headers: ${(content.headers as string[]).join(', ')}。rows 共 ${(content.rows as unknown[]).length} 行。`
-    : '';
+  const formulaCount = Array.isArray(content.formulas)
+    ? (content.formulas as Array<unknown>).length
+    : 0;
+  const formulaHint =
+    formulaCount > 0
+      ? `\n⚠️ 重要：本页 content 包含 ${formulaCount} 个公式（formulas 数组），必须在 instructions 中为每个公式生成 addText(label) + addFormula(latex) 指令，不可省略。`
+      : '';
+  const mainFormulaHint =
+    typeof (content as { mainFormula?: string }).mainFormula === 'string' &&
+    (content as { mainFormula?: string }).mainFormula!.length > 0
+      ? `\n⚠️ 重要：本页 content 包含主公式 mainFormula，必须用 addFormula 指令渲染，不可省略。`
+      : '';
+  const tableHint =
+    pageType === 'table' && Array.isArray(content.headers) && Array.isArray(content.rows)
+      ? `\n⚠️ 重要：本页是 table 类型，必须使用 addTable 指令渲染表格。headers: ${(content.headers as string[]).join(', ')}。rows 共 ${(content.rows as unknown[]).length} 行。`
+      : '';
   const contentHint = buildContentCompletenessHint(pageType, content);
 
   return `页号: ${pageNum} / ${totalPages}${educationLevel ? `\n目标受众: ${educationLevel}` : ''}
@@ -232,22 +259,42 @@ export async function designPage(
     log.info(`Designing page ${pageNum} (${pageType})`);
 
     const pageTypeTokenMap: Record<string, number> = {
-      cover: 4096, toc: 4096, end: 4096, chapter: 4096,
-      concept: 6144, case: 6144, compare: 6144, process: 6144, timeline: 6144, summary: 6144, quiz: 6144,
-      table: 8192, formula: 8192,
+      cover: 4096,
+      toc: 4096,
+      end: 4096,
+      chapter: 4096,
+      concept: 6144,
+      case: 6144,
+      compare: 6144,
+      process: 6144,
+      timeline: 6144,
+      summary: 6144,
+      quiz: 6144,
+      table: 8192,
+      formula: 8192,
     };
 
     const result = await callLLM(
-      { model: languageModel, system, prompt: user, maxOutputTokens: pageTypeTokenMap[pageType] || 6144, temperature: 0.3 },
+      {
+        model: languageModel,
+        system,
+        prompt: user,
+        maxOutputTokens: pageTypeTokenMap[pageType] || 6144,
+        temperature: 0.3,
+      },
       `page-design-${pageNum}`,
-      { retries: 2, timeoutMs: 300_000, validate: (text) => {
-        try {
-          const parsed = JSON.parse(cleanJsonText(text));
-          return pageInstructionsSchema.safeParse(parsed).success;
-        } catch {
-          return false;
-        }
-      } },
+      {
+        retries: 2,
+        timeoutMs: 300_000,
+        validate: (text) => {
+          try {
+            const parsed = JSON.parse(cleanJsonText(text));
+            return pageInstructionsSchema.safeParse(parsed).success;
+          } catch {
+            return false;
+          }
+        },
+      },
       { mode: 'disabled', enabled: false },
     );
 
@@ -270,14 +317,17 @@ export async function designPage(
             jsonText = candidate;
             log.info(`Page ${pageNum} JSON repaired by escaping quote at pos=${pos - 1}`);
             repaired = true;
-          } catch { /* fall through */ }
+          } catch {
+            /* fall through */
+          }
         }
 
         // Strategy 2: missing comma — scan backwards and insert comma after terminators
-        if (!repaired && (
-          errMsg.includes("Expected ',' or ']' after array element") ||
-          errMsg.includes("Expected ',' or '}' after property value")
-        )) {
+        if (
+          !repaired &&
+          (errMsg.includes("Expected ',' or ']' after array element") ||
+            errMsg.includes("Expected ',' or '}' after property value"))
+        ) {
           for (let i = pos - 1; i >= 0; i--) {
             if (jsonText[i] === '}' || jsonText[i] === ']' || jsonText[i] === '"') {
               const candidate = jsonText.slice(0, i + 1) + ',' + jsonText.slice(i + 1);
@@ -297,7 +347,9 @@ export async function designPage(
 
       if (!repaired) {
         const rawPreview = result.text.slice(0, 1000);
-        log.error(`Page ${pageNum} JSON parse failed. Raw preview:\n${rawPreview}\nParse error: ${errMsg}`);
+        log.error(
+          `Page ${pageNum} JSON parse failed. Raw preview:\n${rawPreview}\nParse error: ${errMsg}`,
+        );
         return { success: false, error: `Page ${pageNum} JSON parse failed` };
       }
     }
@@ -306,9 +358,13 @@ export async function designPage(
 
     if (!validated.success) {
       // Log detailed diagnostic information
-      const issues = validated.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+      const issues = validated.error.issues
+        .map((i) => `${i.path.join('.')}: ${i.message}`)
+        .join('; ');
       const rawPreview = result.text.slice(0, 1000);
-      log.error(`Page ${pageNum} instruction validation failed. Issues: ${issues}. Raw preview:\n${rawPreview}`);
+      log.error(
+        `Page ${pageNum} instruction validation failed. Issues: ${issues}. Raw preview:\n${rawPreview}`,
+      );
 
       // Attempt to auto-repair common issues
       const repaired = tryRepairInstructions(parsed as Record<string, unknown>);
@@ -321,13 +377,18 @@ export async function designPage(
       }
 
       // Last resort: generate fallback layout so the page is never empty
-      log.warn(`Page ${pageNum} instruction validation failed after all repair attempts. Generating fallback.`);
+      log.warn(
+        `Page ${pageNum} instruction validation failed after all repair attempts. Generating fallback.`,
+      );
       const fallback = buildFallbackInstructions(pageNum, pageType, content, designDNA);
       if (fallback) {
         return { success: true, pageInstructions: fallback, fallback: true };
       }
 
-      return { success: false, error: `Page ${pageNum} instruction validation failed after repair attempt` };
+      return {
+        success: false,
+        error: `Page ${pageNum} instruction validation failed after repair attempt`,
+      };
     }
 
     let instructions = validated.data.instructions;
@@ -359,9 +420,15 @@ export async function designPage(
     const nonBgInstructions = instructions.filter((i) => i.op !== 'setBackground');
     const hasTable = instructions.some((i) => i.op === 'addTable');
     const hasFormula = instructions.some((i) => i.op === 'addFormula');
-    const contentHasFormulas = (Array.isArray(content.formulas) && (content.formulas as Array<unknown>).length > 0)
-      || (pageType === 'formula' && typeof (content as { mainFormula?: string }).mainFormula === 'string' && (content as { mainFormula?: string }).mainFormula!.length > 0);
-    const contentHasTable = pageType === 'table' && Array.isArray(content.headers) && (content.headers as Array<unknown>).length > 0;
+    const contentHasFormulas =
+      (Array.isArray(content.formulas) && (content.formulas as Array<unknown>).length > 0) ||
+      (pageType === 'formula' &&
+        typeof (content as { mainFormula?: string }).mainFormula === 'string' &&
+        (content as { mainFormula?: string }).mainFormula!.length > 0);
+    const contentHasTable =
+      pageType === 'table' &&
+      Array.isArray(content.headers) &&
+      (content.headers as Array<unknown>).length > 0;
 
     let needFallback = nonBgInstructions.length < minInstructions;
     if (contentHasTable && !hasTable) {
@@ -369,19 +436,25 @@ export async function designPage(
       needFallback = true;
     }
     if (contentHasFormulas && !hasFormula) {
-      log.warn(`Page ${pageNum} has formulas but missing addFormula instruction. Forcing fallback.`);
+      log.warn(
+        `Page ${pageNum} has formulas but missing addFormula instruction. Forcing fallback.`,
+      );
       needFallback = true;
     }
 
     // Post-validation C: content coverage check (prevent LLM from passing density check with decorative shapes only)
     const coverageResult = checkContentCoverage(instructions, content, pageType);
     if (!coverageResult.ok) {
-      log.warn(`Page ${pageNum} (${pageType}) content coverage check failed: ${coverageResult.reason}. Forcing fallback.`);
+      log.warn(
+        `Page ${pageNum} (${pageType}) content coverage check failed: ${coverageResult.reason}. Forcing fallback.`,
+      );
       needFallback = true;
     }
 
     if (needFallback) {
-      log.warn(`Page ${pageNum} (${pageType}) has only ${nonBgInstructions.length} instructions, expected at least ${minInstructions}. Building fallback.`);
+      log.warn(
+        `Page ${pageNum} (${pageType}) has only ${nonBgInstructions.length} instructions, expected at least ${minInstructions}. Building fallback.`,
+      );
       const fallback = buildFallbackInstructions(pageNum, pageType, content, designDNA);
       if (fallback) {
         // Coverage passed → LLM already rendered all content; only add decorative (non-text) elements
@@ -428,8 +501,14 @@ export async function designPage(
 
           mergedInstructions.push(inst);
         }
-        log.info(`Page ${pageNum} using density fallback (merged): LLM=${instructions.length} + added=${mergedInstructions.length - instructions.length} instructions, coveragePassed=${coveragePassed}`);
-        return { success: true, pageInstructions: { pageNum, instructions: mergedInstructions }, fallback: true };
+        log.info(
+          `Page ${pageNum} using density fallback (merged): LLM=${instructions.length} + added=${mergedInstructions.length - instructions.length} instructions, coveragePassed=${coveragePassed}`,
+        );
+        return {
+          success: true,
+          pageInstructions: { pageNum, instructions: mergedInstructions },
+          fallback: true,
+        };
       }
     }
 
@@ -458,7 +537,10 @@ function checkContentCoverage(
 ): { ok: boolean; reason?: string } {
   const renderedTexts = new Set(
     instructions
-      .filter((i) => i.op === 'addText' && typeof (i.params as Record<string, unknown>)?.text === 'string')
+      .filter(
+        (i) =>
+          i.op === 'addText' && typeof (i.params as Record<string, unknown>)?.text === 'string',
+      )
       .map((i) => ((i.params as Record<string, unknown>).text as string).trim()),
   );
   const renderedClean = new Set([...renderedTexts].map((t) => stripTextPrefix(t)));
@@ -481,9 +563,14 @@ function checkContentCoverage(
     case 'concept': {
       const cards = (content.cards as Array<{ title?: string; desc?: string }>) || [];
       if (cards.length === 0) return { ok: true }; // no cards to render
-      const missedCards = cards.filter((c) => !isRendered(c.title?.trim() || '') || !isRendered(c.desc?.trim() || ''));
+      const missedCards = cards.filter(
+        (c) => !isRendered(c.title?.trim() || '') || !isRendered(c.desc?.trim() || ''),
+      );
       if (missedCards.length > 0) {
-        return { ok: false, reason: `${missedCards.length}/${cards.length} cards not rendered (title or desc missing)` };
+        return {
+          ok: false,
+          reason: `${missedCards.length}/${cards.length} cards not rendered (title or desc missing)`,
+        };
       }
       const summary = (content.summary as string) || '';
       if (summary.length > 10 && !isRendered(summary.trim())) {
@@ -494,7 +581,9 @@ function checkContentCoverage(
     case 'case': {
       const scenarios = (content.scenarios as Array<{ problem?: string; solution?: string }>) || [];
       if (scenarios.length === 0) return { ok: true };
-      const missed = scenarios.filter((s) => !isRendered(s.problem?.trim() || '') || !isRendered(s.solution?.trim() || ''));
+      const missed = scenarios.filter(
+        (s) => !isRendered(s.problem?.trim() || '') || !isRendered(s.solution?.trim() || ''),
+      );
       if (missed.length > 0) {
         return { ok: false, reason: `${missed.length}/${scenarios.length} scenarios not rendered` };
       }
@@ -508,7 +597,10 @@ function checkContentCoverage(
       const allItems = [...leftItems, ...rightItems];
       const missed = allItems.filter((item) => !isRendered(item?.trim() || ''));
       if (missed.length > 0) {
-        return { ok: false, reason: `${missed.length}/${allItems.length} compare items not rendered` };
+        return {
+          ok: false,
+          reason: `${missed.length}/${allItems.length} compare items not rendered`,
+        };
       }
       const conclusion = (content.conclusion as string) || '';
       if (conclusion.length > 10 && !isRendered(conclusion.trim())) {
@@ -519,7 +611,9 @@ function checkContentCoverage(
     case 'process': {
       const steps = (content.steps as Array<{ title?: string; desc?: string }>) || [];
       if (steps.length === 0) return { ok: true };
-      const missed = steps.filter((s) => !isRendered(s.title?.trim() || '') || !isRendered(s.desc?.trim() || ''));
+      const missed = steps.filter(
+        (s) => !isRendered(s.title?.trim() || '') || !isRendered(s.desc?.trim() || ''),
+      );
       if (missed.length > 0) {
         return { ok: false, reason: `${missed.length}/${steps.length} steps not rendered` };
       }
@@ -537,9 +631,14 @@ function checkContentCoverage(
     case 'timeline': {
       const events = (content.events as Array<{ date?: string; content?: string }>) || [];
       if (events.length === 0) return { ok: true };
-      const missed = events.filter((e) => !isRendered(e.date?.trim() || '') || !isRendered(e.content?.trim() || ''));
+      const missed = events.filter(
+        (e) => !isRendered(e.date?.trim() || '') || !isRendered(e.content?.trim() || ''),
+      );
       if (missed.length > 0) {
-        return { ok: false, reason: `${missed.length}/${events.length} timeline events not rendered` };
+        return {
+          ok: false,
+          reason: `${missed.length}/${events.length} timeline events not rendered`,
+        };
       }
       return { ok: true };
     }
@@ -548,7 +647,8 @@ function checkContentCoverage(
       const derivation = (content.derivation as string) || '';
       if (mainFormula.length > 0) {
         const hasFormulaInstr = instructions.some((i) => i.op === 'addFormula');
-        if (!hasFormulaInstr) return { ok: false, reason: 'mainFormula not rendered as addFormula' };
+        if (!hasFormulaInstr)
+          return { ok: false, reason: 'mainFormula not rendered as addFormula' };
       }
       if (derivation.length > 10 && !renderedTexts.has(derivation.trim())) {
         return { ok: false, reason: 'derivation not rendered' };
@@ -565,9 +665,12 @@ function checkContentCoverage(
  */
 function getMinInstructionCount(pageType: string, content: Record<string, unknown>): number {
   switch (pageType) {
-    case 'cover': return 3; // bg + title + subtitle
-    case 'toc': return 3;   // bg + title + items
-    case 'chapter': return 3; // bg + num + title + subtitle
+    case 'cover':
+      return 3; // bg + title + subtitle
+    case 'toc':
+      return 3; // bg + title + items
+    case 'chapter':
+      return 3; // bg + num + title + subtitle
     case 'concept': {
       const cards = (content.cards as Array<unknown>)?.length || 0;
       return 2 + Math.max(cards * 2, 2); // bg + title + cards(title+desc each) + summary
@@ -577,8 +680,8 @@ function getMinInstructionCount(pageType: string, content: Record<string, unknow
       return 2 + Math.max(scenarios * 2, 2); // bg + title + scenarios(problem+answer)
     }
     case 'compare': {
-      const leftBullets = ((content.left as { bullets?: string[] })?.bullets)?.length || 0;
-      const rightBullets = ((content.right as { bullets?: string[] })?.bullets)?.length || 0;
+      const leftBullets = (content.left as { bullets?: string[] })?.bullets?.length || 0;
+      const rightBullets = (content.right as { bullets?: string[] })?.bullets?.length || 0;
       return 3 + leftBullets + rightBullets; // bg + title + left title + bullets + right title + bullets + conclusion
     }
     case 'process': {
@@ -592,11 +695,16 @@ function getMinInstructionCount(pageType: string, content: Record<string, unknow
       const keyPoints = (content.keyPoints as Array<unknown>)?.length || 0;
       return 2 + Math.max(keyPoints, 2); // bg + title + keyPoints
     }
-    case 'formula': return 3; // bg + title + formula
-    case 'timeline': return 3;
-    case 'quiz': return 3;
-    case 'end': return 3; // bg + slogan + thanks
-    default: return 2;
+    case 'formula':
+      return 3; // bg + title + formula
+    case 'timeline':
+      return 3;
+    case 'quiz':
+      return 3;
+    case 'end':
+      return 3; // bg + slogan + thanks
+    default:
+      return 2;
   }
 }
 
@@ -605,11 +713,11 @@ function getMinInstructionCount(pageType: string, content: Record<string, unknow
 /** Strip common decorative prefixes for dedup comparison. */
 function stripTextPrefix(text: string): string {
   return text
-    .replace(/^[•·\-*–—\s]+/, '')           // Bullet prefixes
-    .replace(/^\d+[.．]\s*/, '')              // Numbered list "1. "
-    .replace(/^[(（]\d+[)）]\s*/, '')         // "(1) "
-    .replace(/^步骤\s*\d+[：:]\s*/, '')      // "步骤1："
-    .replace(/^第\s*\d+\s*步[：:]\s*/, '')   // "第1步："
+    .replace(/^[•·\-*–—\s]+/, '') // Bullet prefixes
+    .replace(/^\d+[.．]\s*/, '') // Numbered list "1. "
+    .replace(/^[(（]\d+[)）]\s*/, '') // "(1) "
+    .replace(/^步骤\s*\d+[：:]\s*/, '') // "步骤1："
+    .replace(/^第\s*\d+\s*步[：:]\s*/, '') // "第1步："
     .replace(/^[问题解答分析案例场景][:：]\s*/, '') // "问题：" "解答：" "分析："
     .trim();
 }
@@ -664,75 +772,183 @@ function buildFallbackInstructions(
     { op: 'setBackground', params: { color: bg } },
   ];
 
-  const addTxt = (text: string, x: number, y: number, w: number, h: number, opts: Record<string, unknown> = {}) => ({
+  const addTxt = (
+    text: string,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    opts: Record<string, unknown> = {},
+  ) => ({
     op: 'addText',
-    params: { text, x, y, w, h, fontSize: 14, fontFace: fonts.body, color: colors.textBody, align: 'left', ...opts },
+    params: {
+      text,
+      x,
+      y,
+      w,
+      h,
+      fontSize: 14,
+      fontFace: fonts.body,
+      color: colors.textBody,
+      align: 'left',
+      ...opts,
+    },
   });
 
   const title = (content.title as string) || '';
 
   switch (pageType) {
     case 'concept': {
-      instructions.push(addTxt(title, 0.8, 0.5, 11.7, 0.7, { fontSize: fonts.pageTitleSize, fontFace: fonts.heading, color: colors.textPrimary, bold: true }));
+      instructions.push(
+        addTxt(title, 0.8, 0.5, 11.7, 0.7, {
+          fontSize: fonts.pageTitleSize,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+        }),
+      );
       const cards = (content.cards as Array<{ title?: string; desc?: string }>) || [];
       let y = 1.5;
       const cardHeight = cards.length > 0 ? Math.min(1.2, (5.5 - 1.5) / cards.length) : 1;
       for (const card of cards) {
-        instructions.push(addTxt(card.title || '', 0.8, y, 11.7, 0.4, { fontSize: 16, fontFace: fonts.heading, color: colors.accent, bold: true }));
-        instructions.push(addTxt(card.desc || '', 0.8, y + 0.4, 11.7, cardHeight - 0.4, { fontSize: 13 }));
+        instructions.push(
+          addTxt(card.title || '', 0.8, y, 11.7, 0.4, {
+            fontSize: 16,
+            fontFace: fonts.heading,
+            color: colors.accent,
+            bold: true,
+          }),
+        );
+        instructions.push(
+          addTxt(card.desc || '', 0.8, y + 0.4, 11.7, cardHeight - 0.4, { fontSize: 13 }),
+        );
         y += cardHeight + 0.2;
       }
       if (content.summary) {
-        instructions.push(addTxt(content.summary as string, 0.8, Math.min(y + 0.2, 6.2), 11.7, 0.8, { fontSize: 13, fontFace: fonts.heading, color: colors.textMuted, italic: true }));
+        instructions.push(
+          addTxt(content.summary as string, 0.8, Math.min(y + 0.2, 6.2), 11.7, 0.8, {
+            fontSize: 13,
+            fontFace: fonts.heading,
+            color: colors.textMuted,
+            italic: true,
+          }),
+        );
       }
       // Formulas are appended uniformly after the switch block (see ~line 870)
       // to avoid double-injection when fallback merges with LLM output.
       break;
     }
     case 'case': {
-      instructions.push(addTxt(title, 0.8, 0.5, 11.7, 0.7, { fontSize: fonts.pageTitleSize, fontFace: fonts.heading, color: colors.textPrimary, bold: true }));
-      const scenarios = (content.scenarios as Array<{ problem?: string; solution?: string; analysis?: string }>) || [];
+      instructions.push(
+        addTxt(title, 0.8, 0.5, 11.7, 0.7, {
+          fontSize: fonts.pageTitleSize,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+        }),
+      );
+      const scenarios =
+        (content.scenarios as Array<{ problem?: string; solution?: string; analysis?: string }>) ||
+        [];
       let y = 1.5;
       for (const s of scenarios) {
-        instructions.push(addTxt('问题: ' + (s.problem || ''), 0.8, y, 11.7, 0.8, { fontSize: 14, fontFace: fonts.heading, bold: true, color: colors.accent }));
-        instructions.push(addTxt('解答: ' + (s.solution || ''), 0.8, y + 0.9, 11.7, 1.2, { fontSize: 13 }));
+        instructions.push(
+          addTxt('问题: ' + (s.problem || ''), 0.8, y, 11.7, 0.8, {
+            fontSize: 14,
+            fontFace: fonts.heading,
+            bold: true,
+            color: colors.accent,
+          }),
+        );
+        instructions.push(
+          addTxt('解答: ' + (s.solution || ''), 0.8, y + 0.9, 11.7, 1.2, { fontSize: 13 }),
+        );
         if (s.analysis) {
-          instructions.push(addTxt('分析: ' + s.analysis, 0.8, y + 2.2, 11.7, 0.8, { fontSize: 12, color: colors.textMuted, italic: true }));
+          instructions.push(
+            addTxt('分析: ' + s.analysis, 0.8, y + 2.2, 11.7, 0.8, {
+              fontSize: 12,
+              color: colors.textMuted,
+              italic: true,
+            }),
+          );
         }
         y += 3.2;
       }
       if (content.highlight) {
-        instructions.push(addTxt(content.highlight as string, 0.8, 6.2, 11.7, 0.8, { fontSize: 13, fontFace: fonts.heading, color: colors.accentSecondary, bold: true }));
+        instructions.push(
+          addTxt(content.highlight as string, 0.8, 6.2, 11.7, 0.8, {
+            fontSize: 13,
+            fontFace: fonts.heading,
+            color: colors.accentSecondary,
+            bold: true,
+          }),
+        );
       }
       break;
     }
     case 'compare': {
-      instructions.push(addTxt(title, 0.8, 0.5, 11.7, 0.7, { fontSize: fonts.pageTitleSize, fontFace: fonts.heading, color: colors.textPrimary, bold: true }));
+      instructions.push(
+        addTxt(title, 0.8, 0.5, 11.7, 0.7, {
+          fontSize: fonts.pageTitleSize,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+        }),
+      );
       const left = content.left as { title?: string; bullets?: string[] } | undefined;
       const right = content.right as { title?: string; bullets?: string[] } | undefined;
       if (left) {
-        instructions.push(addTxt(left.title || '', 0.8, 1.4, 5.5, 0.5, { fontSize: 16, fontFace: fonts.heading, color: colors.accent, bold: true }));
+        instructions.push(
+          addTxt(left.title || '', 0.8, 1.4, 5.5, 0.5, {
+            fontSize: 16,
+            fontFace: fonts.heading,
+            color: colors.accent,
+            bold: true,
+          }),
+        );
         let y = 2.0;
-        for (const b of (left.bullets || [])) {
+        for (const b of left.bullets || []) {
           instructions.push(addTxt('• ' + b, 0.8, y, 5.5, 0.5, { fontSize: 13 }));
           y += 0.55;
         }
       }
       if (right) {
-        instructions.push(addTxt(right.title || '', 6.8, 1.4, 5.5, 0.5, { fontSize: 16, fontFace: fonts.heading, color: colors.accentSecondary, bold: true }));
+        instructions.push(
+          addTxt(right.title || '', 6.8, 1.4, 5.5, 0.5, {
+            fontSize: 16,
+            fontFace: fonts.heading,
+            color: colors.accentSecondary,
+            bold: true,
+          }),
+        );
         let y = 2.0;
-        for (const b of (right.bullets || [])) {
+        for (const b of right.bullets || []) {
           instructions.push(addTxt('• ' + b, 6.8, y, 5.5, 0.5, { fontSize: 13 }));
           y += 0.55;
         }
       }
       if (content.conclusion) {
-        instructions.push(addTxt(content.conclusion as string, 0.8, 6.2, 11.7, 0.8, { fontSize: 13, fontFace: fonts.heading, color: colors.textMuted, italic: true, align: 'center' }));
+        instructions.push(
+          addTxt(content.conclusion as string, 0.8, 6.2, 11.7, 0.8, {
+            fontSize: 13,
+            fontFace: fonts.heading,
+            color: colors.textMuted,
+            italic: true,
+            align: 'center',
+          }),
+        );
       }
       break;
     }
     case 'process': {
-      instructions.push(addTxt(title, 0.8, 0.5, 11.7, 0.7, { fontSize: fonts.pageTitleSize, fontFace: fonts.heading, color: colors.textPrimary, bold: true }));
+      instructions.push(
+        addTxt(title, 0.8, 0.5, 11.7, 0.7, {
+          fontSize: fonts.pageTitleSize,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+        }),
+      );
       const steps = (content.steps as Array<{ title?: string; desc?: string }>) || [];
       // Dynamically compute step height so all steps fit within slide bounds (title ends at 1.2, leave 0.4" margin)
       const availableH = 7.5 - 1.2 - 0.4; // ≈ 5.9"
@@ -741,15 +957,31 @@ function buildFallbackInstructions(
       for (const s of steps) {
         const titleH = Math.min(0.35, stepSpacing * 0.35);
         const descH = Math.min(0.7, stepSpacing * 0.55);
-        instructions.push(addTxt((s.title || ''), 0.8, y, 11.7, titleH, { fontSize: 15, fontFace: fonts.heading, color: colors.accent, bold: true }));
-        instructions.push(addTxt(s.desc || '', 0.8, y + titleH + 0.05, 11.7, descH, { fontSize: 13 }));
+        instructions.push(
+          addTxt(s.title || '', 0.8, y, 11.7, titleH, {
+            fontSize: 15,
+            fontFace: fonts.heading,
+            color: colors.accent,
+            bold: true,
+          }),
+        );
+        instructions.push(
+          addTxt(s.desc || '', 0.8, y + titleH + 0.05, 11.7, descH, { fontSize: 13 }),
+        );
         y += stepSpacing;
         if (y > 7.0) break; // hard stop before bottom
       }
       break;
     }
     case 'table': {
-      instructions.push(addTxt(title, 0.8, 0.5, 11.7, 0.7, { fontSize: fonts.pageTitleSize, fontFace: fonts.heading, color: colors.textPrimary, bold: true }));
+      instructions.push(
+        addTxt(title, 0.8, 0.5, 11.7, 0.7, {
+          fontSize: fonts.pageTitleSize,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+        }),
+      );
       const headers = (content.headers as string[]) || [];
       const rows = (content.rows as string[][]) || [];
       if (headers.length > 0) {
@@ -758,7 +990,9 @@ function buildFallbackInstructions(
           params: {
             headers,
             rows,
-            x: 0.5, y: 1.5, w: 12.3,
+            x: 0.5,
+            y: 1.5,
+            w: 12.3,
             headerBgColor: colors.accent,
             borderColor: colors.textMuted,
             fontFace: fonts.body,
@@ -770,17 +1004,39 @@ function buildFallbackInstructions(
         // Estimate table height: header ~0.3" + each row ~0.3" to avoid large gap between table and summary
         const estimatedTableH = 0.3 * (1 + rows.length);
         const summaryY = Math.min(1.5 + estimatedTableH + 0.2, 6.5);
-        instructions.push(addTxt(content.summary as string, 0.8, summaryY, 11.7, Math.max(0.5, 7.1 - summaryY), { fontSize: 13, fontFace: fonts.heading, color: colors.textMuted, italic: true }));
+        instructions.push(
+          addTxt(content.summary as string, 0.8, summaryY, 11.7, Math.max(0.5, 7.1 - summaryY), {
+            fontSize: 13,
+            fontFace: fonts.heading,
+            color: colors.textMuted,
+            italic: true,
+          }),
+        );
       }
       break;
     }
     case 'formula': {
-      instructions.push(addTxt(title, 0.8, 0.5, 11.7, 0.7, { fontSize: fonts.pageTitleSize, fontFace: fonts.heading, color: colors.textPrimary, bold: true }));
+      instructions.push(
+        addTxt(title, 0.8, 0.5, 11.7, 0.7, {
+          fontSize: fonts.pageTitleSize,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+        }),
+      );
       const mainFormula = (content.mainFormula as string) || '';
       if (mainFormula) {
         instructions.push({
           op: 'addFormula',
-          params: { latex: mainFormula, x: 1, y: 2, w: 10.7, h: 1.2, fontSize: 18, color: colors.textBody },
+          params: {
+            latex: mainFormula,
+            x: 1,
+            y: 2,
+            w: 10.7,
+            h: 1.2,
+            fontSize: 18,
+            color: colors.textBody,
+          },
         });
       }
       const derivation = (content.derivation as string) || '';
@@ -789,12 +1045,25 @@ function buildFallbackInstructions(
       }
       const application = (content.application as string) || '';
       if (application) {
-        instructions.push(addTxt(application, 0.8, 5.8, 11.7, 0.8, { fontSize: 12, color: colors.textMuted, italic: true }));
+        instructions.push(
+          addTxt(application, 0.8, 5.8, 11.7, 0.8, {
+            fontSize: 12,
+            color: colors.textMuted,
+            italic: true,
+          }),
+        );
       }
       break;
     }
     case 'summary': {
-      instructions.push(addTxt(title, 0.8, 0.5, 11.7, 0.7, { fontSize: fonts.pageTitleSize, fontFace: fonts.heading, color: colors.textPrimary, bold: true }));
+      instructions.push(
+        addTxt(title, 0.8, 0.5, 11.7, 0.7, {
+          fontSize: fonts.pageTitleSize,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+        }),
+      );
       const keyPoints = (content.keyPoints as string[]) || [];
       // Dynamically adjust height so all keyPoints fit within slide bounds (leave 0.5" margin at bottom)
       const availableH = 7.5 - 1.5 - 0.5; // from y=1.5 to bottom margin
@@ -815,7 +1084,15 @@ function buildFallbackInstructions(
       // Layout: num (large, top) → line → title → subtitle (bottom)
       // Generous spacing prevents overlap with large num font
       if (num) {
-        instructions.push(addTxt(num, 0.8, 1.2, 11.7, 1.6, { fontSize: 64, fontFace: fonts.heading, color: colors.accent, bold: true, align: 'center' }));
+        instructions.push(
+          addTxt(num, 0.8, 1.2, 11.7, 1.6, {
+            fontSize: 64,
+            fontFace: fonts.heading,
+            color: colors.accent,
+            bold: true,
+            align: 'center',
+          }),
+        );
       }
       // Decorative line under number
       instructions.push({
@@ -823,10 +1100,25 @@ function buildFallbackInstructions(
         params: { shapeType: 'rect', x: 5.5, y: 3.0, w: 1.5, h: 0.04, fillColor: colors.accent },
       });
       // Title below line
-      instructions.push(addTxt(title, 0.8, 3.3, 11.7, 0.9, { fontSize: fonts.pageTitleSize, fontFace: fonts.heading, color: colors.textPrimary, bold: true, align: 'center' }));
+      instructions.push(
+        addTxt(title, 0.8, 3.3, 11.7, 0.9, {
+          fontSize: fonts.pageTitleSize,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+          align: 'center',
+        }),
+      );
       // Subtitle below title
       if (subtitle) {
-        instructions.push(addTxt(subtitle, 0.8, 4.4, 11.7, 0.8, { fontSize: 16, fontFace: fonts.body, color: colors.textMuted, align: 'center' }));
+        instructions.push(
+          addTxt(subtitle, 0.8, 4.4, 11.7, 0.8, {
+            fontSize: 16,
+            fontFace: fonts.body,
+            color: colors.textMuted,
+            align: 'center',
+          }),
+        );
       }
       break;
     }
@@ -834,7 +1126,15 @@ function buildFallbackInstructions(
       const subtitle = (content.subtitle as string) || '';
       const tagline = (content.tagline as string) || '';
       // Main title centered upper
-      instructions.push(addTxt(title, 0.8, 2.0, 11.7, 1.0, { fontSize: fonts.pageTitleSize + 4, fontFace: fonts.heading, color: colors.textPrimary, bold: true, align: 'center' }));
+      instructions.push(
+        addTxt(title, 0.8, 2.0, 11.7, 1.0, {
+          fontSize: fonts.pageTitleSize + 4,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+          align: 'center',
+        }),
+      );
       // Decorative line
       instructions.push({
         op: 'addShape',
@@ -842,11 +1142,26 @@ function buildFallbackInstructions(
       });
       // Subtitle
       if (subtitle) {
-        instructions.push(addTxt(subtitle, 0.8, 3.5, 11.7, 0.7, { fontSize: 18, fontFace: fonts.body, color: colors.textBody, align: 'center' }));
+        instructions.push(
+          addTxt(subtitle, 0.8, 3.5, 11.7, 0.7, {
+            fontSize: 18,
+            fontFace: fonts.body,
+            color: colors.textBody,
+            align: 'center',
+          }),
+        );
       }
       // Tagline at bottom
       if (tagline) {
-        instructions.push(addTxt(tagline, 0.8, 6.2, 11.7, 0.5, { fontSize: 13, fontFace: fonts.body, color: colors.textMuted, align: 'center', italic: true }));
+        instructions.push(
+          addTxt(tagline, 0.8, 6.2, 11.7, 0.5, {
+            fontSize: 13,
+            fontFace: fonts.body,
+            color: colors.textMuted,
+            align: 'center',
+            italic: true,
+          }),
+        );
       }
       break;
     }
@@ -854,7 +1169,15 @@ function buildFallbackInstructions(
       const slogan = (content.slogan as string) || '';
       const thanks = (content.thanks as string) || '感谢您的学习与探索';
       // Thanks centered
-      instructions.push(addTxt(thanks, 0.8, 2.5, 11.7, 1.0, { fontSize: fonts.pageTitleSize + 2, fontFace: fonts.heading, color: colors.textPrimary, bold: true, align: 'center' }));
+      instructions.push(
+        addTxt(thanks, 0.8, 2.5, 11.7, 1.0, {
+          fontSize: fonts.pageTitleSize + 2,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+          align: 'center',
+        }),
+      );
       // Decorative line
       instructions.push({
         op: 'addShape',
@@ -862,13 +1185,27 @@ function buildFallbackInstructions(
       });
       // Slogan
       if (slogan) {
-        instructions.push(addTxt(slogan, 0.8, 4.0, 11.7, 0.7, { fontSize: 16, fontFace: fonts.body, color: colors.textMuted, align: 'center' }));
+        instructions.push(
+          addTxt(slogan, 0.8, 4.0, 11.7, 0.7, {
+            fontSize: 16,
+            fontFace: fonts.body,
+            color: colors.textMuted,
+            align: 'center',
+          }),
+        );
       }
       break;
     }
     default: {
       // Generic fallback: just title
-      instructions.push(addTxt(title, 0.8, 0.5, 11.7, 0.7, { fontSize: fonts.pageTitleSize, fontFace: fonts.heading, color: colors.textPrimary, bold: true }));
+      instructions.push(
+        addTxt(title, 0.8, 0.5, 11.7, 0.7, {
+          fontSize: fonts.pageTitleSize,
+          fontFace: fonts.heading,
+          color: colors.textPrimary,
+          bold: true,
+        }),
+      );
     }
   }
 
@@ -893,13 +1230,28 @@ function buildFallbackInstructions(
       const isPlaceholder = f.latex && /^\\text\{[^}]*\}$/.test(f.latex.trim());
       if (isPlaceholder) continue;
       if (f.label) {
-        instructions.push(addTxt(f.label, 0.8, formulaY, 11.7, 0.4, { fontSize: 13, fontFace: fonts.heading, bold: true, color: colors.textMuted }));
+        instructions.push(
+          addTxt(f.label, 0.8, formulaY, 11.7, 0.4, {
+            fontSize: 13,
+            fontFace: fonts.heading,
+            bold: true,
+            color: colors.textMuted,
+          }),
+        );
         formulaY += 0.45;
       }
       if (f.latex) {
         instructions.push({
           op: 'addFormula',
-          params: { latex: f.latex, x: 0.8, y: formulaY, w: 11.7, h: 0.6, fontSize: 14, color: colors.textBody },
+          params: {
+            latex: f.latex,
+            x: 0.8,
+            y: formulaY,
+            w: 11.7,
+            h: 0.6,
+            fontSize: 14,
+            color: colors.textBody,
+          },
         });
         formulaY += 0.7;
       }
@@ -943,7 +1295,18 @@ function tryRepairInstructions(parsed: Record<string, unknown>): Record<string, 
     }
 
     // Ensure numeric coordinates are actually numbers
-    for (const numKey of ['x', 'y', 'w', 'h', 'fontSize', 'lineWidth', 'rotate', 'rectRadius', 'fillTransparency', 'transparency']) {
+    for (const numKey of [
+      'x',
+      'y',
+      'w',
+      'h',
+      'fontSize',
+      'lineWidth',
+      'rotate',
+      'rectRadius',
+      'fillTransparency',
+      'transparency',
+    ]) {
       if (numKey in params && typeof params[numKey] !== 'number') {
         const n = Number(params[numKey]);
         if (!Number.isNaN(n)) params[numKey] = n;
@@ -977,7 +1340,14 @@ function tryRepairInstructions(parsed: Record<string, unknown>): Record<string, 
       const v = params.shadow;
       if (typeof v === 'boolean') {
         if (v) {
-          params.shadow = { type: 'outer', color: '808080', blur: 3, offset: 2, angle: 45, opacity: 0.3 };
+          params.shadow = {
+            type: 'outer',
+            color: '808080',
+            blur: 3,
+            offset: 2,
+            angle: 45,
+            opacity: 0.3,
+          };
         } else {
           delete params.shadow;
         }

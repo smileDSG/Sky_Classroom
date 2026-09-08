@@ -60,7 +60,14 @@ export interface SlideGenerationResult {
 
 // ── Theme System ─────────────────────────────────────────────────
 
-export type PptxThemeId = 'sky-blue' | 'minimal' | 'academic' | 'tech-dark' | 'nature-fresh' | 'macaron-pink' | 'handdrawn';
+export type PptxThemeId =
+  | 'sky-blue'
+  | 'minimal'
+  | 'academic'
+  | 'tech-dark'
+  | 'nature-fresh'
+  | 'macaron-pink'
+  | 'handdrawn';
 
 /** Gradient definition for backgrounds */
 export interface ThemeGradient {
@@ -272,4 +279,3 @@ export interface PptxImageOptions {
   w: number;
   h: number;
 }
-

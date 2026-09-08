@@ -114,9 +114,7 @@ function ResetPasswordContent() {
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
             Invalid Link
           </h1>
-          <p className="text-sm text-muted-foreground mb-6">
-            No reset token provided
-          </p>
+          <p className="text-sm text-muted-foreground mb-6">No reset token provided</p>
           <Link href="/auth/forgot-password" className="w-full">
             <Button variant="outline" className="w-full h-11 rounded-xl">
               Request New Link
@@ -181,7 +179,11 @@ function ResetPasswordContent() {
                   key={i}
                   className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
                     i <= strength
-                      ? strength === 1 ? 'bg-red-500' : strength === 2 ? 'bg-yellow-500' : 'bg-green-500'
+                      ? strength === 1
+                        ? 'bg-red-500'
+                        : strength === 2
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
                       : 'bg-slate-200 dark:bg-slate-700'
                   }`}
                 />
@@ -216,9 +218,7 @@ function ResetPasswordContent() {
               <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-green-500" />
             )}
           </div>
-          {passwordsMismatch && (
-            <p className="text-xs text-red-500">Passwords do not match</p>
-          )}
+          {passwordsMismatch && <p className="text-xs text-red-500">Passwords do not match</p>}
         </div>
 
         <Button

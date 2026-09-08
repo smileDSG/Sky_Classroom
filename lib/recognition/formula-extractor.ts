@@ -43,7 +43,10 @@ export function extractFormulas(text: string): { text: string; latex: string } {
   const latex = formulas.length > 0 ? formulas.join('\n') : '';
 
   // Normalize whitespace (but preserve newlines for structure)
-  const normalized = cleaned.replace(/[^\S\n]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  const normalized = cleaned
+    .replace(/[^\S\n]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 
   log.debug(`Extracted ${formulas.length} formulas from text`);
   return { text: normalized, latex };

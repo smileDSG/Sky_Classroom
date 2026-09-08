@@ -83,7 +83,9 @@ function buildSummary(keyInfo: KeyInfoResult): string {
     lines.push(`Key questions: ${keyInfo.questions.join('; ')}`);
   }
   if (keyInfo.answers.length > 0) {
-    lines.push(`Key answers: ${keyInfo.answers.slice(0, 3).join('; ')}${keyInfo.answers.length > 3 ? '...' : ''}`);
+    lines.push(
+      `Key answers: ${keyInfo.answers.slice(0, 3).join('; ')}${keyInfo.answers.length > 3 ? '...' : ''}`,
+    );
   }
   if (keyInfo.decisions.length > 0) {
     lines.push(`Decisions: ${keyInfo.decisions.join('; ')}`);
@@ -129,18 +131,11 @@ export function compressConversation(
   }
 
   // Separate system messages
-  const systemMessages = preserveSystem
-    ? messages.filter((m) => m.role === 'system')
-    : [];
-  const nonSystemMessages = preserveSystem
-    ? messages.filter((m) => m.role !== 'system')
-    : messages;
+  const systemMessages = preserveSystem ? messages.filter((m) => m.role === 'system') : [];
+  const nonSystemMessages = preserveSystem ? messages.filter((m) => m.role !== 'system') : messages;
 
   // Extract key information from older messages
-  const messagesToSummarize = nonSystemMessages.slice(
-    0,
-    nonSystemMessages.length - maxMessages,
-  );
+  const messagesToSummarize = nonSystemMessages.slice(0, nonSystemMessages.length - maxMessages);
   const keyInfo = extractKeyInfo(messagesToSummarize);
   const summary = buildSummary(keyInfo);
 

@@ -352,81 +352,93 @@ export default function MobileStudyLabPage() {
         </section>
 
         <div className="relative space-y-2.5 px-4 pb-24">
-        <section aria-label="学习状态" className="grid grid-cols-4 gap-1.5">
-          <MetricPill icon={CalendarClock} label="到期" value={insights.metrics.dueReviewCount} />
-          <MetricPill icon={BookOpenCheck} label="错题" value={insights.metrics.reviewBacklogCount} />
-          <MetricPill icon={BarChart3} label="掌握" value={insights.metrics.averageMastery} unit="%" />
-          <MetricPill icon={Layers} label="记忆" value={insights.metrics.memoryTopicCount} />
-        </section>
+          <section aria-label="学习状态" className="grid grid-cols-4 gap-1.5">
+            <MetricPill icon={CalendarClock} label="到期" value={insights.metrics.dueReviewCount} />
+            <MetricPill
+              icon={BookOpenCheck}
+              label="错题"
+              value={insights.metrics.reviewBacklogCount}
+            />
+            <MetricPill
+              icon={BarChart3}
+              label="掌握"
+              value={insights.metrics.averageMastery}
+              unit="%"
+            />
+            <MetricPill icon={Layers} label="记忆" value={insights.metrics.memoryTopicCount} />
+          </section>
 
-        <section aria-label="今日任务路径" className="rounded-[20px] border border-white/8 bg-white/[0.035] p-3">
-          <div className="mb-2.5 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-[15px] font-extrabold text-white">
-              <Route className="size-4 text-emerald-200" />
-              今日学习安排
+          <section
+            aria-label="今日任务路径"
+            className="rounded-[20px] border border-white/8 bg-white/[0.035] p-3"
+          >
+            <div className="mb-2.5 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-[15px] font-extrabold text-white">
+                <Route className="size-4 text-emerald-200" />
+                今日学习安排
+              </div>
+              <span className="rounded-full bg-white/7 px-2 py-0.5 text-[12px] font-bold text-slate-400">
+                个性化
+              </span>
             </div>
-            <span className="rounded-full bg-white/7 px-2 py-0.5 text-[12px] font-bold text-slate-400">
-              个性化
-            </span>
-          </div>
-          <div className="space-y-1.5">
-            {pathSteps.map((step) => (
-              <PathStepCard key={`${step.label}-${step.title}`} step={step} />
-            ))}
-          </div>
-        </section>
+            <div className="space-y-1.5">
+              {pathSteps.map((step) => (
+                <PathStepCard key={`${step.label}-${step.title}`} step={step} />
+              ))}
+            </div>
+          </section>
 
-        <section aria-label="学习工具入口">
-          <div className="grid grid-cols-2 gap-2.5">
-            {toolEntries.map((tool, index) => {
-              const Icon = tool.icon;
-              const wide = index === toolEntries.length - 1;
-              return (
-                <Link
-                  key={tool.label}
-                  href={toMobileHref(tool.href)}
-                  className={`group relative overflow-hidden rounded-[17px] border border-white/10 bg-[#0b1525] p-2.5 shadow-[0_12px_28px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.06)] active:scale-[0.99] ${
-                    wide ? 'col-span-2' : 'min-h-[70px]'
-                  }`}
-                >
-                  <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(52,211,153,0.14),rgba(34,211,238,0.055)_48%,rgba(15,23,42,0)_100%)]" />
-                  <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-emerald-200/35 to-transparent" />
-                  <div className="absolute -right-10 -top-12 size-28 rounded-full bg-emerald-200/8 blur-2xl" />
-                  <div
-                    className={`relative flex ${wide ? 'items-center gap-2.5' : 'h-full flex-col items-start justify-between gap-2'}`}
+          <section aria-label="学习工具入口">
+            <div className="grid grid-cols-2 gap-2.5">
+              {toolEntries.map((tool, index) => {
+                const Icon = tool.icon;
+                const wide = index === toolEntries.length - 1;
+                return (
+                  <Link
+                    key={tool.label}
+                    href={toMobileHref(tool.href)}
+                    className={`group relative overflow-hidden rounded-[17px] border border-white/10 bg-[#0b1525] p-2.5 shadow-[0_12px_28px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.06)] active:scale-[0.99] ${
+                      wide ? 'col-span-2' : 'min-h-[70px]'
+                    }`}
                   >
+                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(52,211,153,0.14),rgba(34,211,238,0.055)_48%,rgba(15,23,42,0)_100%)]" />
+                    <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-emerald-200/35 to-transparent" />
+                    <div className="absolute -right-10 -top-12 size-28 rounded-full bg-emerald-200/8 blur-2xl" />
                     <div
-                      className={`flex items-start justify-between gap-2 ${wide ? 'shrink-0' : 'w-full'}`}
+                      className={`relative flex ${wide ? 'items-center gap-2.5' : 'h-full flex-col items-start justify-between gap-2'}`}
                     >
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-[13px] border border-emerald-200/16 bg-emerald-200/[0.095] text-emerald-100 shadow-lg shadow-emerald-950/10 backdrop-blur">
-                        <Icon className="size-4" />
+                      <div
+                        className={`flex items-start justify-between gap-2 ${wide ? 'shrink-0' : 'w-full'}`}
+                      >
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-[13px] border border-emerald-200/16 bg-emerald-200/[0.095] text-emerald-100 shadow-lg shadow-emerald-950/10 backdrop-blur">
+                          <Icon className="size-4" />
+                        </span>
+                        {!wide && (
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/8 bg-white/[0.055] text-slate-500 transition-colors group-active:text-white">
+                            <ArrowRight className="size-3" />
+                          </span>
+                        )}
+                      </div>
+                      <span className={`min-w-0 ${wide ? 'flex-1' : 'w-full'}`}>
+                        <span className="block truncate text-[13px] font-extrabold leading-tight text-white">
+                          {tool.label}
+                        </span>
+                        <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-400">
+                          {tool.desc}
+                        </span>
                       </span>
-                      {!wide && (
+                      {wide && (
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/8 bg-white/[0.055] text-slate-500 transition-colors group-active:text-white">
                           <ArrowRight className="size-3" />
                         </span>
                       )}
                     </div>
-                    <span className={`min-w-0 ${wide ? 'flex-1' : 'w-full'}`}>
-                      <span className="block truncate text-[13px] font-extrabold leading-tight text-white">
-                        {tool.label}
-                      </span>
-                      <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-400">
-                        {tool.desc}
-                      </span>
-                    </span>
-                    {wide && (
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/8 bg-white/[0.055] text-slate-500 transition-colors group-active:text-white">
-                        <ArrowRight className="size-3" />
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        </div>
       </div>
       <MobileQuickEntranceNav />
     </MobileSkyShell>

@@ -68,16 +68,11 @@ export function createQuestionBankDAO(storage: StorageProvider) {
     },
 
     /** Filter by knowledge point(s) */
-    async findByKnowledgePoint(
-      point: string,
-      limit = 20,
-    ): Promise<QuestionBankEntry[]> {
+    async findByKnowledgePoint(point: string, limit = 20): Promise<QuestionBankEntry[]> {
       const all = await storage.getAll<QuestionBankEntry>(TABLE);
       const matches = all
         .filter((e) =>
-          e.data.knowledgePoints.some(
-            (kp) => kp.name.toLowerCase().includes(point.toLowerCase()),
-          ),
+          e.data.knowledgePoints.some((kp) => kp.name.toLowerCase().includes(point.toLowerCase())),
         )
         .slice(0, limit);
       return matches.map((e) => e.data);

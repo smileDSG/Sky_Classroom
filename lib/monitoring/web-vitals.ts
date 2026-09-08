@@ -30,7 +30,10 @@ function observe(name: string, cb: VitalCallback) {
   try {
     new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        const value = name === 'CLS' ? ((entry as unknown as Record<string, number>).value ?? 0) : entry.startTime;
+        const value =
+          name === 'CLS'
+            ? ((entry as unknown as Record<string, number>).value ?? 0)
+            : entry.startTime;
         cb({ name, value, rating: getRating(name, value), timestamp: Date.now() });
       }
     }).observe({ type: name, buffered: true });
@@ -48,7 +51,7 @@ export function onWebVitals(cb: VitalCallback): () => void {
   let clsValue = 0;
   const clsObserver = new PerformanceObserver((list) => {
     for (const entry of list.getEntries()) {
-      clsValue += ((entry as unknown as Record<string, number>).value ?? 0);
+      clsValue += (entry as unknown as Record<string, number>).value ?? 0;
     }
     cb({ name: 'CLS', value: clsValue, rating: getRating('CLS', clsValue), timestamp: Date.now() });
   });
@@ -59,7 +62,12 @@ export function onWebVitals(cb: VitalCallback): () => void {
   // TTFB from navigation timing
   const [nav] = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
   if (nav) {
-    cb({ name: 'TTFB', value: nav.responseStart, rating: getRating('TTFB', nav.responseStart), timestamp: Date.now() });
+    cb({
+      name: 'TTFB',
+      value: nav.responseStart,
+      rating: getRating('TTFB', nav.responseStart),
+      timestamp: Date.now(),
+    });
   }
 
   return () => {

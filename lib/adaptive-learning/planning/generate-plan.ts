@@ -28,7 +28,10 @@ function resolveApiKey(providerId: string): string | undefined {
   // Support comma-separated key pools
   const envKeys = process.env[`${providerId.toUpperCase()}_API_KEYS`];
   if (envKeys) {
-    const keys = envKeys.split(',').map((k) => k.trim()).filter(Boolean);
+    const keys = envKeys
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean);
     return keys[0];
   }
 

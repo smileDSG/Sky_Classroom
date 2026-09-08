@@ -200,7 +200,14 @@ export async function loadGeneratedAgentsForStage(stageId: string): Promise<stri
   const ids: string[] = [];
   for (const record of records) {
     const agent = factory.createFromLLM(
-      { name: record.name, role: record.role, persona: record.persona, avatar: record.avatar, color: record.color, priority: record.priority },
+      {
+        name: record.name,
+        role: record.role,
+        persona: record.persona,
+        avatar: record.avatar,
+        color: record.color,
+        priority: record.priority,
+      },
       record.avatar,
       record.color,
     );
@@ -248,7 +255,17 @@ export async function saveGeneratedAgents(
   for (const record of records) {
     const { voiceConfig, ...rest } = record;
     const agent = factory.createFromLLM(
-      { name: record.name, role: record.role, persona: record.persona, avatar: record.avatar, color: record.color, priority: record.priority, voiceConfig: voiceConfig ? { providerId: voiceConfig.providerId, voiceId: voiceConfig.voiceId } : undefined },
+      {
+        name: record.name,
+        role: record.role,
+        persona: record.persona,
+        avatar: record.avatar,
+        color: record.color,
+        priority: record.priority,
+        voiceConfig: voiceConfig
+          ? { providerId: voiceConfig.providerId, voiceId: voiceConfig.voiceId }
+          : undefined,
+      },
       record.avatar,
       record.color,
     );

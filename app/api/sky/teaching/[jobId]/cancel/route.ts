@@ -9,10 +9,7 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { requireQuota } from '@/lib/server/billing/require-quota';
 import { readTeachingJob, markTeachingJobCancelled } from '@/lib/server/teaching-job-store';
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ jobId: string }> },
-) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {
   const quota = await requireQuota('generationCount');
   if ('error' in quota) return quota.error;
 

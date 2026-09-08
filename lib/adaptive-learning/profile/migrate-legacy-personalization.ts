@@ -21,14 +21,23 @@ function normalizeLanguage(value: string | null | undefined): string {
   return value;
 }
 
-function normalizeExplanationDepth(value: string | null | undefined): LearnerPreferencesInput['explanationDepth'] {
-  const valid: LearnerPreferencesInput['explanationDepth'][] = ['concise', 'standard', 'detailed', 'comprehensive'];
+function normalizeExplanationDepth(
+  value: string | null | undefined,
+): LearnerPreferencesInput['explanationDepth'] {
+  const valid: LearnerPreferencesInput['explanationDepth'][] = [
+    'concise',
+    'standard',
+    'detailed',
+    'comprehensive',
+  ];
   return valid.includes(value as LearnerPreferencesInput['explanationDepth'])
     ? (value as LearnerPreferencesInput['explanationDepth'])
     : 'standard';
 }
 
-function normalizeInteractionTone(value: string | null | undefined): LearnerPreferencesInput['interactionTone'] {
+function normalizeInteractionTone(
+  value: string | null | undefined,
+): LearnerPreferencesInput['interactionTone'] {
   const valid: LearnerPreferencesInput['interactionTone'][] = [
     'friendly',
     'professional',
@@ -41,7 +50,9 @@ function normalizeInteractionTone(value: string | null | undefined): LearnerPref
     : 'friendly';
 }
 
-function mapLearningStyleToFormats(style: string | null | undefined): LearnerPreferencesInput['contentFormatPreferences'] {
+function mapLearningStyleToFormats(
+  style: string | null | undefined,
+): LearnerPreferencesInput['contentFormatPreferences'] {
   switch (style) {
     case 'visual':
       return ['diagram'];
@@ -57,11 +68,15 @@ function mapLearningStyleToFormats(style: string | null | undefined): LearnerPre
   }
 }
 
-function mapStepByStepMode(showStepByStep: boolean | null | undefined): LearnerPreferencesInput['stepByStepMode'] {
+function mapStepByStepMode(
+  showStepByStep: boolean | null | undefined,
+): LearnerPreferencesInput['stepByStepMode'] {
   return showStepByStep === false ? 'when-needed' : 'always';
 }
 
-function mapConversationMemory(enableMemory: boolean | null | undefined): LearnerPreferencesInput['privacy']['conversationMemory'] {
+function mapConversationMemory(
+  enableMemory: boolean | null | undefined,
+): LearnerPreferencesInput['privacy']['conversationMemory'] {
   if (enableMemory === true) return 'persistent';
   if (enableMemory === false) return 'off';
   return 'session';

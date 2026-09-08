@@ -33,7 +33,10 @@ export { DEFAULT_STORAGE_CONFIG } from './storage-types';
 export { IndexedDBStorageProvider } from './indexeddb-provider';
 export { LocalStorageProvider } from './local-storage-provider';
 export { MemoryStorageProvider } from './memory-provider';
-export { createStorageProvider, getStorageProvider as getDataStorageProvider } from './storage-factory';
+export {
+  createStorageProvider,
+  getStorageProvider as getDataStorageProvider,
+} from './storage-factory';
 
 // ── DAOs ──
 export { createQuestionBankDAO, type QuestionBankEntry } from './dao/question-bank';

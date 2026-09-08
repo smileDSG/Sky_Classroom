@@ -20,9 +20,9 @@ import {
 } from '@/lib/adaptive-learning/profile/migrate-legacy-personalization';
 
 const DEPRECATION_HEADERS = {
-  'Deprecation': 'true',
-  'Sunset': 'Sat, 31 Oct 2026 00:00:00 GMT',
-  'Link': '</api/user/learner-profile>; rel="successor-version"',
+  Deprecation: 'true',
+  Sunset: 'Sat, 31 Oct 2026 00:00:00 GMT',
+  Link: '</api/user/learner-profile>; rel="successor-version"',
 };
 
 const patchRequestSchema = z
@@ -43,7 +43,9 @@ async function getOrMigratePreferences(userId: string) {
   if (!user) return null;
 
   const legacy = extractLegacyPersonalizationFields(user);
-  const hasAnyLegacyField = Object.values(legacy).some((value) => value !== null && value !== undefined);
+  const hasAnyLegacyField = Object.values(legacy).some(
+    (value) => value !== null && value !== undefined,
+  );
   if (!hasAnyLegacyField) return null;
 
   const service = new LearnerProfileService(repository);
@@ -122,9 +124,15 @@ export async function PATCH(request: Request) {
     });
   } catch (error) {
     if (error instanceof Error && error.message.includes('PROFILE_VERSION_CONFLICT')) {
-      return apiError('PROFILE_VERSION_CONFLICT', 409, 'Learner profile changed since it was loaded', undefined, {
-        ...DEPRECATION_HEADERS,
-      });
+      return apiError(
+        'PROFILE_VERSION_CONFLICT',
+        409,
+        'Learner profile changed since it was loaded',
+        undefined,
+        {
+          ...DEPRECATION_HEADERS,
+        },
+      );
     }
     return apiError('INTERNAL_ERROR', 500, 'Failed to save learner profile', undefined, {
       ...DEPRECATION_HEADERS,

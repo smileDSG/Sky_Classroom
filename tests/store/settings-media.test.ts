@@ -105,9 +105,11 @@ describe('useMediaGenerationStore — 生成任务状态', () => {
 
   it('入队任务 → status 为 pending', async () => {
     const store = await getMediaStore();
-    store.getState().enqueueTasks('stage-1', [
-      { elementId: 'el-1', type: 'image' as const, prompt: 'test image' },
-    ]);
+    store
+      .getState()
+      .enqueueTasks('stage-1', [
+        { elementId: 'el-1', type: 'image' as const, prompt: 'test image' },
+      ]);
 
     const task = store.getState().getTask('el-1');
     expect(task).toBeDefined();
@@ -117,9 +119,9 @@ describe('useMediaGenerationStore — 生成任务状态', () => {
 
   it('markGenerating → status 变为 generating', async () => {
     const store = await getMediaStore();
-    store.getState().enqueueTasks('stage-1', [
-      { elementId: 'el-2', type: 'video' as const, prompt: 'test' },
-    ]);
+    store
+      .getState()
+      .enqueueTasks('stage-1', [{ elementId: 'el-2', type: 'video' as const, prompt: 'test' }]);
     store.getState().markGenerating('el-2');
 
     expect(store.getState().getTask('el-2')!.status).toBe('generating');
@@ -127,9 +129,9 @@ describe('useMediaGenerationStore — 生成任务状态', () => {
 
   it('markDone → status 变为 done 且 objectUrl 已设置', async () => {
     const store = await getMediaStore();
-    store.getState().enqueueTasks('stage-1', [
-      { elementId: 'el-3', type: 'image' as const, prompt: 'test' },
-    ]);
+    store
+      .getState()
+      .enqueueTasks('stage-1', [{ elementId: 'el-3', type: 'image' as const, prompt: 'test' }]);
     store.getState().markDone('el-3', 'blob:http://example.com/img.png');
 
     const task = store.getState().getTask('el-3')!;
@@ -139,9 +141,9 @@ describe('useMediaGenerationStore — 生成任务状态', () => {
 
   it('markFailed → status 变为 failed 且 error/errorCode 正确', async () => {
     const store = await getMediaStore();
-    store.getState().enqueueTasks('stage-1', [
-      { elementId: 'el-4', type: 'image' as const, prompt: 'test' },
-    ]);
+    store
+      .getState()
+      .enqueueTasks('stage-1', [{ elementId: 'el-4', type: 'image' as const, prompt: 'test' }]);
     store.getState().markFailed('el-4', '请求超时', 'ERR_TIMEOUT');
 
     const task = store.getState().getTask('el-4')!;

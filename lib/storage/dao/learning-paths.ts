@@ -19,7 +19,12 @@ export interface LearningPathDAO {
 export function createLearningPathDAO(storage: StorageProvider): LearningPathDAO {
   return {
     async add(path: LearningPath): Promise<LearningPath> {
-      await storage.set(TABLE, { id: path.id, data: path, createdAt: Date.now(), updatedAt: Date.now() });
+      await storage.set(TABLE, {
+        id: path.id,
+        data: path,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
       return path;
     },
 
@@ -32,13 +37,19 @@ export function createLearningPathDAO(storage: StorageProvider): LearningPathDAO
       const entry = await storage.get<LearningPath>(TABLE, id);
       if (!entry) return null;
       const updated = { ...entry.data, ...partial, updatedAt: Date.now() };
-      await storage.set(TABLE, { id, data: updated, createdAt: entry.createdAt, updatedAt: Date.now() });
+      await storage.set(TABLE, {
+        id,
+        data: updated,
+        createdAt: entry.createdAt,
+        updatedAt: Date.now(),
+      });
       return updated;
     },
 
     async listByUser(userId: string): Promise<LearningPath[]> {
-      const entries = await storage.getAll<LearningPath>(TABLE, (entry) =>
-        entry.data.userId === userId,
+      const entries = await storage.getAll<LearningPath>(
+        TABLE,
+        (entry) => entry.data.userId === userId,
       );
       return entries.map((e) => e.data).sort((a, b) => b.updatedAt - a.updatedAt);
     },
@@ -49,15 +60,17 @@ export function createLearningPathDAO(storage: StorageProvider): LearningPathDAO
         if (path.userId !== userId) return false;
         // A path is "active" while it still has pending/in-progress work, OR
         // it has nodes but none are completed/skipped yet (freshly created).
-        const hasOpen = path.nodes.some((n) => n.status === 'pending' || n.status === 'in_progress');
-        const hasFinished = path.nodes.some((n) => n.status === 'completed' || n.status === 'skipped');
+        const hasOpen = path.nodes.some(
+          (n) => n.status === 'pending' || n.status === 'in_progress',
+        );
+        const hasFinished = path.nodes.some(
+          (n) => n.status === 'completed' || n.status === 'skipped',
+        );
         return hasOpen || (path.nodes.length > 0 && !hasFinished);
       });
       if (entries.length === 0) return null;
       // Return most recently updated active path
-      return entries
-        .map((e) => e.data)
-        .sort((a, b) => b.updatedAt - a.updatedAt)[0];
+      return entries.map((e) => e.data).sort((a, b) => b.updatedAt - a.updatedAt)[0];
     },
 
     async delete(id: string): Promise<boolean> {

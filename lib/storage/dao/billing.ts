@@ -36,14 +36,19 @@ async function ensureProvider(): Promise<StorageProvider> {
 }
 
 export async function createBillingDAO(storage?: StorageProvider) {
-  const s = storage ?? await ensureProvider();
+  const s = storage ?? (await ensureProvider());
 
   return {
-    async create(order: Omit<OrderEntry, 'createdAt' | 'updatedAt' | 'paidAt'>): Promise<OrderEntry> {
+    async create(
+      order: Omit<OrderEntry, 'createdAt' | 'updatedAt' | 'paidAt'>,
+    ): Promise<OrderEntry> {
       const now = Date.now();
       const entry = {
         id: order.id,
-        data: { ...order, createdAt: now, updatedAt: now, paidAt: null } as unknown as Record<string, unknown>,
+        data: { ...order, createdAt: now, updatedAt: now, paidAt: null } as unknown as Record<
+          string,
+          unknown
+        >,
         createdAt: now,
         updatedAt: now,
       };

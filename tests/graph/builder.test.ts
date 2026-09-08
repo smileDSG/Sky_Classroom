@@ -26,9 +26,7 @@ describe('buildGraphFromMistakes', () => {
   });
 
   it('single mistake with one KP → one node', () => {
-    const result = buildGraphFromMistakes([
-      makeEntry({ knowledgePoints: ['加法'] }),
-    ]);
+    const result = buildGraphFromMistakes([makeEntry({ knowledgePoints: ['加法'] })]);
     expect(result.nodes).toHaveLength(1);
     expect(result.nodes[0].id).toBe('加法');
     expect(result.nodes[0].name).toBe('加法');
@@ -37,9 +35,7 @@ describe('buildGraphFromMistakes', () => {
   });
 
   it('single mistake with multiple KPs → nodes + related edges', () => {
-    const result = buildGraphFromMistakes([
-      makeEntry({ knowledgePoints: ['加法', '进位'] }),
-    ]);
+    const result = buildGraphFromMistakes([makeEntry({ knowledgePoints: ['加法', '进位'] })]);
     expect(result.nodes).toHaveLength(2);
     expect(result.edges).toHaveLength(2); // related both ways
     expect(result.edges[0].relation).toBe('related');
@@ -57,9 +53,7 @@ describe('buildGraphFromMistakes', () => {
   });
 
   it('mastery decreases as mistake count grows', () => {
-    const single = buildGraphFromMistakes([
-      makeEntry({ knowledgePoints: ['加法'] }),
-    ]);
+    const single = buildGraphFromMistakes([makeEntry({ knowledgePoints: ['加法'] })]);
     const multi = buildGraphFromMistakes([
       makeEntry({ id: 'm1', knowledgePoints: ['加法'] }),
       makeEntry({ id: 'm2', knowledgePoints: ['加法'] }),
@@ -104,44 +98,32 @@ describe('buildGraphFromMistakes', () => {
   });
 
   it('nodes with mastery >= 50 are not weak points', () => {
-    const result = buildGraphFromMistakes([
-      makeEntry({ knowledgePoints: ['强项'] }),
-    ]);
+    const result = buildGraphFromMistakes([makeEntry({ knowledgePoints: ['强项'] })]);
     expect(result.weakPoints).not.toContain('强项');
   });
 
   it('category inference: 函数 keywords', () => {
-    const result = buildGraphFromMistakes([
-      makeEntry({ knowledgePoints: ['二次函数'] }),
-    ]);
+    const result = buildGraphFromMistakes([makeEntry({ knowledgePoints: ['二次函数'] })]);
     expect(result.nodes[0].category).toBe('函数');
   });
 
   it('category inference: 几何 keywords', () => {
-    const result = buildGraphFromMistakes([
-      makeEntry({ knowledgePoints: ['三角形面积'] }),
-    ]);
+    const result = buildGraphFromMistakes([makeEntry({ knowledgePoints: ['三角形面积'] })]);
     expect(result.nodes[0].category).toBe('几何');
   });
 
   it('category inference: 概率 keywords', () => {
-    const result = buildGraphFromMistakes([
-      makeEntry({ knowledgePoints: ['概率分布'] }),
-    ]);
+    const result = buildGraphFromMistakes([makeEntry({ knowledgePoints: ['概率分布'] })]);
     expect(result.nodes[0].category).toBe('概率');
   });
 
   it('category inference: default to 综合', () => {
-    const result = buildGraphFromMistakes([
-      makeEntry({ knowledgePoints: ['阅读理解'] }),
-    ]);
+    const result = buildGraphFromMistakes([makeEntry({ knowledgePoints: ['阅读理解'] })]);
     expect(result.nodes[0].category).toBe('综合');
   });
 
   it('returns GraphResponse shape with all fields', () => {
-    const result = buildGraphFromMistakes([
-      makeEntry({ knowledgePoints: ['加法'] }),
-    ]);
+    const result = buildGraphFromMistakes([makeEntry({ knowledgePoints: ['加法'] })]);
     expect(result).toHaveProperty('nodes');
     expect(result).toHaveProperty('edges');
     expect(result).toHaveProperty('weakPoints');

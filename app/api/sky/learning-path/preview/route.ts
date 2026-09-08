@@ -39,14 +39,14 @@ export async function GET(req: NextRequest) {
       context;
 
     const now = Date.now();
-    const dueReviewItems = reviewSchedule.today?.items.slice(0, 5).map((m) => ({
-      id: m.id,
-      problemText: m.problemText.slice(0, 80),
-      knowledgePoints: m.knowledgePoints,
-      nextReview: m.nextReview ?? 0,
-      overdue:
-        (m.nextReview ?? 0) > 0 && (m.nextReview ?? 0) < now - 24 * 60 * 60 * 1000,
-    })) ?? [];
+    const dueReviewItems =
+      reviewSchedule.today?.items.slice(0, 5).map((m) => ({
+        id: m.id,
+        problemText: m.problemText.slice(0, 80),
+        knowledgePoints: m.knowledgePoints,
+        nextReview: m.nextReview ?? 0,
+        overdue: (m.nextReview ?? 0) > 0 && (m.nextReview ?? 0) < now - 24 * 60 * 60 * 1000,
+      })) ?? [];
 
     const topErrorPatterns = profile.errorPatterns
       .sort((a, b) => b.frequency - a.frequency)

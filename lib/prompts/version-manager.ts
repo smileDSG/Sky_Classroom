@@ -52,9 +52,7 @@ class VersionStore {
   getLatestVersion(promptId: string): PromptVersion | null {
     const versions = this.versions.get(promptId);
     if (!versions || versions.length === 0) return null;
-    return versions.reduce((a, b) =>
-      compareSemver(a.version, b.version) > 0 ? a : b,
-    );
+    return versions.reduce((a, b) => (compareSemver(a.version, b.version) > 0 ? a : b));
   }
 
   // A/B Tests
@@ -92,8 +90,7 @@ class VersionStore {
     }
     if (data.score !== undefined) {
       target.avgScore =
-        ((target.avgScore || 0) * (target.calls - 1) + (data.score as number)) /
-        target.calls;
+        ((target.avgScore || 0) * (target.calls - 1) + (data.score as number)) / target.calls;
     }
     this.metrics.set(abTestId, m);
   }
@@ -154,9 +151,7 @@ export class VersionManager implements IVersionManager {
       // Resolve versionId (e.g. "v1.0.0") back to the actual version string (e.g. "1.0.0")
       const variant = this.store.getVersion(promptId, versionId);
       const versionStr = variant?.version || versionId;
-      log.debug(
-        `A/B test ${abTest.id}: resolved to ${useVariantB ? 'B' : 'A'} (${versionStr})`,
-      );
+      log.debug(`A/B test ${abTest.id}: resolved to ${useVariantB ? 'B' : 'A'} (${versionStr})`);
       return versionStr;
     }
 
@@ -170,7 +165,9 @@ export class VersionManager implements IVersionManager {
       throw new Error('trafficSplit must be between 0 and 1');
     }
     this.store.addABTest(config);
-    log.info(`Created A/B test: ${config.id} for ${config.promptId} (split: ${config.trafficSplit})`);
+    log.info(
+      `Created A/B test: ${config.id} for ${config.promptId} (split: ${config.trafficSplit})`,
+    );
   }
 
   getABTest(promptId: string): ABTestConfig | null {

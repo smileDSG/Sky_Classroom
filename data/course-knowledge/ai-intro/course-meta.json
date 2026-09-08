@@ -3,13 +3,7 @@
   "title": "人工智能导论",
   "englishTitle": "Introduction to Artificial Intelligence",
   "courseType": "高校计算机类专业基础课",
-  "targetMajors": [
-    "人工智能",
-    "计算机科学与技术",
-    "软件工程",
-    "电子信息",
-    "数据科学与大数据技术"
-  ],
+  "targetMajors": ["人工智能", "计算机科学与技术", "软件工程", "电子信息", "数据科学与大数据技术"],
   "suggestedSemester": "大二下或大三上",
   "suggestedHours": 48,
   "suggestedCredits": 3,

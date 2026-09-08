@@ -26,7 +26,11 @@ describe('Cover Pipeline Integration', () => {
     expect(stat.size).toBeGreaterThan(1000);
 
     // Cleanup
-    try { await fs.unlink(render.pptxPath!); } catch { /* ignore */ }
+    try {
+      await fs.unlink(render.pptxPath!);
+    } catch {
+      /* ignore */
+    }
   });
 
   it('designDNA with bad colors → sanitized → can still render', async () => {
@@ -43,7 +47,11 @@ describe('Cover Pipeline Integration', () => {
 
     // Cleanup
     if (render.pptxPath) {
-      try { await fs.unlink(render.pptxPath!); } catch { /* ignore */ }
+      try {
+        await fs.unlink(render.pptxPath!);
+      } catch {
+        /* ignore */
+      }
     }
   });
 
@@ -56,11 +64,21 @@ describe('Cover Pipeline Integration', () => {
       const validation = validateDesignDNA(dna);
       expect(validation.valid, `${name} should be valid`).toBe(true);
 
-      const render = await renderCoverPptx(validation.designDNA, '测试', name, tmpDir, Object.keys(COLOR_PALETTES).indexOf(name));
+      const render = await renderCoverPptx(
+        validation.designDNA,
+        '测试',
+        name,
+        tmpDir,
+        Object.keys(COLOR_PALETTES).indexOf(name),
+      );
       expect(render.success, `${name} render should succeed`).toBe(true);
 
       if (render.pptxPath) {
-        try { await fs.unlink(render.pptxPath!); } catch { /* ignore */ }
+        try {
+          await fs.unlink(render.pptxPath!);
+        } catch {
+          /* ignore */
+        }
       }
     }
   }, 15000);

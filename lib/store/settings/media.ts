@@ -104,9 +104,7 @@ export function getDefaultMediaState() {
 
 export function createMediaActions(
   set: (
-    partial:
-      | Partial<MediaSliceState>
-      | ((state: MediaSliceState) => Partial<MediaSliceState>),
+    partial: Partial<MediaSliceState> | ((state: MediaSliceState) => Partial<MediaSliceState>),
   ) => void,
   get: () => MediaSliceState,
 ): MediaSliceActions {
@@ -151,9 +149,7 @@ export function createMediaActions(
     setImageGenerationEnabled: (enabled) => {
       if (enabled) {
         const cfg = get().imageProvidersConfig;
-        const hasUsable = Object.values(cfg).some(
-          (c) => c.isServerConfigured || c.apiKey,
-        );
+        const hasUsable = Object.values(cfg).some((c) => c.isServerConfigured || c.apiKey);
         if (!hasUsable) return;
       }
       set({ imageGenerationEnabled: enabled });
@@ -162,22 +158,17 @@ export function createMediaActions(
     setVideoGenerationEnabled: (enabled) => {
       if (enabled) {
         const cfg = get().videoProvidersConfig;
-        const hasUsable = Object.values(cfg).some(
-          (c) => c.isServerConfigured || c.apiKey,
-        );
+        const hasUsable = Object.values(cfg).some((c) => c.isServerConfigured || c.apiKey);
         if (!hasUsable) return;
       }
       set({ videoGenerationEnabled: enabled });
     },
 
-    setReviewOutlineEnabled: (enabled) =>
-      set({ reviewOutlineEnabled: enabled }),
+    setReviewOutlineEnabled: (enabled) => set({ reviewOutlineEnabled: enabled }),
   };
 }
 
-export function ensureBuiltInImageProviders(
-  state: Partial<MediaSliceState>,
-): void {
+export function ensureBuiltInImageProviders(state: Partial<MediaSliceState>): void {
   if (!state.imageProvidersConfig) return;
   const defaultConfig = getDefaultImageConfig().imageProvidersConfig;
   for (const pid of Object.keys(IMAGE_PROVIDERS)) {
@@ -188,9 +179,7 @@ export function ensureBuiltInImageProviders(
   }
 }
 
-export function ensureBuiltInVideoProviders(
-  state: Partial<MediaSliceState>,
-): void {
+export function ensureBuiltInVideoProviders(state: Partial<MediaSliceState>): void {
   if (!state.videoProvidersConfig) return;
   const defaultConfig = getDefaultVideoConfig().videoProvidersConfig;
   for (const pid of Object.keys(VIDEO_PROVIDERS)) {

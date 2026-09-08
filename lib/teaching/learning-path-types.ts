@@ -44,12 +44,7 @@ export const DEFAULT_PATH_CONFIG: PathEngineConfig = {
 };
 
 /** Strategy choices shown to the user in the generation dialog */
-export type PriorityStrategy =
-  | 'weakness'
-  | 'review'
-  | 'error-pattern'
-  | 'goal-topic'
-  | 'balanced';
+export type PriorityStrategy = 'weakness' | 'review' | 'error-pattern' | 'goal-topic' | 'balanced';
 
 /** User-facing strategy alias (single-select convenience) */
 export type StrategyAlias =

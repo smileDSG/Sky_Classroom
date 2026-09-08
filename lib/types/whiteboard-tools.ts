@@ -35,9 +35,16 @@ export const LINE_SUB_TYPES: { key: LineSubType; label: string }[] = [
 // ── Color presets ────────────────────────────────────────────────────
 
 export const PEN_COLORS = [
-  '#000000', '#e74c3c', '#e67e22', '#f1c40f',
-  '#2ecc71', '#3498db', '#9b59b6', '#1abc9c',
-  '#ffffff', '#95a5a6',
+  '#000000',
+  '#e74c3c',
+  '#e67e22',
+  '#f1c40f',
+  '#2ecc71',
+  '#3498db',
+  '#9b59b6',
+  '#1abc9c',
+  '#ffffff',
+  '#95a5a6',
 ];
 
 export const PEN_WIDTHS = [2, 4, 6, 10];

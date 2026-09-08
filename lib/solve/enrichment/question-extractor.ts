@@ -76,8 +76,15 @@ function resolveExtractorModel() {
 // ── Normalization ────────────────────────────────────────────────────
 
 const VALID_SUBJECTS: Set<string> = new Set([
-  'math', 'physics', 'chemistry', 'chinese', 'english',
-  'biology', 'history', 'geography', 'politics',
+  'math',
+  'physics',
+  'chemistry',
+  'chinese',
+  'english',
+  'biology',
+  'history',
+  'geography',
+  'politics',
 ]);
 
 const VALID_GRADES: Set<string> = new Set(['junior', 'senior', 'college']);
@@ -114,7 +121,8 @@ function normalizeType(raw: string): ExtractedQuestion['questionType'] {
   if (VALID_TYPES.has(s)) return s as ExtractedQuestion['questionType'];
   if (s.includes('choice') || s.includes('选择')) return 'choice';
   if (s.includes('fill') || s.includes('填空')) return 'fill';
-  if (s.includes('solve') || s.includes('解答') || s.includes('证明') || s.includes('计算')) return 'solve';
+  if (s.includes('solve') || s.includes('解答') || s.includes('证明') || s.includes('计算'))
+    return 'solve';
   if (s.includes('judge') || s.includes('判断')) return 'judge';
   return 'solve';
 }
@@ -140,19 +148,15 @@ export interface ExtractQuestionsOptions {
 export async function extractQuestionsFromText(
   opts: ExtractQuestionsOptions,
 ): Promise<ExtractedQuestion[]> {
-  const {
-    textContent,
-    expectedSubject,
-    expectedGrade,
-    maxQuestions = 20,
-  } = opts;
+  const { textContent, expectedSubject, expectedGrade, maxQuestions = 20 } = opts;
 
   // Truncate input — 15K chars is enough context for LLM extraction
   const truncatedText = textContent.slice(0, 15_000);
 
-  const userPrompt = expectedSubject && expectedGrade
-    ? `以下网页文本来自 ${expectedSubject} ${expectedGrade} 相关页面。提取其中的所有题目：\n\n${truncatedText}`
-    : `以下网页文本来自教育相关页面。提取其中的所有题目：\n\n${truncatedText}`;
+  const userPrompt =
+    expectedSubject && expectedGrade
+      ? `以下网页文本来自 ${expectedSubject} ${expectedGrade} 相关页面。提取其中的所有题目：\n\n${truncatedText}`
+      : `以下网页文本来自教育相关页面。提取其中的所有题目：\n\n${truncatedText}`;
 
   try {
     const modelWithInfo = getModel(resolveExtractorModel());
@@ -171,7 +175,9 @@ export async function extractQuestionsFromText(
       { retries: 1 },
     );
 
-    log.info(`[Extractor] Raw response length: ${result.text?.length ?? 0}, first 200: ${result.text?.slice(0, 200) ?? '(empty)'}`);
+    log.info(
+      `[Extractor] Raw response length: ${result.text?.length ?? 0}, first 200: ${result.text?.slice(0, 200) ?? '(empty)'}`,
+    );
 
     let parsed = parseJsonResponse<ExtractionResponse>(result.text);
 
@@ -181,12 +187,16 @@ export async function extractQuestionsFromText(
       const jsonEnd = result.text.lastIndexOf('}');
       if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
         try {
-          const candidate = JSON.parse(result.text.slice(jsonStart, jsonEnd + 1)) as ExtractionResponse;
+          const candidate = JSON.parse(
+            result.text.slice(jsonStart, jsonEnd + 1),
+          ) as ExtractionResponse;
           if (candidate && Array.isArray(candidate.questions)) {
             parsed = candidate;
             log.info('[Extractor] Recovered via regex fallback');
           }
-        } catch { /* not valid JSON — will be caught by next guard */ }
+        } catch {
+          /* not valid JSON — will be caught by next guard */
+        }
       }
     }
 
@@ -237,12 +247,7 @@ export interface ExtractQuestionsFromPagesOptions {
 export async function extractQuestionsFromPages(
   opts: ExtractQuestionsFromPagesOptions,
 ): Promise<ExtractedQuestion[]> {
-  const {
-    pages,
-    expectedSubject,
-    expectedGrade,
-    maxTotalQuestions = MAX_QUESTIONS_PER_RUN,
-  } = opts;
+  const { pages, expectedSubject, expectedGrade, maxTotalQuestions = MAX_QUESTIONS_PER_RUN } = opts;
 
   const allQuestions: ExtractedQuestion[] = [];
 

@@ -5,12 +5,7 @@
  * Previously located in lib/mistakes/knowledge-graph.ts.
  */
 
-import type {
-  KnowledgeGraph,
-  KnowledgeNode,
-  KnowledgeEdge,
-  LearningPath,
-} from './types';
+import type { KnowledgeGraph, KnowledgeNode, KnowledgeEdge, LearningPath } from './types';
 import { KNOWLEDGE_RELATIONS } from './relations';
 
 const EBBINGHAUS_MAX_ROUNDS = 6;
@@ -18,7 +13,8 @@ const EBBINGHAUS_MAX_ROUNDS = 6;
 export function inferCategory(name: string): string {
   if (/方程|不等式|多项式|因式|整式|分式|根式|指数|对数|代数/.test(name)) return '代数';
   if (/函数|映射|单调|奇偶|周期|反函数|一次|二次|幂|指对/.test(name)) return '函数';
-  if (/几何|三角|圆|向量|直线|平面|立体|棱|球|柱|锥|角|平行|垂直|相似|全等/.test(name)) return '几何';
+  if (/几何|三角|圆|向量|直线|平面|立体|棱|球|柱|锥|角|平行|垂直|相似|全等/.test(name))
+    return '几何';
   if (/概率|随机|期望|方差|分布|频率|事件/.test(name)) return '概率';
   if (/统计|样本|总体|回归|相关|抽样|频率分布|中位|众数|平均/.test(name)) return '统计';
   if (/数列|等差|等比|通项|求和|递推/.test(name)) return '数列';
@@ -41,25 +37,24 @@ function calcNodeMastery(mistakesForKP: RecordLike[]): number {
 
   const penalty = count * 10;
 
-  const avgReviewProgress = mistakesForKP.reduce((sum, m) => {
-    return sum + Math.min((m.reviewCount ?? 0) / EBBINGHAUS_MAX_ROUNDS, 1);
-  }, 0) / count;
+  const avgReviewProgress =
+    mistakesForKP.reduce((sum, m) => {
+      return sum + Math.min((m.reviewCount ?? 0) / EBBINGHAUS_MAX_ROUNDS, 1);
+    }, 0) / count;
   const reviewBonus = avgReviewProgress * 60;
 
   const now = Date.now();
   const staleCount = mistakesForKP.filter((m) => {
     if (m.reviewed) return false;
     if (!m.lastReview) return false;
-    return (now - m.lastReview) > 7 * 86400000;
+    return now - m.lastReview > 7 * 86400000;
   }).length;
   const decay = staleCount * 5;
 
   return Math.max(0, Math.min(100, Math.round(100 - penalty + reviewBonus - decay)));
 }
 
-export function buildKnowledgeGraph<T extends RecordLike>(
-  records: T[],
-): KnowledgeGraph {
+export function buildKnowledgeGraph<T extends RecordLike>(records: T[]): KnowledgeGraph {
   const kpSet = new Set<string>();
   const kpMistakeIds = new Map<string, Set<string>>();
   const kpProblemCount = new Map<string, number>();
@@ -83,9 +78,13 @@ export function buildKnowledgeGraph<T extends RecordLike>(
   for (const kp of kpSet) {
     const mistakeCount = kpMistakeIds.get(kp)?.size ?? 0;
     const relatedMistakes = kpMistakes.get(kp) ?? [];
-    const reviewProgress = relatedMistakes.length > 0
-      ? relatedMistakes.reduce((sum, m) => sum + Math.min((m.reviewCount ?? 0) / EBBINGHAUS_MAX_ROUNDS, 1), 0) / relatedMistakes.length
-      : 0;
+    const reviewProgress =
+      relatedMistakes.length > 0
+        ? relatedMistakes.reduce(
+            (sum, m) => sum + Math.min((m.reviewCount ?? 0) / EBBINGHAUS_MAX_ROUNDS, 1),
+            0,
+          ) / relatedMistakes.length
+        : 0;
     nodes.push({
       id: kp,
       name: kp,

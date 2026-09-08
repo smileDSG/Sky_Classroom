@@ -35,11 +35,13 @@ export async function GET(req: NextRequest) {
     runEnrichment({
       gradeLevels: ['senior', 'college'],
       maxQuestions: 50, // Smaller batch for cron runs
-    }).then((job) => {
-      log.info(`[Cron] Job ${job.id} finished: ${job.stats.totalStored} stored`);
-    }).catch((err) => {
-      log.error(`[Cron] Job failed:`, err);
-    });
+    })
+      .then((job) => {
+        log.info(`[Cron] Job ${job.id} finished: ${job.stats.totalStored} stored`);
+      })
+      .catch((err) => {
+        log.error(`[Cron] Job failed:`, err);
+      });
 
     return apiSuccess({ message: 'Cron enrichment started' });
   } catch (err) {

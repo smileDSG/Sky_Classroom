@@ -85,9 +85,7 @@ export async function createMemories(inputs: CreateMemoryInput[]): Promise<Agent
 // ── Read ──────────────────────────────────────────────────────────
 
 /** Query memories with flexible filtering */
-export async function queryMemories(
-  options: MemoryQueryOptions,
-): Promise<AgentMemoryRecord[]> {
+export async function queryMemories(options: MemoryQueryOptions): Promise<AgentMemoryRecord[]> {
   let collection = db.agentMemories.where('agentId').equals(options.agentId);
 
   let records = await collection.toArray();
@@ -131,10 +129,7 @@ export async function queryMemories(
 }
 
 /** Get all memories for an agent, sorted by importance */
-export async function getAgentMemories(
-  agentId: string,
-  limit = 50,
-): Promise<AgentMemoryRecord[]> {
+export async function getAgentMemories(agentId: string, limit = 50): Promise<AgentMemoryRecord[]> {
   return queryMemories({ agentId, limit });
 }
 
@@ -151,8 +146,7 @@ export async function searchMemories(
   const results = all.filter(
     (r) =>
       (!r.expiresAt || r.expiresAt > now) &&
-      (r.content.toLowerCase().includes(q) ||
-        r.category.toLowerCase().includes(q)),
+      (r.content.toLowerCase().includes(q) || r.category.toLowerCase().includes(q)),
   );
 
   // Update access counts for recalled memories
@@ -180,7 +174,9 @@ export async function getMemory(id: string): Promise<AgentMemoryRecord | undefin
 /** Update an existing memory */
 export async function updateMemory(
   id: string,
-  updates: Partial<Pick<AgentMemoryRecord, 'content' | 'importance' | 'category' | 'type' | 'expiresAt'>>,
+  updates: Partial<
+    Pick<AgentMemoryRecord, 'content' | 'importance' | 'category' | 'type' | 'expiresAt'>
+  >,
 ): Promise<void> {
   await db.agentMemories.update(id, {
     ...updates,
@@ -202,16 +198,10 @@ export async function touchMemory(id: string): Promise<void> {
 
 /** Deduplicate: update existing memory if same agent+type+category+content exists, else create */
 export async function upsertMemory(input: CreateMemoryInput): Promise<AgentMemoryRecord> {
-  const existing = await db.agentMemories
-    .where('agentId')
-    .equals(input.agentId)
-    .toArray();
+  const existing = await db.agentMemories.where('agentId').equals(input.agentId).toArray();
 
   const duplicate = existing.find(
-    (r) =>
-      r.type === input.type &&
-      r.category === input.category &&
-      r.content === input.content,
+    (r) => r.type === input.type && r.category === input.category && r.content === input.content,
   );
 
   if (duplicate) {
@@ -268,7 +258,12 @@ export async function getMemoryStats(agentId: string): Promise<{
   const active = records.filter((r) => !r.expiresAt || r.expiresAt > now);
 
   const byType: Record<MemoryType, number> = {
-    core: 0, preference: 0, fact: 0, progress: 0, question: 0, decision: 0,
+    core: 0,
+    preference: 0,
+    fact: 0,
+    progress: 0,
+    question: 0,
+    decision: 0,
   };
   const categoryMap: Record<string, number> = {};
 
@@ -282,9 +277,8 @@ export async function getMemoryStats(agentId: string): Promise<{
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
-  const avgImportance = active.length > 0
-    ? active.reduce((sum, r) => sum + r.importance, 0) / active.length
-    : 0;
+  const avgImportance =
+    active.length > 0 ? active.reduce((sum, r) => sum + r.importance, 0) / active.length : 0;
 
   return { total: active.length, byType, avgImportance, topCategories };
 }

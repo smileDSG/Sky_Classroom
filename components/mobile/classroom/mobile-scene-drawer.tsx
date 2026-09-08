@@ -70,7 +70,12 @@ export function MobileSceneDrawer({
                 {active ? <CheckCircle2 className="size-5" /> : <Icon className="size-4" />}
               </div>
               <div className="min-w-0 flex-1">
-                <p className={cn('truncate text-sm font-medium', active ? 'text-sky-100' : 'text-slate-200')}>
+                <p
+                  className={cn(
+                    'truncate text-sm font-medium',
+                    active ? 'text-sky-100' : 'text-slate-200',
+                  )}
+                >
                   {index + 1}. {scene.title || '未命名场景'}
                 </p>
                 <p className="text-xs text-slate-500">{TYPE_LABEL[scene.type]}</p>

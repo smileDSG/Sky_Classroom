@@ -56,12 +56,7 @@ export function GlassDialog({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.98 }}
           transition={{ duration: 0.35, ease: [0.21, 1, 0.36, 1] }}
-          className={cn(
-            'fixed z-50',
-            positionStyles[position],
-            sizeStyles[size],
-            className
-          )}
+          className={cn('fixed z-50', positionStyles[position], sizeStyles[size], className)}
         >
           <div
             className={cn(
@@ -72,7 +67,7 @@ export function GlassDialog({
               'before:absolute before:inset-0 before:rounded-3xl',
               'before:bg-gradient-to-br',
               speaker ? roleColors[speaker.role] : 'from-white/5 to-white/10',
-              'before:opacity-50'
+              'before:opacity-50',
             )}
           >
             {/* Inner glow */}
@@ -88,7 +83,7 @@ export function GlassDialog({
                       'ring-2 ring-white/20',
                       speaker.role === 'teacher' && 'ring-violet-400/50',
                       speaker.role === 'student' && 'ring-sky-400/50',
-                      speaker.role === 'user' && 'ring-emerald-400/50'
+                      speaker.role === 'user' && 'ring-emerald-400/50',
                     )}
                   >
                     <img
@@ -101,9 +96,7 @@ export function GlassDialog({
                     <div className="absolute -inset-1 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   )}
                 </div>
-                <span className="text-sm font-medium text-slate-200">
-                  {speaker.name}
-                </span>
+                <span className="text-sm font-medium text-slate-200">{speaker.name}</span>
                 {isLoading && (
                   <div className="flex gap-1 ml-auto">
                     <motion.div
@@ -149,12 +142,7 @@ interface SpeechBubbleProps {
   className?: string;
 }
 
-export function SpeechBubble({
-  text,
-  speaker,
-  isVisible,
-  className,
-}: SpeechBubbleProps) {
+export function SpeechBubble({ text, speaker, isVisible, className }: SpeechBubbleProps) {
   if (!isVisible) return null;
 
   return (
@@ -168,17 +156,20 @@ export function SpeechBubble({
         'bg-slate-800/70 backdrop-blur-xl',
         'border border-white/10',
         'shadow-[0_4px_24px_-6px_rgba(0,0,0,0.4)]',
-        className
+        className,
       )}
     >
       {/* Gradient accent */}
       <div
         className={cn(
           'absolute top-0 left-0 right-0 h-px',
-          speaker?.role === 'teacher' && 'bg-gradient-to-r from-transparent via-violet-400/60 to-transparent',
-          speaker?.role === 'student' && 'bg-gradient-to-r from-transparent via-sky-400/60 to-transparent',
-          speaker?.role === 'user' && 'bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent',
-          !speaker && 'bg-gradient-to-r from-transparent via-white/20 to-transparent'
+          speaker?.role === 'teacher' &&
+            'bg-gradient-to-r from-transparent via-violet-400/60 to-transparent',
+          speaker?.role === 'student' &&
+            'bg-gradient-to-r from-transparent via-sky-400/60 to-transparent',
+          speaker?.role === 'user' &&
+            'bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent',
+          !speaker && 'bg-gradient-to-r from-transparent via-white/20 to-transparent',
         )}
       />
 
@@ -208,12 +199,7 @@ interface TypewriterTextProps {
   className?: string;
 }
 
-export function TypewriterText({
-  text,
-  speed = 30,
-  onComplete,
-  className,
-}: TypewriterTextProps) {
+export function TypewriterText({ text, speed = 30, onComplete, className }: TypewriterTextProps) {
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
 

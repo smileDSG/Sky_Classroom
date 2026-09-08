@@ -47,16 +47,28 @@ function detectFormat(file: File): 'json' | 'csv' | 'xlsx' | 'pdf' | 'image' | '
 
   if (ext === 'json' || mime === 'application/json' || mime === 'text/json') return 'json';
   if (ext === 'csv' || mime === 'text/csv' || mime === 'application/csv') return 'csv';
-  if (ext === 'xlsx' || ext === 'xls' || mime === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || mime === 'application/vnd.ms-excel') return 'xlsx';
+  if (
+    ext === 'xlsx' ||
+    ext === 'xls' ||
+    mime === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+    mime === 'application/vnd.ms-excel'
+  )
+    return 'xlsx';
   if (ext === 'pdf' || mime === 'application/pdf') return 'pdf';
   if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || mime.startsWith('image/')) return 'image';
-  if (ext === 'docx' || mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return 'docx';
+  if (
+    ext === 'docx' ||
+    mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  )
+    return 'docx';
 
   // Content sniffing fallback
   return null; // Will read first bytes after
 }
 
-async function sniffFormat(buffer: Buffer): Promise<'json' | 'csv' | 'xlsx' | 'pdf' | 'image' | 'docx' | null> {
+async function sniffFormat(
+  buffer: Buffer,
+): Promise<'json' | 'csv' | 'xlsx' | 'pdf' | 'image' | 'docx' | null> {
   const header = buffer.slice(0, 8).toString('hex');
   // PDF magic: %PDF
   if (buffer.slice(0, 4).toString() === '%PDF') return 'pdf';
@@ -131,7 +143,9 @@ const OCR_SYSTEM_PROMPT = `你是一个专业的数学题目识别助手。请�
 async function ocrImageToText(buffer: Buffer, mimeType: string): Promise<string> {
   const visionModels = getVisionModels();
   if (visionModels.length === 0) {
-    throw new Error('没有配置支持视觉的模型，请配置 ANTHROPIC_API_KEY 或 GLM_API_KEY 或 QWEN_API_KEY');
+    throw new Error(
+      '没有配置支持视觉的模型，请配置 ANTHROPIC_API_KEY 或 GLM_API_KEY 或 QWEN_API_KEY',
+    );
   }
 
   const messages = [
@@ -162,7 +176,15 @@ async function ocrImageToText(buffer: Buffer, mimeType: string): Promise<string>
     );
 
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error(`${visionConfig.providerId}/${visionConfig.modelId} timed out after ${MODEL_TIMEOUT}ms`)), MODEL_TIMEOUT);
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              `${visionConfig.providerId}/${visionConfig.modelId} timed out after ${MODEL_TIMEOUT}ms`,
+            ),
+          ),
+        MODEL_TIMEOUT,
+      );
     });
 
     const result = await Promise.race([llmPromise, timeoutPromise]);
@@ -177,8 +199,12 @@ async function ocrImageToText(buffer: Buffer, mimeType: string): Promise<string>
     const winner = await Promise.any(modelPromises);
     return winner;
   } catch (aggErr) {
-    const errors = (aggErr as AggregateError).errors?.map((e: Error) => e.message) || [String(aggErr)];
-    throw new Error(`所有视觉模型均识别失败（已尝试 ${visionModels.length} 个模型）: ${errors.join('; ')}`);
+    const errors = (aggErr as AggregateError).errors?.map((e: Error) => e.message) || [
+      String(aggErr),
+    ];
+    throw new Error(
+      `所有视觉模型均识别失败（已尝试 ${visionModels.length} 个模型）: ${errors.join('; ')}`,
+    );
   }
 }
 
@@ -193,10 +219,7 @@ async function extractDocxToText(buffer: Buffer): Promise<string> {
 
 const CONFIDENCE_THRESHOLD = 0.8;
 
-async function runTextImportPipeline(
-  text: string,
-  options?: ImportOptions,
-): Promise<ImportResult> {
+async function runTextImportPipeline(text: string, options?: ImportOptions): Promise<ImportResult> {
   // Step 1: Split into question segments
   const segments = await splitQuestions(text, {
     callLLM: async (params, source) => callLLM(params as any, source),
@@ -245,7 +268,12 @@ async function runTextImportPipeline(
   const processedHigh = postProcessEntries(highConfidence);
   const processedLow = postProcessEntries(lowConfidence);
 
-  let highResult: ImportResult = { total: processedHigh.length, inserted: 0, duplicates: 0, errors: [] };
+  let highResult: ImportResult = {
+    total: processedHigh.length,
+    inserted: 0,
+    duplicates: 0,
+    errors: [],
+  };
   if (processedHigh.length > 0) {
     try {
       highResult = await insertBatch(processedHigh);
@@ -255,7 +283,12 @@ async function runTextImportPipeline(
     }
   }
 
-  let lowResult: ImportResult = { total: processedLow.length, inserted: 0, duplicates: 0, errors: [] };
+  let lowResult: ImportResult = {
+    total: processedLow.length,
+    inserted: 0,
+    duplicates: 0,
+    errors: [],
+  };
   if (processedLow.length > 0) {
     try {
       lowResult = await insertBatch(processedLow);
@@ -312,7 +345,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (!format) {
-      return apiError('INVALID_FILE_TYPE', 400, '无法识别文件格式，请上传 JSON/CSV/Excel/PDF/图片/Word 文件');
+      return apiError(
+        'INVALID_FILE_TYPE',
+        400,
+        '无法识别文件格式，请上传 JSON/CSV/Excel/PDF/图片/Word 文件',
+      );
     }
 
     log.info(`Importing ${format}: ${file.name} (${file.size} bytes)`);
@@ -361,11 +398,23 @@ export async function POST(req: NextRequest) {
               return;
             }
 
-            write(formatEvent('progress', { stage: 'inserting', processed: 0, total: pipelineResult.entries.length }));
+            write(
+              formatEvent('progress', {
+                stage: 'inserting',
+                processed: 0,
+                total: pipelineResult.entries.length,
+              }),
+            );
 
             const insertResult = await insertBatch(pipelineResult.entries);
 
-            write(formatEvent('progress', { stage: 'inserting', processed: insertResult.inserted, total: pipelineResult.entries.length }));
+            write(
+              formatEvent('progress', {
+                stage: 'inserting',
+                processed: insertResult.inserted,
+                total: pipelineResult.entries.length,
+              }),
+            );
 
             const result: ImportResult = {
               total: pipelineResult.meta.totalRows,
@@ -405,7 +454,13 @@ export async function POST(req: NextRequest) {
 
             const pdfResult = await importFromPdf(buffer);
 
-            write(formatEvent('progress', { stage: 'inserting', processed: pdfResult.inserted, total: pdfResult.total }));
+            write(
+              formatEvent('progress', {
+                stage: 'inserting',
+                processed: pdfResult.inserted,
+                total: pdfResult.total,
+              }),
+            );
 
             write(formatEvent('complete', { result: pdfResult }));
             controller.close();
@@ -443,7 +498,13 @@ export async function POST(req: NextRequest) {
 
             const result = await runTextImportPipeline(text);
 
-            write(formatEvent('progress', { stage: 'inserting', processed: result.inserted, total: result.total }));
+            write(
+              formatEvent('progress', {
+                stage: 'inserting',
+                processed: result.inserted,
+                total: result.total,
+              }),
+            );
             write(formatEvent('complete', { result }));
             controller.close();
           } catch (err: unknown) {
@@ -479,7 +540,13 @@ export async function POST(req: NextRequest) {
 
             const result = await runTextImportPipeline(text);
 
-            write(formatEvent('progress', { stage: 'inserting', processed: result.inserted, total: result.total }));
+            write(
+              formatEvent('progress', {
+                stage: 'inserting',
+                processed: result.inserted,
+                total: result.total,
+              }),
+            );
             write(formatEvent('complete', { result }));
             controller.close();
           } catch (err: unknown) {

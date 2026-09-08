@@ -45,7 +45,8 @@ export const ProactiveCard = ({
   onSkip,
   onListen,
   onTogglePause,
-}: ProactiveCardProps) => {const [progress, setProgress] = useState(100);
+}: ProactiveCardProps) => {
+  const [progress, setProgress] = useState(100);
   const skippedRef = useRef(false);
   const isPaused = mode === 'paused';
 

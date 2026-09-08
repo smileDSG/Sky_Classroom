@@ -11,7 +11,14 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const TelemetryEventSchema = z.object({
-  event_type: z.enum(['page_view', 'api_call', 'error', 'performance', 'feature_use', 'ai_task'] as const),
+  event_type: z.enum([
+    'page_view',
+    'api_call',
+    'error',
+    'performance',
+    'feature_use',
+    'ai_task',
+  ] as const),
   event_data: z.record(z.string(), z.unknown()),
   page: z.string().optional(),
   session_id: z.string(),
@@ -23,9 +30,19 @@ const TelemetryBatchSchema = z.object({
 });
 
 const SENSITIVE_FIELDS = [
-  'password', 'token', 'apiKey', 'api_key', 'secret',
-  'access_token', 'refresh_token', 'authorization', 'cookie',
-  'email', 'phone', 'credit_card', 'ssn',
+  'password',
+  'token',
+  'apiKey',
+  'api_key',
+  'secret',
+  'access_token',
+  'refresh_token',
+  'authorization',
+  'cookie',
+  'email',
+  'phone',
+  'credit_card',
+  'ssn',
 ];
 
 function sanitize(data: Record<string, unknown>, depth = 0): Record<string, unknown> {
@@ -73,7 +90,9 @@ export async function POST(request: Request) {
     if (accessToken) {
       try {
         const { jwtVerify } = await import('jose');
-        const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'change-me-in-production');
+        const secret = new TextEncoder().encode(
+          process.env.JWT_SECRET || 'change-me-in-production',
+        );
         const { payload } = await jwtVerify(accessToken, secret);
         userId = (payload as any).id || null;
       } catch {}

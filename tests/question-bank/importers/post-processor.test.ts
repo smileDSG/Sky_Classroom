@@ -145,7 +145,11 @@ A. $\int x dx$
 B. $\int x^2 dx$
 C. $\int e^x dx$`;
     const result = extractOptionsFromContent(content);
-    expect(result.options).toEqual([String.raw`$\int x dx$`, String.raw`$\int x^2 dx$`, String.raw`$\int e^x dx$`]);
+    expect(result.options).toEqual([
+      String.raw`$\int x dx$`,
+      String.raw`$\int x^2 dx$`,
+      String.raw`$\int e^x dx$`,
+    ]);
     expect(result.content).toBe('求积分');
   });
 });

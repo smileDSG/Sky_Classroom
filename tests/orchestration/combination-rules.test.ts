@@ -48,7 +48,9 @@ describe('Combination rules: defaults', () => {
   test('standard rule matches any course', () => {
     const standard = DEFAULT_COMBO_RULES.find((r) => r.id === 'standard')!;
     expect(standard.appliesTo({ name: 'Anything' })).toBe(true);
-    expect(standard.appliesTo({ name: 'Math 101', sceneTypes: ['slide', 'quiz'], sceneCount: 10 })).toBe(true);
+    expect(
+      standard.appliesTo({ name: 'Math 101', sceneTypes: ['slide', 'quiz'], sceneCount: 10 }),
+    ).toBe(true);
   });
 });
 
@@ -56,7 +58,9 @@ describe('Combination rules: defaults', () => {
 
 describe('CombinationRuleEngine', () => {
   let engine: CombinationRuleEngine;
-  beforeEach(() => { engine = makeEngine(); });
+  beforeEach(() => {
+    engine = makeEngine();
+  });
 
   test('findBestRule returns standard for generic course', () => {
     const rule = engine.findBestRule({ name: 'Generic Course' });
@@ -137,7 +141,9 @@ describe('CombinationRuleEngine', () => {
 
 describe('CombinationRuleEngine: buildAgentPlan', () => {
   let engine: CombinationRuleEngine;
-  beforeEach(() => { engine = makeEngine(); });
+  beforeEach(() => {
+    engine = makeEngine();
+  });
 
   const studentTemplates = getAgentFactory().listTemplates('student');
 
@@ -195,7 +201,9 @@ describe('CombinationRuleEngine: buildAgentPlan', () => {
 
 describe('CombinationRuleEngine: custom rules', () => {
   let engine: CombinationRuleEngine;
-  beforeEach(() => { engine = makeEngine(); });
+  beforeEach(() => {
+    engine = makeEngine();
+  });
 
   test('addRule inserts custom rule', () => {
     engine.addRule({
@@ -229,7 +237,11 @@ describe('CombinationRuleEngine: custom rules', () => {
         name: 'Custom First',
         description: '...',
         appliesTo: (c: CourseInfo) => c.name === 'Special Course',
-        recommendedCombo: { teacher: 1, assistant: 3, students: { count: 1, preferredTypes: ['creative'] } },
+        recommendedCombo: {
+          teacher: 1,
+          assistant: 3,
+          students: { count: 1, preferredTypes: ['creative'] },
+        },
       },
       ...engine.listRules(),
     ];
@@ -245,7 +257,11 @@ describe('CombinationRuleEngine: custom rules', () => {
 
 describe('agent-profiles.md template', () => {
   const templatePath = path.join(
-    process.cwd(), 'lib', 'prompts', 'generators', 'agent-profiles.md',
+    process.cwd(),
+    'lib',
+    'prompts',
+    'generators',
+    'agent-profiles.md',
   );
 
   test('template exists', () => {

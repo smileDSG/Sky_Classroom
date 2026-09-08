@@ -99,11 +99,7 @@ describe('replanLearningPlan', () => {
       'old-later',
     ]);
     expect(result.plan.version).toBe(2);
-    expect(result.adjustment.preservedTaskIds).toEqual([
-      'completed',
-      'in-progress',
-      'old-later',
-    ]);
+    expect(result.adjustment.preservedTaskIds).toEqual(['completed', 'in-progress', 'old-later']);
     expect(result.adjustment.changedTaskIds).toEqual([
       'old-today',
       'old-tomorrow',

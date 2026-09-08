@@ -18,7 +18,12 @@ export const MATH_TEMPLATES: CourseTemplate[] = [
     isBuiltIn: true,
     suggestedSettings: { difficulty: 'medium' },
     outline: [
-      { id: 'm1', title: 'Introduction to Quadratics', type: 'slide', description: 'What is a quadratic function?' },
+      {
+        id: 'm1',
+        title: 'Introduction to Quadratics',
+        type: 'slide',
+        description: 'What is a quadratic function?',
+      },
       { id: 'm2', title: 'Standard Form', type: 'slide', description: 'y = ax² + bx + c' },
       { id: 'm3', title: 'Vertex Form', type: 'slide', description: 'y = a(x-h)² + k' },
       { id: 'm4', title: 'Graphing Practice', type: 'interactive', description: 'Plot parabolas' },

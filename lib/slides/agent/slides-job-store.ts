@@ -119,7 +119,8 @@ async function cleanupOldSlidesJobs(): Promise<void> {
       try {
         const content = await fs.readFile(filePath, 'utf-8');
         const job = JSON.parse(content) as SlidesJob;
-        const isTerminal = job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled';
+        const isTerminal =
+          job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled';
         if (!isTerminal) continue;
 
         const completedAt = job.completedAt ? new Date(job.completedAt).getTime() : 0;
@@ -274,10 +275,7 @@ export async function markSlidesJobSucceeded(
   });
 }
 
-export async function markSlidesJobFailed(
-  jobId: string,
-  error: string,
-): Promise<SlidesJob> {
+export async function markSlidesJobFailed(jobId: string, error: string): Promise<SlidesJob> {
   return updateSlidesJob(jobId, {
     status: 'failed',
     stage: 'failed',

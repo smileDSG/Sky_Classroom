@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -28,13 +31,16 @@ export function FrameBorderCover({ dna, title, subtitle }: Props) {
   const cornerDots = [] as React.ReactNode[];
   if (density === 'moderate' || density === 'rich') {
     const corners = [
-      [m, m], [13.33 - m, m], [m, 7.5 - m], [13.33 - m, 7.5 - m],
+      [m, m],
+      [13.33 - m, m],
+      [m, 7.5 - m],
+      [13.33 - m, 7.5 - m],
     ];
-    corners.forEach(([cx, cy], i) => (
+    corners.forEach(([cx, cy], i) =>
       cornerDots.push(
         <circle key={`fd${i}`} cx={cx} cy={cy} r="0.12" fill={`#${colors.accent}`} />,
-      )
-    ));
+      ),
+    );
   }
 
   return (

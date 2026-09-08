@@ -20,11 +20,14 @@ export async function POST(req: NextRequest) {
     input?: string;
     studentInput?: string;
   };
-  const input = [body.input, body.studentInput].find(
-    (value): value is string => typeof value === 'string',
-  ) ?? '';
+  const input =
+    [body.input, body.studentInput].find((value): value is string => typeof value === 'string') ??
+    '';
   if (input.length > 30000) {
-    return Response.json({ success: false, error: '输入内容不能超过 30000 个字符' }, { status: 400 });
+    return Response.json(
+      { success: false, error: '输入内容不能超过 30000 个字符' },
+      { status: 400 },
+    );
   }
 
   const result = await runSoftwareCupGeneration(input, {

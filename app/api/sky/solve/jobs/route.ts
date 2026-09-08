@@ -61,7 +61,12 @@ export async function POST(req: Request) {
       try {
         problemSpec = validateProblemSpec(rawProblemSpec);
       } catch (err) {
-        return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid problemSpec', err instanceof Error ? err.message : String(err));
+        return apiError(
+          API_ERROR_CODES.INVALID_REQUEST,
+          400,
+          'Invalid problemSpec',
+          err instanceof Error ? err.message : String(err),
+        );
       }
     }
 

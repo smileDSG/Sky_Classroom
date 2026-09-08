@@ -91,7 +91,9 @@ export function CelestialAmbient({
             width: s.size ?? 400,
             height: s.size ?? 400,
             transform: 'translate(-50%, -50%)',
-            background: `radial-gradient(circle, ${s.color}${Math.round(s.intensity * 255).toString(16).padStart(2, '0')}, transparent 70%)`,
+            background: `radial-gradient(circle, ${s.color}${Math.round(s.intensity * 255)
+              .toString(16)
+              .padStart(2, '0')}, transparent 70%)`,
             filter: 'blur(80px)',
           }}
         />

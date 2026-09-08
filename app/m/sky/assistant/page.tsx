@@ -26,10 +26,7 @@ import { MobileSkyFrame } from '@/components/mobile/mobile-sky-frame';
 import { MobileSkyShell } from '@/components/mobile/mobile-sky-shell';
 import { MobileSkyShell as MobileNavShell } from '@/components/mobile/shell/mobile-sky-shell';
 import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
-import {
-  listConversations,
-  deleteConversation,
-} from '@/lib/storage/dao/assistant-conversation';
+import { listConversations, deleteConversation } from '@/lib/storage/dao/assistant-conversation';
 
 const assistantNav: Array<{
   label: string;
@@ -169,115 +166,118 @@ function MobileAssistantContent() {
         </section>
 
         <div className="relative space-y-2.5 px-4 pb-24">
-        <section aria-label="助手导航" className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
-          {assistantNav.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-2 text-[13px] font-extrabold active:scale-[0.99] ${
-                  item.active
-                    ? 'bg-sky-500 text-white shadow-md shadow-sky-500/25'
-                    : 'border border-white/8 bg-[#0d1728] text-slate-400'
-                }`}
-              >
-                <Icon className="size-3.5" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </section>
-
-        <section className="rounded-[20px] border border-white/10 bg-[#0d1728] shadow-[0_16px_38px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.055)]">
-          <div className="flex items-center justify-between gap-2 border-b border-white/8 px-3 py-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[16px] font-extrabold text-white">小镜课堂</span>
-              <span className="rounded-full bg-sky-400/14 px-2 py-0.5 text-[11px] font-bold text-sky-200">
-                {subject}
-              </span>
-              <span className="rounded-full bg-white/7 px-2 py-0.5 text-[11px] font-bold text-slate-400">
-                {difficultyLabel}
-              </span>
-              <span className="rounded-full bg-white/7 px-2 py-0.5 text-[11px] font-bold text-slate-400">
-                {styleLabel}
-              </span>
-            </div>
-            <Link
-              href="/m/sky/assistant?view=settings"
-              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/7 text-slate-400 active:bg-white/10"
-            >
-              <Settings className="size-4" />
-            </Link>
-          </div>
-
-          <div className="flex min-h-[220px] flex-col items-center justify-center px-4 py-5 text-center">
-            <div className="flex size-14 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-white/[0.06] shadow-lg shadow-slate-950/25 ring-4 ring-sky-300/8">
-              <img
-                src="/avatars/kagami/chibi.png"
-                alt="小镜头像"
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <p className="mt-3 text-[13px] font-semibold text-slate-400">
-              哈？遇到不会的题目了？告诉我吧。
-            </p>
-            <div className="mt-3 flex w-full max-w-[280px] flex-wrap justify-center gap-2">
-              {quickPrompts.slice(0, 2).map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  onClick={() => {
-                    setQuestion(prompt);
-                    openAssistantChat(prompt);
-                  }}
-                  className="rounded-full border border-sky-200/15 bg-white/[0.035] px-3 py-1.5 text-[12px] font-semibold text-slate-300 active:bg-white/[0.06]"
+          <section
+            aria-label="助手导航"
+            className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-hide"
+          >
+            {assistantNav.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-2 text-[13px] font-extrabold active:scale-[0.99] ${
+                    item.active
+                      ? 'bg-sky-500 text-white shadow-md shadow-sky-500/25'
+                      : 'border border-white/8 bg-[#0d1728] text-slate-400'
+                  }`}
                 >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          </div>
+                  <Icon className="size-3.5" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </section>
 
-          <div className="space-y-2 border-t border-white/8 p-2.5">
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                openAssistantChat();
-              }}
-              className="flex h-11 items-center gap-2 rounded-[13px] border border-white/10 bg-white/[0.055] px-3 text-[14px] font-semibold text-slate-400 focus-within:border-sky-300/35"
-            >
-              <input
-                value={question}
-                onChange={(event) => setQuestion(event.target.value)}
-                placeholder="输入你的问题..."
-                className="min-w-0 flex-1 bg-transparent text-left text-slate-100 outline-none placeholder:text-slate-500"
-              />
-              <button
-                type="submit"
-                aria-label="发送问题"
-                className="flex size-8 shrink-0 items-center justify-center rounded-[11px] bg-sky-500 text-white disabled:opacity-50"
-                disabled={!question.trim()}
+          <section className="rounded-[20px] border border-white/10 bg-[#0d1728] shadow-[0_16px_38px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.055)]">
+            <div className="flex items-center justify-between gap-2 border-b border-white/8 px-3 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[16px] font-extrabold text-white">小镜课堂</span>
+                <span className="rounded-full bg-sky-400/14 px-2 py-0.5 text-[11px] font-bold text-sky-200">
+                  {subject}
+                </span>
+                <span className="rounded-full bg-white/7 px-2 py-0.5 text-[11px] font-bold text-slate-400">
+                  {difficultyLabel}
+                </span>
+                <span className="rounded-full bg-white/7 px-2 py-0.5 text-[11px] font-bold text-slate-400">
+                  {styleLabel}
+                </span>
+              </div>
+              <Link
+                href="/m/sky/assistant?view=settings"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/7 text-slate-400 active:bg-white/10"
               >
-                <Send className="size-3.5" />
-              </button>
-            </form>
-            <button
-              type="button"
-              onClick={() => openAssistantChat()}
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border border-sky-200/15 bg-sky-300/[0.08] text-[13px] font-extrabold text-sky-100 active:bg-sky-300/[0.12]"
-            >
-              进入完整对话
-              <ArrowRight className="size-3.5" />
-            </button>
-          </div>
-        </section>
+                <Settings className="size-4" />
+              </Link>
+            </div>
 
-        <div className="rounded-[15px] border border-amber-200/18 bg-amber-300/8 px-3 py-2 text-[12px] font-bold text-amber-200">
-          <Sparkles className="mr-1 inline size-3" />
-          小镜会记住你们的对话
+            <div className="flex min-h-[220px] flex-col items-center justify-center px-4 py-5 text-center">
+              <div className="flex size-14 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-white/[0.06] shadow-lg shadow-slate-950/25 ring-4 ring-sky-300/8">
+                <img
+                  src="/avatars/kagami/chibi.png"
+                  alt="小镜头像"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <p className="mt-3 text-[13px] font-semibold text-slate-400">
+                哈？遇到不会的题目了？告诉我吧。
+              </p>
+              <div className="mt-3 flex w-full max-w-[280px] flex-wrap justify-center gap-2">
+                {quickPrompts.slice(0, 2).map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => {
+                      setQuestion(prompt);
+                      openAssistantChat(prompt);
+                    }}
+                    className="rounded-full border border-sky-200/15 bg-white/[0.035] px-3 py-1.5 text-[12px] font-semibold text-slate-300 active:bg-white/[0.06]"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2 border-t border-white/8 p-2.5">
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  openAssistantChat();
+                }}
+                className="flex h-11 items-center gap-2 rounded-[13px] border border-white/10 bg-white/[0.055] px-3 text-[14px] font-semibold text-slate-400 focus-within:border-sky-300/35"
+              >
+                <input
+                  value={question}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  placeholder="输入你的问题..."
+                  className="min-w-0 flex-1 bg-transparent text-left text-slate-100 outline-none placeholder:text-slate-500"
+                />
+                <button
+                  type="submit"
+                  aria-label="发送问题"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-[11px] bg-sky-500 text-white disabled:opacity-50"
+                  disabled={!question.trim()}
+                >
+                  <Send className="size-3.5" />
+                </button>
+              </form>
+              <button
+                type="button"
+                onClick={() => openAssistantChat()}
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border border-sky-200/15 bg-sky-300/[0.08] text-[13px] font-extrabold text-sky-100 active:bg-sky-300/[0.12]"
+              >
+                进入完整对话
+                <ArrowRight className="size-3.5" />
+              </button>
+            </div>
+          </section>
+
+          <div className="rounded-[15px] border border-amber-200/18 bg-amber-300/8 px-3 py-2 text-[12px] font-bold text-amber-200">
+            <Sparkles className="mr-1 inline size-3" />
+            小镜会记住你们的对话
+          </div>
         </div>
-      </div>
       </div>
       <MobileQuickEntranceNav />
     </MobileSkyShell>
@@ -303,14 +303,24 @@ function MobileAssistantSettings() {
     try {
       const saved = localStorage.getItem('assistant-panel-mode');
       if (saved === 'normal' || saved === 'anime') return saved;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return 'anime';
   });
   const [selectedTheme, setSelectedTheme] = useState(() => {
-    try { return localStorage.getItem('assistant-theme') || 'sky'; } catch { return 'sky'; }
+    try {
+      return localStorage.getItem('assistant-theme') || 'sky';
+    } catch {
+      return 'sky';
+    }
   });
   const [selectedFontSize, setSelectedFontSize] = useState(() => {
-    try { return localStorage.getItem('assistant-font-size') || 'base'; } catch { return 'base'; }
+    try {
+      return localStorage.getItem('assistant-font-size') || 'base';
+    } catch {
+      return 'base';
+    }
   });
   const [clearingData, setClearingData] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -318,17 +328,29 @@ function MobileAssistantSettings() {
 
   const handleModeChange = (newMode: 'anime' | 'normal') => {
     setMode(newMode);
-    try { localStorage.setItem('assistant-panel-mode', newMode); } catch { /* ignore */ }
+    try {
+      localStorage.setItem('assistant-panel-mode', newMode);
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleThemeChange = (themeId: string) => {
     setSelectedTheme(themeId);
-    try { localStorage.setItem('assistant-theme', themeId); } catch { /* ignore */ }
+    try {
+      localStorage.setItem('assistant-theme', themeId);
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleFontSizeChange = (sizeId: string) => {
     setSelectedFontSize(sizeId);
-    try { localStorage.setItem('assistant-font-size', sizeId); } catch { /* ignore */ }
+    try {
+      localStorage.setItem('assistant-font-size', sizeId);
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleClearAllData = async () => {
@@ -342,7 +364,9 @@ function MobileAssistantSettings() {
         localStorage.removeItem('kagami-mode');
         localStorage.removeItem('assistant-theme');
         localStorage.removeItem('assistant-font-size');
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       setCleared(true);
       setTimeout(() => {
         setCleared(false);
@@ -420,7 +444,9 @@ function MobileAssistantSettings() {
                 >
                   {selectedTheme === theme.id && <Check className="size-4 text-white" />}
                 </div>
-                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{theme.label}</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                  {theme.label}
+                </span>
               </button>
             ))}
           </div>
@@ -468,7 +494,9 @@ function MobileAssistantSettings() {
               <div className="flex items-start gap-3">
                 <AlertTriangle className="mt-0.5 size-5 shrink-0 text-rose-500 dark:text-rose-400" />
                 <div className="flex-1">
-                  <p className="text-[13px] font-extrabold text-rose-700 dark:text-rose-100">确认清空数据？</p>
+                  <p className="text-[13px] font-extrabold text-rose-700 dark:text-rose-100">
+                    确认清空数据？
+                  </p>
                   <p className="mt-1 text-[11px] font-semibold text-rose-600/80 dark:text-rose-200/70">
                     此操作将删除所有对话历史、记忆数据和个性化设置，且无法恢复。
                   </p>

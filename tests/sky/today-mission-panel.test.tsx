@@ -62,11 +62,7 @@ function makeViewModel(): StudyLabViewModel {
 describe('TodayMissionPanel', () => {
   it('prioritizes the scheduled plan task over the profile recommendation', () => {
     render(
-      <TodayMissionPanel
-        viewModel={makeViewModel()}
-        onRefresh={vi.fn()}
-        refreshing={false}
-      />,
+      <TodayMissionPanel viewModel={makeViewModel()} onRefresh={vi.fn()} refreshing={false} />,
     );
 
     expect(screen.getByText('今日导数专项练习')).toBeInTheDocument();
@@ -88,13 +84,7 @@ describe('TodayMissionPanel', () => {
       completionRate: 0,
     };
 
-    render(
-      <TodayMissionPanel
-        viewModel={viewModel}
-        onRefresh={vi.fn()}
-        refreshing={false}
-      />,
-    );
+    render(<TodayMissionPanel viewModel={viewModel} onRefresh={vi.fn()} refreshing={false} />);
 
     expect(screen.getByText('今日为计划缓冲日')).toBeInTheDocument();
     expect(screen.queryByText('旧画像推荐')).not.toBeInTheDocument();

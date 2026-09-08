@@ -37,7 +37,11 @@ export async function POST(request: NextRequest) {
       return apiError('ACCOUNT_SUSPENDED', 403, 'Account is suspended');
     }
 
-    const newAccessToken = await signAccessToken({ id: user.id, email: user.email ?? undefined, role: user.role });
+    const newAccessToken = await signAccessToken({
+      id: user.id,
+      email: user.email ?? undefined,
+      role: user.role,
+    });
 
     const response = NextResponse.json({ success: true });
     response.cookies.set('access_token', newAccessToken, {

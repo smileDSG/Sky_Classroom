@@ -73,10 +73,7 @@ export function SpotlightOverlay() {
   const dimness = spotlightOptions?.dimness ?? 0.7;
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 z-10 pointer-events-none overflow-hidden"
-    >
+    <div ref={containerRef} className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
       <AnimatePresence mode="wait">
         {active && rect && (
           <motion.div

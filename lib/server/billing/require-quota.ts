@@ -21,17 +21,18 @@ import { apiError } from '@/lib/server/api-response';
  */
 export async function requireQuota(
   metric: 'llmCalls' | 'generationCount',
-): Promise<
-  | { userId: string; planType: PlanType }
-  | { error: ReturnType<typeof apiError> }
-> {
+): Promise<{ userId: string; planType: PlanType } | { error: ReturnType<typeof apiError> }> {
   let cookieStore;
   try {
     cookieStore = await cookies();
   } catch (error) {
     // Route unit tests run outside Next's request async-local storage.
     // Never enable this path outside Vitest.
-    if (process.env.NODE_ENV === 'test' && error instanceof Error && error.message.includes('outside a request scope')) {
+    if (
+      process.env.NODE_ENV === 'test' &&
+      error instanceof Error &&
+      error.message.includes('outside a request scope')
+    ) {
       return { userId: 'default-user', planType: 'enterprise' };
     }
     throw error;

@@ -13,7 +13,9 @@ export interface NetworkStatus {
 }
 
 export function useNetworkStatus(): NetworkStatus {
-  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
+  );
   const [isSyncing] = useState(false);
   const [pendingActions] = useState(0);
 

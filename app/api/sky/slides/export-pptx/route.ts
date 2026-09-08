@@ -21,41 +21,34 @@ export async function POST(req: NextRequest) {
     const rateLimitResult = rateLimiters.generate.consume(getClientIp(req));
     if (!rateLimitResult.allowed) return rateLimitResponse(rateLimitResult);
     const body = await req.json();
-    const {
-      title,
-      slides,
-      theme,
-      speakerNotes,
-      avatarSpeech,
-      includeSpeakerNotes,
-      layoutMode,
-    } = body as {
-      title?: string;
-      slides?: Slide[];
-      theme?: string;
-      speakerNotes?: string[];
-      avatarSpeech?: AvatarSpeech;
-      includeSpeakerNotes?: boolean;
-      layoutMode?: 'ai';
-    };
+    const { title, slides, theme, speakerNotes, avatarSpeech, includeSpeakerNotes, layoutMode } =
+      body as {
+        title?: string;
+        slides?: Slide[];
+        theme?: string;
+        speakerNotes?: string[];
+        avatarSpeech?: AvatarSpeech;
+        includeSpeakerNotes?: boolean;
+        layoutMode?: 'ai';
+      };
 
     if (!title || !title.trim()) {
-      return apiError(
-        API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400,
-        'Missing required field: title',
-      );
+      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing required field: title');
     }
 
     if (!slides || !Array.isArray(slides) || slides.length === 0) {
       return apiError(
-        API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400,
+        API_ERROR_CODES.MISSING_REQUIRED_FIELD,
+        400,
         'Missing required field: slides (non-empty array)',
       );
     }
 
     titleSnippet = title.substring(0, 40);
 
-    log.info(`Exporting PPTX: "${titleSnippet}" (${slides.length} slides, notes=${!!includeSpeakerNotes})`);
+    log.info(
+      `Exporting PPTX: "${titleSnippet}" (${slides.length} slides, notes=${!!includeSpeakerNotes})`,
+    );
 
     const result = await exportPptx({
       title: title.trim(),
@@ -78,7 +71,8 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     log.error(`PPTX export failed [title="${titleSnippet ?? 'unknown'}"]:`, err);
     return apiError(
-      API_ERROR_CODES.INTERNAL_ERROR, 500,
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
       'PPTX 导出失败',
       err instanceof Error ? err.message : undefined,
     );

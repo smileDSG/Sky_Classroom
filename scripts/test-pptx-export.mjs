@@ -71,8 +71,8 @@ function convertTemplateElement(pptxSlide, el, theme) {
       if (!text) return undefined;
 
       const colorC = resolveTemplateColor(el.content?.color, theme, '#333333');
-      const align = (el.content?.align?.[0]) || 'left';
-      const valign = (el.content?.align?.[1]) || 'top';
+      const align = el.content?.align?.[0] || 'left';
+      const valign = el.content?.align?.[1] || 'top';
 
       let fontSize = 14;
       const styleRef = el.content?.style;
@@ -107,9 +107,7 @@ function convertTemplateElement(pptxSlide, el, theme) {
             ? 'roundRect'
             : 'rect';
       const fillC = resolveTemplateColor(el.fill?.color, theme, '#5b9bd5');
-      const lineC = el.border
-        ? resolveTemplateColor(el.border.color, theme, '#cccccc')
-        : undefined;
+      const lineC = el.border ? resolveTemplateColor(el.border.color, theme, '#cccccc') : undefined;
       const shadowC = el.shadow
         ? resolveTemplateColor(el.shadow.color, theme, '#000000')
         : undefined;
@@ -243,9 +241,7 @@ function replaceInElement(el, values) {
 
   if (newValue === undefined) return el;
 
-  const text = newValue.trim().startsWith('<')
-    ? newValue
-    : `<p>${newValue}</p>`;
+  const text = newValue.trim().startsWith('<') ? newValue : `<p>${newValue}</p>`;
 
   return {
     ...el,
@@ -307,39 +303,59 @@ async function testTemplateExport(templateName, pageName, values, outputFile) {
 
 async function main() {
   // Test 1: tech_dark_blue cover
-  await testTemplateExport('tech_dark_blue', 'cover', {
-    title: '走进天文物理学',
-    subtitle: '探索宇宙的奥秘',
-    instructor: '讲师：星穹课堂',
-    date: '2026年6月10日',
-  }, 'test-tech-cover.pptx');
+  await testTemplateExport(
+    'tech_dark_blue',
+    'cover',
+    {
+      title: '走进天文物理学',
+      subtitle: '探索宇宙的奥秘',
+      instructor: '讲师：星穹课堂',
+      date: '2026年6月10日',
+    },
+    'test-tech-cover.pptx',
+  );
 
   // Test 2: tech_dark_blue bullets (summary)
-  await testTemplateExport('tech_dark_blue', 'bullets', {
-    title: '天文学的核心概念',
-    bullet_1_title: '恒星演化',
-    bullet_1_desc: '恒星从诞生到死亡的完整生命周期',
-    bullet_2_title: '黑洞理论',
-    bullet_2_desc: '时空弯曲与事件视界',
-    bullet_3_title: '宇宙大爆炸',
-    bullet_3_desc: '宇宙起源与膨胀模型',
-    bullet_4_title: '暗物质与暗能量',
-    bullet_4_desc: '占据宇宙95%的未知存在',
-  }, 'test-tech-bullets.pptx');
+  await testTemplateExport(
+    'tech_dark_blue',
+    'bullets',
+    {
+      title: '天文学的核心概念',
+      bullet_1_title: '恒星演化',
+      bullet_1_desc: '恒星从诞生到死亡的完整生命周期',
+      bullet_2_title: '黑洞理论',
+      bullet_2_desc: '时空弯曲与事件视界',
+      bullet_3_title: '宇宙大爆炸',
+      bullet_3_desc: '宇宙起源与膨胀模型',
+      bullet_4_title: '暗物质与暗能量',
+      bullet_4_desc: '占据宇宙95%的未知存在',
+    },
+    'test-tech-bullets.pptx',
+  );
 
   // Test 3: warm_humanities cover
-  await testTemplateExport('warm_humanities', 'cover', {
-    title: '欢迎来到忍者世界',
-    subtitle: '日本忍者文化探秘',
-    instructor: '讲师：星穹课堂',
-    date: '2026年6月10日',
-  }, 'test-warm-cover.pptx');
+  await testTemplateExport(
+    'warm_humanities',
+    'cover',
+    {
+      title: '欢迎来到忍者世界',
+      subtitle: '日本忍者文化探秘',
+      instructor: '讲师：星穹课堂',
+      date: '2026年6月10日',
+    },
+    'test-warm-cover.pptx',
+  );
 
   // Test 4: nature_green text (concept)
-  await testTemplateExport('nature_green', 'text', {
-    title: '生态系统的平衡',
-    body: '<p><strong>生态系统</strong>是指在一定空间内，生物与环境构成的统一整体。</p><p>维持生态平衡需要生产者、消费者和分解者的协同作用。</p>',
-  }, 'test-nature-text.pptx');
+  await testTemplateExport(
+    'nature_green',
+    'text',
+    {
+      title: '生态系统的平衡',
+      body: '<p><strong>生态系统</strong>是指在一定空间内，生物与环境构成的统一整体。</p><p>维持生态平衡需要生产者、消费者和分解者的协同作用。</p>',
+    },
+    'test-nature-text.pptx',
+  );
 
   console.log('All tests completed!');
 }

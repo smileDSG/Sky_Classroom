@@ -14,7 +14,10 @@ import type { FourPartOutput } from '@/lib/solve/types';
 // ── 预置测试数据 ──────────────────────────────────────────────────
 // 每个学科故意混合：已有$包裹、裸LaTeX、Unicode符号、裸分数、多行对齐
 
-const TEST_DATA: Record<string, { title: string; problems: { name: string; output: FourPartOutput }[] }> = {
+const TEST_DATA: Record<
+  string,
+  { title: string; problems: { name: string; output: FourPartOutput }[] }
+> = {
   math: {
     title: '数学',
     problems: [
@@ -29,16 +32,41 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             '计算 $\\sin 2\\alpha = 2\\sin\\alpha\\cos\\alpha = 2 \\times \\frac{3}{5} \\times \\frac{4}{5} = \\frac{24}{25}$',
           answer: '$\\frac{24}{25}$',
           steps: [
-            { label: '求 cosα', content: '由 $\\sin^2\\alpha + \\cos^2\\alpha = 1$ 求得 $\\cos\\alpha = \\frac{4}{5}$' },
-            { label: '求 tanα', content: '$\\tan\\alpha = \\frac{\\sin\\alpha}{\\cos\\alpha} = \\frac{3}{4}$' },
-            { label: '求 sin2α', content: '$\\sin 2\\alpha = 2\\sin\\alpha\\cos\\alpha = \\frac{24}{25}$' },
+            {
+              label: '求 cosα',
+              content:
+                '由 $\\sin^2\\alpha + \\cos^2\\alpha = 1$ 求得 $\\cos\\alpha = \\frac{4}{5}$',
+            },
+            {
+              label: '求 tanα',
+              content: '$\\tan\\alpha = \\frac{\\sin\\alpha}{\\cos\\alpha} = \\frac{3}{4}$',
+            },
+            {
+              label: '求 sin2α',
+              content: '$\\sin 2\\alpha = 2\\sin\\alpha\\cos\\alpha = \\frac{24}{25}$',
+            },
           ],
           knowledgePoints: [
-            { name: '同角三角函数关系', description: 'sin²α + cos²α = 1，tanα = sinα/cosα。常用于已知一个三角函数值求其他值。注意符号判断需结合象限。', difficulty: 'easy' },
-            { name: '二倍角公式', description: 'sin2α = 2sinαcosα，cos2α = cos²α - sin²α。用于将单角转化为倍角计算。注意不要和半角公式混淆。', difficulty: 'medium' },
+            {
+              name: '同角三角函数关系',
+              description:
+                'sin²α + cos²α = 1，tanα = sinα/cosα。常用于已知一个三角函数值求其他值。注意符号判断需结合象限。',
+              difficulty: 'easy',
+            },
+            {
+              name: '二倍角公式',
+              description:
+                'sin2α = 2sinαcosα，cos2α = cos²α - sin²α。用于将单角转化为倍角计算。注意不要和半角公式混淆。',
+              difficulty: 'medium',
+            },
           ],
           similarQuestions: [
-            { problem: '已知 $\\cos\\alpha = -\\frac{5}{13}$，$\\alpha \\in (\\pi, \\frac{3\\pi}{2})$，求 $\\sin 2\\alpha$', difficulty: 4, knowledgePoint: '二倍角公式' },
+            {
+              problem:
+                '已知 $\\cos\\alpha = -\\frac{5}{13}$，$\\alpha \\in (\\pi, \\frac{3\\pi}{2})$，求 $\\sin 2\\alpha$',
+              difficulty: 4,
+              knowledgePoint: '二倍角公式',
+            },
           ],
         },
       },
@@ -61,10 +89,19 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             { label: '二阶导判别', content: "$f''(0) = -6 < 0$（极大），$f''(2) = 6 > 0$（极小）" },
           ],
           knowledgePoints: [
-            { name: '极值判定（二阶导法）', description: "f'(x₀)=0 且 f''(x₀)<0 → 极大值；f''(x₀)>0 → 极小值。注意 f''(x₀)=0 时需用其他方法判断。", difficulty: 'medium' },
+            {
+              name: '极值判定（二阶导法）',
+              description:
+                "f'(x₀)=0 且 f''(x₀)<0 → 极大值；f''(x₀)>0 → 极小值。注意 f''(x₀)=0 时需用其他方法判断。",
+              difficulty: 'medium',
+            },
           ],
           similarQuestions: [
-            { problem: '求 $f(x) = x^3 - 6x^2 + 9x + 1$ 的极值', difficulty: 5, knowledgePoint: '极值判定' },
+            {
+              problem: '求 $f(x) = x^3 - 6x^2 + 9x + 1$ 的极值',
+              difficulty: 5,
+              knowledgePoint: '极值判定',
+            },
           ],
         },
       },
@@ -85,10 +122,19 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             { label: '求准线', content: '$x = \\pm \\frac{a^2}{c} = \\pm \\frac{25}{4}$' },
           ],
           knowledgePoints: [
-            { name: '椭圆基本性质', description: '标准方程 x²/a² + y²/b² = 1，c² = a² - b²，e = c/a ∈ (0,1)。焦点在长轴上，准线垂直于长轴。', difficulty: 'medium' },
+            {
+              name: '椭圆基本性质',
+              description:
+                '标准方程 x²/a² + y²/b² = 1，c² = a² - b²，e = c/a ∈ (0,1)。焦点在长轴上，准线垂直于长轴。',
+              difficulty: 'medium',
+            },
           ],
           similarQuestions: [
-            { problem: '椭圆 $\\frac{x^2}{16} + \\frac{y^2}{9} = 1$ 的离心率', difficulty: 3, knowledgePoint: '椭圆基本性质' },
+            {
+              problem: '椭圆 $\\frac{x^2}{16} + \\frac{y^2}{9} = 1$ 的离心率',
+              difficulty: 3,
+              knowledgePoint: '椭圆基本性质',
+            },
           ],
         },
       },
@@ -118,13 +164,33 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             '$$\\frac{\\partial^2 z}{\\partial x \\partial y} = 3x^2 + 2y\\cos(xy^2) - 2xy^3\\sin(xy^2)$$',
           answer: '$dz = (3x^2 y + y^2 \\cos(xy^2))dx + (x^3 + 2xy\\cos(xy^2))dy$',
           steps: [
-            { label: '求 ∂z/∂x', content: '$\\frac{\\partial z}{\\partial x} = 3x^2 y + y^2 \\cos(xy^2)$' },
-            { label: '求 ∂z/∂y', content: '$\\frac{\\partial z}{\\partial y} = x^3 + 2xy\\cos(xy^2)$' },
-            { label: '写全微分', content: '$dz = \\frac{\\partial z}{\\partial x}dx + \\frac{\\partial z}{\\partial y}dy$' },
+            {
+              label: '求 ∂z/∂x',
+              content: '$\\frac{\\partial z}{\\partial x} = 3x^2 y + y^2 \\cos(xy^2)$',
+            },
+            {
+              label: '求 ∂z/∂y',
+              content: '$\\frac{\\partial z}{\\partial y} = x^3 + 2xy\\cos(xy^2)$',
+            },
+            {
+              label: '写全微分',
+              content:
+                '$dz = \\frac{\\partial z}{\\partial x}dx + \\frac{\\partial z}{\\partial y}dy$',
+            },
           ],
           knowledgePoints: [
-            { name: '偏导数', description: '∂z/∂x 表示固定其他变量对 x 求导。链式法则同样适用：d/dx[f(g(x))] = f\'(g(x))·g\'(x)。', difficulty: 'medium' },
-            { name: '全微分', description: 'dz = (∂z/∂x)dx + (∂z/∂y)dy，是偏导数的线性组合。注意混合偏导数在连续条件下相等（Clairaut 定理）。', difficulty: 'medium' },
+            {
+              name: '偏导数',
+              description:
+                "∂z/∂x 表示固定其他变量对 x 求导。链式法则同样适用：d/dx[f(g(x))] = f'(g(x))·g'(x)。",
+              difficulty: 'medium',
+            },
+            {
+              name: '全微分',
+              description:
+                'dz = (∂z/∂x)dx + (∂z/∂y)dy，是偏导数的线性组合。注意混合偏导数在连续条件下相等（Clairaut 定理）。',
+              difficulty: 'medium',
+            },
           ],
           similarQuestions: [
             { problem: '求 $z = e^{x^2 + y^2}$ 的全微分', difficulty: 5, knowledgePoint: '全微分' },
@@ -144,15 +210,28 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             '但极坐标法更简便。',
           answer: '$8\\pi$',
           steps: [
-            { label: '极坐标变换', content: '$x = r\\cos\\theta$，$y = r\\sin\\theta$，$d\\sigma = r\\,dr\\,d\\theta$' },
+            {
+              label: '极坐标变换',
+              content: '$x = r\\cos\\theta$，$y = r\\sin\\theta$，$d\\sigma = r\\,dr\\,d\\theta$',
+            },
             { label: '确定积分限', content: '$r \\in [0, 2]$，$\\theta \\in [0, 2\\pi]$' },
             { label: '计算', content: '$2\\pi \\cdot \\frac{r^4}{4}\\Big|_0^2 = 8\\pi$' },
           ],
           knowledgePoints: [
-            { name: '极坐标二重积分', description: '当积分区域为圆或圆环时，用极坐标更简便。关键是 dσ = r dr dθ，不要遗漏 r。', difficulty: 'hard' },
+            {
+              name: '极坐标二重积分',
+              description:
+                '当积分区域为圆或圆环时，用极坐标更简便。关键是 dσ = r dr dθ，不要遗漏 r。',
+              difficulty: 'hard',
+            },
           ],
           similarQuestions: [
-            { problem: '计算 $\\iint_D xy \\, d\\sigma$，$D: x^2+y^2 \\leq 1, x \\geq 0, y \\geq 0$', difficulty: 6, knowledgePoint: '二重积分' },
+            {
+              problem:
+                '计算 $\\iint_D xy \\, d\\sigma$，$D: x^2+y^2 \\leq 1, x \\geq 0, y \\geq 0$',
+              difficulty: 6,
+              knowledgePoint: '二重积分',
+            },
           ],
         },
       },
@@ -174,15 +253,28 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             '收敛半径：$e^x$ 和 $\\sin x$ 的泰勒级数都在 $(-\\infty, +\\infty)$ 上收敛，所以乘积级数也在 $\\mathbb{R}$ 上收敛。',
           answer: '$e^x \\sin x = x + x^2 + \\frac{x^3}{3} + O(x^5)$',
           steps: [
-            { label: '写出展开式', content: '$e^x = \\sum_{n=0}^{\\infty} \\frac{x^n}{n!}$，$\\sin x = \\sum_{n=0}^{\\infty} \\frac{(-1)^n x^{2n+1}}{(2n+1)!}$' },
+            {
+              label: '写出展开式',
+              content:
+                '$e^x = \\sum_{n=0}^{\\infty} \\frac{x^n}{n!}$，$\\sin x = \\sum_{n=0}^{\\infty} \\frac{(-1)^n x^{2n+1}}{(2n+1)!}$',
+            },
             { label: '逐项相乘', content: '保留到 $x^4$ 项' },
             { label: '合并同类项', content: '$e^x \\sin x = x + x^2 + \\frac{x^3}{3} + O(x^5)$' },
           ],
           knowledgePoints: [
-            { name: '泰勒级数', description: 'f(x) = Σ f⁽ⁿ⁾(0)/n! · x^n。常见展开：eˣ、sinx、cosx、ln(1+x)、1/(1-x)。乘积展开需逐项相乘后合并。', difficulty: 'hard' },
+            {
+              name: '泰勒级数',
+              description:
+                'f(x) = Σ f⁽ⁿ⁾(0)/n! · x^n。常见展开：eˣ、sinx、cosx、ln(1+x)、1/(1-x)。乘积展开需逐项相乘后合并。',
+              difficulty: 'hard',
+            },
           ],
           similarQuestions: [
-            { problem: '将 $\\ln(1+x)$ 展开到 $x^5$ 项', difficulty: 5, knowledgePoint: '泰勒级数' },
+            {
+              problem: '将 $\\ln(1+x)$ 展开到 $x^5$ 项',
+              difficulty: 5,
+              knowledgePoint: '泰勒级数',
+            },
           ],
         },
       },
@@ -190,8 +282,8 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
         name: '微分方程（二阶常系数）',
         output: {
           solution:
-            '求解微分方程 $y\'\' - 5y\' + 6y = e^{2x}$\n\n' +
-            '第一步：求齐次方程 $y\'\' - 5y\' + 6y = 0$ 的通解\n' +
+            "求解微分方程 $y'' - 5y' + 6y = e^{2x}$\n\n" +
+            "第一步：求齐次方程 $y'' - 5y' + 6y = 0$ 的通解\n" +
             '特征方程：$r^2 - 5r + 6 = 0$\n' +
             '$$(r - 2)(r - 3) = 0 \\implies r_1 = 2, \\quad r_2 = 3$$\n' +
             '齐次通解：$y_h = C_1 e^{2x} + C_2 e^{3x}$\n\n' +
@@ -215,10 +307,15 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             { label: '求 A', content: '代入得 $A = -1$' },
           ],
           knowledgePoints: [
-            { name: '二阶常系数非齐次方程', description: 'y\'\'+py\'\'+qy = eᵅˣ 型。先求特征根，再根据 λ 是否为特征根设特解：非根→Aeᵅˣ，单根→Axeᵅˣ，重根→Ax²eᵅˣ。', difficulty: 'hard' },
+            {
+              name: '二阶常系数非齐次方程',
+              description:
+                "y''+py''+qy = eᵅˣ 型。先求特征根，再根据 λ 是否为特征根设特解：非根→Aeᵅˣ，单根→Axeᵅˣ，重根→Ax²eᵅˣ。",
+              difficulty: 'hard',
+            },
           ],
           similarQuestions: [
-            { problem: '求解 $y\'\' + y = \\sin x$', difficulty: 7, knowledgePoint: '微分方程' },
+            { problem: "求解 $y'' + y = \\sin x$", difficulty: 7, knowledgePoint: '微分方程' },
           ],
         },
       },
@@ -239,15 +336,31 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             '$$= 3 \\cdot 2\\pi \\cdot 2 \\cdot \\frac{a^5}{5} = \\frac{12\\pi a^5}{5}$$',
           answer: '$\\dfrac{12\\pi a^5}{5}$',
           steps: [
-            { label: '高斯公式', content: '曲面积分 → 三重积分：$\\iiint_\\Omega 3(x^2+y^2+z^2)\\,dV$' },
+            {
+              label: '高斯公式',
+              content: '曲面积分 → 三重积分：$\\iiint_\\Omega 3(x^2+y^2+z^2)\\,dV$',
+            },
             { label: '球坐标变换', content: '$dV = r^2\\sin\\varphi\\,dr\\,d\\varphi\\,d\\theta$' },
-            { label: '逐次积分', content: '$3 \\cdot 2\\pi \\cdot 2 \\cdot \\frac{a^5}{5} = \\frac{12\\pi a^5}{5}$' },
+            {
+              label: '逐次积分',
+              content: '$3 \\cdot 2\\pi \\cdot 2 \\cdot \\frac{a^5}{5} = \\frac{12\\pi a^5}{5}$',
+            },
           ],
           knowledgePoints: [
-            { name: '高斯公式', description: '闭合曲面积分 = 散度的三重积分。条件：S 封闭、外侧、P/Q/R 有一阶连续偏导。球坐标下 dV = r²sinφ dr dφ dθ。', difficulty: 'hard' },
+            {
+              name: '高斯公式',
+              description:
+                '闭合曲面积分 = 散度的三重积分。条件：S 封闭、外侧、P/Q/R 有一阶连续偏导。球坐标下 dV = r²sinφ dr dφ dθ。',
+              difficulty: 'hard',
+            },
           ],
           similarQuestions: [
-            { problem: '用高斯公式计算 $\\oiint_S x\\,dy\\,dz + y\\,dz\\,dx + z\\,dx\\,dy$，S 为单位球面', difficulty: 6, knowledgePoint: '高斯公式' },
+            {
+              problem:
+                '用高斯公式计算 $\\oiint_S x\\,dy\\,dz + y\\,dz\\,dx + z\\,dx\\,dy$，S 为单位球面',
+              difficulty: 6,
+              knowledgePoint: '高斯公式',
+            },
           ],
         },
       },
@@ -275,10 +388,19 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             { label: '结论', content: '不可对角化，Jordan 标准形 $J = A$' },
           ],
           knowledgePoints: [
-            { name: '矩阵对角化', description: 'A 可对角化 ⟺ 每个特征值的几何重数 = 代数重数。Jordan 标准形处理不可对角化的情况。', difficulty: 'hard' },
+            {
+              name: '矩阵对角化',
+              description:
+                'A 可对角化 ⟺ 每个特征值的几何重数 = 代数重数。Jordan 标准形处理不可对角化的情况。',
+              difficulty: 'hard',
+            },
           ],
           similarQuestions: [
-            { problem: '判断 $A = \\begin{pmatrix} 1 & 1 \\\\ 0 & 1 \\end{pmatrix}$ 能否对角化', difficulty: 5, knowledgePoint: '矩阵对角化' },
+            {
+              problem: '判断 $A = \\begin{pmatrix} 1 & 1 \\\\ 0 & 1 \\end{pmatrix}$ 能否对角化',
+              difficulty: 5,
+              knowledgePoint: '矩阵对角化',
+            },
           ],
         },
       },
@@ -305,16 +427,35 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             '$$s = \\frac{1}{2}at^2 = \\frac{1}{2} \\times 3 \\times 16 = 24\\,\\text{m}$$',
           answer: '$a = 3\\,\\text{m/s}^2$',
           steps: [
-            { label: '受力分析', content: '竖直 $N = mg = 20\\,\\text{N}$，摩擦力 $f = \\mu N = 4\\,\\text{N}$' },
+            {
+              label: '受力分析',
+              content: '竖直 $N = mg = 20\\,\\text{N}$，摩擦力 $f = \\mu N = 4\\,\\text{N}$',
+            },
             { label: '求合力', content: '$F_{\\text{合}} = F - f = 10 - 4 = 6\\,\\text{N}$' },
-            { label: '求加速度', content: '$a = \\frac{F_{\\text{合}}}{m} = \\frac{6}{2} = 3\\,\\text{m/s}^2$' },
+            {
+              label: '求加速度',
+              content: '$a = \\frac{F_{\\text{合}}}{m} = \\frac{6}{2} = 3\\,\\text{m/s}^2$',
+            },
           ],
           knowledgePoints: [
-            { name: '牛顿第二定律', description: 'F = ma，合力等于质量乘以加速度。注意受力分析时不要遗漏摩擦力、支持力等。', difficulty: 'easy' },
-            { name: '匀变速直线运动', description: 'v = v₀ + at，s = v₀t + ½at²，v² - v₀² = 2as。适用于加速度恒定的运动。', difficulty: 'easy' },
+            {
+              name: '牛顿第二定律',
+              description:
+                'F = ma，合力等于质量乘以加速度。注意受力分析时不要遗漏摩擦力、支持力等。',
+              difficulty: 'easy',
+            },
+            {
+              name: '匀变速直线运动',
+              description: 'v = v₀ + at，s = v₀t + ½at²，v² - v₀² = 2as。适用于加速度恒定的运动。',
+              difficulty: 'easy',
+            },
           ],
           similarQuestions: [
-            { problem: '质量 5kg 的物体受 30N 水平力，摩擦系数 0.3，求加速度', difficulty: 3, knowledgePoint: '牛顿第二定律' },
+            {
+              problem: '质量 5kg 的物体受 30N 水平力，摩擦系数 0.3，求加速度',
+              difficulty: 3,
+              knowledgePoint: '牛顿第二定律',
+            },
           ],
         },
       },
@@ -339,10 +480,18 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             { label: '中点电场', content: '$E = E_1 + E_2 = 2 \\times 10^6\\,\\text{N/C}$' },
           ],
           knowledgePoints: [
-            { name: '库仑定律', description: 'F = kq₁q₂/r²，k = 9×10⁹ N·m²/C²。适用于真空中两个点电荷之间的力。', difficulty: 'medium' },
+            {
+              name: '库仑定律',
+              description: 'F = kq₁q₂/r²，k = 9×10⁹ N·m²/C²。适用于真空中两个点电荷之间的力。',
+              difficulty: 'medium',
+            },
           ],
           similarQuestions: [
-            { problem: '两个等量同号电荷相距 d，求中点处电场强度', difficulty: 4, knowledgePoint: '电场叠加' },
+            {
+              problem: '两个等量同号电荷相距 d，求中点处电场强度',
+              difficulty: 4,
+              knowledgePoint: '电场叠加',
+            },
           ],
         },
       },
@@ -368,15 +517,28 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             '$$\\alpha = \\frac{[\\text{N}_2]_0 - [\\text{N}_2]}{[\\text{N}_2]_0} = \\frac{1 - 0.5}{1} = 50\\%$$',
           answer: '$K_c \\approx 0.379$',
           steps: [
-            { label: '写出平衡常数表达式', content: '$K_c = \\frac{[\\text{NH}_3]^2}{[\\text{N}_2][\\text{H}_2]^3}$' },
+            {
+              label: '写出平衡常数表达式',
+              content: '$K_c = \\frac{[\\text{NH}_3]^2}{[\\text{N}_2][\\text{H}_2]^3}$',
+            },
             { label: '代入数据', content: '$K_c = \\frac{0.64}{1.6875} \\approx 0.379$' },
             { label: '判断反应类型', content: '温度升高 $K_c$ 减小 → 正反应放热' },
           ],
           knowledgePoints: [
-            { name: '化学平衡常数', description: 'Kc = 生成物浓度幂次方之积 / 反应物浓度幂次方之积。Kc 只与温度有关，与浓度、压强无关。', difficulty: 'medium' },
+            {
+              name: '化学平衡常数',
+              description:
+                'Kc = 生成物浓度幂次方之积 / 反应物浓度幂次方之积。Kc 只与温度有关，与浓度、压强无关。',
+              difficulty: 'medium',
+            },
           ],
           similarQuestions: [
-            { problem: '对于 $\\text{H}_2 + \\text{I}_2 \\rightleftharpoons 2\\text{HI}$，写出 $K_c$ 表达式', difficulty: 3, knowledgePoint: '化学平衡常数' },
+            {
+              problem:
+                '对于 $\\text{H}_2 + \\text{I}_2 \\rightleftharpoons 2\\text{HI}$，写出 $K_c$ 表达式',
+              difficulty: 3,
+              knowledgePoint: '化学平衡常数',
+            },
           ],
         },
       },
@@ -394,15 +556,27 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
             '其中含有碳原子 $0.1\\,\\text{mol}$，氧原子 $0.2\\,\\text{mol}$。',
           answer: '$n = 0.1\\,\\text{mol}$，$m = 4.4\\,\\text{g}$',
           steps: [
-            { label: '求物质的量', content: '$n = \\frac{V}{V_m} = \\frac{2.24}{22.4} = 0.1\\,\\text{mol}$' },
+            {
+              label: '求物质的量',
+              content: '$n = \\frac{V}{V_m} = \\frac{2.24}{22.4} = 0.1\\,\\text{mol}$',
+            },
             { label: '求质量', content: '$m = nM = 0.1 \\times 44 = 4.4\\,\\text{g}$' },
             { label: '求分子数', content: '$N = nN_A = 6.02 \\times 10^{22}$' },
           ],
           knowledgePoints: [
-            { name: '物质的量', description: 'n = m/M = V/Vm = N/NA。标准状况下 Vm = 22.4 L/mol。注意区分标准状况和常温常压。', difficulty: 'easy' },
+            {
+              name: '物质的量',
+              description:
+                'n = m/M = V/Vm = N/NA。标准状况下 Vm = 22.4 L/mol。注意区分标准状况和常温常压。',
+              difficulty: 'easy',
+            },
           ],
           similarQuestions: [
-            { problem: '标准状况下 11.2L O₂ 的质量是多少？', difficulty: 2, knowledgePoint: '物质的量' },
+            {
+              problem: '标准状况下 11.2L O₂ 的质量是多少？',
+              difficulty: 2,
+              knowledgePoint: '物质的量',
+            },
           ],
         },
       },
@@ -432,14 +606,25 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
           answer: '显性：隐性 = 3:1',
           steps: [
             { label: '确定亲本基因型', content: '$Aa \\times Aa$' },
-            { label: '计算后代基因型', content: '$P(AA) = \\frac{1}{4}$，$P(Aa) = \\frac{1}{2}$，$P(aa) = \\frac{1}{4}$' },
+            {
+              label: '计算后代基因型',
+              content: '$P(AA) = \\frac{1}{4}$，$P(Aa) = \\frac{1}{2}$，$P(aa) = \\frac{1}{4}$',
+            },
             { label: '得出表现型比', content: '显性：隐性 = 3:1' },
           ],
           knowledgePoints: [
-            { name: '分离定律', description: '杂合子自交后代基因型比 AA:Aa:aa = 1:2:1，表现型比 显性:隐性 = 3:1。', difficulty: 'easy' },
+            {
+              name: '分离定律',
+              description: '杂合子自交后代基因型比 AA:Aa:aa = 1:2:1，表现型比 显性:隐性 = 3:1。',
+              difficulty: 'easy',
+            },
           ],
           similarQuestions: [
-            { problem: 'Aa × aa 后代的表现型比是多少？', difficulty: 2, knowledgePoint: '分离定律' },
+            {
+              problem: 'Aa × aa 后代的表现型比是多少？',
+              difficulty: 2,
+              knowledgePoint: '分离定律',
+            },
           ],
         },
       },
@@ -460,14 +645,26 @@ const TEST_DATA: Record<string, { title: string; problems: { name: string; outpu
           answer: '$v = 80\\,\\mu\\text{mol/min}$',
           steps: [
             { label: '写出米氏方程', content: '$v = \\frac{V_{\\max}[S]}{K_m + [S]}$' },
-            { label: '代入数据', content: '$v = \\frac{100 \\times 8}{2 + 8} = 80\\,\\mu\\text{mol/min}$' },
+            {
+              label: '代入数据',
+              content: '$v = \\frac{100 \\times 8}{2 + 8} = 80\\,\\mu\\text{mol/min}$',
+            },
             { label: '分析结果', content: '$v \\approx 0.8 V_{\\max}$，酶接近饱和' },
           ],
           knowledgePoints: [
-            { name: '米氏方程', description: 'v = Vmax[S]/(Km+[S])。Km 值越小，酶与底物亲和力越大。当 [S] >> Km 时，v ≈ Vmax。', difficulty: 'hard' },
+            {
+              name: '米氏方程',
+              description:
+                'v = Vmax[S]/(Km+[S])。Km 值越小，酶与底物亲和力越大。当 [S] >> Km 时，v ≈ Vmax。',
+              difficulty: 'hard',
+            },
           ],
           similarQuestions: [
-            { problem: '当 [S] = Km 时，反应速率是多少？', difficulty: 3, knowledgePoint: '米氏方程' },
+            {
+              problem: '当 [S] = Km 时，反应速率是多少？',
+              difficulty: 3,
+              knowledgePoint: '米氏方程',
+            },
           ],
         },
       },
@@ -496,11 +693,11 @@ const RAW_LLM_EXAMPLES: { name: string; raw: string; answer: string }[] = [
   {
     name: '高数：求导数（LLM 裸输出）',
     raw:
-      '设 y = x^(sinx)，求 y\'\n\n' +
+      "设 y = x^(sinx)，求 y'\n\n" +
       '取对数：ln y = sinx · lnx\n\n' +
       '两边对x求导：\n' +
-      '1/y · y\' = cosx · lnx + sinx · 1/x\n\n' +
-      '所以 y\' = y(cosx · lnx + sinx/x)\n' +
+      "1/y · y' = cosx · lnx + sinx · 1/x\n\n" +
+      "所以 y' = y(cosx · lnx + sinx/x)\n" +
       '= x^(sinx)(cosx · lnx + sinx/x)',
     answer: "y' = x^(sinx)(cosx · lnx + sinx/x)",
   },
@@ -520,7 +717,7 @@ const RAW_LLM_EXAMPLES: { name: string; raw: string; answer: string }[] = [
   {
     name: '高数：二阶微分方程（LLM 裸输出）',
     raw:
-      '求解 y\'\' + 4y = sin2x\n\n' +
+      "求解 y'' + 4y = sin2x\n\n" +
       '特征方程：r² + 4 = 0，r = ±2i\n' +
       '齐次通解：y_h = C₁cos2x + C₂sin2x\n\n' +
       '因为 λ = 2i 是特征根，设特解：\n' +
@@ -741,9 +938,7 @@ export default function MathTestPage() {
                     />
                   </CardContent>
                 </Card>
-                {customText && (
-                  <PipelineDebugView raw={customText} answer="" name="自定义输入" />
-                )}
+                {customText && <PipelineDebugView raw={customText} answer="" name="自定义输入" />}
               </div>
             )}
           </div>
@@ -756,26 +951,24 @@ export default function MathTestPage() {
 // ── 管道调试视图 ────────────────────────────────────────────────
 // 展示原始文本经过 postProcessMathContent 和 MathRenderer 后的效果
 
-function PipelineDebugView({
-  raw,
-  answer,
-  name,
-}: {
-  raw: string;
-  answer: string;
-  name: string;
-}) {
+function PipelineDebugView({ raw, answer, name }: { raw: string; answer: string; name: string }) {
   const processed = postProcessMathContent(raw);
 
   return (
     <div className="space-y-4">
       {/* 管道阶段标签 */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Badge variant="outline" className="text-xs">原始 LLM 输出</Badge>
+        <Badge variant="outline" className="text-xs">
+          原始 LLM 输出
+        </Badge>
         <span className="text-xs text-muted-foreground">→</span>
-        <Badge variant="outline" className="text-xs">postProcessMathContent</Badge>
+        <Badge variant="outline" className="text-xs">
+          postProcessMathContent
+        </Badge>
         <span className="text-xs text-muted-foreground">→</span>
-        <Badge variant="default" className="text-xs bg-sky-600">MathRenderer 渲染</Badge>
+        <Badge variant="default" className="text-xs bg-sky-600">
+          MathRenderer 渲染
+        </Badge>
       </div>
 
       {/* 阶段1：原始文本 */}

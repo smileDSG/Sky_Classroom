@@ -121,9 +121,7 @@ export function buildSupplementalSections(
     if (group.length === 0) continue;
 
     // Determine depth from the weakest point in the group
-    const minMastery = Math.min(
-      ...group.map((kp) => masteryByKnowledge?.[kp] ?? 0),
-    );
+    const minMastery = Math.min(...group.map((kp) => masteryByKnowledge?.[kp] ?? 0));
     const depth = difficultyToDepth(getDifficultyForMastery(minMastery));
 
     supplemental.push({
@@ -137,7 +135,9 @@ export function buildSupplementalSections(
     });
   }
 
-  log.info(`Adaptive decision: ${supplemental.length} supplemental sections for ${uniqueWeak.length} weak points`);
+  log.info(
+    `Adaptive decision: ${supplemental.length} supplemental sections for ${uniqueWeak.length} weak points`,
+  );
   return supplemental;
 }
 

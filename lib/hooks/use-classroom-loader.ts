@@ -79,9 +79,8 @@ export function useClassroomLoader(classroomId: string): UseClassroomLoaderRetur
 
       await useMediaGenerationStore.getState().restoreFromDB(classroomId);
 
-      const { loadGeneratedAgentsForStage, useAgentRegistry } = await import(
-        '@/lib/orchestration/registry/store'
-      );
+      const { loadGeneratedAgentsForStage, useAgentRegistry } =
+        await import('@/lib/orchestration/registry/store');
       const generatedAgentIds = await loadGeneratedAgentsForStage(classroomId);
       const { useSettingsStore } = await import('@/lib/store/settings');
       if (generatedAgentIds.length > 0) {

@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -39,7 +42,14 @@ export function DoubleStripeCover({ dna, title, subtitle }: Props) {
 
       {/* Thin accent stripe above title */}
       {showThinStripe && (
-        <rect x="1.0" y="1.6" width="3.0" height="0.03" fill={`#${colors.accentSecondary}`} opacity="0.6" />
+        <rect
+          x="1.0"
+          y="1.6"
+          width="3.0"
+          height="0.03"
+          fill={`#${colors.accentSecondary}`}
+          opacity="0.6"
+        />
       )}
 
       {/* Tag */}

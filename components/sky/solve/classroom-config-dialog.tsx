@@ -40,7 +40,10 @@ export function ClassroomConfigDialog({
   onSubmit,
   loading,
 }: ClassroomConfigDialogProps) {
-  const recommended = useMemo(() => recommendAgentsFromLessonPlan(plan, sections), [plan, sections]);
+  const recommended = useMemo(
+    () => recommendAgentsFromLessonPlan(plan, sections),
+    [plan, sections],
+  );
   const [config, setConfig] = useState<TeachingToClassroomConfig>(() => ({
     ...DEFAULT_CLASSROOM_CONFIG,
     selectedTeacherId: recommended.teacherId,
@@ -58,8 +61,7 @@ export function ClassroomConfigDialog({
     setIsRecommended(true);
   }, [plan, sections]);
 
-  const canSubmit =
-    config.selectedTeacherId && config.selectedStudentIds.length > 0;
+  const canSubmit = config.selectedTeacherId && config.selectedStudentIds.length > 0;
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit || loading) return;

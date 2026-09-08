@@ -19,13 +19,8 @@ export function calculateMastery(errorCount: number, totalCount: number): number
  * Get weak points: nodes with mastery below the given threshold (default 50).
  * Returns nodes sorted from weakest to strongest.
  */
-export function getWeakPoints(
-  nodes: GraphNode[],
-  threshold = 50,
-): GraphNode[] {
-  return nodes
-    .filter((n) => n.mastery < threshold)
-    .sort((a, b) => a.mastery - b.mastery);
+export function getWeakPoints(nodes: GraphNode[], threshold = 50): GraphNode[] {
+  return nodes.filter((n) => n.mastery < threshold).sort((a, b) => a.mastery - b.mastery);
 }
 
 /**

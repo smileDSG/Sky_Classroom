@@ -36,10 +36,13 @@ export function resolvePromptLocale(appLocale?: string): PromptI18nLocale | unde
  * Each locale maps fragment IDs to replacement content.
  * Keys are loaded lazily to avoid bloating the bundle.
  */
-const localeOverrides: Record<Exclude<PromptI18nLocale, 'en'>, () => Promise<Record<string, string>>> = {
-  zh: () => import('./zh').then(m => m.zhOverrides),
-  ja: () => import('./ja').then(m => m.jaOverrides),
-  ru: () => import('./ru').then(m => m.ruOverrides),
+const localeOverrides: Record<
+  Exclude<PromptI18nLocale, 'en'>,
+  () => Promise<Record<string, string>>
+> = {
+  zh: () => import('./zh').then((m) => m.zhOverrides),
+  ja: () => import('./ja').then((m) => m.jaOverrides),
+  ru: () => import('./ru').then((m) => m.ruOverrides),
 };
 
 /**

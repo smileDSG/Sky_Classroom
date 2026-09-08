@@ -190,7 +190,10 @@ export async function generateLearningPlan(
                   materials: Array.isArray(t.materials)
                     ? t.materials.filter((m): m is string => typeof m === 'string')
                     : [],
-                  minutes: typeof t.minutes === 'number' ? t.minutes : projection.data.availability.preferredSessionMinutes,
+                  minutes:
+                    typeof t.minutes === 'number'
+                      ? t.minutes
+                      : projection.data.availability.preferredSessionMinutes,
                 };
               })
             : [],
@@ -214,6 +217,7 @@ export async function generateLearningPlan(
     goal,
     strategy,
     weeklyPlans,
-    materials: materials.length > 0 ? materials : chunks.map((c) => ({ title: c.title, source: c.source })),
+    materials:
+      materials.length > 0 ? materials : chunks.map((c) => ({ title: c.title, source: c.source })),
   };
 }

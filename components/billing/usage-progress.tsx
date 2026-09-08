@@ -30,8 +30,10 @@ export function UsageProgress() {
   if (loading || !usage) return null;
   if (usage.llmCalls.limit === 0 && usage.generationCount.limit === 0) return null;
 
-  const pct = (current: number, limit: number) => (limit === 0 ? 0 : Math.round((current / limit) * 100));
-  const barColor = (p: number) => (p > 90 ? 'bg-red-500' : p > 70 ? 'bg-yellow-500' : 'bg-green-500');
+  const pct = (current: number, limit: number) =>
+    limit === 0 ? 0 : Math.round((current / limit) * 100);
+  const barColor = (p: number) =>
+    p > 90 ? 'bg-red-500' : p > 70 ? 'bg-yellow-500' : 'bg-green-500';
 
   return (
     <div className="space-y-3 p-3 rounded-lg border bg-card text-sm">

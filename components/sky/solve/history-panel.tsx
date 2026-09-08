@@ -196,15 +196,27 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
                 </div>
                 历史星图
               </CardTitle>
-              <CardDescription className="mt-1 text-[var(--probe-muted)]">所有探测记录</CardDescription>
+              <CardDescription className="mt-1 text-[var(--probe-muted)]">
+                所有探测记录
+              </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               {selectMode ? (
                 <>
-                  <Button variant="ghost" size="sm" onClick={exitSelectMode} className="text-[var(--probe-muted)] hover:text-[var(--probe-text)]">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={exitSelectMode}
+                    className="text-[var(--probe-muted)] hover:text-[var(--probe-text)]"
+                  >
                     取消
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={toggleSelectAll} className="text-[var(--probe-primary-bright)] hover:bg-[var(--probe-primary)]/15">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleSelectAll}
+                    className="text-[var(--probe-primary-bright)] hover:bg-[var(--probe-primary)]/15"
+                  >
                     {selectedKeys.size === filteredItems.length ? '取消全选' : '全选'}
                   </Button>
                 </>
@@ -219,7 +231,12 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
                   >
                     多选
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={onClose} className="text-[var(--probe-muted)] hover:text-[var(--probe-text)]">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClose}
+                    className="text-[var(--probe-muted)] hover:text-[var(--probe-text)]"
+                  >
                     返回搜题
                   </Button>
                 </>
@@ -261,8 +278,12 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
                 <AlertCircle className="h-6 w-6 text-[var(--probe-error)]" />
               </div>
               <p className="text-sm text-[var(--probe-error)]">{error}</p>
-              <Button variant="outline" size="sm" onClick={fetchEntries}
-                className="border-[var(--probe-border-strong)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-primary)]">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchEntries}
+                className="border-[var(--probe-border-strong)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-primary)]"
+              >
                 重试
               </Button>
             </div>
@@ -361,7 +382,13 @@ function HistoryItemRow({
         onClick={() => (selectMode ? onToggleSelect() : onLoad?.(entry))}
       >
         {selectMode && (
-          <div className="mt-0.5 shrink-0" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
+          <div
+            className="mt-0.5 shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect();
+            }}
+          >
             {selected ? (
               <CheckSquare className="h-5 w-5 text-[var(--probe-primary-bright)] drop-shadow-[0_0_4px_var(--probe-glow)]" />
             ) : (
@@ -384,7 +411,10 @@ function HistoryItemRow({
             <MathRenderer content={entry.problemText} />
           </p>
           <div className="flex items-center gap-2 text-xs text-[var(--probe-muted)]">
-            <Badge variant="outline" className="h-4 px-1 text-[10px] border-[var(--probe-success)]/30 text-[var(--probe-success)]">
+            <Badge
+              variant="outline"
+              className="h-4 px-1 text-[10px] border-[var(--probe-success)]/30 text-[var(--probe-success)]"
+            >
               已解答
             </Badge>
             {entry.agentId && (
@@ -420,7 +450,13 @@ function HistoryItemRow({
       onClick={() => (selectMode ? onToggleSelect() : onLoad?.(matchedBank ?? record))}
     >
       {selectMode && (
-        <div className="mt-0.5 shrink-0" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
+        <div
+          className="mt-0.5 shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect();
+          }}
+        >
           {selected ? (
             <CheckSquare className="h-5 w-5 text-[var(--probe-primary-bright)] drop-shadow-[0_0_4px_var(--probe-glow)]" />
           ) : (
@@ -453,7 +489,9 @@ function HistoryItemRow({
         />
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm leading-normal line-clamp-1 truncate text-[var(--probe-text)]">{record.query}</p>
+        <p className="text-sm leading-normal line-clamp-1 truncate text-[var(--probe-text)]">
+          {record.query}
+        </p>
         <div className="flex items-center gap-2 text-xs text-[var(--probe-muted)]">
           <span className="flex items-center gap-0.5">
             {record.type === 'image' ? (

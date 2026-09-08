@@ -60,7 +60,7 @@ export function GenerationToolbar({
   onPdfError,
 }: GenerationToolbarProps) {
   const t = (key: string) => key;
-const currentProviderId = useSettingsStore((s) => s.providerId);
+  const currentProviderId = useSettingsStore((s) => s.providerId);
   const currentModelId = useSettingsStore((s) => s.modelId);
   const providersConfig = useSettingsStore((s) => s.providersConfig);
   const setModel = useSettingsStore((s) => s.setModel);
@@ -199,9 +199,7 @@ const currentProviderId = useSettingsStore((s) => s.providerId);
           <PopoverContent align="start" className="w-72 p-0">
             {/* Parser selector */}
             <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-              <span className="text-xs font-medium text-muted-foreground shrink-0">
-                {'解析器'}
-              </span>
+              <span className="text-xs font-medium text-muted-foreground shrink-0">{'解析器'}</span>
               <Select
                 value={pdfProviderId}
                 onValueChange={(v) => setPDFProvider(v as PDFProviderId)}
@@ -338,9 +336,7 @@ const currentProviderId = useSettingsStore((s) => s.providerId);
                   )}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium">
-                    {webSearch ? '已开启' : '点击开启'}
-                  </p>
+                  <p className="text-xs font-medium">{webSearch ? '已开启' : '点击开启'}</p>
                   <p className="text-[10px] text-muted-foreground/70 mt-0.5">
                     {'生成前搜索网络获取最新资料，让内容更丰富准确'}
                   </p>

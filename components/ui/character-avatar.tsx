@@ -3,11 +3,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect } from 'react';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 
 export type AvatarShape = 'circle' | 'hexagon' | 'diamond' | 'blob';
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -41,7 +37,8 @@ const hexagonClipPath = 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0
 // Diamond clip path
 const diamondClipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
 // Blob clip path (organic shape)
-const blobClipPath = 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)';
+const blobClipPath =
+  'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)';
 
 export function CharacterAvatar({
   avatar,
@@ -130,7 +127,7 @@ export function CharacterAvatar({
         'transition-transform duration-300',
         isActive && !isSpeaking && !isThinking && 'scale-105',
         onClick && 'cursor-pointer hover:scale-110',
-        className
+        className,
       )}
       onClick={onClick}
       style={{
@@ -148,7 +145,7 @@ export function CharacterAvatar({
       className={cn(
         'relative overflow-hidden bg-slate-800',
         sizes.inner,
-        shape === 'circle' ? 'rounded-full' : ''
+        shape === 'circle' ? 'rounded-full' : '',
       )}
       style={{
         clipPath: shape === 'circle' ? undefined : getClipPath(),
@@ -156,9 +153,7 @@ export function CharacterAvatar({
       }}
     >
       {/* Placeholder/loading state */}
-      {!imageLoaded && (
-        <div className="absolute inset-0 bg-slate-700 animate-pulse" />
-      )}
+      {!imageLoaded && <div className="absolute inset-0 bg-slate-700 animate-pulse" />}
 
       {/* Avatar image */}
       <img
@@ -166,7 +161,7 @@ export function CharacterAvatar({
         alt={name}
         className={cn(
           'w-full h-full object-cover transition-opacity duration-300',
-          imageLoaded ? 'opacity-100' : 'opacity-0'
+          imageLoaded ? 'opacity-100' : 'opacity-0',
         )}
         onLoad={() => setImageLoaded(true)}
       />
@@ -264,7 +259,7 @@ export function CharacterAvatar({
                 'w-8 h-8 rounded-full overflow-hidden',
                 shape === 'hexagon' && 'clip-hexagon',
                 shape === 'diamond' && 'clip-diamond',
-                shape === 'blob' && 'clip-blob'
+                shape === 'blob' && 'clip-blob',
               )}
               style={{
                 clipPath: shape === 'circle' ? undefined : getClipPath(),
@@ -333,12 +328,7 @@ export function CharacterStrip({
   const user = participants.find((p) => p.role === 'user');
 
   return (
-    <div
-      className={cn(
-        'flex flex-col items-center gap-4 py-4',
-        className
-      )}
-    >
+    <div className={cn('flex flex-col items-center gap-4 py-4', className)}>
       {/* Teacher - Hexagon, larger */}
       {teacher && (
         <div

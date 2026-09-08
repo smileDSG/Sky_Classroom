@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { buildCoverPrompt, buildConceptPrompt, buildSlideImagePrompt } from '@/lib/slides/image-generation';
+import {
+  buildCoverPrompt,
+  buildConceptPrompt,
+  buildSlideImagePrompt,
+} from '@/lib/slides/image-generation';
 import type { ThemeToken } from '@/lib/slides/types';
 
 const mockTheme: ThemeToken = {

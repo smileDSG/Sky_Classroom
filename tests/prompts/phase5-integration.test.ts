@@ -109,7 +109,11 @@ describe('Phase 5: Hot-reload', () => {
   const testFragmentId = '__hot_reload_test__';
 
   afterEach(() => {
-    try { fs.unlinkSync(testFile); } catch { /* clean */ }
+    try {
+      fs.unlinkSync(testFile);
+    } catch {
+      /* clean */
+    }
     resetPromptComposer();
   });
 
@@ -291,12 +295,25 @@ describe('Phase 5: User overrides', () => {
 
       const result = composer.compose({
         fragments: ['slide-content'],
-        variables: { theme_palette_name: 'midnight-executive', mood: '专业稳重', title: 'X', description: 'X', keyPoints: 'X', languageDirective: '讲中文', teacherContext: '', mediaElementEnabled: false },
+        variables: {
+          theme_palette_name: 'midnight-executive',
+          mood: '专业稳重',
+          title: 'X',
+          description: 'X',
+          keyPoints: 'X',
+          languageDirective: '讲中文',
+          teacherContext: '',
+          mediaElementEnabled: false,
+        },
       });
 
       expect(result.system).toContain('Custom user override from file');
     } finally {
-      try { fs.unlinkSync(userFile); } catch { /* clean */ }
+      try {
+        fs.unlinkSync(userFile);
+      } catch {
+        /* clean */
+      }
     }
   });
 });
@@ -499,13 +516,99 @@ describe('Phase 5: Full pipeline composition', () => {
 
   test('all 7 fixed templates interpolate language directive', () => {
     const templates = [
-      { id: 'slide-content', file: 'slide-content.md', vars: { theme_palette_name: 'midnight-executive', mood: '专业稳重', title: 'X', description: 'X', keyPoints: 'X', mediaElementEnabled: false, languageDirective: '讲中文', teacherContext: '' } },
-      { id: 'slide-actions', file: 'slide-actions.md', vars: { elements: 'x', title: 'X', keyPoints: 'X', description: 'X', languageDirective: '讲中文', courseContext: '', agents: '', userProfile: '' } },
-      { id: 'quiz', file: 'quiz.md', vars: { title: 'X', description: 'X', keyPoints: 'X', questionCount: '1', difficulty: 'easy', questionTypes: 'single', languageDirective: '讲中文' } },
-      { id: 'quiz-actions', file: 'quiz-actions.md', vars: { questions: 'x', title: 'X', keyPoints: 'X', description: 'X', languageDirective: '讲中文', courseContext: '', agents: '' } },
-      { id: 'interactive-actions', file: 'interactive-actions.md', vars: { title: 'X', conceptName: 'X', description: 'X', designIdea: 'X', keyPoints: 'X', languageDirective: '讲中文', courseContext: '', agents: '' } },
-      { id: 'widget-teacher-actions', file: 'widget-teacher-actions.md', vars: { widgetType: 'simulation', description: 'X', keyPoints: 'X', widgetConfig: '{}', languageDirective: '讲中文' } },
-      { id: 'pbl-actions', file: 'pbl-actions.md', vars: { title: 'X', projectTopic: 'X', projectDescription: 'X', keyPoints: 'X', description: 'X', languageDirective: '讲中文', courseContext: '', agents: '' } },
+      {
+        id: 'slide-content',
+        file: 'slide-content.md',
+        vars: {
+          theme_palette_name: 'midnight-executive',
+          mood: '专业稳重',
+          title: 'X',
+          description: 'X',
+          keyPoints: 'X',
+          mediaElementEnabled: false,
+          languageDirective: '讲中文',
+          teacherContext: '',
+        },
+      },
+      {
+        id: 'slide-actions',
+        file: 'slide-actions.md',
+        vars: {
+          elements: 'x',
+          title: 'X',
+          keyPoints: 'X',
+          description: 'X',
+          languageDirective: '讲中文',
+          courseContext: '',
+          agents: '',
+          userProfile: '',
+        },
+      },
+      {
+        id: 'quiz',
+        file: 'quiz.md',
+        vars: {
+          title: 'X',
+          description: 'X',
+          keyPoints: 'X',
+          questionCount: '1',
+          difficulty: 'easy',
+          questionTypes: 'single',
+          languageDirective: '讲中文',
+        },
+      },
+      {
+        id: 'quiz-actions',
+        file: 'quiz-actions.md',
+        vars: {
+          questions: 'x',
+          title: 'X',
+          keyPoints: 'X',
+          description: 'X',
+          languageDirective: '讲中文',
+          courseContext: '',
+          agents: '',
+        },
+      },
+      {
+        id: 'interactive-actions',
+        file: 'interactive-actions.md',
+        vars: {
+          title: 'X',
+          conceptName: 'X',
+          description: 'X',
+          designIdea: 'X',
+          keyPoints: 'X',
+          languageDirective: '讲中文',
+          courseContext: '',
+          agents: '',
+        },
+      },
+      {
+        id: 'widget-teacher-actions',
+        file: 'widget-teacher-actions.md',
+        vars: {
+          widgetType: 'simulation',
+          description: 'X',
+          keyPoints: 'X',
+          widgetConfig: '{}',
+          languageDirective: '讲中文',
+        },
+      },
+      {
+        id: 'pbl-actions',
+        file: 'pbl-actions.md',
+        vars: {
+          title: 'X',
+          projectTopic: 'X',
+          projectDescription: 'X',
+          keyPoints: 'X',
+          description: 'X',
+          languageDirective: '讲中文',
+          courseContext: '',
+          agents: '',
+        },
+      },
     ];
 
     for (const { id, file, vars } of templates) {

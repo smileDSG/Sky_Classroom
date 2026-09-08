@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -28,7 +31,14 @@ export function GradientWashCover({ dna, title, subtitle }: Props) {
   if (density === 'moderate' || density === 'rich') {
     decorations.push(
       <circle key="gw1" cx="3" cy="2.5" r="0.9" fill={`#${colors.accentLight}`} opacity="0.15" />,
-      <circle key="gw2" cx="10.5" cy="5.5" r="1.1" fill={`#${colors.accentLight}`} opacity="0.15" />,
+      <circle
+        key="gw2"
+        cx="10.5"
+        cy="5.5"
+        r="1.1"
+        fill={`#${colors.accentLight}`}
+        opacity="0.15"
+      />,
     );
   }
   if (density === 'rich') {
@@ -43,7 +53,14 @@ export function GradientWashCover({ dna, title, subtitle }: Props) {
       <rect x="0" y="0" width="13.33" height="7.5" fill={`#${colors.coverBg}`} />
 
       {/* Soft gradient overlays */}
-      <rect x="0" y="0" width="13.33" height="4.5" fill={`#${colors.accentSecondary}`} opacity="0.08" />
+      <rect
+        x="0"
+        y="0"
+        width="13.33"
+        height="4.5"
+        fill={`#${colors.accentSecondary}`}
+        opacity="0.08"
+      />
       <rect x="0" y="3.0" width="13.33" height="4.5" fill={`#${colors.accent}`} opacity="0.06" />
 
       {/* Decorative circles */}

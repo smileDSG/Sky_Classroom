@@ -6,7 +6,12 @@
  * all settings are correctly applied.
  */
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { exportSettings, importSettings, applyPreset, migrateFromOldStorage } from '@/lib/store/settings';
+import {
+  exportSettings,
+  importSettings,
+  applyPreset,
+  migrateFromOldStorage,
+} from '@/lib/store/settings';
 import { EDUCATION_PRESET, DEMO_PRESET, DEVELOPMENT_PRESET } from '@/lib/store/settings/presets';
 
 // ─── Tests ───

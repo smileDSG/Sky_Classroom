@@ -140,9 +140,7 @@ describe('POST /api/sky/solve/grade learner profile integration', () => {
       version: 3,
     });
 
-    const res = await POST(
-      makeRequest({ problem: '2+2=?', correctAnswer: '4', userAnswer: '4' }),
-    );
+    const res = await POST(makeRequest({ problem: '2+2=?', correctAnswer: '4', userAnswer: '4' }));
 
     expect(res.status).toBe(200);
     const [, , , , teachingProjection] = gradeAnswerMock.mock.calls[0];

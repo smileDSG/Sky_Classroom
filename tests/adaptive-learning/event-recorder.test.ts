@@ -223,6 +223,8 @@ describe('EventRecorder', () => {
 
     expect(planned?.type).toBe('intervention-planned');
     expect(outcome?.correlationId).toBe('decision-1');
-    await expect(new LearnerProfileRepository(storage).listLearningEvents('user-1')).resolves.toHaveLength(2);
+    await expect(
+      new LearnerProfileRepository(storage).listLearningEvents('user-1'),
+    ).resolves.toHaveLength(2);
   });
 });

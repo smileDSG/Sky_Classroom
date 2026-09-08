@@ -54,71 +54,35 @@ describe('extractNumbers', () => {
 describe('analyzeMistakeCause', () => {
   // ── 1. 空答案 → concept-unclear ──────────────────────────────────
   it('用户答案为空白字符串时返回 concept-unclear', () => {
-    const { problem, correctAnswer, userAnswer } = makeProblem(
-      '1 + 1 = ?',
-      '2',
-      '',
-    );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'concept-unclear',
-    );
+    const { problem, correctAnswer, userAnswer } = makeProblem('1 + 1 = ?', '2', '');
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('concept-unclear');
   });
 
   it('用户答案为纯空格时也返回 concept-unclear', () => {
-    const { problem, correctAnswer, userAnswer } = makeProblem(
-      '1 + 1 = ?',
-      '2',
-      '   ',
-    );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'concept-unclear',
-    );
+    const { problem, correctAnswer, userAnswer } = makeProblem('1 + 1 = ?', '2', '   ');
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('concept-unclear');
   });
 
   // ── 2. 计算错误（数量级差 ~10x）─────────────────────────────────
   it('数字差约 10 倍时返回 calculation-error', () => {
-    const { problem, correctAnswer, userAnswer } = makeProblem(
-      '1 + 1 = ?',
-      '42',
-      '4.2',
-    );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'calculation-error',
-    );
+    const { problem, correctAnswer, userAnswer } = makeProblem('1 + 1 = ?', '42', '4.2');
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('calculation-error');
   });
 
   it('数字差约 0.1 倍时也是 calculation-error', () => {
-    const { problem, correctAnswer, userAnswer } = makeProblem(
-      '计算距离',
-      '5',
-      '50',
-    );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'calculation-error',
-    );
+    const { problem, correctAnswer, userAnswer } = makeProblem('计算距离', '5', '50');
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('calculation-error');
   });
 
   // ── 3. 方法错误（正负号反了 / 数字顺序颠倒）───────────────────
   it('正负号反了返回 method-wrong', () => {
-    const { problem, correctAnswer, userAnswer } = makeProblem(
-      '计算温差',
-      '5',
-      '-5',
-    );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'method-wrong',
-    );
+    const { problem, correctAnswer, userAnswer } = makeProblem('计算温差', '5', '-5');
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('method-wrong');
   });
 
   it('数字顺序颠倒返回 method-wrong', () => {
-    const { problem, correctAnswer, userAnswer } = makeProblem(
-      '写出坐标',
-      '3, 5',
-      '5, 3',
-    );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'method-wrong',
-    );
+    const { problem, correctAnswer, userAnswer } = makeProblem('写出坐标', '3, 5', '5, 3');
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('method-wrong');
   });
 
   // ── 4. 审题错误（题干含关键词）─────────────────────────────────
@@ -128,9 +92,7 @@ describe('analyzeMistakeCause', () => {
       '4',
       '0',
     );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'misreading',
-    );
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('misreading');
   });
 
   it('题干含"正确的是"时返回 misreading', () => {
@@ -139,9 +101,7 @@ describe('analyzeMistakeCause', () => {
       'πr²',
       '2πr',
     );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'misreading',
-    );
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('misreading');
   });
 
   it('题干含"下列选项中"时返回 misreading', () => {
@@ -150,21 +110,13 @@ describe('analyzeMistakeCause', () => {
       '正方形',
       '四边形',
     );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'misreading',
-    );
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('misreading');
   });
 
   // ── 5. 格式错误（核心内容对但格式不一致）───────────────────────
   it('数字相同但单位/空格不一致返回 format-error', () => {
-    const { problem, correctAnswer, userAnswer } = makeProblem(
-      '计算长度',
-      '10 cm',
-      '10cm',
-    );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'format-error',
-    );
+    const { problem, correctAnswer, userAnswer } = makeProblem('计算长度', '10 cm', '10cm');
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('format-error');
   });
 
   it('去空白后核心内容一致返回 format-error', () => {
@@ -173,9 +125,7 @@ describe('analyzeMistakeCause', () => {
       'Hello World',
       'HELLOWORLD',
     );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'format-error',
-    );
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('format-error');
   });
 
   // ── 6. 默认返回 concept-unclear ──────────────────────────────────
@@ -185,9 +135,7 @@ describe('analyzeMistakeCause', () => {
       '北京',
       '上海',
     );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'concept-unclear',
-    );
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('concept-unclear');
   });
 
   it('无数字、无关键词、也无格式匹配时返回 concept-unclear', () => {
@@ -196,21 +144,13 @@ describe('analyzeMistakeCause', () => {
       '光能转化为化学能',
       '植物呼吸作用',
     );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'concept-unclear',
-    );
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('concept-unclear');
   });
 
   // ── 7. 精确/归一化匹配 → careless ──────────────────────────────────
   it('exact normalized match returns careless', () => {
-    const { problem, correctAnswer, userAnswer } = makeProblem(
-      '1 + 1 = ?',
-      '4',
-      '4',
-    );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'careless',
-    );
+    const { problem, correctAnswer, userAnswer } = makeProblem('1 + 1 = ?', '4', '4');
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('careless');
   });
 
   it('whitespace/case differences that normalize to same returns careless', () => {
@@ -219,8 +159,6 @@ describe('analyzeMistakeCause', () => {
       '  Hello   World  ',
       'hello world',
     );
-    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
-      'careless',
-    );
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe('careless');
   });
 });

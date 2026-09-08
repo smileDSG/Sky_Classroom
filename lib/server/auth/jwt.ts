@@ -41,7 +41,11 @@ export interface RefreshPayload {
 }
 
 /** Sign a short-lived access token */
-export async function signAccessToken(user: { id: string; email?: string; role: string }): Promise<string> {
+export async function signAccessToken(user: {
+  id: string;
+  email?: string;
+  role: string;
+}): Promise<string> {
   return new SignJWT({ role: user.role, email: user.email })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(user.id)

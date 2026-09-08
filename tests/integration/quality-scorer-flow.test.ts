@@ -13,8 +13,28 @@ import type { GeneratedSlideContent, GeneratedQuizContent } from '@/lib/types/ge
 
 const GOOD_SLIDE: GeneratedSlideContent = {
   elements: [
-    { id: 'title', type: 'text', left: 60, top: 40, width: 900, height: 60, content: '<p>光合作用</p>', defaultFontName: '', defaultColor: '#333' },
-    { id: 'body', type: 'text', left: 60, top: 120, width: 900, height: 200, content: '<p>光合作用是植物利用光能将二氧化碳和水转化为有机物的过程。</p>', defaultFontName: '', defaultColor: '#666' },
+    {
+      id: 'title',
+      type: 'text',
+      left: 60,
+      top: 40,
+      width: 900,
+      height: 60,
+      content: '<p>光合作用</p>',
+      defaultFontName: '',
+      defaultColor: '#333',
+    },
+    {
+      id: 'body',
+      type: 'text',
+      left: 60,
+      top: 120,
+      width: 900,
+      height: 200,
+      content: '<p>光合作用是植物利用光能将二氧化碳和水转化为有机物的过程。</p>',
+      defaultFontName: '',
+      defaultColor: '#666',
+    },
   ],
   background: { type: 'solid', color: '#ffffff' },
   remark: 'Well structured slide',

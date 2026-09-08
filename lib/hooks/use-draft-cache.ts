@@ -39,7 +39,11 @@ export function useDraftCache<T>({
       }
     } catch {
       // Corrupted entry — clear it so it doesn't persist forever
-      try { localStorage.removeItem(key); } catch { /* ignore */ }
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        /* ignore */
+      }
       setCachedValue(undefined);
     }
   }, [key]);

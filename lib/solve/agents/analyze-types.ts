@@ -1,8 +1,15 @@
 // lib/solve/agents/analyze-types.ts
 
 export type Subject =
-  | 'math' | 'physics' | 'chemistry' | 'biology'
-  | 'chinese' | 'english' | 'history' | 'geography' | 'politics'
+  | 'math'
+  | 'physics'
+  | 'chemistry'
+  | 'biology'
+  | 'chinese'
+  | 'english'
+  | 'history'
+  | 'geography'
+  | 'politics'
   | 'unknown';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';

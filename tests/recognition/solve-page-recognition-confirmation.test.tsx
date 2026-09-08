@@ -67,9 +67,7 @@ describe('handwriting recognition confirmation in the existing solve page', () =
           text: '解方程 $x+1=2$',
           latex: ['x+1=2'],
           confidence: 0.62,
-          ambiguities: [
-            { field: 'stem', candidates: ['1', 'l'], reason: '手写字符不清晰' },
-          ],
+          ambiguities: [{ field: 'stem', candidates: ['1', 'l'], reason: '手写字符不清晰' }],
           needsConfirmation: true,
         }),
       }),

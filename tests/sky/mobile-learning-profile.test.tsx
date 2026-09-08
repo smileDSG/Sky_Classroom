@@ -45,7 +45,9 @@ describe('MobileLearningProfilePage', () => {
           },
           weakPoints: ['二次函数', '函数图像'],
           strongPoints: ['方程思想'],
-          errorPatterns: [{ knowledgePoint: '二次函数', errorType: 'concept-unclear', frequency: 4 }],
+          errorPatterns: [
+            { knowledgePoint: '二次函数', errorType: 'concept-unclear', frequency: 4 },
+          ],
           totalQuestions: 18,
           totalCorrect: 13,
         },

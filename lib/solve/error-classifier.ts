@@ -1,31 +1,38 @@
 import type { MistakeCause } from './types';
 
 const VALID_CAUSES: MistakeCause[] = [
-  'concept-unclear', 'calculation-error', 'misreading',
-  'method-wrong', 'careless', 'format-error',
+  'concept-unclear',
+  'calculation-error',
+  'misreading',
+  'method-wrong',
+  'careless',
+  'format-error',
 ];
 
 const FULL_PHRASE_MAP: Record<string, MistakeCause> = {
-  '概念不清': 'concept-unclear',
-  '计算失误': 'calculation-error',
-  '审题错误': 'misreading',
-  '方法错误': 'method-wrong',
-  '粗心': 'careless',
-  '格式错误': 'format-error',
+  概念不清: 'concept-unclear',
+  计算失误: 'calculation-error',
+  审题错误: 'misreading',
+  方法错误: 'method-wrong',
+  粗心: 'careless',
+  格式错误: 'format-error',
 };
 
 const KEYWORD_MAP: Record<string, MistakeCause> = {
-  '概念': 'concept-unclear', '计算': 'calculation-error',
-  '审题': 'misreading', '方法': 'method-wrong',
-  '粗心': 'careless', '格式': 'format-error',
+  概念: 'concept-unclear',
+  计算: 'calculation-error',
+  审题: 'misreading',
+  方法: 'method-wrong',
+  粗心: 'careless',
+  格式: 'format-error',
 };
 
 const CAUSE_LABELS: Record<MistakeCause, string> = {
   'concept-unclear': '概念不清',
   'calculation-error': '计算失误',
-  'misreading': '审题错误',
+  misreading: '审题错误',
   'method-wrong': '方法错误',
-  'careless': '粗心',
+  careless: '粗心',
   'format-error': '格式错误',
 };
 

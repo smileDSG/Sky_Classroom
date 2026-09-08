@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -32,7 +35,14 @@ export function ImageZoneCover({ dna, title, subtitle }: Props) {
   }
   if (density === 'rich') {
     decorations.push(
-      <circle key="iz2" cx="12.0" cy="0.8" r="0.2" fill={`#${colors.accentSecondary}`} opacity="0.08" />,
+      <circle
+        key="iz2"
+        cx="12.0"
+        cy="0.8"
+        r="0.2"
+        fill={`#${colors.accentSecondary}`}
+        opacity="0.08"
+      />,
     );
   }
 
@@ -54,8 +64,24 @@ export function ImageZoneCover({ dna, title, subtitle }: Props) {
       />
 
       {/* Cross lines in image zone (placeholder) */}
-      <line x1="7.8" y1="1.3" x2="12.2" y2="6.3" stroke={`#${colors.accent}`} strokeWidth="0.008" opacity="0.3" />
-      <line x1="12.2" y1="1.3" x2="7.8" y2="6.3" stroke={`#${colors.accent}`} strokeWidth="0.008" opacity="0.3" />
+      <line
+        x1="7.8"
+        y1="1.3"
+        x2="12.2"
+        y2="6.3"
+        stroke={`#${colors.accent}`}
+        strokeWidth="0.008"
+        opacity="0.3"
+      />
+      <line
+        x1="12.2"
+        y1="1.3"
+        x2="7.8"
+        y2="6.3"
+        stroke={`#${colors.accent}`}
+        strokeWidth="0.008"
+        opacity="0.3"
+      />
 
       {/* Small label in image zone */}
       <text

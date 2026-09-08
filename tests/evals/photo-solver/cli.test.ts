@@ -340,9 +340,7 @@ describe('LiveAdapter', () => {
 
     const result = await adapter.run(testCase);
 
-    expect(result.retrievedDocuments).toEqual([
-      { id: 'doc-live', content: '2+2=4', score: 0.9 },
-    ]);
+    expect(result.retrievedDocuments).toEqual([{ id: 'doc-live', content: '2+2=4', score: 0.9 }]);
     expect(result.timing.retrievalMs).toBe(12);
   });
 });

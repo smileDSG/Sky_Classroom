@@ -17,11 +17,7 @@ const log = createLogger('HealthCheck');
 
 // ==================== Types ====================
 
-export type ProviderHealthStatus =
-  | 'connected'
-  | 'degraded'
-  | 'unavailable'
-  | 'not_configured';
+export type ProviderHealthStatus = 'connected' | 'degraded' | 'unavailable' | 'not_configured';
 
 export interface ProviderHealth {
   type: string;
@@ -83,7 +79,10 @@ export async function checkProviderHealth(): Promise<HealthSnapshot> {
   const providers: ProviderHealth[] = [];
 
   // Check LLM providers
-  const llmProviders = getServerProviders() as Record<string, { baseUrl?: string; models?: string[] }>;
+  const llmProviders = getServerProviders() as Record<
+    string,
+    { baseUrl?: string; models?: string[] }
+  >;
   for (const [id, config] of Object.entries(llmProviders)) {
     if (!config.baseUrl) {
       providers.push({
@@ -134,11 +133,7 @@ export async function checkProviderHealth(): Promise<HealthSnapshot> {
   const hasConnected = providers.some((p) => p.status === 'connected');
 
   const snapshot: HealthSnapshot = {
-    status: !hasConnected
-      ? 'unhealthy'
-      : hasUnavailable
-        ? 'degraded'
-        : 'healthy',
+    status: !hasConnected ? 'unhealthy' : hasUnavailable ? 'degraded' : 'healthy',
     timestamp: Date.now(),
     providers,
   };

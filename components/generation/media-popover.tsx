@@ -62,7 +62,8 @@ const TABS: Array<{ id: TabId; icon: LucideIcon; label: string }> = [
   { id: 'asr', icon: Mic, label: 'ASR' },
 ];
 
-export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {const [open, setOpen] = useState(false);
+export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
+  const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('image');
 
   // ─── Store ───
@@ -295,12 +296,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {const [ope
           )}
 
           {activeTab === 'asr' && (
-            <TabPanel
-              icon={Mic}
-              label={'语音识别'}
-              enabled={asrEnabled}
-              onToggle={setASREnabled}
-            >
+            <TabPanel icon={Mic} label={'语音识别'} enabled={asrEnabled} onToggle={setASREnabled}>
               <GroupedSelect
                 groups={asrGroups}
                 selectedGroupId={asrProviderId}

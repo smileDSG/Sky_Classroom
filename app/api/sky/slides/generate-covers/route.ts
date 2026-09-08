@@ -42,7 +42,11 @@ export async function POST(req: NextRequest) {
 
     if (!result.success || !result.covers) {
       log.error(`Cover generation failed: ${result.error}`);
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, `封面生成失败: ${result.error || '请重试'}`);
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        `封面生成失败: ${result.error || '请重试'}`,
+      );
     }
 
     // Step 2: Render cover PPTX + convert to PNG (parallel)
@@ -77,9 +81,7 @@ export async function POST(req: NextRequest) {
       .filter((r) => (r as { pptxPath?: string }).pptxPath)
       .map((r) => (r as { pptxPath: string }).pptxPath);
 
-    const pngResults = pptxPaths.length > 0
-      ? await convertMultiplePptx(pptxPaths, coversDir)
-      : [];
+    const pngResults = pptxPaths.length > 0 ? await convertMultiplePptx(pptxPaths, coversDir) : [];
 
     // Map PNG results back to covers by matching basename
     const pngMap = new Map<string, string>();

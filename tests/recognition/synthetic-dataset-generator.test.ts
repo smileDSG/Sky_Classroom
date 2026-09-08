@@ -10,12 +10,8 @@ describe('synthetic handwriting recognition dataset', () => {
     expect(second).toEqual(first);
     expect(first).toHaveLength(50);
     expect(new Set(first.map((sample) => sample.id)).size).toBe(50);
-    expect(new Set(first.map((sample) => sample.split))).toEqual(
-      new Set(['tune', 'dev', 'test']),
-    );
-    expect(new Set(first.map((sample) => sample.subject))).toEqual(
-      new Set(['math', 'physics']),
-    );
+    expect(new Set(first.map((sample) => sample.split))).toEqual(new Set(['tune', 'dev', 'test']));
+    expect(new Set(first.map((sample) => sample.subject))).toEqual(new Set(['math', 'physics']));
     expect(first.some((sample) => sample.tags.includes('fraction'))).toBe(true);
     expect(first.some((sample) => sample.tags.includes('radical'))).toBe(true);
     expect(first.some((sample) => sample.tags.includes('superscript'))).toBe(true);

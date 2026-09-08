@@ -77,7 +77,12 @@ export function CelestialCanvas({
           stars.push({
             x: Math.random() * w,
             y: Math.random() * h,
-            size: layer === 0 ? Math.random() * 0.8 + 0.2 : layer === 1 ? Math.random() * 1.2 + 0.5 : Math.random() * 1.8 + 0.8,
+            size:
+              layer === 0
+                ? Math.random() * 0.8 + 0.2
+                : layer === 1
+                  ? Math.random() * 1.2 + 0.5
+                  : Math.random() * 1.8 + 0.8,
             opacity: Math.random() * 0.4 + 0.2,
             twinkleSpeed: Math.random() * 0.001 + 0.0003,
             twinkleOffset: Math.random() * Math.PI * 2,
@@ -89,7 +94,11 @@ export function CelestialCanvas({
     }
 
     function initNebulas() {
-      const colors = ['rgba(139, 92, 246, 0.08)', 'rgba(56, 189, 248, 0.06)', 'rgba(255, 140, 105, 0.05)'];
+      const colors = [
+        'rgba(139, 92, 246, 0.08)',
+        'rgba(56, 189, 248, 0.06)',
+        'rgba(255, 140, 105, 0.05)',
+      ];
       nebulasRef.current = colors.map((color) => ({
         x: Math.random() * w,
         y: Math.random() * h,
@@ -135,7 +144,14 @@ export function CelestialCanvas({
       for (const n of nebulasRef.current) {
         const dx = Math.cos(n.driftAngle + time * n.driftSpeed) * 30;
         const dy = Math.sin(n.driftAngle + time * n.driftSpeed * 0.7) * 20;
-        const gradient = ctx!.createRadialGradient(n.x + dx, n.y + dy, 0, n.x + dx, n.y + dy, n.radius);
+        const gradient = ctx!.createRadialGradient(
+          n.x + dx,
+          n.y + dy,
+          0,
+          n.x + dx,
+          n.y + dy,
+          n.radius,
+        );
         gradient.addColorStop(0, n.color);
         gradient.addColorStop(1, 'transparent');
         ctx!.fillStyle = gradient;

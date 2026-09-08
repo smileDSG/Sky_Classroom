@@ -150,7 +150,11 @@ const resourceMeta: Record<
     tone: string;
   }
 > = {
-  markdown_lecture: { label: '讲义', icon: BookOpen, tone: 'text-sky-700 bg-sky-50 border-sky-200' },
+  markdown_lecture: {
+    label: '讲义',
+    icon: BookOpen,
+    tone: 'text-sky-700 bg-sky-50 border-sky-200',
+  },
   ppt_outline: {
     label: 'PPT',
     icon: Presentation,
@@ -238,8 +242,19 @@ function StatusPill({ status }: { status: StageStatus | string }) {
           : 'border-slate-200 bg-slate-50 text-slate-500';
 
   return (
-    <span className={cn('inline-flex items-center rounded-md border px-2 py-0.5 text-[11px]', className)}>
-      {status === 'completed' ? '完成' : status === 'running' ? '生成中' : status === 'failed' ? '失败' : '等待'}
+    <span
+      className={cn(
+        'inline-flex items-center rounded-md border px-2 py-0.5 text-[11px]',
+        className,
+      )}
+    >
+      {status === 'completed'
+        ? '完成'
+        : status === 'running'
+          ? '生成中'
+          : status === 'failed'
+            ? '失败'
+            : '等待'}
     </span>
   );
 }
@@ -274,7 +289,9 @@ function ProfilePanel({ profile }: { profile: StudentProfile | null }) {
             key={label}
             className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-white/10 dark:bg-white/[0.04]"
           >
-            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{label}</div>
+            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              {label}
+            </div>
             <div className="mt-1 text-sm leading-5 text-slate-900 dark:text-slate-100">{value}</div>
           </div>
         ))}
@@ -283,13 +300,7 @@ function ProfilePanel({ profile }: { profile: StudentProfile | null }) {
   );
 }
 
-function AgentProgressPanel({
-  stages,
-  traces,
-}: {
-  stages: StageItem[];
-  traces: AgentTraceItem[];
-}) {
+function AgentProgressPanel({ stages, traces }: { stages: StageItem[]; traces: AgentTraceItem[] }) {
   const completed = stages.filter((stage) => stage.status === 'completed').length;
   const percent = Math.round((completed / stages.length) * 100);
 
@@ -301,7 +312,10 @@ function AgentProgressPanel({
           <span>{percent}%</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/[0.08]">
-          <div className="h-full rounded-full bg-sky-600 transition-all" style={{ width: `${percent}%` }} />
+          <div
+            className="h-full rounded-full bg-sky-600 transition-all"
+            style={{ width: `${percent}%` }}
+          />
         </div>
       </div>
 
@@ -312,7 +326,9 @@ function AgentProgressPanel({
             className="rounded-lg border border-slate-200 px-3 py-2 dark:border-white/10"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{stage.label}</span>
+              <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                {stage.label}
+              </span>
               <StatusPill status={stage.status} />
             </div>
             <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{stage.agent}</div>
@@ -328,10 +344,14 @@ function AgentProgressPanel({
               className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-white/10 dark:bg-white/[0.04]"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{trace.agent}</span>
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  {trace.agent}
+                </span>
                 <span className="text-[11px] text-slate-500">{trace.progress ?? 100}%</span>
               </div>
-              <div className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">{trace.output}</div>
+              <div className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                {trace.output}
+              </div>
             </div>
           ))}
         </div>
@@ -391,7 +411,12 @@ function ResourcesPanel({ resources }: { resources: GeneratedResource[] }) {
               className="flex min-h-[210px] flex-col rounded-lg border border-slate-200 p-3 dark:border-white/10"
             >
               <div className="flex items-start justify-between gap-3">
-                <span className={cn('inline-flex h-9 w-9 items-center justify-center rounded-lg border', meta.tone)}>
+                <span
+                  className={cn(
+                    'inline-flex h-9 w-9 items-center justify-center rounded-lg border',
+                    meta.tone,
+                  )}
+                >
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700">
@@ -447,17 +472,24 @@ function LearningPathPanel({ path }: { path: LearningPathNode[] }) {
           </div>
         ) : (
           path.map((node, index) => (
-            <div key={node.dayRange} className="relative rounded-lg border border-slate-200 p-3 dark:border-white/10">
+            <div
+              key={node.dayRange}
+              className="relative rounded-lg border border-slate-200 p-3 dark:border-white/10"
+            >
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-xs font-semibold text-white dark:bg-white dark:text-slate-950">
                   {index + 1}
                 </span>
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">{node.dayRange}</div>
-                  <div className="text-sm font-semibold text-slate-950 dark:text-white">{node.goal}</div>
+                  <div className="text-sm font-semibold text-slate-950 dark:text-white">
+                    {node.goal}
+                  </div>
                 </div>
               </div>
-              <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">{node.reason}</p>
+              <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                {node.reason}
+              </p>
             </div>
           ))
         )}
@@ -646,8 +678,17 @@ export function SoftwareCupPage() {
                 <Sparkles className="h-4 w-4" />
                 示例输入
               </Button>
-              <Button type="button" className="min-h-11 justify-center" onClick={runDemo} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              <Button
+                type="button"
+                className="min-h-11 justify-center"
+                onClick={runDemo}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
                 生成学习方案
               </Button>
             </div>

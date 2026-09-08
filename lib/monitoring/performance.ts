@@ -57,17 +57,12 @@ export class PerformanceMonitor {
     }
 
     if (!m.success) {
-      log.warn(
-        `[${m.source}] LLM call failed: model=${m.model}, duration=${m.durationMs}ms`,
-      );
+      log.warn(`[${m.source}] LLM call failed: model=${m.model}, duration=${m.durationMs}ms`);
     }
   }
 
   /** Time an async operation. */
-  async time<T>(
-    label: string,
-    fn: () => Promise<T>,
-  ): Promise<{ result: T; durationMs: number }> {
+  async time<T>(label: string, fn: () => Promise<T>): Promise<{ result: T; durationMs: number }> {
     const start = performance.now();
     const result = await fn();
     const durationMs = Math.round(performance.now() - start);

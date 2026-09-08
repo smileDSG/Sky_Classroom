@@ -19,11 +19,19 @@ export function InlineMath({ text, className }: InlineMathProps) {
     preprocessed = preprocessed.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
     // Convert common Unicode math symbols to LaTeX
     preprocessed = preprocessed
-      .replace(/≤/g, '\\leq').replace(/≥/g, '\\geq').replace(/≠/g, '\\neq')
-      .replace(/×/g, '\\times').replace(/÷/g, '\\div').replace(/±/g, '\\pm')
-      .replace(/∑/g, '\\sum').replace(/∫/g, '\\int').replace(/∞/g, '\\infty')
-      .replace(/∂/g, '\\partial').replace(/√/g, '\\sqrt')
-      .replace(/·/g, '\\cdot').replace(/…/g, '\\dots');
+      .replace(/≤/g, '\\leq')
+      .replace(/≥/g, '\\geq')
+      .replace(/≠/g, '\\neq')
+      .replace(/×/g, '\\times')
+      .replace(/÷/g, '\\div')
+      .replace(/±/g, '\\pm')
+      .replace(/∑/g, '\\sum')
+      .replace(/∫/g, '\\int')
+      .replace(/∞/g, '\\infty')
+      .replace(/∂/g, '\\partial')
+      .replace(/√/g, '\\sqrt')
+      .replace(/·/g, '\\cdot')
+      .replace(/…/g, '\\dots');
     // Fix \sqrt(...) → \sqrt{...}
     preprocessed = preprocessed.replace(/\\sqrt(\[[^\]]*\])?\(([^)]+)\)/g, '\\sqrt$1{$2}');
 
@@ -64,16 +72,18 @@ export function InlineMath({ text, className }: InlineMathProps) {
             />
           );
         } catch {
-          return <span key={i} className="text-red-500">{part.value}</span>;
+          return (
+            <span key={i} className="text-red-500">
+              {part.value}
+            </span>
+          );
         }
       })}
     </span>
   );
 }
 
-function parseInlineMath(
-  text: string,
-): { type: 'text' | 'math'; value: string }[] {
+function parseInlineMath(text: string): { type: 'text' | 'math'; value: string }[] {
   const result: { type: 'text' | 'math'; value: string }[] = [];
   const regex = /\$([^$]+)\$/g;
   let lastIndex = 0;

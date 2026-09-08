@@ -46,7 +46,8 @@ const ROLE_NAMES: Record<string, string> = {
   student: '学生',
 };
 
-export function AgentRevealModal({ agents, open, onClose, onAllRevealed }: AgentRevealModalProps) {const [revealedCount, setRevealedCount] = useState(0);
+export function AgentRevealModal({ agents, open, onClose, onAllRevealed }: AgentRevealModalProps) {
+  const [revealedCount, setRevealedCount] = useState(0);
   const [flipsComplete, setFlipsComplete] = useState(false);
   const allRevealedFiredRef = useRef(false);
   const onAllRevealedRef = useRef(onAllRevealed);

@@ -16,9 +16,7 @@ describe('createJsonImporter', () => {
   });
 
   it('parses JSON array with Chinese columns', async () => {
-    const json = JSON.stringify([
-      { 学科: '数学', 题目: '1+1=?', 答案: '2', 难度: '简单' },
-    ]);
+    const json = JSON.stringify([{ 学科: '数学', 题目: '1+1=?', 答案: '2', 难度: '简单' }]);
     const result = await importer.parse(json);
     expect(result.entries).toHaveLength(1);
     expect(result.entries[0].subject).toBe('数学');

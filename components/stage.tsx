@@ -94,9 +94,8 @@ export function Stage({
       if (startedAt) {
         const activeDurationSeconds = Math.max(
           0,
-          Math.round(
-            (dwellAccumulatedSecondsRef.current + (Date.now() - startedAt) / 1000) * 10,
-          ) / 10,
+          Math.round((dwellAccumulatedSecondsRef.current + (Date.now() - startedAt) / 1000) * 10) /
+            10,
         );
         if (activeDurationSeconds > 0) {
           void recordLearnerBehaviorEvent({
@@ -319,43 +318,46 @@ export function Stage({
    * Unified session cleanup — called by both roundtable stop button and chat area end button.
    * Handles: engine transition, flash, roundtable state clearing.
    */
-  const doSessionCleanup = useCallback((options?: { preserveQaBubble?: boolean }) => {
-    const activeType = chatSessionType;
+  const doSessionCleanup = useCallback(
+    (options?: { preserveQaBubble?: boolean }) => {
+      const activeType = chatSessionType;
 
-    // Engine cleanup — guard to avoid double flash from onDiscussionEnd
-    manualStopRef.current = true;
-    engineRef.current?.handleEndDiscussion();
-    manualStopRef.current = false;
+      // Engine cleanup — guard to avoid double flash from onDiscussionEnd
+      manualStopRef.current = true;
+      engineRef.current?.handleEndDiscussion();
+      manualStopRef.current = false;
 
-    // Show end flash with correct session type
-    if (activeType === 'qa' || activeType === 'discussion') {
-      setEndFlashSessionType(activeType);
-      setShowEndFlash(true);
-      setTimeout(() => setShowEndFlash(false), 1800);
-    }
+      // Show end flash with correct session type
+      if (activeType === 'qa' || activeType === 'discussion') {
+        setEndFlashSessionType(activeType);
+        setShowEndFlash(true);
+        setTimeout(() => setShowEndFlash(false), 1800);
+      }
 
-    if (activeType === 'qa' && options?.preserveQaBubble) {
-      setChatIsStreaming(false);
-      setChatSessionType(null);
-      setThinkingState(null);
-      setIsCueUser(false);
-      setIsTopicPending(false);
-      setIsDiscussionPaused(false);
-      setSpeechProgress(null);
-      liveCleanupTimerRef.current = setTimeout(() => {
-        liveCleanupTimerRef.current = null;
-        setLiveSpeech(null);
-        setAudioSpeech(null);
-        setSpeakingAgentId(null);
-      }, 6000);
-      return;
-    }
+      if (activeType === 'qa' && options?.preserveQaBubble) {
+        setChatIsStreaming(false);
+        setChatSessionType(null);
+        setThinkingState(null);
+        setIsCueUser(false);
+        setIsTopicPending(false);
+        setIsDiscussionPaused(false);
+        setSpeechProgress(null);
+        liveCleanupTimerRef.current = setTimeout(() => {
+          liveCleanupTimerRef.current = null;
+          setLiveSpeech(null);
+          setAudioSpeech(null);
+          setSpeakingAgentId(null);
+        }, 6000);
+        return;
+      }
 
-    // Stop any in-flight discussion TTS audio
-    discussionTTS.cleanup();
+      // Stop any in-flight discussion TTS audio
+      discussionTTS.cleanup();
 
-    resetLiveState();
-  }, [chatSessionType, resetLiveState, discussionTTS]);
+      resetLiveState();
+    },
+    [chatSessionType, resetLiveState, discussionTTS],
+  );
 
   // Shared stop-discussion handler (used by both Roundtable and Canvas toolbar)
   const handleStopDiscussion = useCallback(async () => {

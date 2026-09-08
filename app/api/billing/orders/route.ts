@@ -85,7 +85,16 @@ export async function GET() {
     const dao = await createBillingDAO();
     const orders = await dao.getByUserId(payload.sub);
 
-    return apiSuccess({ orders: orders.map((o) => ({ id: o.id, planType: o.planType, amount: o.amount, status: o.status, createdAt: o.createdAt, paymentMethod: o.paymentMethod })) });
+    return apiSuccess({
+      orders: orders.map((o) => ({
+        id: o.id,
+        planType: o.planType,
+        amount: o.amount,
+        status: o.status,
+        createdAt: o.createdAt,
+        paymentMethod: o.paymentMethod,
+      })),
+    });
   } catch (err) {
     return apiError('INTERNAL_ERROR', 500, 'Failed to fetch orders');
   }

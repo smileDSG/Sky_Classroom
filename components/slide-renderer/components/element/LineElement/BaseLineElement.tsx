@@ -84,9 +84,7 @@ export function BaseLineElement({ elementInfo, animate }: BaseLineElementProps) 
   }, [animate]);
 
   return (
-    <div
-      className="base-element-line relative w-full h-full"
-    >
+    <div className="base-element-line relative w-full h-full">
       <div
         className="element-content relative w-full h-full"
         style={{ filter: shadowStyle ? `drop-shadow(${shadowStyle})` : '' }}

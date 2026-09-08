@@ -43,13 +43,8 @@ export function MobileScriptSheet({
 
         <div className="space-y-2">
           {transcript.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-2xl border border-white/10 bg-[#0d1728] p-3"
-            >
-              {item.role && (
-                <p className="mb-1 text-xs font-medium text-sky-400">{item.role}</p>
-              )}
+            <div key={item.id} className="rounded-2xl border border-white/10 bg-[#0d1728] p-3">
+              {item.role && <p className="mb-1 text-xs font-medium text-sky-400">{item.role}</p>}
               <p className="text-sm leading-relaxed text-slate-200">{item.text}</p>
             </div>
           ))}

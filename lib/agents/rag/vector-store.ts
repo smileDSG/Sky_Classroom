@@ -166,10 +166,7 @@ export class VectorStore {
 
 // ── 工具函数 ───────────────────────────────────────────────────────
 
-function cosineSimilarity(
-  a: Map<string, number>,
-  b: Map<string, number>,
-): number {
+function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): number {
   let dotProduct = 0;
   let normA = 0;
   let normB = 0;

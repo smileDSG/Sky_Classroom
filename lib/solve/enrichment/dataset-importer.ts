@@ -71,7 +71,11 @@ function parseJSON(text: string): Record<string, unknown>[] {
         .split('\n')
         .filter((l) => l.trim())
         .map((l) => {
-          try { return JSON.parse(l); } catch { return null; }
+          try {
+            return JSON.parse(l);
+          } catch {
+            return null;
+          }
         })
         .filter(Boolean) as Record<string, unknown>[];
     }
@@ -99,10 +103,7 @@ function parseJSON(text: string): Record<string, unknown>[] {
 
 // ── Field normalization ──────────────────────────────────────────────
 
-function findField(
-  row: Record<string, unknown>,
-  candidates: string[],
-): unknown {
+function findField(row: Record<string, unknown>, candidates: string[]): unknown {
   for (const field of candidates) {
     // Exact match
     if (field in row && row[field] != null && row[field] !== '') {
@@ -121,7 +122,7 @@ function findField(
 function normalizeSubject(raw: unknown, source: DatasetSource): SubjectId {
   if (typeof raw !== 'string') {
     // Use source default
-    return source.subjects[0] as SubjectId ?? 'math';
+    return (source.subjects[0] as SubjectId) ?? 'math';
   }
   const s = raw.toLowerCase();
   if (s.includes('math') || s.includes('数学')) return 'math';
@@ -133,7 +134,7 @@ function normalizeSubject(raw: unknown, source: DatasetSource): SubjectId {
   if (s.includes('history') || s.includes('历史')) return 'history';
   if (s.includes('geography') || s.includes('地理')) return 'geography';
   if (s.includes('politics') || s.includes('政治')) return 'politics';
-  return source.subjects[0] as SubjectId ?? 'math';
+  return (source.subjects[0] as SubjectId) ?? 'math';
 }
 
 function normalizeGrade(raw: unknown, source: DatasetSource): GradeLevel {
@@ -149,16 +150,25 @@ function normalizeGrade(raw: unknown, source: DatasetSource): GradeLevel {
     if (raw <= 9) return 'junior'; // Grades 7-9
     if (raw <= 12) return 'senior'; // Grades 10-12
   }
-  return source.gradeLevels[0] as GradeLevel ?? 'senior';
+  return (source.gradeLevels[0] as GradeLevel) ?? 'senior';
 }
 
 function normalizeType(raw: unknown): ExtractedQuestion['questionType'] {
   if (typeof raw !== 'string') return 'solve';
   const s = raw.toLowerCase();
-  if (s.includes('选择') || s.includes('choice') || s.includes('单选') || s.includes('多选')) return 'choice';
+  if (s.includes('选择') || s.includes('choice') || s.includes('单选') || s.includes('多选'))
+    return 'choice';
   if (s.includes('填空') || s.includes('fill')) return 'fill';
-  if (s.includes('判断') || s.includes('judge') || s.includes('true') || s.includes('false')) return 'judge';
-  if (s.includes('解答') || s.includes('solve') || s.includes('证明') || s.includes('计算') || s.includes('简答')) return 'solve';
+  if (s.includes('判断') || s.includes('judge') || s.includes('true') || s.includes('false'))
+    return 'judge';
+  if (
+    s.includes('解答') ||
+    s.includes('solve') ||
+    s.includes('证明') ||
+    s.includes('计算') ||
+    s.includes('简答')
+  )
+    return 'solve';
   return 'solve';
 }
 
@@ -193,7 +203,7 @@ export async function importDataset(
       signal: AbortSignal.timeout(30_000),
       headers: {
         'User-Agent': 'SkyClassroom-EnrichBot/1.0 (educational research)',
-        'Accept': 'application/json,text/csv,text/plain,*/*',
+        Accept: 'application/json,text/csv,text/plain,*/*',
       },
     });
 
@@ -269,11 +279,7 @@ export interface ImportAllDatasetsOptions {
 export async function importAllDatasets(
   opts: ImportAllDatasetsOptions = {},
 ): Promise<ExtractedQuestion[]> {
-  const {
-    datasets = DATASET_SOURCES,
-    maxQuestions = 200,
-    subjects,
-  } = opts;
+  const { datasets = DATASET_SOURCES, maxQuestions = 200, subjects } = opts;
 
   // Filter by subject if requested
   const filtered = subjects
@@ -299,9 +305,13 @@ export async function importAllDatasets(
       if (allQuestions.length >= maxQuestions) break;
     }
 
-    log.info(`[Dataset] ${source.id}: ${imported.length} imported → ${allQuestions.length} total (after dedup)`);
+    log.info(
+      `[Dataset] ${source.id}: ${imported.length} imported → ${allQuestions.length} total (after dedup)`,
+    );
   }
 
-  log.info(`[Dataset] Total: ${allQuestions.length} unique questions from ${filtered.length} datasets`);
+  log.info(
+    `[Dataset] Total: ${allQuestions.length} unique questions from ${filtered.length} datasets`,
+  );
   return allQuestions;
 }

@@ -3,7 +3,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { planMistakeReview, buildTeachingTopicFromReview } from '@/lib/teaching/mistake-review-planner';
+import {
+  planMistakeReview,
+  buildTeachingTopicFromReview,
+} from '@/lib/teaching/mistake-review-planner';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 
 function makeEntry(overrides?: Partial<MistakeBookEntry>): MistakeBookEntry {
@@ -59,9 +62,7 @@ describe('planMistakeReview', () => {
   });
 
   it('collects prerequisites for weak points', () => {
-    const mistakes = [
-      makeEntry({ knowledgePoints: ['二次函数'] }),
-    ];
+    const mistakes = [makeEntry({ knowledgePoints: ['二次函数'] })];
     const plan = planMistakeReview(mistakes);
     // 二次函数 should have prerequisites like 一元二次方程
     expect(plan.prerequisiteChain.length).toBeGreaterThanOrEqual(0);

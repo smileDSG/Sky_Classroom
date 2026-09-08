@@ -241,12 +241,8 @@ const behaviorPayloadSchemas = {
     .strict(),
   'shadow-decision-recorded': z
     .object({
-      baselineTargetTool: z
-        .enum(['solve', 'slides', 'quiz', 'memory', 'teaching'])
-        .nullable(),
-      newTargetTool: z
-        .enum(['solve', 'slides', 'quiz', 'memory', 'teaching'])
-        .nullable(),
+      baselineTargetTool: z.enum(['solve', 'slides', 'quiz', 'memory', 'teaching']).nullable(),
+      newTargetTool: z.enum(['solve', 'slides', 'quiz', 'memory', 'teaching']).nullable(),
       baselineHref: z.string().min(1).nullable(),
       newHref: z.string().min(1).nullable(),
       changed: z.boolean(),

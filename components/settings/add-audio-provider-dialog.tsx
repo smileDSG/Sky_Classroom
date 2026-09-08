@@ -26,7 +26,8 @@ export function AddAudioProviderDialog({
   onOpenChange,
   onAdd,
   type,
-}: AddAudioProviderDialogProps) {const [name, setName] = useState('');
+}: AddAudioProviderDialogProps) {
+  const [name, setName] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
   const [defaultModel, setDefaultModel] = useState('');
   const [requiresApiKey, setRequiresApiKey] = useState(false);
@@ -66,9 +67,7 @@ export function AddAudioProviderDialog({
         <div className="space-y-4">
           <div className="pb-3 border-b">
             <h2 className="text-lg font-semibold">{title}</h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              {'添加兼容 OpenAI 协议的音频服务'}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{'添加兼容 OpenAI 协议的音频服务'}</p>
           </div>
 
           <div className="space-y-2">
@@ -99,7 +98,9 @@ export function AddAudioProviderDialog({
                 value={defaultModel}
                 onChange={(e) => setDefaultModel(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">{'API 请求中的模型名（如 kokoro、tts-1）'}</p>
+              <p className="text-xs text-muted-foreground">
+                {'API 请求中的模型名（如 kokoro、tts-1）'}
+              </p>
             </div>
           )}
 

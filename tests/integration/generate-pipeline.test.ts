@@ -92,11 +92,9 @@ const VALID_ACTIONS_JSON = JSON.stringify([
 describe('generate pipeline: content', () => {
   test('generates slide content from outline', async () => {
     const { aiCall, capturedSystem, capturedUser } = makeAiCall(VALID_SLIDE_JSON);
-    const content = await generateSceneContent(
-      baseSlideOutline({ type: 'slide' }),
-      aiCall,
-      { languageDirective: 'Use Chinese.' },
-    );
+    const content = await generateSceneContent(baseSlideOutline({ type: 'slide' }), aiCall, {
+      languageDirective: 'Use Chinese.',
+    });
 
     expect(content).not.toBeNull();
     const slideContent = content as GeneratedSlideContent;
@@ -128,11 +126,7 @@ describe('generate pipeline: content', () => {
 
   test('returns null for invalid AI response', async () => {
     const { aiCall } = makeAiCall('not valid json {{');
-    const content = await generateSceneContent(
-      baseSlideOutline(),
-      aiCall,
-      {},
-    );
+    const content = await generateSceneContent(baseSlideOutline(), aiCall, {});
     expect(content).toBeNull();
   });
 

@@ -10,8 +10,16 @@ function makeProfile(overrides?: Partial<StudentProfile>): StudentProfile {
   return {
     userId: 'test-user',
     masteryBySubject: {
-      math: 60, physics: 40, chemistry: 0, biology: 0,
-      chinese: 0, english: 0, history: 0, geography: 0, politics: 0, unknown: 0,
+      math: 60,
+      physics: 40,
+      chemistry: 0,
+      biology: 0,
+      chinese: 0,
+      english: 0,
+      history: 0,
+      geography: 0,
+      politics: 0,
+      unknown: 0,
     },
     masteryByKnowledge: {},
     weakPoints: [],
@@ -42,7 +50,7 @@ describe('extractPrerequisites', () => {
 
   it('filters out mastered prerequisites (mastery > 80)', () => {
     const profile = makeProfile({
-      masteryByKnowledge: { '函数概念': 90 },
+      masteryByKnowledge: { 函数概念: 90 },
     });
     const result = extractPrerequisites('二次函数', profile);
     // 函数概念 is mastered, should be filtered out
@@ -68,9 +76,30 @@ describe('extractPrerequisites', () => {
 
 describe('analyzeDiagnosticResult', () => {
   const questions = [
-    { id: 1, question: 'Q1', options: ['A', 'B'], answer: 0, explanation: '', knowledgePoint: 'KP1' },
-    { id: 2, question: 'Q2', options: ['A', 'B'], answer: 1, explanation: '', knowledgePoint: 'KP2' },
-    { id: 3, question: 'Q3', options: ['A', 'B'], answer: 0, explanation: '', knowledgePoint: 'KP3' },
+    {
+      id: 1,
+      question: 'Q1',
+      options: ['A', 'B'],
+      answer: 0,
+      explanation: '',
+      knowledgePoint: 'KP1',
+    },
+    {
+      id: 2,
+      question: 'Q2',
+      options: ['A', 'B'],
+      answer: 1,
+      explanation: '',
+      knowledgePoint: 'KP2',
+    },
+    {
+      id: 3,
+      question: 'Q3',
+      options: ['A', 'B'],
+      answer: 0,
+      explanation: '',
+      knowledgePoint: 'KP3',
+    },
   ];
 
   it('calculates 100% accuracy', () => {

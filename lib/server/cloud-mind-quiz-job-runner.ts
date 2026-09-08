@@ -13,9 +13,8 @@ const globalForRunningJobs = globalThis as unknown as {
   _cloudMindQuizRunningJobs: Map<string, Promise<void>> | undefined;
 };
 
-const runningJobs: Map<string, Promise<void>> =
-  globalForRunningJobs._cloudMindQuizRunningJobs ??
-  (globalForRunningJobs._cloudMindQuizRunningJobs = new Map());
+const runningJobs: Map<string, Promise<void>> = globalForRunningJobs._cloudMindQuizRunningJobs ??
+(globalForRunningJobs._cloudMindQuizRunningJobs = new Map());
 
 export function runCloudMindQuizJob(
   jobId: string,

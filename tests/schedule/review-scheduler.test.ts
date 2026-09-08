@@ -117,10 +117,7 @@ describe('getDaysUntilReview', () => {
 
 describe('getMasteryProgress', () => {
   it('full mastery → 100%', () => {
-    const items = [
-      makeEntry({ id: 'a', reviewed: true }),
-      makeEntry({ id: 'b', reviewed: true }),
-    ];
+    const items = [makeEntry({ id: 'a', reviewed: true }), makeEntry({ id: 'b', reviewed: true })];
     const progress = getMasteryProgress(items);
     expect(progress.percentComplete).toBe(100);
     expect(progress.masteredCount).toBe(2);

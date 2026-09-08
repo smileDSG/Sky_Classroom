@@ -10,9 +10,7 @@ export class HomePage {
     this.page = page;
     this.logo = page.locator('img[alt="天空课堂"], img[alt="OpenMAIC"]').first();
     this.textarea = page.locator('textarea');
-    this.enterButton = page
-      .getByRole('button', { name: /enter|开始讲解|进入课堂/i })
-      .first();
+    this.enterButton = page.getByRole('button', { name: /enter|开始讲解|进入课堂/i }).first();
   }
 
   async goto() {

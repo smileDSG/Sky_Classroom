@@ -123,7 +123,7 @@ export function AgentSelector({
               'dark:from-slate-800/50 dark:to-slate-700/50',
               'border border-slate-200/60 dark:border-slate-700/60',
               'hover:border-sky-400/40 dark:hover:border-sky-500/40',
-              'transition-all duration-200 group'
+              'transition-all duration-200 group',
             )}
           >
             {/* 老师头像 */}
@@ -171,9 +171,7 @@ export function AgentSelector({
                 </div>
               ))}
               {selectedStudents.length > 3 && (
-                <div
-                  className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-medium text-slate-600 dark:text-slate-400 border-2 border-white dark:border-slate-800"
-                >
+                <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-medium text-slate-600 dark:text-slate-400 border-2 border-white dark:border-slate-800">
                   +{selectedStudents.length - 3}
                 </div>
               )}
@@ -190,9 +188,7 @@ export function AgentSelector({
                   {selectedStudents.length} 位学生
                 </span>
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-500">
-                点击配置课堂角色
-              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-500">点击配置课堂角色</div>
             </div>
 
             {/* 展开箭头 */}
@@ -207,7 +203,7 @@ export function AgentSelector({
               'w-full rounded-2xl overflow-hidden',
               'bg-white/90 dark:bg-slate-800/90',
               'border border-slate-200/80 dark:border-slate-700/80',
-              'shadow-xl shadow-slate-200/50 dark:shadow-slate-900/30'
+              'shadow-xl shadow-slate-200/50 dark:shadow-slate-900/30',
             )}
           >
             {/* 头部 */}
@@ -216,9 +212,7 @@ export function AgentSelector({
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-violet-500 flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-medium text-slate-800 dark:text-slate-200">
-                  配置课堂角色
-                </span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">配置课堂角色</span>
               </div>
               <button
                 onClick={() => setIsExpanded(false)}
@@ -248,7 +242,7 @@ export function AgentSelector({
                         'border-2',
                         selectedTeacherId === teacher.id
                           ? 'border-sky-400 bg-sky-50 dark:bg-sky-900/20'
-                          : 'border-transparent bg-slate-50 dark:bg-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                          : 'border-transparent bg-slate-50 dark:bg-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-700/50',
                       )}
                     >
                       <div
@@ -301,7 +295,7 @@ export function AgentSelector({
                           'border-2 relative',
                           isSelected
                             ? 'border-violet-400 bg-violet-50 dark:bg-violet-900/20'
-                            : 'border-transparent bg-slate-50 dark:bg-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                            : 'border-transparent bg-slate-50 dark:bg-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-700/50',
                         )}
                       >
                         <div
@@ -354,9 +348,7 @@ export function AgentSelector({
               {/* 提示 */}
               <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-sm">
                 <Bot className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>
-                  选择不同性格的同学让课堂更有趣！每个角色都有独特的表情包风格。
-                </span>
+                <span>选择不同性格的同学让课堂更有趣！每个角色都有独特的表情包风格。</span>
               </div>
             </div>
           </motion.div>

@@ -108,14 +108,34 @@ export class MockApi {
       route.fulfill({
         status: 202,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: true, data: { jobId, status: 'running', step: 'generating_outlines', progress: 1, message: '生成中' } }),
+        body: JSON.stringify({
+          success: true,
+          data: {
+            jobId,
+            status: 'running',
+            step: 'generating_outlines',
+            progress: 1,
+            message: '生成中',
+          },
+        }),
       }),
     );
     await this.page.route('**/api/generate-classroom/*', (route) =>
       route.fulfill({
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: true, data: { jobId, status: 'succeeded', step: 'done', progress: 100, message: '完成', done: true, result: { classroomId, url: `/classroom/${classroomId}`, scenesCount: scenes.length } } }),
+        body: JSON.stringify({
+          success: true,
+          data: {
+            jobId,
+            status: 'succeeded',
+            step: 'done',
+            progress: 100,
+            message: '完成',
+            done: true,
+            result: { classroomId, url: `/classroom/${classroomId}`, scenesCount: scenes.length },
+          },
+        }),
       }),
     );
     await this.page.route('**/api/classroom?id=*', (route) =>

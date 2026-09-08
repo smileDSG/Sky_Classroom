@@ -218,29 +218,32 @@ describe('MySQLStorageProvider insert', () => {
       }
       if (normalized === 'SELECT * FROM storage_entries WHERE table_name = ?') {
         expect(params).toEqual(['mistakes']);
-        return [[
-          {
-            id: 'owned',
-            data: JSON.stringify({
-              userId: 'user-a',
-              problemText: 'owned problem',
-              userAnswer: 'x',
-              correctAnswer: 'y',
-            }),
-            created_at: 1000,
-            updated_at: 1000,
-          },
-          {
-            id: 'orphan',
-            data: JSON.stringify({
-              problemText: 'orphan problem',
-              userAnswer: 'x',
-              correctAnswer: 'y',
-            }),
-            created_at: 1000,
-            updated_at: 1000,
-          },
-        ], []];
+        return [
+          [
+            {
+              id: 'owned',
+              data: JSON.stringify({
+                userId: 'user-a',
+                problemText: 'owned problem',
+                userAnswer: 'x',
+                correctAnswer: 'y',
+              }),
+              created_at: 1000,
+              updated_at: 1000,
+            },
+            {
+              id: 'orphan',
+              data: JSON.stringify({
+                problemText: 'orphan problem',
+                userAnswer: 'x',
+                correctAnswer: 'y',
+              }),
+              created_at: 1000,
+              updated_at: 1000,
+            },
+          ],
+          [],
+        ];
       }
       if (normalized.startsWith('INSERT IGNORE INTO mistakes')) return [{ affectedRows: 1 }, []];
       throw new Error(`Unexpected SQL in test boundary: ${normalized}`);
@@ -268,17 +271,22 @@ describe('MySQLStorageProvider insert', () => {
         return [[{ cnt: normalized.endsWith('FROM mistakes') ? 0 : 1 }], []];
       }
       if (normalized === 'SELECT * FROM storage_entries WHERE table_name = ?') {
-        return [[{
-          id: 'owned',
-          data: JSON.stringify({
-            userId: 'user-a',
-            problemText: 'problem',
-            userAnswer: 'x',
-            correctAnswer: 'y',
-          }),
-          created_at: 1000,
-          updated_at: 1000,
-        }], []];
+        return [
+          [
+            {
+              id: 'owned',
+              data: JSON.stringify({
+                userId: 'user-a',
+                problemText: 'problem',
+                userAnswer: 'x',
+                correctAnswer: 'y',
+              }),
+              created_at: 1000,
+              updated_at: 1000,
+            },
+          ],
+          [],
+        ];
       }
       if (normalized.startsWith('INSERT IGNORE INTO mistakes')) {
         throw new Error('migration write failed');

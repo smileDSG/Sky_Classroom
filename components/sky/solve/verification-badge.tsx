@@ -13,10 +13,10 @@ export interface VerificationData {
 }
 
 export type VerificationStatus =
-  | 'verified'      // isCorrect=true, high confidence
-  | 'corrected'     // was false, corrected to true
-  | 'uncertain'     // low confidence or no verification result
-  | 'failed';       // isCorrect=false, not corrected
+  | 'verified' // isCorrect=true, high confidence
+  | 'corrected' // was false, corrected to true
+  | 'uncertain' // low confidence or no verification result
+  | 'failed'; // isCorrect=false, not corrected
 
 // ── Component ────────────────────────────────────────────────────────
 
@@ -59,17 +59,17 @@ export function VerificationBadge({ status, data, className }: VerificationBadge
   const Icon = config.icon;
 
   return (
-    <div className={cn(
-      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
-      config.bg,
-      className,
-    )}>
+    <div
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
+        config.bg,
+        className,
+      )}
+    >
       <Icon className={cn('h-3.5 w-3.5', config.color)} />
       <span className={config.color}>{config.label}</span>
       {data && (
-        <span className="text-muted-foreground ml-1">
-          ({Math.round(data.confidence * 100)}%)
-        </span>
+        <span className="text-muted-foreground ml-1">({Math.round(data.confidence * 100)}%)</span>
       )}
     </div>
   );

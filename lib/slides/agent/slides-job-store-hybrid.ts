@@ -19,7 +19,13 @@ import {
 } from './slides-job-store';
 
 // Re-export for convenience
-export { isValidSlidesJobId, type SlidesJob, type SlidesJobStatus, type PipelineStage, type QAReport };
+export {
+  isValidSlidesJobId,
+  type SlidesJob,
+  type SlidesJobStatus,
+  type PipelineStage,
+  type QAReport,
+};
 
 // ── In-Memory Cache ──────────────────────────────────────────────────
 
@@ -236,10 +242,7 @@ export async function markSlidesJobSucceededHybrid(
   });
 }
 
-export async function markSlidesJobFailedHybrid(
-  jobId: string,
-  error: string,
-): Promise<SlidesJob> {
+export async function markSlidesJobFailedHybrid(jobId: string, error: string): Promise<SlidesJob> {
   return updateSlidesJobHybrid(jobId, {
     status: 'failed',
     stage: 'failed',

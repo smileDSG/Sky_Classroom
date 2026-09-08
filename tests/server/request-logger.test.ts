@@ -19,7 +19,8 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 // Import after mock
-const { createRequestLogInfo, logRequestEnd, requestLogger } = await import('@/lib/server/middleware/request-logger');
+const { createRequestLogInfo, logRequestEnd, requestLogger } =
+  await import('@/lib/server/middleware/request-logger');
 
 describe('createRequestLogInfo', () => {
   test('extracts method, path, query from Request', () => {

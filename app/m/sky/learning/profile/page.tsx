@@ -64,14 +64,20 @@ function clampPercent(value: number | undefined) {
   return Math.max(0, Math.min(100, Math.round(value ?? 0)));
 }
 
-function getAccuracy(profile?: WorkshopSnapshot['profile'], stats?: WorkshopSnapshot['learningStats']) {
+function getAccuracy(
+  profile?: WorkshopSnapshot['profile'],
+  stats?: WorkshopSnapshot['learningStats'],
+) {
   const total = profile?.totalQuestions ?? stats?.problemsAttempted ?? 0;
   const correct = profile?.totalCorrect ?? stats?.problemsCorrect ?? 0;
   if (!total) return 0;
   return clampPercent((correct / total) * 100);
 }
 
-function getMastery(profile?: WorkshopSnapshot['profile'], stats?: WorkshopSnapshot['learningStats']) {
+function getMastery(
+  profile?: WorkshopSnapshot['profile'],
+  stats?: WorkshopSnapshot['learningStats'],
+) {
   const statMastery = stats?.masteryPercent;
   if (typeof statMastery === 'number' && statMastery > 0) return clampPercent(statMastery);
   const values = Object.values(profile?.masteryByKnowledge ?? {});
@@ -127,7 +133,8 @@ function getPreferenceLines(snapshot: WorkshopSnapshot | null, accuracy: number)
   return [
     {
       label: weakCount > 0 ? '先补薄弱点' : '先做入门练习',
-      detail: weakCount > 0 ? `当前优先处理 ${weakCount} 个不熟悉的知识点` : '完成几道题后系统会更了解你',
+      detail:
+        weakCount > 0 ? `当前优先处理 ${weakCount} 个不熟悉的知识点` : '完成几道题后系统会更了解你',
     },
     {
       label: accuracy >= 75 ? '挑战进阶题' : '步骤拆解优先',
@@ -247,7 +254,9 @@ export default function MobileLearningProfilePage() {
               </div>
               <div className="grid size-[78px] shrink-0 place-items-center rounded-[24px] border border-slate-200 bg-white/88 shadow-[0_12px_24px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)]">
                 <div className="text-center">
-                  <div className="text-[22px] font-black leading-none text-slate-950">{mastery}%</div>
+                  <div className="text-[22px] font-black leading-none text-slate-950">
+                    {mastery}%
+                  </div>
                   <div className="mt-1 text-[11px] font-bold text-slate-500">掌握情况</div>
                 </div>
               </div>
@@ -255,7 +264,11 @@ export default function MobileLearningProfilePage() {
 
             <div className="mt-4 grid grid-cols-3 gap-2">
               <HeroMetric icon={Gauge} label="正确率" value={`${accuracy}%`} />
-              <HeroMetric icon={Clock3} label="今日学习" value={`${stats?.todayStudyMinutes ?? 0}m`} />
+              <HeroMetric
+                icon={Clock3}
+                label="今日学习"
+                value={`${stats?.todayStudyMinutes ?? 0}m`}
+              />
               <HeroMetric icon={Flame} label="连续学习" value={`${stats?.streakDays ?? 0}天`} />
             </div>
           </div>
@@ -281,7 +294,10 @@ export default function MobileLearningProfilePage() {
           </div>
         </section>
 
-        <section aria-label="薄弱点" className="rounded-[20px] border border-slate-200 bg-white/88 p-3.5 shadow-[0_12px_28px_rgba(15,23,42,0.07)]">
+        <section
+          aria-label="薄弱点"
+          className="rounded-[20px] border border-slate-200 bg-white/88 p-3.5 shadow-[0_12px_28px_rgba(15,23,42,0.07)]"
+        >
           <div className="mb-2.5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[15px] font-extrabold text-slate-950">
               <Target className="size-4 text-amber-600" />
@@ -367,7 +383,15 @@ export default function MobileLearningProfilePage() {
   );
 }
 
-function HeroMetric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
+function HeroMetric({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="min-h-[78px] rounded-[17px] border border-slate-200 bg-white/82 px-2 py-2.5 text-center shadow-[0_8px_18px_rgba(15,23,42,0.07),inset_0_1px_0_rgba(255,255,255,0.9)]">
       <Icon className="mx-auto size-4 text-cyan-600" />

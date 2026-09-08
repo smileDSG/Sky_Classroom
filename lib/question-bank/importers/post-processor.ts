@@ -210,7 +210,9 @@ export function postProcessEntries(entries: QuestionBankInsert[]): QuestionBankI
     if (entry.content) {
       const extracted = extractOptionsFromContent(entry.content);
       if (extracted.options.length >= 2) {
-        log.info(`Extracted ${extracted.options.length} options from content for: ${entry.content.slice(0, 40)}...`);
+        log.info(
+          `Extracted ${extracted.options.length} options from content for: ${entry.content.slice(0, 40)}...`,
+        );
         return {
           ...entry,
           content: extracted.content,

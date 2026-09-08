@@ -39,30 +39,21 @@ export async function POST(
     // Get job data
     const job = await readTeachingJob(jobId);
     if (!job) {
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
     if (job.userId !== userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     if (!job.plan || !job.sections) {
-      return NextResponse.json(
-        { error: 'Job not completed yet' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Job not completed yet' }, { status: 400 });
     }
 
     const body: ChatRequest = await request.json();
     const { message, sectionId, history = [] } = body;
 
     if (!message || message.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Message is required' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
     // Find the specific section if sectionId provided
@@ -70,9 +61,7 @@ export async function POST(
     if (sectionId) {
       const sectionData = job.sections.find((s) => s.section.id === sectionId);
       if (sectionData) {
-        const chunksText = sectionData.chunks
-          .map((c) => c.content)
-          .join('\n\n');
+        const chunksText = sectionData.chunks.map((c) => c.content).join('\n\n');
         sectionContext = `
 ## 当前章节内容
 标题：${sectionData.section.title}
@@ -179,9 +168,6 @@ ${message}
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Teaching chat failed:', error);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

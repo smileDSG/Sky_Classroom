@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import { EBBINGHAUS_INTERVALS } from '@/lib/storage/dao/mistakes';
+import { MathRenderer } from '@/components/sky/solve/math-renderer';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -83,22 +84,30 @@ export function ReviewCard({
           {/* Problem */}
           <div className="rounded-xl border border-slate-200/60 dark:border-slate-700/40 bg-white/80 dark:bg-slate-800/60 p-5">
             <div className="flex items-center gap-2 mb-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-500/15 text-xs font-bold text-violet-500">Q</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-500/15 text-xs font-bold text-violet-500">
+                Q
+              </span>
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">题目</span>
             </div>
-            <p className="text-base leading-relaxed text-slate-800 dark:text-slate-100 whitespace-pre-wrap">
-              {item.problem}
-            </p>
+            <div className="text-base leading-relaxed text-slate-800 dark:text-slate-100 whitespace-pre-wrap">
+              <MathRenderer content={item.problem} />
+            </div>
           </div>
 
           {/* Blurred answer area */}
           <div className="relative rounded-xl border border-slate-200/60 dark:border-slate-700/40 bg-white/80 dark:bg-slate-800/60 p-5 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/15 text-xs">🔒</span>
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">答案区域</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/15 text-xs">
+                🔒
+              </span>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                答案区域
+              </span>
             </div>
             <div className="blur-md select-none pointer-events-none text-slate-400 dark:text-slate-500 text-sm space-y-1">
-              <p>正确答案: {item.correctAnswer}</p>
+              <p>
+                正确答案: <MathRenderer content={item.correctAnswer} />
+              </p>
               <p>解题过程将在此展示...</p>
             </div>
             <div className="absolute inset-0 flex items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm">
@@ -126,9 +135,7 @@ export function ReviewCard({
                   <p className="text-xs font-medium text-amber-700 dark:text-amber-300 mb-1">
                     提示 {hintsUsed}/{item.hints?.length ?? 0}
                   </p>
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
-                    {currentHint}
-                  </p>
+                  <p className="text-sm text-amber-800 dark:text-amber-200">{currentHint}</p>
                 </div>
               </div>
             </motion.div>
@@ -180,29 +187,33 @@ export function ReviewCard({
         >
           {/* Problem (compact) */}
           <div className="rounded-xl border border-slate-200/60 dark:border-slate-700/40 bg-white/80 dark:bg-slate-800/60 p-4">
-            <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-3 whitespace-pre-wrap">
-              {item.problem}
-            </p>
+            <div className="text-sm text-slate-700 dark:text-slate-200 line-clamp-3 whitespace-pre-wrap">
+              <MathRenderer content={item.problem} />
+            </div>
           </div>
 
           {/* Answer comparison */}
           <div className="rounded-xl border border-slate-200/60 dark:border-slate-700/40 bg-white/80 dark:bg-slate-800/60 p-4 space-y-3">
             <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-red-500/15 text-xs">❌</span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-red-500/15 text-xs">
+                ❌
+              </span>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">我的原答案</p>
                 <p className="text-sm font-medium text-red-600 dark:text-red-400">
-                  {item.userAnswer}
+                  <MathRenderer content={item.userAnswer} />
                 </p>
               </div>
             </div>
             <div className="h-px bg-slate-100 dark:bg-slate-700" />
             <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-xs">✅</span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-xs">
+                ✅
+              </span>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">正确答案</p>
                 <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                  {item.correctAnswer}
+                  <MathRenderer content={item.correctAnswer} />
                 </p>
               </div>
             </div>
@@ -217,7 +228,9 @@ export function ReviewCard({
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">📖</span>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">解题过程</span>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    解题过程
+                  </span>
                   <span className="rounded-full bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 text-[10px] text-blue-600 dark:text-blue-400">
                     {item.solutionSteps.length} 步
                   </span>
@@ -251,9 +264,9 @@ export function ReviewCard({
                           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-500/15 text-[10px] font-bold text-blue-500 mt-0.5">
                             {i + 1}
                           </span>
-                          <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
-                            {step}
-                          </p>
+                          <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+                            <MathRenderer content={step} />
+                          </div>
                         </motion.div>
                       ))}
                     </div>
@@ -272,9 +285,9 @@ export function ReviewCard({
                   <p className="text-xs font-medium text-orange-700 dark:text-orange-300 mb-1">
                     错因分析
                   </p>
-                  <p className="text-sm text-orange-800 dark:text-orange-200">
-                    {item.errorExplanation || CAUSE_LABELS[item.cause]}
-                  </p>
+                  <div className="text-sm text-orange-800 dark:text-orange-200">
+                    <MathRenderer content={item.errorExplanation || CAUSE_LABELS[item.cause]} />
+                  </div>
                 </div>
               </div>
             </div>

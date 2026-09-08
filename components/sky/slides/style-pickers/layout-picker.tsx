@@ -24,7 +24,13 @@ const LAYOUT_META: { type: LayoutType; label: string; desc: string }[] = [
   { type: 'image-zone', label: '图片区', desc: '图片主导，图文叠加' },
 ];
 
-function LayoutThumbnail({ type, colors }: { type: LayoutType; colors: { coverBg: string; accent: string; textOnDark: string } }) {
+function LayoutThumbnail({
+  type,
+  colors,
+}: {
+  type: LayoutType;
+  colors: { coverBg: string; accent: string; textOnDark: string };
+}) {
   const { coverBg, accent, textOnDark } = colors;
 
   switch (type) {
@@ -101,8 +107,26 @@ function LayoutThumbnail({ type, colors }: { type: LayoutType; colors: { coverBg
       return (
         <svg viewBox="0 0 40 24" className="w-full h-full">
           <rect width="40" height="24" fill={coverBg} />
-          <rect x="3" y="2" width="34" height="20" fill="none" stroke={accent} strokeWidth="0.8" opacity="0.5" />
-          <rect x="4.5" y="3.5" width="31" height="17" fill="none" stroke={accent} strokeWidth="0.5" opacity="0.3" />
+          <rect
+            x="3"
+            y="2"
+            width="34"
+            height="20"
+            fill="none"
+            stroke={accent}
+            strokeWidth="0.8"
+            opacity="0.5"
+          />
+          <rect
+            x="4.5"
+            y="3.5"
+            width="31"
+            height="17"
+            fill="none"
+            stroke={accent}
+            strokeWidth="0.5"
+            opacity="0.3"
+          />
           <rect x="16" y="9" width="8" height="2" fill={textOnDark} opacity="0.5" />
         </svg>
       );
@@ -129,7 +153,16 @@ function LayoutThumbnail({ type, colors }: { type: LayoutType; colors: { coverBg
       return (
         <svg viewBox="0 0 40 24" className="w-full h-full">
           <rect width="40" height="24" fill={coverBg} />
-          <rect x="24" y="3" width="14" height="16" fill={accent} opacity="0.2" stroke={accent} strokeWidth="0.5" />
+          <rect
+            x="24"
+            y="3"
+            width="14"
+            height="16"
+            fill={accent}
+            opacity="0.2"
+            stroke={accent}
+            strokeWidth="0.5"
+          />
           <line x1="26" y1="5" x2="36" y2="17" stroke={accent} strokeWidth="0.3" opacity="0.4" />
           <line x1="36" y1="5" x2="26" y2="17" stroke={accent} strokeWidth="0.3" opacity="0.4" />
           <rect x="4" y="8" width="10" height="2" fill={textOnDark} opacity="0.5" />
@@ -156,7 +189,9 @@ export function LayoutPicker({ selectedLayout, onSelect }: LayoutPickerProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">布局结构</span>
+      <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
+        布局结构
+      </span>
       <div className="grid grid-cols-6 gap-2">
         {LAYOUT_META.map(({ type, label, desc }) => {
           const isSelected = selectedLayout === type;
@@ -178,9 +213,11 @@ export function LayoutPicker({ selectedLayout, onSelect }: LayoutPickerProps) {
               >
                 <LayoutThumbnail type={type} colors={thumbColors} />
               </div>
-              <span className={`text-[10px] font-semibold ${
-                isSelected ? 'text-primary' : 'text-slate-500 dark:text-gray-500'
-              }`}>
+              <span
+                className={`text-[10px] font-semibold ${
+                  isSelected ? 'text-primary' : 'text-slate-500 dark:text-gray-500'
+                }`}
+              >
                 {label}
               </span>
             </button>

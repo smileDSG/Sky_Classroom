@@ -64,10 +64,7 @@ const MAX_CHARS_PER_CALL = 12000; // ~4k tokens, safe for most contexts
  *
  * If text is very long, it is chunked and processed in parallel.
  */
-export async function splitQuestions(
-  text: string,
-  deps: SplitDeps,
-): Promise<QuestionSegment[]> {
+export async function splitQuestions(text: string, deps: SplitDeps): Promise<QuestionSegment[]> {
   const model = deps.model ?? DEFAULT_MODEL;
 
   // Chunk long text to avoid exceeding context window
@@ -118,7 +115,10 @@ ${text}
 }
 
 function parseSplitResult(text: string): QuestionSegment[] {
-  const cleaned = text.trim().replace(/^```json\s*/i, '').replace(/```\s*$/i, '');
+  const cleaned = text
+    .trim()
+    .replace(/^```json\s*/i, '')
+    .replace(/```\s*$/i, '');
   try {
     const parsed = JSON.parse(cleaned);
     if (Array.isArray(parsed.segments)) {

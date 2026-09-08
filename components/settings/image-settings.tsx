@@ -25,7 +25,8 @@ interface ImageSettingsProps {
   selectedProviderId: ImageProviderId;
 }
 
-export function ImageSettings({ selectedProviderId }: ImageSettingsProps) {const imageModelId = useSettingsStore((state) => state.imageModelId);
+export function ImageSettings({ selectedProviderId }: ImageSettingsProps) {
+  const imageModelId = useSettingsStore((state) => state.imageModelId);
   const imageProvidersConfig = useSettingsStore((state) => state.imageProvidersConfig);
   const _setImageModelId = useSettingsStore((state) => state.setImageModelId);
   const setImageProviderConfig = useSettingsStore((state) => state.setImageProviderConfig);
@@ -157,9 +158,7 @@ export function ImageSettings({ selectedProviderId }: ImageSettingsProps) {cons
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              placeholder={
-                isServerConfigured ? '可选，留空则使用服务端配置' : '输入 API Key'
-              }
+              placeholder={isServerConfigured ? '可选，留空则使用服务端配置' : '输入 API Key'}
               value={currentConfig?.apiKey || ''}
               onChange={(e) => handleApiKeyChange(e.target.value)}
               className="h-8 pr-8"
@@ -223,9 +222,7 @@ export function ImageSettings({ selectedProviderId }: ImageSettingsProps) {cons
           value={currentConfig?.baseUrl || ''}
           onChange={(e) => handleBaseUrlChange(e.target.value)}
           placeholder={
-            currentConfig?.serverBaseUrl ||
-            currentProvider?.defaultBaseUrl ||
-            '输入自定义 Base URL'
+            currentConfig?.serverBaseUrl || currentProvider?.defaultBaseUrl || '输入自定义 Base URL'
           }
           className="h-8"
         />
@@ -306,9 +303,7 @@ export function ImageSettings({ selectedProviderId }: ImageSettingsProps) {cons
       {/* Add/Edit Model Dialog */}
       <Dialog open={showModelDialog} onOpenChange={setShowModelDialog}>
         <DialogContent className="sm:max-w-md">
-          <DialogTitle>
-            {editingModelIndex !== null ? '编辑模型' : '新建模型'}
-          </DialogTitle>
+          <DialogTitle>{editingModelIndex !== null ? '编辑模型' : '新建模型'}</DialogTitle>
           <DialogDescription className="sr-only">
             {editingModelIndex !== null ? '编辑模型' : '新建模型'}
           </DialogDescription>

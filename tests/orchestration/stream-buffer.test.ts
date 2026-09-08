@@ -28,16 +28,36 @@ function makeCallbacks(): StreamBufferCallbacks & {
 
   return {
     calls,
-    onAgentStart: vi.fn((data) => { calls.onAgentStart.push([data]); }),
-    onAgentEnd: vi.fn((data) => { calls.onAgentEnd.push([data]); }),
-    onTextReveal: vi.fn((...args) => { calls.onTextReveal.push(args); }),
-    onActionReady: vi.fn((...args) => { calls.onActionReady.push(args); }),
-    onLiveSpeech: vi.fn((...args) => { calls.onLiveSpeech.push(args); }),
-    onSpeechProgress: vi.fn((...args) => { calls.onSpeechProgress.push(args); }),
-    onThinking: vi.fn((data) => { calls.onThinking.push([data]); }),
-    onCueUser: vi.fn((...args) => { calls.onCueUser.push(args); }),
-    onDone: vi.fn((data) => { calls.onDone.push([data]); }),
-    onError: vi.fn((msg) => { calls.onError.push([msg]); }),
+    onAgentStart: vi.fn((data) => {
+      calls.onAgentStart.push([data]);
+    }),
+    onAgentEnd: vi.fn((data) => {
+      calls.onAgentEnd.push([data]);
+    }),
+    onTextReveal: vi.fn((...args) => {
+      calls.onTextReveal.push(args);
+    }),
+    onActionReady: vi.fn((...args) => {
+      calls.onActionReady.push(args);
+    }),
+    onLiveSpeech: vi.fn((...args) => {
+      calls.onLiveSpeech.push(args);
+    }),
+    onSpeechProgress: vi.fn((...args) => {
+      calls.onSpeechProgress.push(args);
+    }),
+    onThinking: vi.fn((data) => {
+      calls.onThinking.push([data]);
+    }),
+    onCueUser: vi.fn((...args) => {
+      calls.onCueUser.push(args);
+    }),
+    onDone: vi.fn((data) => {
+      calls.onDone.push([data]);
+    }),
+    onError: vi.fn((msg) => {
+      calls.onError.push([msg]);
+    }),
   };
 }
 

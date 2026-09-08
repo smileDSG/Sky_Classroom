@@ -26,7 +26,10 @@ export interface StorageProvider {
   get<T>(table: string, id: string): Promise<StorageEntry<T> | null>;
 
   /** Get all entries from a table, optionally filtered */
-  getAll<T>(table: string, filter?: (entry: StorageEntry<T>) => boolean): Promise<StorageEntry<T>[]>;
+  getAll<T>(
+    table: string,
+    filter?: (entry: StorageEntry<T>) => boolean,
+  ): Promise<StorageEntry<T>[]>;
 
   /** Delete an entry by id. Returns true if found and deleted. */
   delete(table: string, id: string): Promise<boolean>;

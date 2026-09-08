@@ -17,11 +17,7 @@ const log = createLogger('CacheRecovery');
  * If parsing fails, removes the corrupted key from localStorage and
  * returns the provided fallback.
  */
-export function safeParseJSON<T>(
-  key: string,
-  fallback: T,
-  storage: Storage = localStorage,
-): T {
+export function safeParseJSON<T>(key: string, fallback: T, storage: Storage = localStorage): T {
   try {
     const raw = storage.getItem(key);
     if (raw === null) return fallback;
@@ -161,7 +157,11 @@ export async function resetAllCache(options?: {
   indexedDB?: boolean;
   keepSettings?: boolean;
 }): Promise<{ localStorageCleared: boolean; indexedDBCleared: boolean }> {
-  const { localStorage: clearLS = true, indexedDB: clearIDB = true, keepSettings = false } = options ?? {};
+  const {
+    localStorage: clearLS = true,
+    indexedDB: clearIDB = true,
+    keepSettings = false,
+  } = options ?? {};
   const result = { localStorageCleared: false, indexedDBCleared: false };
 
   // Clear localStorage

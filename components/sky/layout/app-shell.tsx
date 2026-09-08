@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import dynamic from "next/dynamic";
-import { useTheme } from "@/lib/hooks/use-theme";
-import { motion } from "motion/react";
-import { HeaderControls } from "@/components/sky/home/header-controls";
-import { FloatingUserCard } from "@/components/sky/home/floating-user-card";
-import { SkySidebar } from "./sidebar-nav";
-import { BackgroundTasksIndicator } from "./background-tasks-indicator";
-import { useOptionalAuth } from "@/components/auth/auth-provider";
-import { useStudyTimer } from "@/lib/hooks/use-study-timer";
-import { Button } from "@/components/ui/button";
-import { usePathname } from "next/navigation";
-import { CheckCircle2, Sparkles } from "lucide-react";
-import { MobileSkyShell } from "@/components/mobile/shell/mobile-sky-shell";
-import { SkySectionNav, type SkySection } from "./sky-section-nav";
-import { fetchLearningStats } from "@/lib/client/learning-stats";
+import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+import { useTheme } from '@/lib/hooks/use-theme';
+import { motion } from 'motion/react';
+import { HeaderControls } from '@/components/sky/home/header-controls';
+import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
+import { SkySidebar } from './sidebar-nav';
+import { BackgroundTasksIndicator } from './background-tasks-indicator';
+import { useOptionalAuth } from '@/components/auth/auth-provider';
+import { useStudyTimer } from '@/lib/hooks/use-study-timer';
+import { Button } from '@/components/ui/button';
+import { usePathname } from 'next/navigation';
+import { CheckCircle2, Sparkles } from 'lucide-react';
+import { MobileSkyShell } from '@/components/mobile/shell/mobile-sky-shell';
+import { SkySectionNav, type SkySection } from './sky-section-nav';
+import { fetchLearningStats } from '@/lib/client/learning-stats';
 
 const SettingsDialog = dynamic(
-  () => import("@/components/settings").then((module) => module.SettingsDialog),
+  () => import('@/components/settings').then((module) => module.SettingsDialog),
   { ssr: false },
 );
 const UpgradeDialog = dynamic(
-  () => import("@/components/billing/upgrade-dialog").then((module) => module.UpgradeDialog),
+  () => import('@/components/billing/upgrade-dialog').then((module) => module.UpgradeDialog),
   { ssr: false },
 );
 
@@ -46,7 +46,7 @@ function AtmosphericBackground() {
   // During SSR and hydration: return null → no mismatch
   if (!isMounted) return null;
 
-  const isDark = resolvedTheme === "dark";
+  const isDark = resolvedTheme === 'dark';
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
@@ -55,8 +55,8 @@ function AtmosphericBackground() {
         className="absolute inset-0"
         style={{
           background: isDark
-            ? "linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)"
-            : "#FAFBFC",
+            ? 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)'
+            : '#FAFBFC',
         }}
       />
 
@@ -103,8 +103,8 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Check today's check-in status
@@ -124,9 +124,9 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
 
     setCheckingIn(true);
     try {
-      const res = await fetch("/api/sky/check-in", {
-        method: "POST",
-        credentials: "include",
+      const res = await fetch('/api/sky/check-in', {
+        method: 'POST',
+        credentials: 'include',
       });
       const data = await res.json();
 
@@ -141,24 +141,25 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
     }
   }, [user, checkedIn, checkingIn]);
 
-  const workspace = pathname.startsWith("/sky/teaching") || pathname.startsWith("/sky/cloud-mind/teaching")
-    ? {
-        label: "备课工作区",
-        description: "课程、教案、课件和课堂历史",
-      }
-    : pathname.startsWith("/sky/cloud-mind") ||
-        pathname.startsWith("/sky/question-bank") ||
-        pathname.startsWith("/sky/assistant") ||
-        pathname.startsWith("/sky/solve") ||
-        pathname.startsWith("/sky/slides")
+  const workspace =
+    pathname.startsWith('/sky/teaching') || pathname.startsWith('/sky/cloud-mind/teaching')
       ? {
-          label: "学习资源",
-          description: "题目、讲解、复习和课程材料",
+          label: '备课工作区',
+          description: '课程、教案、课件和课堂历史',
         }
-      : {
-          label: "学习工作台",
-          description: "今天学什么、为什么学、下一步怎么走",
-        };
+      : pathname.startsWith('/sky/cloud-mind') ||
+          pathname.startsWith('/sky/question-bank') ||
+          pathname.startsWith('/sky/assistant') ||
+          pathname.startsWith('/sky/solve') ||
+          pathname.startsWith('/sky/slides')
+        ? {
+            label: '学习资源',
+            description: '题目、讲解、复习和课程材料',
+          }
+        : {
+            label: '学习工作台',
+            description: '今天学什么、为什么学、下一步怎么走',
+          };
 
   return (
     <div className="relative min-h-dvh w-full overflow-x-clip">
@@ -170,14 +171,14 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
 
       <div
         className={`ml-[248px] flex min-h-dvh min-w-0 flex-col ${
-          sidebarCollapsed ? "ml-[72px]" : ""
+          sidebarCollapsed ? 'ml-[72px]' : ''
         }`}
       >
         <header
           className={`sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 px-5 transition-all duration-500 xl:px-8 ${
             scrolled
-              ? "bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl shadow-[0_1px_20px_-8px_rgba(15,23,42,0.08)] dark:shadow-[0_1px_20px_-8px_rgba(0,0,0,0.2)] border-b border-slate-200/40 dark:border-slate-700/20"
-              : "bg-transparent"
+              ? 'bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl shadow-[0_1px_20px_-8px_rgba(15,23,42,0.08)] dark:shadow-[0_1px_20px_-8px_rgba(0,0,0,0.2)] border-b border-slate-200/40 dark:border-slate-700/20'
+              : 'bg-transparent'
           }`}
         >
           {scrolled && (
@@ -201,36 +202,34 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
           </div>
 
           <div className="flex shrink-0 items-center justify-end gap-2 md:gap-3">
-          {/* Check-in Button - Only show when logged in and not checked in */}
-          {user && !checkedIn && (
-            <Button
-              size="sm"
-              onClick={handleCheckIn}
-              disabled={checkingIn}
-              className="hidden lg:flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg shadow-rose-500/25"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              {checkingIn ? "打卡中..." : "今日打卡"}
-            </Button>
-          )}
-          {user && checkedIn && (
-            <div className="hidden md:flex items-center gap-1.5 text-sm text-rose-500 font-medium">
-              <Sparkles className="h-4 w-4" />
-              <span>{streakDays > 0 ? `${streakDays} 天` : "已打卡"}</span>
-            </div>
-          )}
-          <HeaderControls />
-          <div className="hidden h-5 w-px bg-slate-200/60 dark:bg-slate-700/40 sm:block" />
-          <FloatingUserCard onUpgradeOpen={() => setUpgradeOpen(true)} />
+            {/* Check-in Button - Only show when logged in and not checked in */}
+            {user && !checkedIn && (
+              <Button
+                size="sm"
+                onClick={handleCheckIn}
+                disabled={checkingIn}
+                className="hidden lg:flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg shadow-rose-500/25"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                {checkingIn ? '打卡中...' : '今日打卡'}
+              </Button>
+            )}
+            {user && checkedIn && (
+              <div className="hidden md:flex items-center gap-1.5 text-sm text-rose-500 font-medium">
+                <Sparkles className="h-4 w-4" />
+                <span>{streakDays > 0 ? `${streakDays} 天` : '已打卡'}</span>
+              </div>
+            )}
+            <HeaderControls />
+            <div className="hidden h-5 w-px bg-slate-200/60 dark:bg-slate-700/40 sm:block" />
+            <FloatingUserCard onUpgradeOpen={() => setUpgradeOpen(true)} />
           </div>
         </header>
 
         <main
           data-sky-desktop-main
           className={
-            fullBleed
-              ? "min-w-0 flex-1"
-              : "min-w-0 flex-1 px-4 py-5 md:px-6 md:py-7 xl:px-8"
+            fullBleed ? 'min-w-0 flex-1' : 'min-w-0 flex-1 px-4 py-5 md:px-6 md:py-7 xl:px-8'
           }
         >
           {children}
@@ -243,7 +242,7 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
         <UpgradeDialog
           open
           onClose={() => setUpgradeOpen(false)}
-          currentPlan={user?.planType ?? "free"}
+          currentPlan={user?.planType ?? 'free'}
           onPlanChanged={refresh}
         />
       )}

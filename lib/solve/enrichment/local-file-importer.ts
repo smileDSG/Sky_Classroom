@@ -16,7 +16,11 @@ function parseJSONL(text: string): Record<string, unknown>[] {
     .split('\n')
     .filter((l) => l.trim())
     .map((l) => {
-      try { return JSON.parse(l); } catch { return null; }
+      try {
+        return JSON.parse(l);
+      } catch {
+        return null;
+      }
     })
     .filter(Boolean) as Record<string, unknown>[];
 }
@@ -44,11 +48,14 @@ function parseTALQuestion(raw: Record<string, unknown>): ExtractedQuestion | nul
 
   // Add options if available
   if (q.answer_option_list && q.answer_option_list.length > 0) {
-    const options = q.answer_option_list.map((opt) => {
-      const first = opt[0];
-      if (!first) return '';
-      return `${first.aoVal}. ${first.content.trim()}`;
-    }).filter(Boolean).join('  ');
+    const options = q.answer_option_list
+      .map((opt) => {
+        const first = opt[0];
+        if (!first) return '';
+        return `${first.aoVal}. ${first.content.trim()}`;
+      })
+      .filter(Boolean)
+      .join('  ');
     if (options) text += '\n' + options;
   }
 
@@ -94,7 +101,10 @@ interface AGIEvalQuestion {
   other?: { source?: string };
 }
 
-function parseAGIEvalQuestion(raw: Record<string, unknown>, subject: SubjectId): ExtractedQuestion | null {
+function parseAGIEvalQuestion(
+  raw: Record<string, unknown>,
+  subject: SubjectId,
+): ExtractedQuestion | null {
   const q = raw as unknown as AGIEvalQuestion;
   if (!q.question || q.question.length < 5) return null;
 
@@ -138,9 +148,7 @@ export interface LocalFileImportOptions {
 /**
  * Import questions from a local dataset file.
  */
-export async function importLocalFile(
-  opts: LocalFileImportOptions,
-): Promise<ExtractedQuestion[]> {
+export async function importLocalFile(opts: LocalFileImportOptions): Promise<ExtractedQuestion[]> {
   const { filePath, format, maxQuestions = 1000 } = opts;
 
   log.info(`[FileImport] Reading ${filePath}...`);
@@ -154,8 +162,7 @@ export async function importLocalFile(
   }
 
   // Auto-detect format
-  const detectedFormat = format
-    ?? (filePath.endsWith('.jsonl') ? 'tal-scq5k' : 'generic-json');
+  const detectedFormat = format ?? (filePath.endsWith('.jsonl') ? 'tal-scq5k' : 'generic-json');
 
   let questions: ExtractedQuestion[];
 
@@ -163,9 +170,7 @@ export async function importLocalFile(
     case 'tal-scq5k': {
       const rows = parseJSONL(text);
       log.info(`[FileImport] Parsed ${rows.length} JSONL rows`);
-      questions = rows
-        .map(parseTALQuestion)
-        .filter(Boolean) as ExtractedQuestion[];
+      questions = rows.map(parseTALQuestion).filter(Boolean) as ExtractedQuestion[];
       break;
     }
     case 'agieval': {
@@ -205,7 +210,9 @@ export async function importLocalFile(
     deduped.push(q);
   }
 
-  log.info(`[FileImport] ${deduped.length} unique questions (${questions.length - deduped.length} dupes)`);
+  log.info(
+    `[FileImport] ${deduped.length} unique questions (${questions.length - deduped.length} dupes)`,
+  );
   return deduped.slice(0, maxQuestions);
 }
 
@@ -225,8 +232,15 @@ function parseGenericRow(row: Record<string, unknown>, source: string): Extracte
 
 function detectSubject(text: string): SubjectId {
   const lower = text.toLowerCase();
-  if (lower.includes('物理') || lower.includes('力学') || lower.includes('电场') || lower.includes('磁场')) return 'physics';
-  if (lower.includes('化学') || lower.includes('反应') || lower.includes('溶液')) return 'chemistry';
+  if (
+    lower.includes('物理') ||
+    lower.includes('力学') ||
+    lower.includes('电场') ||
+    lower.includes('磁场')
+  )
+    return 'physics';
+  if (lower.includes('化学') || lower.includes('反应') || lower.includes('溶液'))
+    return 'chemistry';
   if (lower.includes('生物') || lower.includes('细胞') || lower.includes('基因')) return 'biology';
   return 'math';
 }

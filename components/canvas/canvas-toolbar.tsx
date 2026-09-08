@@ -110,7 +110,8 @@ export function CanvasToolbar({
   playbackSpeed = 1,
   onCycleSpeed,
   onAskTeacher,
-}: CanvasToolbarProps) {const canGoPrev = currentSceneIndex > 0;
+}: CanvasToolbarProps) {
+  const canGoPrev = currentSceneIndex > 0;
   const canGoNext = currentSceneIndex < scenesCount - 1;
   const showPlayPause = !isLiveSession;
 
@@ -188,7 +189,7 @@ export function CanvasToolbar({
                   'text-white text-xs font-semibold',
                   'hover:from-sky-400 hover:to-blue-400',
                   'active:scale-95 transition-all cursor-pointer',
-                  'shadow-[0_4px_16px_rgba(14,165,233,0.3)]'
+                  'shadow-[0_4px_16px_rgba(14,165,233,0.3)]',
                 )}
                 title="向老师提问"
               >

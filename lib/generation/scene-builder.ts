@@ -147,11 +147,11 @@ export function buildCompleteScene(
   if (outline.type === 'slide' && 'elements' in content) {
     // Build Slide object with dynamic theme (use course-level theme if provided)
     const slideContent = content as GeneratedSlideContent;
-    const theme = themeSelection ?? (
-      slideContent.templateData
+    const theme =
+      themeSelection ??
+      (slideContent.templateData
         ? selectThemeForTemplate(slideContent.templateData.templateName)
-        : selectThemeForOutline(outline)
-    );
+        : selectThemeForOutline(outline));
     const palette = theme.palette;
     const slideTheme: SlideTheme = {
       backgroundColor: `#${palette.contentBg}`,
@@ -179,7 +179,9 @@ export function buildCompleteScene(
       layoutVersion: slideContent.templateData ? 2 : 1,
     };
 
-    log.info(`[SceneBuilder] Slide built for "${outline.title}": layoutVersion=${slide.layoutVersion}, hasTemplateData=${!!slide.templateData}, legacyElements=${slide.elements.length}`);
+    log.info(
+      `[SceneBuilder] Slide built for "${outline.title}": layoutVersion=${slide.layoutVersion}, hasTemplateData=${!!slide.templateData}, legacyElements=${slide.elements.length}`,
+    );
 
     return {
       id: sceneId,

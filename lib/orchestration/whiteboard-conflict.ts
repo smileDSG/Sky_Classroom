@@ -40,14 +40,8 @@ interface LayoutResult {
 // ─── Spatial conflict detection ───
 
 function calculateOverlap(a: WhiteboardElement, b: WhiteboardElement): number {
-  const xOverlap = Math.max(
-    0,
-    Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x),
-  );
-  const yOverlap = Math.max(
-    0,
-    Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y),
-  );
+  const xOverlap = Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x));
+  const yOverlap = Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
   const overlapArea = xOverlap * yOverlap;
   const smallerArea = Math.min(a.width * a.height, b.width * b.height);
   return smallerArea > 0 ? overlapArea / smallerArea : 0;

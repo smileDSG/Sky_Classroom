@@ -17,7 +17,11 @@ interface APIEndpoint {
 
 const API_ENDPOINTS: APIEndpoint[] = [
   { method: 'POST', path: '/api/chat', description: 'Chat with AI agent' },
-  { method: 'POST', path: '/api/generate-classroom', description: 'Generate classroom from requirements' },
+  {
+    method: 'POST',
+    path: '/api/generate-classroom',
+    description: 'Generate classroom from requirements',
+  },
   { method: 'POST', path: '/api/generate/outline', description: 'Generate outline' },
   { method: 'POST', path: '/api/generate/scene-content', description: 'Generate scene content' },
   { method: 'POST', path: '/api/generate/scene-actions', description: 'Generate scene actions' },
@@ -32,9 +36,7 @@ const API_ENDPOINTS: APIEndpoint[] = [
 ];
 
 function findEndpoint(path: string, method: string): APIEndpoint | undefined {
-  return API_ENDPOINTS.find(
-    (e) => e.path === path && e.method === method.toUpperCase(),
-  );
+  return API_ENDPOINTS.find((e) => e.path === path && e.method === method.toUpperCase());
 }
 
 // ─── Request validation ───

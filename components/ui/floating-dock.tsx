@@ -141,7 +141,7 @@ export function FloatingDock({
         'shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)]',
         'transition-all duration-300',
         isExpanded && 'gap-2 px-4',
-        className
+        className,
       )}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => {
@@ -190,7 +190,7 @@ export function FloatingDock({
             'text-white text-xs font-medium',
             'shadow-lg shadow-sky-500/30',
             'hover:from-sky-400 hover:to-blue-400',
-            'transition-all duration-200'
+            'transition-all duration-200',
           )}
         >
           <MessageSquare className="w-3.5 h-3.5" />
@@ -209,13 +209,7 @@ export function FloatingDock({
       ) : (
         <DockButton
           onClick={onPlayPause}
-          icon={
-            isPlaying ? (
-              <Pause className="w-4 h-4" />
-            ) : (
-              <Play className="w-4 h-4 ml-0.5" />
-            )
-          }
+          icon={isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
           label={isPlaying ? '暂停' : isPaused ? '继续' : '播放'}
           variant="primary"
           className="w-10 h-10"
@@ -276,7 +270,11 @@ export function FloatingDock({
       {onCycleSpeed && (
         <DockButton
           onClick={onCycleSpeed}
-          icon={<span className="text-[10px] font-semibold">{playbackSpeed === 1.5 ? '1.5x' : `${playbackSpeed}x`}</span>}
+          icon={
+            <span className="text-[10px] font-semibold">
+              {playbackSpeed === 1.5 ? '1.5x' : `${playbackSpeed}x`}
+            </span>
+          }
           label="播放速度"
           active={playbackSpeed !== 1}
         />
@@ -386,7 +384,7 @@ function DockButton({
   const variants = {
     default: cn(
       'text-slate-300 hover:text-white hover:bg-white/10',
-      active && 'text-white bg-white/10'
+      active && 'text-white bg-white/10',
     ),
     primary: 'text-white bg-violet-600 hover:bg-violet-500 shadow-lg shadow-violet-600/30',
     danger: 'text-white bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-600/30',
@@ -405,7 +403,7 @@ function DockButton({
         'transition-colors duration-200',
         'disabled:opacity-30 disabled:cursor-not-allowed',
         variants[variant],
-        className
+        className,
       )}
     >
       {icon}

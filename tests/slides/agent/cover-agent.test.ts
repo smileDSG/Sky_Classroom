@@ -9,7 +9,20 @@ import type { LanguageModel } from 'ai';
 const mockModel = { modelId: 'test-model' } as unknown as LanguageModel;
 
 function makeSkeleton(index: number, recommended: boolean) {
-  const paletteKeys = ['midnight-executive', 'forest-moss', 'coral-energy', 'warm-terracotta', 'ocean-gradient', 'charcoal-minimal', 'teal-trust', 'berry-cream', 'sage-calm', 'cherry-bold', 'classical-chinese', 'tech-dark-cn'];
+  const paletteKeys = [
+    'midnight-executive',
+    'forest-moss',
+    'coral-energy',
+    'warm-terracotta',
+    'ocean-gradient',
+    'charcoal-minimal',
+    'teal-trust',
+    'berry-cream',
+    'sage-calm',
+    'cherry-bold',
+    'classical-chinese',
+    'tech-dark-cn',
+  ];
   return {
     styleName: `风格 ${index + 1}`,
     paletteId: paletteKeys[index % paletteKeys.length],

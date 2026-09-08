@@ -24,7 +24,9 @@ export function toPptxColor(color: string): PptxColor {
   const trimmed = color.trim();
 
   // rgba(R, G, B, A)
-  const rgbaMatch = trimmed.match(/^rgba?\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})(?:,\s*([\d.]+))?\)$/i);
+  const rgbaMatch = trimmed.match(
+    /^rgba?\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})(?:,\s*([\d.]+))?\)$/i,
+  );
   if (rgbaMatch) {
     const r = Math.min(255, Math.max(0, parseInt(rgbaMatch[1], 10)));
     const g = Math.min(255, Math.max(0, parseInt(rgbaMatch[2], 10)));
@@ -77,7 +79,9 @@ const LUM_CACHE = new Map<string, number>();
 export function getLuminance(color: string): number {
   const cached = LUM_CACHE.get(color);
   if (cached !== undefined) return cached;
-  let r = 0, g = 0, b = 0;
+  let r = 0,
+    g = 0,
+    b = 0;
   const hex = color.replace('#', '');
   if (hex.length === 3) {
     r = parseInt(hex[0] + hex[0], 16);

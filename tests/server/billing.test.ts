@@ -91,7 +91,9 @@ function mockAuth(planType: PlanType = 'free') {
 }
 
 /** Build an in-memory StorageProvider for testing the usage tracker */
-function makeMemoryStorage(initialData: Record<string, Record<string, unknown>> = {}): StorageProvider {
+function makeMemoryStorage(
+  initialData: Record<string, Record<string, unknown>> = {},
+): StorageProvider {
   const store = new Map<string, Record<string, unknown>>();
   for (const [key, value] of Object.entries(initialData)) {
     store.set(key, value);
@@ -99,14 +101,22 @@ function makeMemoryStorage(initialData: Record<string, Record<string, unknown>> 
 
   return {
     isAvailable: async () => true,
-    set: async (_table: string, entry: { id: string; data: Record<string, unknown>; createdAt: number; updatedAt: number }) => {
+    set: async (
+      _table: string,
+      entry: { id: string; data: Record<string, unknown>; createdAt: number; updatedAt: number },
+    ) => {
       store.set(entry.id, entry.data);
     },
-    get: async <T>(_table: string, id: string): Promise<{ id: string; data: T; createdAt: number; updatedAt: number } | null> => {
+    get: async <T>(
+      _table: string,
+      id: string,
+    ): Promise<{ id: string; data: T; createdAt: number; updatedAt: number } | null> => {
       const data = store.get(id);
       return data ? { id, data: data as T, createdAt: Date.now(), updatedAt: Date.now() } : null;
     },
-    getAll: async <T>(_table: string): Promise<{ id: string; data: T; createdAt: number; updatedAt: number }[]> => {
+    getAll: async <T>(
+      _table: string,
+    ): Promise<{ id: string; data: T; createdAt: number; updatedAt: number }[]> => {
       return Array.from(store.entries()).map(([id, data]) => ({
         id,
         data: data as T,
@@ -115,7 +125,9 @@ function makeMemoryStorage(initialData: Record<string, Record<string, unknown>> 
       }));
     },
     delete: async (_table: string, id: string): Promise<boolean> => store.delete(id),
-    clear: async (_table: string): Promise<void> => { store.clear(); },
+    clear: async (_table: string): Promise<void> => {
+      store.clear();
+    },
     count: async (_table: string): Promise<number> => store.size,
   };
 }
@@ -302,7 +314,9 @@ describe('requireQuota', () => {
     const result = await requireQuota('generationCount');
 
     expect(result).toHaveProperty('error');
-    const errBody = (result as { error: { __isMock: true; body: { errorCode: string }; status: number } }).error;
+    const errBody = (
+      result as { error: { __isMock: true; body: { errorCode: string }; status: number } }
+    ).error;
     expect(errBody.body.errorCode).toBe('UNAUTHORIZED');
     expect(errBody.status).toBe(401);
   });
@@ -317,7 +331,9 @@ describe('requireQuota', () => {
     const result = await requireQuota('generationCount');
 
     expect(result).toHaveProperty('error');
-    const errBody = (result as { error: { __isMock: true; body: { errorCode: string }; status: number } }).error;
+    const errBody = (
+      result as { error: { __isMock: true; body: { errorCode: string }; status: number } }
+    ).error;
     expect(errBody.body.errorCode).toBe('UNAUTHORIZED');
   });
 
@@ -334,7 +350,9 @@ describe('requireQuota', () => {
     const result = await requireQuota('generationCount');
 
     expect(result).toHaveProperty('error');
-    const errBody = (result as { error: { __isMock: true; body: { errorCode: string }; status: number } }).error;
+    const errBody = (
+      result as { error: { __isMock: true; body: { errorCode: string }; status: number } }
+    ).error;
     expect(errBody.body.errorCode).toBe('UNAUTHORIZED');
   });
 
@@ -390,7 +408,9 @@ describe('requireQuota', () => {
     const result = await requireQuota('generationCount');
 
     expect(result).toHaveProperty('error');
-    const errBody = (result as { error: { __isMock: true; body: { errorCode: string }; status: number } }).error;
+    const errBody = (
+      result as { error: { __isMock: true; body: { errorCode: string }; status: number } }
+    ).error;
     expect(errBody.body.errorCode).toBe('USAGE_LIMIT_EXCEEDED');
     expect(errBody.status).toBe(429);
   });
@@ -414,7 +434,9 @@ describe('requireQuota', () => {
     const result = await requireQuota('llmCalls');
 
     expect(result).toHaveProperty('error');
-    const errBody = (result as { error: { __isMock: true; body: { errorCode: string }; status: number } }).error;
+    const errBody = (
+      result as { error: { __isMock: true; body: { errorCode: string }; status: number } }
+    ).error;
     expect(errBody.body.errorCode).toBe('USAGE_LIMIT_EXCEEDED');
     expect(errBody.status).toBe(429);
   });

@@ -65,7 +65,9 @@ export function SimilarProblems({
               </div>
               同类星题
             </CardTitle>
-            <CardDescription className="mt-1 text-[var(--probe-muted)]">巩固知识，多做同类题目加深理解</CardDescription>
+            <CardDescription className="mt-1 text-[var(--probe-muted)]">
+              巩固知识，多做同类题目加深理解
+            </CardDescription>
           </div>
           <div className="flex items-center gap-2 text-sm font-medium text-[var(--probe-primary-bright)]">
             <Target className="h-4 w-4" />
@@ -146,7 +148,10 @@ export function SimilarProblems({
                         >
                           难度 {question.difficulty}/10
                         </Badge>
-                        <Badge variant="secondary" className="text-xs bg-[var(--probe-primary)]/10 text-[var(--probe-primary)] border border-[var(--probe-primary)]/20">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs bg-[var(--probe-primary)]/10 text-[var(--probe-primary)] border border-[var(--probe-primary)]/20"
+                        >
                           {question.knowledgePoint}
                         </Badge>
                       </div>

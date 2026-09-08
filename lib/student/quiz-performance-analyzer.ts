@@ -54,20 +54,18 @@ export async function analyzeQuizPerformance(
   }
 
   // Calculate accuracy by knowledge point
-  const kpStats = new Map<
-    string,
-    { name: string; attempts: number; correct: number }
-  >();
+  const kpStats = new Map<string, { name: string; attempts: number; correct: number }>();
 
   const causeCounts = new Map<string, number>();
 
   for (const attempt of recentAttempts) {
     for (const question of attempt.questions) {
-      const points = question.knowledgePoints.length > 0
-        ? question.knowledgePoints
-        : attempt.topic
-          ? [attempt.topic]
-          : ['综合练习'];
+      const points =
+        question.knowledgePoints.length > 0
+          ? question.knowledgePoints
+          : attempt.topic
+            ? [attempt.topic]
+            : ['综合练习'];
       for (const kp of points) {
         const canonical = canonicalizeKnowledgePoint(kp);
         const stat = kpStats.get(canonical.id) ?? {
@@ -107,15 +105,10 @@ export async function analyzeQuizPerformance(
     totalAttempts += stat.attempts;
     totalCorrect += stat.correct;
     accuracyByKnowledge[stat.name] =
-      stat.attempts > 0
-        ? Math.round((stat.correct / stat.attempts) * 100)
-        : 0;
+      stat.attempts > 0 ? Math.round((stat.correct / stat.attempts) * 100) : 0;
   }
 
-  const overallAccuracy =
-    totalAttempts > 0
-      ? Math.round((totalCorrect / totalAttempts) * 100)
-      : 50;
+  const overallAccuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 50;
 
   const topErrorCauses = Array.from(causeCounts.entries())
     .sort((a, b) => b[1] - a[1])

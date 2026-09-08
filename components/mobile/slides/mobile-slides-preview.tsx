@@ -48,7 +48,7 @@ export function MobileSlidesPreview({
       if (index < 0 || index >= total) return;
       setActiveIndex(index);
     },
-    [total]
+    [total],
   );
 
   const goNext = useCallback(() => {
@@ -72,7 +72,7 @@ export function MobileSlidesPreview({
       }
       touchStartX.current = null;
     },
-    [goNext, goPrev]
+    [goNext, goPrev],
   );
 
   const toggleImmersive = useCallback(async () => {
@@ -221,7 +221,10 @@ export function MobileSlidesPreview({
                     relative flex-shrink-0 overflow-hidden rounded transition-all
                     ${i === activeIndex ? 'ring-2 ring-sky-400' : 'opacity-50 hover:opacity-80'}
                   `}
-                  style={{ width: i === activeIndex ? 56 : 40, height: i === activeIndex ? 32 : 24 }}
+                  style={{
+                    width: i === activeIndex ? 56 : 40,
+                    height: i === activeIndex ? 32 : 24,
+                  }}
                   aria-label={`跳转到第 ${i + 1} 页`}
                 >
                   <img src={src} alt="" className="h-full w-full object-cover" />

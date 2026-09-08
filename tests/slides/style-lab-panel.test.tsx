@@ -13,9 +13,7 @@ describe('StyleLabPanel', () => {
   };
 
   it('renders all four pickers', () => {
-    const { container } = render(
-      <StyleLabPanel draftDNA={defaultDNA} {...mockCallbacks} />,
-    );
+    const { container } = render(<StyleLabPanel draftDNA={defaultDNA} {...mockCallbacks} />);
     expect(container.textContent).toContain('配色方案');
     expect(container.textContent).toContain('布局结构');
     expect(container.textContent).toContain('字体气质');
@@ -23,9 +21,7 @@ describe('StyleLabPanel', () => {
   });
 
   it('renders correct number of color options', () => {
-    const { container } = render(
-      <StyleLabPanel draftDNA={defaultDNA} {...mockCallbacks} />,
-    );
+    const { container } = render(<StyleLabPanel draftDNA={defaultDNA} {...mockCallbacks} />);
     const colorButtons = container.querySelectorAll('[title]');
     // There are 12 color palettes, each rendered as a button
     const paletteCount = Object.keys(COLOR_PALETTES).length;
@@ -33,18 +29,14 @@ describe('StyleLabPanel', () => {
   });
 
   it('renders correct number of layout options', () => {
-    const { container } = render(
-      <StyleLabPanel draftDNA={defaultDNA} {...mockCallbacks} />,
-    );
+    const { container } = render(<StyleLabPanel draftDNA={defaultDNA} {...mockCallbacks} />);
     const layoutButtons = container.querySelectorAll('button');
     // At least 5 layout buttons
     expect(layoutButtons.length).toBeGreaterThanOrEqual(5);
   });
 
   it('calls onUpdatePalette when color clicked', () => {
-    const { container } = render(
-      <StyleLabPanel draftDNA={defaultDNA} {...mockCallbacks} />,
-    );
+    const { container } = render(<StyleLabPanel draftDNA={defaultDNA} {...mockCallbacks} />);
     // Find color picker buttons by their container — first grid in the panel
     const grids = container.querySelectorAll('.grid');
     const colorGrid = grids[0]; // ColorPicker is the first grid
@@ -61,9 +53,7 @@ describe('StyleLabPanel', () => {
       ...defaultDNA,
       colors: { ...forestPalette },
     };
-    const { container } = render(
-      <StyleLabPanel draftDNA={customDNA} {...mockCallbacks} />,
-    );
+    const { container } = render(<StyleLabPanel draftDNA={customDNA} {...mockCallbacks} />);
     // The selected button's swatch has scale-105 class (applied only when isSelected)
     const selectedSwatch = container.querySelector('.scale-110');
     expect(selectedSwatch).toBeTruthy();

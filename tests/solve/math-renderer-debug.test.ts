@@ -5,9 +5,35 @@ function fixBareLatexCommands(text: string): string {
   let result = text;
 
   const bareCommands = [
-    'sum', 'prod', 'int', 'frac', 'sqrt', 'lim', 'sin', 'cos', 'tan', 'log', 'ln', 'exp',
-    'alpha', 'beta', 'gamma', 'delta', 'theta', 'lambda', 'mu', 'pi', 'sigma', 'phi', 'omega',
-    'infty', 'leq', 'geq', 'neq', 'approx', 'equiv',
+    'sum',
+    'prod',
+    'int',
+    'frac',
+    'sqrt',
+    'lim',
+    'sin',
+    'cos',
+    'tan',
+    'log',
+    'ln',
+    'exp',
+    'alpha',
+    'beta',
+    'gamma',
+    'delta',
+    'theta',
+    'lambda',
+    'mu',
+    'pi',
+    'sigma',
+    'phi',
+    'omega',
+    'infty',
+    'leq',
+    'geq',
+    'neq',
+    'approx',
+    'equiv',
   ];
 
   // Pattern: command followed by $, {, [, _, ^, (, or whitespace/newline

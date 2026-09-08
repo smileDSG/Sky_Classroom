@@ -206,7 +206,11 @@ type Points = Array<
   | { close: true }
 >;
 
-export function formatPoints(points: SvgPoints, ratioPx2Inch: number, scale = { x: 1, y: 1 }): Points {
+export function formatPoints(
+  points: SvgPoints,
+  ratioPx2Inch: number,
+  scale = { x: 1, y: 1 },
+): Points {
   return points.map((point) => {
     if (point.close !== undefined) {
       return { close: true };
@@ -308,7 +312,10 @@ const dashTypeMap: Record<string, string> = {
   dotted: 'sysDot',
 };
 
-export function getOutlineOption(outline: PPTElementOutline, ratioPx2Pt: number): pptxgen.ShapeLineProps {
+export function getOutlineOption(
+  outline: PPTElementOutline,
+  ratioPx2Pt: number,
+): pptxgen.ShapeLineProps {
   const c = formatColor(outline?.color || '#000000');
   return {
     color: c.color,
@@ -320,7 +327,10 @@ export function getOutlineOption(outline: PPTElementOutline, ratioPx2Pt: number)
 
 // ── Link config ──
 
-export function getLinkOption(link: PPTElementLink, slides: Slide[]): pptxgen.HyperlinkProps | null {
+export function getLinkOption(
+  link: PPTElementLink,
+  slides: Slide[],
+): pptxgen.HyperlinkProps | null {
   const { type, target } = link;
   if (type === 'web') return { url: target };
   if (type === 'slide') {
@@ -425,7 +435,9 @@ async function buildPptxBlob(
 
     // ── Template-driven rendering ──
     if (slide.templateData) {
-      log.info(`[PPTX Export] Slide ${slideIdx + 1}: template-driven (${slide.templateData.templateName}/${slide.templateData.pageName}), ${slide.templateData.page.elements.length} elements`);
+      log.info(
+        `[PPTX Export] Slide ${slideIdx + 1}: template-driven (${slide.templateData.templateName}/${slide.templateData.pageName}), ${slide.templateData.page.elements.length} elements`,
+      );
       applyTemplateBackground(pptxSlide, slide.templateData);
       let convertedCount = 0;
       let skippedCount = 0;
@@ -434,7 +446,9 @@ async function buildPptxBlob(
           const result = convertTemplateElement(pptxSlide, el, slide.templateData.theme);
           if (result === undefined) {
             skippedCount++;
-            log.info(`[PPTX Export]   Skipped element ${el.elementId} (${el.elementType}) - no content`);
+            log.info(
+              `[PPTX Export]   Skipped element ${el.elementId} (${el.elementType}) - no content`,
+            );
           } else {
             convertedCount++;
           }
@@ -443,11 +457,15 @@ async function buildPptxBlob(
           log.warn(`[PPTX Export]   Error element ${el.elementId} (${el.elementType}):`, err);
         }
       }
-      log.info(`[PPTX Export] Slide ${slideIdx + 1}: converted=${convertedCount}, skipped=${skippedCount}`);
+      log.info(
+        `[PPTX Export] Slide ${slideIdx + 1}: converted=${convertedCount}, skipped=${skippedCount}`,
+      );
       continue;
     }
 
-    log.info(`[PPTX Export] Slide ${slideIdx + 1}: legacy path, elements=${slide.elements?.length ?? 0}`);
+    log.info(
+      `[PPTX Export] Slide ${slideIdx + 1}: legacy path, elements=${slide.elements?.length ?? 0}`,
+    );
     if (!slide.elements) continue;
 
     // ── Legacy Elements ──
@@ -610,10 +628,15 @@ async function buildPptxBlob(
           }
           pptxSlide.addImage(imgOptions);
         } else {
-          const vb = typeof el.viewBox === 'string' ? el.viewBox.split(' ').map(Number) : Array.isArray(el.viewBox) ? el.viewBox : [1, 1];
+          const vb =
+            typeof el.viewBox === 'string'
+              ? el.viewBox.split(' ').map(Number)
+              : Array.isArray(el.viewBox)
+                ? el.viewBox
+                : [1, 1];
           const scale = {
-            x: el.width / ((vb[2] || vb[0]) || 1),
-            y: el.height / ((vb[3] || vb[1]) || 1),
+            x: el.width / (vb[2] || vb[0] || 1),
+            y: el.height / (vb[3] || vb[1] || 1),
           };
           const rawPoints = toPoints(el.path);
           if (!rawPoints.length) continue; // Malformed path — toPoints already logged.
@@ -1261,10 +1284,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-function applyTemplateBackground(
-  pptxSlide: pptxgen.Slide,
-  templateData: TemplateSlideData,
-) {
+function applyTemplateBackground(pptxSlide: pptxgen.Slide, templateData: TemplateSlideData) {
   const bg = templateData.page.background;
   if (!bg) return;
 
@@ -1332,9 +1352,7 @@ function convertTemplateElement(
             ? 'roundRect'
             : 'rect';
       const fillC = resolveTemplateColor(el.fill?.color, theme, '#5b9bd5');
-      const lineC = el.border
-        ? resolveTemplateColor(el.border.color, theme, '#cccccc')
-        : undefined;
+      const lineC = el.border ? resolveTemplateColor(el.border.color, theme, '#cccccc') : undefined;
       const shadowC = el.shadow
         ? resolveTemplateColor(el.shadow.color, theme, '#000000')
         : undefined;
@@ -1372,17 +1390,20 @@ function convertTemplateElement(
       const lineC = el.border
         ? resolveTemplateColor(el.border.color, theme, '#333333')
         : formatColor('#333333');
-      pptxSlide.addShape('line' as never, {
-        x: inchX,
-        y: inchY,
-        w: inchW,
-        h: inchH,
-        line: {
-          color: lineC.color,
-          transparency: (1 - lineC.alpha) * 100,
-          width: el.border ? el.border.width / TEMPLATE_SCALE : 1,
-        },
-      } as never);
+      pptxSlide.addShape(
+        'line' as never,
+        {
+          x: inchX,
+          y: inchY,
+          w: inchW,
+          h: inchH,
+          line: {
+            color: lineC.color,
+            transparency: (1 - lineC.alpha) * 100,
+            width: el.border ? el.border.width / TEMPLATE_SCALE : 1,
+          },
+        } as never,
+      );
       return 'converted';
     }
 

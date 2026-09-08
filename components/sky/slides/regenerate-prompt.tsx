@@ -2,14 +2,41 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Sparkles, Atom, BookOpen, FlaskConical, Pi, Brain, Dna, Landmark, Globe, Cpu } from 'lucide-react';
+import {
+  X,
+  Sparkles,
+  Atom,
+  BookOpen,
+  FlaskConical,
+  Pi,
+  Brain,
+  Dna,
+  Landmark,
+  Globe,
+  Cpu,
+} from 'lucide-react';
 
 const HOT_TOPICS = [
-  { label: '牛顿运动定律', icon: Atom, color: 'from-blue-500/20 to-cyan-500/20', accent: '#3b82f6' },
-  { label: '光合作用', icon: FlaskConical, color: 'from-emerald-500/20 to-teal-500/20', accent: '#10b981' },
+  {
+    label: '牛顿运动定律',
+    icon: Atom,
+    color: 'from-blue-500/20 to-cyan-500/20',
+    accent: '#3b82f6',
+  },
+  {
+    label: '光合作用',
+    icon: FlaskConical,
+    color: 'from-emerald-500/20 to-teal-500/20',
+    accent: '#10b981',
+  },
   { label: '勾股定理', icon: Pi, color: 'from-violet-500/20 to-purple-500/20', accent: '#8b5cf6' },
   { label: 'DNA 结构', icon: Dna, color: 'from-rose-500/20 to-pink-500/20', accent: '#f43f5e' },
-  { label: '中国近代史', icon: Landmark, color: 'from-amber-500/20 to-orange-500/20', accent: '#f59e0b' },
+  {
+    label: '中国近代史',
+    icon: Landmark,
+    color: 'from-amber-500/20 to-orange-500/20',
+    accent: '#f59e0b',
+  },
   { label: '计算机原理', icon: Cpu, color: 'from-sky-500/20 to-indigo-500/20', accent: '#0ea5e9' },
 ] as const;
 
@@ -57,11 +84,7 @@ export function RegeneratePrompt({ currentTopic, onGenerate, onClose }: Regenera
             </div>
             <div>
               <h3 className="text-sm font-semibold text-white/80">生成新课件</h3>
-              {currentTopic && (
-                <p className="text-[11px] text-white/30">
-                  当前：{currentTopic}
-                </p>
-              )}
+              {currentTopic && <p className="text-[11px] text-white/30">当前：{currentTopic}</p>}
             </div>
           </div>
           <button
@@ -74,7 +97,9 @@ export function RegeneratePrompt({ currentTopic, onGenerate, onClose }: Regenera
 
         {/* Hot topics grid */}
         <div className="px-6 pb-2">
-          <p className="text-[11px] font-medium text-white/25 uppercase tracking-wider mb-2.5">热门主题</p>
+          <p className="text-[11px] font-medium text-white/25 uppercase tracking-wider mb-2.5">
+            热门主题
+          </p>
           <div className="grid grid-cols-3 gap-2">
             {HOT_TOPICS.map((t, i) => {
               const Icon = t.icon;
@@ -90,10 +115,15 @@ export function RegeneratePrompt({ currentTopic, onGenerate, onClose }: Regenera
                   {/* Hover glow */}
                   <div
                     className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md"
-                    style={{ background: `radial-gradient(circle at center, ${t.accent}15, transparent 70%)` }}
+                    style={{
+                      background: `radial-gradient(circle at center, ${t.accent}15, transparent 70%)`,
+                    }}
                   />
-                  <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br border border-white/[0.06]"
-                    style={{ backgroundImage: `linear-gradient(135deg, ${t.accent}15, transparent)` }}
+                  <div
+                    className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br border border-white/[0.06]"
+                    style={{
+                      backgroundImage: `linear-gradient(135deg, ${t.accent}15, transparent)`,
+                    }}
                   >
                     <Icon size={15} style={{ color: t.accent }} />
                   </div>
@@ -108,7 +138,9 @@ export function RegeneratePrompt({ currentTopic, onGenerate, onClose }: Regenera
 
         {/* Custom input */}
         <form onSubmit={handleSubmit} className="px-6 pb-5 pt-3">
-          <p className="text-[11px] font-medium text-white/25 uppercase tracking-wider mb-2">自定义主题</p>
+          <p className="text-[11px] font-medium text-white/25 uppercase tracking-wider mb-2">
+            自定义主题
+          </p>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <input

@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { autoFixContent, deepRepairContent, convertInlineLatexToUnicode } from '@/lib/slides/agent/content-schemas';
+import {
+  autoFixContent,
+  deepRepairContent,
+  convertInlineLatexToUnicode,
+} from '@/lib/slides/agent/content-schemas';
 
 describe('deepRepairContent', () => {
   it('repairs table rows with object cells', () => {
@@ -9,16 +13,16 @@ describe('deepRepairContent', () => {
       rows: [
         ['铅酸', '2.0'],
         [{ text: '锂离子', value: '3.7' }], // object cell with multiple string props
-        [{ name: '镍氢', content: '1.2' }],   // different keys
-        [{ unknown: 'obj' }, '8'],             // single string value, fallback
+        [{ name: '镍氢', content: '1.2' }], // different keys
+        [{ unknown: 'obj' }, '8'], // single string value, fallback
       ],
       summary: '总结',
     });
     expect(result.rows).toEqual([
       ['铅酸', '2.0'],
-      ['锂离子'],          // { text: '...' } -> extracts text field only
-      ['1.2'],             // { name: '镍氢', content: '1.2' } -> content matches first
-      ['obj', '8'],        // { unknown: 'obj' } -> expands all string values
+      ['锂离子'], // { text: '...' } -> extracts text field only
+      ['1.2'], // { name: '镍氢', content: '1.2' } -> content matches first
+      ['obj', '8'], // { unknown: 'obj' } -> expands all string values
     ]);
   });
 

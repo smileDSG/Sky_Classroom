@@ -77,8 +77,7 @@ describe('import-export — 设置导入导出', () => {
   // 往返测试（核心）
   // ================================================================
   it('往返测试：导出 → 修改 → 导入 → 导出 → JSON 一致', async () => {
-    const { exportSettings, importSettings, useSettingsStore } =
-      await getImportExport();
+    const { exportSettings, importSettings, useSettingsStore } = await getImportExport();
 
     // 1. 先导出原始状态
     const original = exportSettings();

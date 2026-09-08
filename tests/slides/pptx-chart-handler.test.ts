@@ -152,7 +152,10 @@ describe('pptx-chart-handler', () => {
 
     const slide2 = mockSlide();
     const el2 = baseChart('bar');
-    el2.data.series = [[1, 2], [3, 4]];
+    el2.data.series = [
+      [1, 2],
+      [3, 4],
+    ];
     addChartToSlide({ pptxSlide: slide2 as any, theme: baseTheme(), ratioPx2Inch: 96 }, el2);
     const [, , opts2] = slide2.addChart.mock.calls[0];
     expect(opts2.showLegend).toBe(true);

@@ -18,9 +18,7 @@
     {
       "id": "ai-01-001",
       "chapter": "01-ai-overview",
-      "knowledgePoints": [
-        "ai-definition"
-      ],
+      "knowledgePoints": ["ai-definition"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "以下哪项最能概括人工智能的研究目标？",
@@ -32,16 +30,12 @@
       ],
       "answer": "让机器表现出与感知、推理、学习、决策相关的智能行为",
       "explanation": "人工智能是一组让机器完成智能行为的方法和系统设计思想，不等同于单一模型或硬件加速。",
-      "errorTags": [
-        "概念边界混淆"
-      ]
+      "errorTags": ["概念边界混淆"]
     },
     {
       "id": "ai-01-002",
       "chapter": "01-ai-overview",
-      "knowledgePoints": [
-        "ai-ml-dl-llm-agent"
-      ],
+      "knowledgePoints": ["ai-ml-dl-llm-agent"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于 AI、ML、DL、LLM 与 Agent 的关系，正确的是哪些？",
@@ -57,202 +51,125 @@
         "大语言模型通常属于深度学习方法的应用"
       ],
       "explanation": "Agent 强调目标、工具、状态和行动闭环，不只是文本问答。",
-      "errorTags": [
-        "层级关系混淆",
-        "智能体理解不足"
-      ]
+      "errorTags": ["层级关系混淆", "智能体理解不足"]
     },
     {
       "id": "ai-01-003",
       "chapter": "01-ai-overview",
-      "knowledgePoints": [
-        "ai-system-elements"
-      ],
+      "knowledgePoints": ["ai-system-elements"],
       "type": "true_false",
       "difficulty": "easy",
       "stem": "一个真实 AI 系统只要接入能力强的大模型，就不需要单独设计数据、评价和安全机制。",
       "answer": "false",
       "explanation": "真实 AI 系统需要任务目标、数据或知识来源、模型机制、评价和安全约束共同支撑。",
-      "errorTags": [
-        "模型万能论"
-      ]
+      "errorTags": ["模型万能论"]
     },
     {
       "id": "ai-01-004",
       "chapter": "01-ai-overview",
-      "knowledgePoints": [
-        "trustworthy-ai-intro"
-      ],
+      "knowledgePoints": ["trustworthy-ai-intro"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "为什么学习资源生成系统需要可信 AI 机制？请列出至少三点。",
       "answer": "需要降低幻觉风险、提供来源引用、保护学生隐私、避免学术不诚信、支持错误复核和持续改进。",
       "explanation": "学习场景中学生容易把系统输出当作事实，因此必须让内容可追溯、可解释、可修正。",
-      "errorTags": [
-        "安全意识不足"
-      ]
+      "errorTags": ["安全意识不足"]
     },
     {
       "id": "ai-01-005",
       "chapter": "01-ai-overview",
-      "knowledgePoints": [
-        "人工智能定义",
-        "AI/ML/DL/LLM/Agent 关系",
-        "可信 AI"
-      ],
+      "knowledgePoints": ["人工智能定义", "AI/ML/DL/LLM/Agent 关系", "可信 AI"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“人工智能概述”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "人工智能定义",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["人工智能定义", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "人工智能定义",
       "explanation": "人工智能定义 是理解“人工智能概述”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-01-006",
       "chapter": "01-ai-overview",
-      "knowledgePoints": [
-        "人工智能定义",
-        "AI/ML/DL/LLM/Agent 关系",
-        "可信 AI"
-      ],
+      "knowledgePoints": ["人工智能定义", "AI/ML/DL/LLM/Agent 关系", "可信 AI"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“人工智能概述”，哪些知识点属于本章重点？",
-      "options": [
-        "人工智能定义",
-        "AI/ML/DL/LLM/Agent 关系",
-        "可信 AI",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "人工智能定义",
-        "AI/ML/DL/LLM/Agent 关系",
-        "可信 AI"
-      ],
+      "options": ["人工智能定义", "AI/ML/DL/LLM/Agent 关系", "可信 AI", "随机选择按钮颜色"],
+      "answer": ["人工智能定义", "AI/ML/DL/LLM/Agent 关系", "可信 AI"],
       "explanation": "本章重点围绕 人工智能定义、AI/ML/DL/LLM/Agent 关系、可信 AI 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-01-007",
       "chapter": "01-ai-overview",
-      "knowledgePoints": [
-        "人工智能定义",
-        "AI/ML/DL/LLM/Agent 关系",
-        "可信 AI"
-      ],
+      "knowledgePoints": ["人工智能定义", "AI/ML/DL/LLM/Agent 关系", "可信 AI"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“人工智能概述”中，把人工智能等同于单一大模型 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-01-008",
       "chapter": "01-ai-overview",
-      "knowledgePoints": [
-        "人工智能定义",
-        "AI/ML/DL/LLM/Agent 关系",
-        "可信 AI"
-      ],
+      "knowledgePoints": ["人工智能定义", "AI/ML/DL/LLM/Agent 关系", "可信 AI"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“AI/ML/DL/LLM/Agent 关系”在“人工智能概述”中的作用。",
       "answer": "AI/ML/DL/LLM/Agent 关系 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-01-009",
       "chapter": "01-ai-overview",
-      "knowledgePoints": [
-        "人工智能定义",
-        "AI/ML/DL/LLM/Agent 关系",
-        "可信 AI"
-      ],
+      "knowledgePoints": ["人工智能定义", "AI/ML/DL/LLM/Agent 关系", "可信 AI"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“人工智能概述”时反复混淆“AI/ML/DL/LLM/Agent 关系”和“可信 AI”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 人工智能定义 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-01-010",
       "chapter": "01-ai-overview",
-      "knowledgePoints": [
-        "人工智能定义",
-        "AI/ML/DL/LLM/Agent 关系",
-        "可信 AI"
-      ],
+      "knowledgePoints": ["人工智能定义", "AI/ML/DL/LLM/Agent 关系", "可信 AI"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“人工智能概述”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 人工智能定义 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-02-001",
       "chapter": "02-search-and-problem-solving",
-      "knowledgePoints": [
-        "state-space"
-      ],
+      "knowledgePoints": ["state-space"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "搜索问题建模中，以下哪一项通常不属于基本要素？",
-      "options": [
-        "初始状态",
-        "动作",
-        "目标测试",
-        "训练损失函数"
-      ],
+      "options": ["初始状态", "动作", "目标测试", "训练损失函数"],
       "answer": "训练损失函数",
       "explanation": "搜索问题通常由初始状态、动作、目标测试、路径代价等组成；训练损失函数属于机器学习训练概念。",
-      "errorTags": [
-        "章节概念混用"
-      ]
+      "errorTags": ["章节概念混用"]
     },
     {
       "id": "ai-02-002",
       "chapter": "02-search-and-problem-solving",
-      "knowledgePoints": [
-        "bfs-dfs"
-      ],
+      "knowledgePoints": ["bfs-dfs"],
       "type": "true_false",
       "difficulty": "easy",
       "stem": "BFS 通常按层扩展节点，在边代价相同的情况下可找到最短步数路径。",
       "answer": "true",
       "explanation": "BFS 的层序扩展特性使其适合无权或等权图的最短步数搜索。",
-      "errorTags": [
-        "搜索策略混淆"
-      ]
+      "errorTags": ["搜索策略混淆"]
     },
     {
       "id": "ai-02-003",
       "chapter": "02-search-and-problem-solving",
-      "knowledgePoints": [
-        "heuristic-search",
-        "a-star"
-      ],
+      "knowledgePoints": ["heuristic-search", "a-star"],
       "type": "single_choice",
       "difficulty": "medium",
       "stem": "A* 搜索中的 f(n) 通常表示什么？",
@@ -264,203 +181,125 @@
       ],
       "answer": "已付代价 g(n) 与估计剩余代价 h(n) 之和",
       "explanation": "A* 使用 f(n)=g(n)+h(n) 对待扩展节点排序。",
-      "errorTags": [
-        "公式含义不清"
-      ]
+      "errorTags": ["公式含义不清"]
     },
     {
       "id": "ai-02-004",
       "chapter": "02-search-and-problem-solving",
-      "knowledgePoints": [
-        "state-space",
-        "heuristic-search"
-      ],
+      "knowledgePoints": ["state-space", "heuristic-search"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "把“为学生规划两周机器学习学习路径”类比为搜索问题，请说明状态、动作、目标和代价可以如何定义。",
       "answer": "状态可以是学生当前掌握度和已完成资源；动作可以是学习某讲义、做题或运行案例；目标是达到指定知识点掌握度；代价可以是时间、难度和认知负荷。",
       "explanation": "学习路径规划可以借用搜索思想，把知识点和资源组织成可计算路径。",
-      "errorTags": [
-        "迁移应用能力弱"
-      ]
+      "errorTags": ["迁移应用能力弱"]
     },
     {
       "id": "ai-02-005",
       "chapter": "02-search-and-problem-solving",
-      "knowledgePoints": [
-        "状态空间",
-        "BFS 与 DFS",
-        "A* 搜索"
-      ],
+      "knowledgePoints": ["状态空间", "BFS 与 DFS", "A* 搜索"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“搜索与问题求解”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "状态空间",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["状态空间", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "状态空间",
       "explanation": "状态空间 是理解“搜索与问题求解”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-02-006",
       "chapter": "02-search-and-problem-solving",
-      "knowledgePoints": [
-        "状态空间",
-        "BFS 与 DFS",
-        "A* 搜索"
-      ],
+      "knowledgePoints": ["状态空间", "BFS 与 DFS", "A* 搜索"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“搜索与问题求解”，哪些知识点属于本章重点？",
-      "options": [
-        "状态空间",
-        "BFS 与 DFS",
-        "A* 搜索",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "状态空间",
-        "BFS 与 DFS",
-        "A* 搜索"
-      ],
+      "options": ["状态空间", "BFS 与 DFS", "A* 搜索", "随机选择按钮颜色"],
+      "answer": ["状态空间", "BFS 与 DFS", "A* 搜索"],
       "explanation": "本章重点围绕 状态空间、BFS 与 DFS、A* 搜索 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-02-007",
       "chapter": "02-search-and-problem-solving",
-      "knowledgePoints": [
-        "状态空间",
-        "BFS 与 DFS",
-        "A* 搜索"
-      ],
+      "knowledgePoints": ["状态空间", "BFS 与 DFS", "A* 搜索"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“搜索与问题求解”中，忽略启发函数对最优性的条件限制 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-02-008",
       "chapter": "02-search-and-problem-solving",
-      "knowledgePoints": [
-        "状态空间",
-        "BFS 与 DFS",
-        "A* 搜索"
-      ],
+      "knowledgePoints": ["状态空间", "BFS 与 DFS", "A* 搜索"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“BFS 与 DFS”在“搜索与问题求解”中的作用。",
       "answer": "BFS 与 DFS 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-02-009",
       "chapter": "02-search-and-problem-solving",
-      "knowledgePoints": [
-        "状态空间",
-        "BFS 与 DFS",
-        "A* 搜索"
-      ],
+      "knowledgePoints": ["状态空间", "BFS 与 DFS", "A* 搜索"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“搜索与问题求解”时反复混淆“BFS 与 DFS”和“A* 搜索”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 状态空间 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-02-010",
       "chapter": "02-search-and-problem-solving",
-      "knowledgePoints": [
-        "状态空间",
-        "BFS 与 DFS",
-        "A* 搜索"
-      ],
+      "knowledgePoints": ["状态空间", "BFS 与 DFS", "A* 搜索"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“搜索与问题求解”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 状态空间 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-03-001",
       "chapter": "03-knowledge-representation",
-      "knowledgePoints": [
-        "knowledge-graph"
-      ],
+      "knowledgePoints": ["knowledge-graph"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "知识图谱中通常用什么表示概念之间的关系？",
-      "options": [
-        "节点和边",
-        "像素矩阵",
-        "损失函数",
-        "批大小"
-      ],
+      "options": ["节点和边", "像素矩阵", "损失函数", "批大小"],
       "answer": "节点和边",
       "explanation": "知识图谱以节点表示实体或概念，以边表示关系。",
-      "errorTags": [
-        "知识图谱基础薄弱"
-      ]
+      "errorTags": ["知识图谱基础薄弱"]
     },
     {
       "id": "ai-03-002",
       "chapter": "03-knowledge-representation",
-      "knowledgePoints": [
-        "production-rules"
-      ],
+      "knowledgePoints": ["production-rules"],
       "type": "short_answer",
       "difficulty": "easy",
       "stem": "请写出一个用于判断过拟合风险的 IF-THEN 规则。",
       "answer": "示例：IF 训练集误差低 AND 测试集误差高 THEN 模型可能过拟合。",
       "explanation": "产生式规则适合表达条件到结论的专家经验。",
-      "errorTags": [
-        "规则表达不清"
-      ]
+      "errorTags": ["规则表达不清"]
     },
     {
       "id": "ai-03-003",
       "chapter": "03-knowledge-representation",
-      "knowledgePoints": [
-        "ontology",
-        "knowledge-graph"
-      ],
+      "knowledgePoints": ["ontology", "knowledge-graph"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "知识图谱的价值只在于可视化好看，不参与检索、推理或学习路径规划。",
       "answer": "false",
       "explanation": "知识图谱可以支持前置知识判断、路径排序、薄弱点定位和可解释推荐。",
-      "errorTags": [
-        "工具用途理解不足"
-      ]
+      "errorTags": ["工具用途理解不足"]
     },
     {
       "id": "ai-03-004",
       "chapter": "03-knowledge-representation",
-      "knowledgePoints": [
-        "propositional-logic",
-        "knowledge-graph"
-      ],
+      "knowledgePoints": ["propositional-logic", "knowledge-graph"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "在课程知识库中，知识图谱可以用于哪些任务？",
@@ -470,140 +309,82 @@
         "辅助学习路径排序",
         "替代所有模型训练过程"
       ],
-      "answer": [
-        "标注知识点前置关系",
-        "定位学生薄弱点",
-        "辅助学习路径排序"
-      ],
+      "answer": ["标注知识点前置关系", "定位学生薄弱点", "辅助学习路径排序"],
       "explanation": "知识图谱是结构化知识组织工具，不能替代所有模型训练。",
-      "errorTags": [
-        "能力边界混淆"
-      ]
+      "errorTags": ["能力边界混淆"]
     },
     {
       "id": "ai-03-005",
       "chapter": "03-knowledge-representation",
-      "knowledgePoints": [
-        "命题逻辑",
-        "产生式规则",
-        "知识图谱"
-      ],
+      "knowledgePoints": ["命题逻辑", "产生式规则", "知识图谱"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“知识表示与推理”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "命题逻辑",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["命题逻辑", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "命题逻辑",
       "explanation": "命题逻辑 是理解“知识表示与推理”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-03-006",
       "chapter": "03-knowledge-representation",
-      "knowledgePoints": [
-        "命题逻辑",
-        "产生式规则",
-        "知识图谱"
-      ],
+      "knowledgePoints": ["命题逻辑", "产生式规则", "知识图谱"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“知识表示与推理”，哪些知识点属于本章重点？",
-      "options": [
-        "命题逻辑",
-        "产生式规则",
-        "知识图谱",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "命题逻辑",
-        "产生式规则",
-        "知识图谱"
-      ],
+      "options": ["命题逻辑", "产生式规则", "知识图谱", "随机选择按钮颜色"],
+      "answer": ["命题逻辑", "产生式规则", "知识图谱"],
       "explanation": "本章重点围绕 命题逻辑、产生式规则、知识图谱 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-03-007",
       "chapter": "03-knowledge-representation",
-      "knowledgePoints": [
-        "命题逻辑",
-        "产生式规则",
-        "知识图谱"
-      ],
+      "knowledgePoints": ["命题逻辑", "产生式规则", "知识图谱"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“知识表示与推理”中，认为知识图谱只是展示用图片 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-03-008",
       "chapter": "03-knowledge-representation",
-      "knowledgePoints": [
-        "命题逻辑",
-        "产生式规则",
-        "知识图谱"
-      ],
+      "knowledgePoints": ["命题逻辑", "产生式规则", "知识图谱"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“产生式规则”在“知识表示与推理”中的作用。",
       "answer": "产生式规则 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-03-009",
       "chapter": "03-knowledge-representation",
-      "knowledgePoints": [
-        "命题逻辑",
-        "产生式规则",
-        "知识图谱"
-      ],
+      "knowledgePoints": ["命题逻辑", "产生式规则", "知识图谱"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“知识表示与推理”时反复混淆“产生式规则”和“知识图谱”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 命题逻辑 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-03-010",
       "chapter": "03-knowledge-representation",
-      "knowledgePoints": [
-        "命题逻辑",
-        "产生式规则",
-        "知识图谱"
-      ],
+      "knowledgePoints": ["命题逻辑", "产生式规则", "知识图谱"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“知识表示与推理”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 命题逻辑 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-04-001",
       "chapter": "04-machine-learning-basics",
-      "knowledgePoints": [
-        "ml-workflow"
-      ],
+      "knowledgePoints": ["ml-workflow"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "以下哪一项最符合机器学习基本流程？",
@@ -615,31 +396,23 @@
       ],
       "answer": "数据准备 -> 特征处理 -> 训练 -> 评价 -> 部署监控",
       "explanation": "机器学习是围绕数据、模型和评价形成的工程流程。",
-      "errorTags": [
-        "流程顺序不清"
-      ]
+      "errorTags": ["流程顺序不清"]
     },
     {
       "id": "ai-04-002",
       "chapter": "04-machine-learning-basics",
-      "knowledgePoints": [
-        "train-validation-test"
-      ],
+      "knowledgePoints": ["train-validation-test"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "训练集、验证集和测试集分别用于什么？",
       "answer": "训练集用于学习参数，验证集用于调参和选择模型，测试集用于最终评估未见数据上的泛化能力。",
       "explanation": "三者用途不同，测试集不应被反复用于调参。",
-      "errorTags": [
-        "数据划分混淆"
-      ]
+      "errorTags": ["数据划分混淆"]
     },
     {
       "id": "ai-04-003",
       "chapter": "04-machine-learning-basics",
-      "knowledgePoints": [
-        "overfitting-generalization"
-      ],
+      "knowledgePoints": ["overfitting-generalization"],
       "type": "single_choice",
       "difficulty": "medium",
       "stem": "以下哪种现象最能说明模型可能过拟合？",
@@ -651,395 +424,239 @@
       ],
       "answer": "训练集表现好但测试集表现差",
       "explanation": "过拟合通常表现为模型记住训练数据细节，泛化到测试集时效果下降。",
-      "errorTags": [
-        "过拟合概念不清"
-      ]
+      "errorTags": ["过拟合概念不清"]
     },
     {
       "id": "ai-04-004",
       "chapter": "04-machine-learning-basics",
-      "knowledgePoints": [
-        "classification-metrics"
-      ],
+      "knowledgePoints": ["classification-metrics"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "某二分类任务中正类很少，模型全部预测为负类也有 95% 准确率。为什么只看准确率有问题？",
       "answer": "类别不平衡时准确率可能掩盖正类识别失败，应结合精确率、召回率、F1 和混淆矩阵分析。",
       "explanation": "评价指标要匹配任务风险，尤其关注少数类或高代价错误。",
-      "errorTags": [
-        "评价指标单一"
-      ]
+      "errorTags": ["评价指标单一"]
     },
     {
       "id": "ai-04-005",
       "chapter": "04-machine-learning-basics",
-      "knowledgePoints": [
-        "训练集/验证集/测试集",
-        "过拟合",
-        "评价指标"
-      ],
+      "knowledgePoints": ["训练集/验证集/测试集", "过拟合", "评价指标"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“机器学习基础”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "训练集/验证集/测试集",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["训练集/验证集/测试集", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "训练集/验证集/测试集",
       "explanation": "训练集/验证集/测试集 是理解“机器学习基础”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-04-006",
       "chapter": "04-machine-learning-basics",
-      "knowledgePoints": [
-        "训练集/验证集/测试集",
-        "过拟合",
-        "评价指标"
-      ],
+      "knowledgePoints": ["训练集/验证集/测试集", "过拟合", "评价指标"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“机器学习基础”，哪些知识点属于本章重点？",
-      "options": [
-        "训练集/验证集/测试集",
-        "过拟合",
-        "评价指标",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "训练集/验证集/测试集",
-        "过拟合",
-        "评价指标"
-      ],
+      "options": ["训练集/验证集/测试集", "过拟合", "评价指标", "随机选择按钮颜色"],
+      "answer": ["训练集/验证集/测试集", "过拟合", "评价指标"],
       "explanation": "本章重点围绕 训练集/验证集/测试集、过拟合、评价指标 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-04-007",
       "chapter": "04-machine-learning-basics",
-      "knowledgePoints": [
-        "训练集/验证集/测试集",
-        "过拟合",
-        "评价指标"
-      ],
+      "knowledgePoints": ["训练集/验证集/测试集", "过拟合", "评价指标"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“机器学习基础”中，只看训练集准确率判断模型好坏 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-04-008",
       "chapter": "04-machine-learning-basics",
-      "knowledgePoints": [
-        "训练集/验证集/测试集",
-        "过拟合",
-        "评价指标"
-      ],
+      "knowledgePoints": ["训练集/验证集/测试集", "过拟合", "评价指标"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“过拟合”在“机器学习基础”中的作用。",
       "answer": "过拟合 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-04-009",
       "chapter": "04-machine-learning-basics",
-      "knowledgePoints": [
-        "训练集/验证集/测试集",
-        "过拟合",
-        "评价指标"
-      ],
+      "knowledgePoints": ["训练集/验证集/测试集", "过拟合", "评价指标"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“机器学习基础”时反复混淆“过拟合”和“评价指标”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 训练集/验证集/测试集 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-04-010",
       "chapter": "04-machine-learning-basics",
-      "knowledgePoints": [
-        "训练集/验证集/测试集",
-        "过拟合",
-        "评价指标"
-      ],
+      "knowledgePoints": ["训练集/验证集/测试集", "过拟合", "评价指标"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“机器学习基础”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 训练集/验证集/测试集 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-05-001",
       "chapter": "05-supervised-learning",
-      "knowledgePoints": [
-        "supervised-learning"
-      ],
+      "knowledgePoints": ["supervised-learning"],
       "type": "true_false",
       "difficulty": "easy",
       "stem": "监督学习通常使用带标签的数据进行训练。",
       "answer": "true",
       "explanation": "监督学习的关键是输入样本和对应标签。",
-      "errorTags": [
-        "监督学习定义不清"
-      ]
+      "errorTags": ["监督学习定义不清"]
     },
     {
       "id": "ai-05-002",
       "chapter": "05-supervised-learning",
-      "knowledgePoints": [
-        "classification-regression"
-      ],
+      "knowledgePoints": ["classification-regression"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "预测房价通常属于哪类监督学习任务？",
-      "options": [
-        "回归",
-        "分类",
-        "聚类",
-        "搜索"
-      ],
+      "options": ["回归", "分类", "聚类", "搜索"],
       "answer": "回归",
       "explanation": "房价是连续数值，通常属于回归任务。",
-      "errorTags": [
-        "分类回归混淆"
-      ]
+      "errorTags": ["分类回归混淆"]
     },
     {
       "id": "ai-05-003",
       "chapter": "05-supervised-learning",
-      "knowledgePoints": [
-        "knn"
-      ],
+      "knowledgePoints": ["knn"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "哪些因素会明显影响 KNN 的分类效果？",
-      "options": [
-        "K 值",
-        "距离度量",
-        "特征尺度",
-        "网页背景颜色"
-      ],
-      "answer": [
-        "K 值",
-        "距离度量",
-        "特征尺度"
-      ],
+      "options": ["K 值", "距离度量", "特征尺度", "网页背景颜色"],
+      "answer": ["K 值", "距离度量", "特征尺度"],
       "explanation": "KNN 基于距离和邻居投票，对 K 值、距离定义和特征缩放敏感。",
-      "errorTags": [
-        "算法影响因素不清"
-      ]
+      "errorTags": ["算法影响因素不清"]
     },
     {
       "id": "ai-05-004",
       "chapter": "05-supervised-learning",
-      "knowledgePoints": [
-        "decision-tree",
-        "overfitting-generalization"
-      ],
+      "knowledgePoints": ["decision-tree", "overfitting-generalization"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "一棵决策树训练准确率 100%，测试准确率 72%。请给出可能原因和一种改进策略。",
       "answer": "可能是树过深导致过拟合。可限制最大深度、设置最小叶子样本数、剪枝或使用交叉验证选择参数。",
       "explanation": "决策树解释性强，但复杂度过高时容易记住训练数据。",
-      "errorTags": [
-        "过拟合诊断弱"
-      ]
+      "errorTags": ["过拟合诊断弱"]
     },
     {
       "id": "ai-05-005",
       "chapter": "05-supervised-learning",
-      "knowledgePoints": [
-        "分类与回归",
-        "KNN",
-        "决策树"
-      ],
+      "knowledgePoints": ["分类与回归", "KNN", "决策树"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“监督学习”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "分类与回归",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["分类与回归", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "分类与回归",
       "explanation": "分类与回归 是理解“监督学习”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-05-006",
       "chapter": "05-supervised-learning",
-      "knowledgePoints": [
-        "分类与回归",
-        "KNN",
-        "决策树"
-      ],
+      "knowledgePoints": ["分类与回归", "KNN", "决策树"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“监督学习”，哪些知识点属于本章重点？",
-      "options": [
-        "分类与回归",
-        "KNN",
-        "决策树",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "分类与回归",
-        "KNN",
-        "决策树"
-      ],
+      "options": ["分类与回归", "KNN", "决策树", "随机选择按钮颜色"],
+      "answer": ["分类与回归", "KNN", "决策树"],
       "explanation": "本章重点围绕 分类与回归、KNN、决策树 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-05-007",
       "chapter": "05-supervised-learning",
-      "knowledgePoints": [
-        "分类与回归",
-        "KNN",
-        "决策树"
-      ],
+      "knowledgePoints": ["分类与回归", "KNN", "决策树"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“监督学习”中，认为复杂模型一定优于简单基线 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-05-008",
       "chapter": "05-supervised-learning",
-      "knowledgePoints": [
-        "分类与回归",
-        "KNN",
-        "决策树"
-      ],
+      "knowledgePoints": ["分类与回归", "KNN", "决策树"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“KNN”在“监督学习”中的作用。",
       "answer": "KNN 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-05-009",
       "chapter": "05-supervised-learning",
-      "knowledgePoints": [
-        "分类与回归",
-        "KNN",
-        "决策树"
-      ],
+      "knowledgePoints": ["分类与回归", "KNN", "决策树"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“监督学习”时反复混淆“KNN”和“决策树”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 分类与回归 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-05-010",
       "chapter": "05-supervised-learning",
-      "knowledgePoints": [
-        "分类与回归",
-        "KNN",
-        "决策树"
-      ],
+      "knowledgePoints": ["分类与回归", "KNN", "决策树"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“监督学习”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 分类与回归 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-06-001",
       "chapter": "06-neural-networks",
-      "knowledgePoints": [
-        "neuron-activation"
-      ],
+      "knowledgePoints": ["neuron-activation"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "神经网络中激活函数的主要作用是什么？",
-      "options": [
-        "引入非线性表达能力",
-        "删除训练数据",
-        "替代测试集",
-        "保证模型永不出错"
-      ],
+      "options": ["引入非线性表达能力", "删除训练数据", "替代测试集", "保证模型永不出错"],
       "answer": "引入非线性表达能力",
       "explanation": "没有非线性激活，多层线性变换仍可等价为单层线性变换。",
-      "errorTags": [
-        "激活函数作用不清"
-      ]
+      "errorTags": ["激活函数作用不清"]
     },
     {
       "id": "ai-06-002",
       "chapter": "06-neural-networks",
-      "knowledgePoints": [
-        "forward-loss"
-      ],
+      "knowledgePoints": ["forward-loss"],
       "type": "true_false",
       "difficulty": "easy",
       "stem": "损失函数用于度量模型预测与真实标签之间的差距。",
       "answer": "true",
       "explanation": "训练过程通过最小化损失来更新模型参数。",
-      "errorTags": [
-        "训练闭环不清"
-      ]
+      "errorTags": ["训练闭环不清"]
     },
     {
       "id": "ai-06-003",
       "chapter": "06-neural-networks",
-      "knowledgePoints": [
-        "backprop-gradient"
-      ],
+      "knowledgePoints": ["backprop-gradient"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用一句话解释反向传播的直觉含义。",
       "answer": "反向传播利用链式法则计算损失对各层参数的梯度，从而指导参数朝降低损失的方向更新。",
       "explanation": "反向传播不是简单反向运行网络，而是梯度计算方法。",
-      "errorTags": [
-        "反向传播误解"
-      ]
+      "errorTags": ["反向传播误解"]
     },
     {
       "id": "ai-06-004",
       "chapter": "06-neural-networks",
-      "knowledgePoints": [
-        "cnn"
-      ],
+      "knowledgePoints": ["cnn"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "CNN 适合图像任务的原因包括哪些？",
@@ -1049,171 +666,94 @@
         "池化可降低空间尺寸",
         "CNN 不需要任何数据"
       ],
-      "answer": [
-        "卷积核提取局部特征",
-        "参数共享降低复杂度",
-        "池化可降低空间尺寸"
-      ],
+      "answer": ["卷积核提取局部特征", "参数共享降低复杂度", "池化可降低空间尺寸"],
       "explanation": "CNN 利用图像局部结构和空间层级特征，但仍需要数据和训练。",
-      "errorTags": [
-        "CNN 机制不清"
-      ]
+      "errorTags": ["CNN 机制不清"]
     },
     {
       "id": "ai-06-005",
       "chapter": "06-neural-networks",
-      "knowledgePoints": [
-        "激活函数",
-        "损失函数",
-        "反向传播",
-        "CNN"
-      ],
+      "knowledgePoints": ["激活函数", "损失函数", "反向传播", "CNN"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“神经网络与深度学习”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "激活函数",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["激活函数", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "激活函数",
       "explanation": "激活函数 是理解“神经网络与深度学习”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-06-006",
       "chapter": "06-neural-networks",
-      "knowledgePoints": [
-        "激活函数",
-        "损失函数",
-        "反向传播",
-        "CNN"
-      ],
+      "knowledgePoints": ["激活函数", "损失函数", "反向传播", "CNN"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“神经网络与深度学习”，哪些知识点属于本章重点？",
-      "options": [
-        "激活函数",
-        "损失函数",
-        "反向传播",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "激活函数",
-        "损失函数",
-        "反向传播"
-      ],
+      "options": ["激活函数", "损失函数", "反向传播", "随机选择按钮颜色"],
+      "answer": ["激活函数", "损失函数", "反向传播"],
       "explanation": "本章重点围绕 激活函数、损失函数、反向传播 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-06-007",
       "chapter": "06-neural-networks",
-      "knowledgePoints": [
-        "激活函数",
-        "损失函数",
-        "反向传播",
-        "CNN"
-      ],
+      "knowledgePoints": ["激活函数", "损失函数", "反向传播", "CNN"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“神经网络与深度学习”中，把反向传播理解为反向运行网络 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-06-008",
       "chapter": "06-neural-networks",
-      "knowledgePoints": [
-        "激活函数",
-        "损失函数",
-        "反向传播",
-        "CNN"
-      ],
+      "knowledgePoints": ["激活函数", "损失函数", "反向传播", "CNN"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“损失函数”在“神经网络与深度学习”中的作用。",
       "answer": "损失函数 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-06-009",
       "chapter": "06-neural-networks",
-      "knowledgePoints": [
-        "激活函数",
-        "损失函数",
-        "反向传播",
-        "CNN"
-      ],
+      "knowledgePoints": ["激活函数", "损失函数", "反向传播", "CNN"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“神经网络与深度学习”时反复混淆“损失函数”和“反向传播”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 CNN 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-06-010",
       "chapter": "06-neural-networks",
-      "knowledgePoints": [
-        "激活函数",
-        "损失函数",
-        "反向传播",
-        "CNN"
-      ],
+      "knowledgePoints": ["激活函数", "损失函数", "反向传播", "CNN"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“神经网络与深度学习”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 激活函数 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-07-001",
       "chapter": "07-natural-language-processing",
-      "knowledgePoints": [
-        "nlp-tasks"
-      ],
+      "knowledgePoints": ["nlp-tasks"],
       "type": "multiple_choice",
       "difficulty": "easy",
       "stem": "以下哪些属于自然语言处理任务？",
-      "options": [
-        "文本分类",
-        "机器翻译",
-        "自动摘要",
-        "图像像素增强"
-      ],
-      "answer": [
-        "文本分类",
-        "机器翻译",
-        "自动摘要"
-      ],
+      "options": ["文本分类", "机器翻译", "自动摘要", "图像像素增强"],
+      "answer": ["文本分类", "机器翻译", "自动摘要"],
       "explanation": "NLP 处理语言文本，图像像素增强属于视觉处理范畴。",
-      "errorTags": [
-        "任务归类不清"
-      ]
+      "errorTags": ["任务归类不清"]
     },
     {
       "id": "ai-07-002",
       "chapter": "07-natural-language-processing",
-      "knowledgePoints": [
-        "text-representation"
-      ],
+      "knowledgePoints": ["text-representation"],
       "type": "single_choice",
       "difficulty": "medium",
       "stem": "词袋模型的主要局限是什么？",
@@ -1225,572 +765,330 @@
       ],
       "answer": "通常忽略词序和上下文",
       "explanation": "词袋模型简单有效，但对词序和上下文语义表达不足。",
-      "errorTags": [
-        "文本表示理解不足"
-      ]
+      "errorTags": ["文本表示理解不足"]
     },
     {
       "id": "ai-07-003",
       "chapter": "07-natural-language-processing",
-      "knowledgePoints": [
-        "attention",
-        "transformer"
-      ],
+      "knowledgePoints": ["attention", "transformer"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "注意力机制为什么对长文本建模有帮助？",
       "answer": "它允许模型在处理当前位置时关注输入中的其他相关位置，从而捕捉长距离依赖和上下文关系。",
       "explanation": "注意力机制让模型不必只依赖局部或顺序状态传递。",
-      "errorTags": [
-        "注意力直觉不足"
-      ]
+      "errorTags": ["注意力直觉不足"]
     },
     {
       "id": "ai-07-004",
       "chapter": "07-natural-language-processing",
-      "knowledgePoints": [
-        "hallucination-control"
-      ],
+      "knowledgePoints": ["hallucination-control"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "一个大模型回答非常流畅，但给出的论文引用不存在。这个问题属于什么风险？应如何缓解？",
       "answer": "属于幻觉风险。可通过 RAG 检索、来源引用校验、事实核验、低置信度标记和人工复核缓解。",
       "explanation": "语言流畅不代表事实可靠，教学系统必须核验来源。",
-      "errorTags": [
-        "幻觉风险识别弱"
-      ]
+      "errorTags": ["幻觉风险识别弱"]
     },
     {
       "id": "ai-07-005",
       "chapter": "07-natural-language-processing",
-      "knowledgePoints": [
-        "文本表示",
-        "注意力机制",
-        "Transformer",
-        "幻觉"
-      ],
+      "knowledgePoints": ["文本表示", "注意力机制", "Transformer", "幻觉"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“自然语言处理”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "文本表示",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["文本表示", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "文本表示",
       "explanation": "文本表示 是理解“自然语言处理”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-07-006",
       "chapter": "07-natural-language-processing",
-      "knowledgePoints": [
-        "文本表示",
-        "注意力机制",
-        "Transformer",
-        "幻觉"
-      ],
+      "knowledgePoints": ["文本表示", "注意力机制", "Transformer", "幻觉"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“自然语言处理”，哪些知识点属于本章重点？",
-      "options": [
-        "文本表示",
-        "注意力机制",
-        "Transformer",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "文本表示",
-        "注意力机制",
-        "Transformer"
-      ],
+      "options": ["文本表示", "注意力机制", "Transformer", "随机选择按钮颜色"],
+      "answer": ["文本表示", "注意力机制", "Transformer"],
       "explanation": "本章重点围绕 文本表示、注意力机制、Transformer 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-07-007",
       "chapter": "07-natural-language-processing",
-      "knowledgePoints": [
-        "文本表示",
-        "注意力机制",
-        "Transformer",
-        "幻觉"
-      ],
+      "knowledgePoints": ["文本表示", "注意力机制", "Transformer", "幻觉"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“自然语言处理”中，认为文本生成流畅就一定正确 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-07-008",
       "chapter": "07-natural-language-processing",
-      "knowledgePoints": [
-        "文本表示",
-        "注意力机制",
-        "Transformer",
-        "幻觉"
-      ],
+      "knowledgePoints": ["文本表示", "注意力机制", "Transformer", "幻觉"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“注意力机制”在“自然语言处理”中的作用。",
       "answer": "注意力机制 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-07-009",
       "chapter": "07-natural-language-processing",
-      "knowledgePoints": [
-        "文本表示",
-        "注意力机制",
-        "Transformer",
-        "幻觉"
-      ],
+      "knowledgePoints": ["文本表示", "注意力机制", "Transformer", "幻觉"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“自然语言处理”时反复混淆“注意力机制”和“Transformer”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 幻觉 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-07-010",
       "chapter": "07-natural-language-processing",
-      "knowledgePoints": [
-        "文本表示",
-        "注意力机制",
-        "Transformer",
-        "幻觉"
-      ],
+      "knowledgePoints": ["文本表示", "注意力机制", "Transformer", "幻觉"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“自然语言处理”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 文本表示 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-08-001",
       "chapter": "08-computer-vision",
-      "knowledgePoints": [
-        "cv-tasks"
-      ],
+      "knowledgePoints": ["cv-tasks"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "目标检测与图像分类相比，额外需要输出什么？",
-      "options": [
-        "对象位置",
-        "训练轮数",
-        "网页标题",
-        "文本摘要"
-      ],
+      "options": ["对象位置", "训练轮数", "网页标题", "文本摘要"],
       "answer": "对象位置",
       "explanation": "目标检测需要同时识别类别和位置，通常输出边界框。",
-      "errorTags": [
-        "视觉任务混淆"
-      ]
+      "errorTags": ["视觉任务混淆"]
     },
     {
       "id": "ai-08-002",
       "chapter": "08-computer-vision",
-      "knowledgePoints": [
-        "data-augmentation"
-      ],
+      "knowledgePoints": ["data-augmentation"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "常见图像数据增强方式包括哪些？",
-      "options": [
-        "随机裁剪",
-        "水平翻转",
-        "颜色扰动",
-        "泄露测试集标签"
-      ],
-      "answer": [
-        "随机裁剪",
-        "水平翻转",
-        "颜色扰动"
-      ],
+      "options": ["随机裁剪", "水平翻转", "颜色扰动", "泄露测试集标签"],
+      "answer": ["随机裁剪", "水平翻转", "颜色扰动"],
       "explanation": "数据增强增加训练样本变化，但不能引入测试集标签等泄露信息。",
-      "errorTags": [
-        "数据增强边界不清"
-      ]
+      "errorTags": ["数据增强边界不清"]
     },
     {
       "id": "ai-08-003",
       "chapter": "08-computer-vision",
-      "knowledgePoints": [
-        "transfer-learning"
-      ],
+      "knowledgePoints": ["transfer-learning"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "迁移学习可以使用预训练模型降低小数据场景的训练成本，但仍需关注新任务数据分布。",
       "answer": "true",
       "explanation": "预训练模型提供通用能力，但目标任务差异过大时仍需评估和针对任务进一步调整。",
-      "errorTags": [
-        "迁移学习误解"
-      ]
+      "errorTags": ["迁移学习误解"]
     },
     {
       "id": "ai-08-004",
       "chapter": "08-computer-vision",
-      "knowledgePoints": [
-        "privacy-security"
-      ],
+      "knowledgePoints": ["privacy-security"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "如果课程项目使用学生课堂照片训练视觉模型，需要注意哪些风险？",
       "answer": "需要关注肖像和隐私授权、数据最小化、脱敏存储、访问控制、用途限制和删除机制。",
       "explanation": "图像数据可能包含敏感个人信息，不能只从技术准确率角度评估。",
-      "errorTags": [
-        "隐私意识不足"
-      ]
+      "errorTags": ["隐私意识不足"]
     },
     {
       "id": "ai-08-005",
       "chapter": "08-computer-vision",
-      "knowledgePoints": [
-        "图像分类",
-        "目标检测",
-        "数据增强",
-        "迁移学习"
-      ],
+      "knowledgePoints": ["图像分类", "目标检测", "数据增强", "迁移学习"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“计算机视觉”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "图像分类",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["图像分类", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "图像分类",
       "explanation": "图像分类 是理解“计算机视觉”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-08-006",
       "chapter": "08-computer-vision",
-      "knowledgePoints": [
-        "图像分类",
-        "目标检测",
-        "数据增强",
-        "迁移学习"
-      ],
+      "knowledgePoints": ["图像分类", "目标检测", "数据增强", "迁移学习"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“计算机视觉”，哪些知识点属于本章重点？",
-      "options": [
-        "图像分类",
-        "目标检测",
-        "数据增强",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "图像分类",
-        "目标检测",
-        "数据增强"
-      ],
+      "options": ["图像分类", "目标检测", "数据增强", "随机选择按钮颜色"],
+      "answer": ["图像分类", "目标检测", "数据增强"],
       "explanation": "本章重点围绕 图像分类、目标检测、数据增强 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-08-007",
       "chapter": "08-computer-vision",
-      "knowledgePoints": [
-        "图像分类",
-        "目标检测",
-        "数据增强",
-        "迁移学习"
-      ],
+      "knowledgePoints": ["图像分类", "目标检测", "数据增强", "迁移学习"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“计算机视觉”中，把所有视觉任务都当作分类任务 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-08-008",
       "chapter": "08-computer-vision",
-      "knowledgePoints": [
-        "图像分类",
-        "目标检测",
-        "数据增强",
-        "迁移学习"
-      ],
+      "knowledgePoints": ["图像分类", "目标检测", "数据增强", "迁移学习"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“目标检测”在“计算机视觉”中的作用。",
       "answer": "目标检测 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-08-009",
       "chapter": "08-computer-vision",
-      "knowledgePoints": [
-        "图像分类",
-        "目标检测",
-        "数据增强",
-        "迁移学习"
-      ],
+      "knowledgePoints": ["图像分类", "目标检测", "数据增强", "迁移学习"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“计算机视觉”时反复混淆“目标检测”和“数据增强”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 迁移学习 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-08-010",
       "chapter": "08-computer-vision",
-      "knowledgePoints": [
-        "图像分类",
-        "目标检测",
-        "数据增强",
-        "迁移学习"
-      ],
+      "knowledgePoints": ["图像分类", "目标检测", "数据增强", "迁移学习"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“计算机视觉”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 图像分类 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-09-001",
       "chapter": "09-reinforcement-learning",
-      "knowledgePoints": [
-        "rl-agent-env"
-      ],
+      "knowledgePoints": ["rl-agent-env"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "强化学习中，智能体根据什么信号调整策略？",
-      "options": [
-        "奖励",
-        "网页颜色",
-        "文件名长度",
-        "数据库表数量"
-      ],
+      "options": ["奖励", "网页颜色", "文件名长度", "数据库表数量"],
       "answer": "奖励",
       "explanation": "强化学习通过奖励信号评价行动结果并优化长期收益。",
-      "errorTags": [
-        "强化学习基础薄弱"
-      ]
+      "errorTags": ["强化学习基础薄弱"]
     },
     {
       "id": "ai-09-002",
       "chapter": "09-reinforcement-learning",
-      "knowledgePoints": [
-        "mdp"
-      ],
+      "knowledgePoints": ["mdp"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "MDP 通常包含哪些要素？",
-      "options": [
-        "状态",
-        "动作",
-        "转移概率",
-        "奖励函数"
-      ],
-      "answer": [
-        "状态",
-        "动作",
-        "转移概率",
-        "奖励函数"
-      ],
+      "options": ["状态", "动作", "转移概率", "奖励函数"],
+      "answer": ["状态", "动作", "转移概率", "奖励函数"],
       "explanation": "MDP 是描述序列决策问题的基础框架。",
-      "errorTags": [
-        "MDP 要素不清"
-      ]
+      "errorTags": ["MDP 要素不清"]
     },
     {
       "id": "ai-09-003",
       "chapter": "09-reinforcement-learning",
-      "knowledgePoints": [
-        "exploration-exploitation"
-      ],
+      "knowledgePoints": ["exploration-exploitation"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请解释探索与利用的权衡。",
       "answer": "利用是选择当前看起来最优的动作，探索是尝试不确定动作以获取新信息；二者需要平衡，避免陷入局部最优或效率过低。",
       "explanation": "强化学习需要在短期收益和长期学习之间平衡。",
-      "errorTags": [
-        "决策权衡理解不足"
-      ]
+      "errorTags": ["决策权衡理解不足"]
     },
     {
       "id": "ai-09-004",
       "chapter": "09-reinforcement-learning",
-      "knowledgePoints": [
-        "q-learning"
-      ],
+      "knowledgePoints": ["q-learning"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "Q 值只表示当前动作得到的即时奖励，不包含对未来收益的估计。",
       "answer": "false",
       "explanation": "Q 值估计状态-动作对的长期价值，通常包含未来收益。",
-      "errorTags": [
-        "Q 值含义混淆"
-      ]
+      "errorTags": ["Q 值含义混淆"]
     },
     {
       "id": "ai-09-005",
       "chapter": "09-reinforcement-learning",
-      "knowledgePoints": [
-        "智能体与环境",
-        "MDP",
-        "Q-learning",
-        "探索与利用"
-      ],
+      "knowledgePoints": ["智能体与环境", "MDP", "Q-learning", "探索与利用"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“强化学习”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "智能体与环境",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["智能体与环境", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "智能体与环境",
       "explanation": "智能体与环境 是理解“强化学习”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-09-006",
       "chapter": "09-reinforcement-learning",
-      "knowledgePoints": [
-        "智能体与环境",
-        "MDP",
-        "Q-learning",
-        "探索与利用"
-      ],
+      "knowledgePoints": ["智能体与环境", "MDP", "Q-learning", "探索与利用"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“强化学习”，哪些知识点属于本章重点？",
-      "options": [
-        "智能体与环境",
-        "MDP",
-        "Q-learning",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "智能体与环境",
-        "MDP",
-        "Q-learning"
-      ],
+      "options": ["智能体与环境", "MDP", "Q-learning", "随机选择按钮颜色"],
+      "answer": ["智能体与环境", "MDP", "Q-learning"],
       "explanation": "本章重点围绕 智能体与环境、MDP、Q-learning 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-09-007",
       "chapter": "09-reinforcement-learning",
-      "knowledgePoints": [
-        "智能体与环境",
-        "MDP",
-        "Q-learning",
-        "探索与利用"
-      ],
+      "knowledgePoints": ["智能体与环境", "MDP", "Q-learning", "探索与利用"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“强化学习”中，只关注即时奖励而忽略长期收益 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-09-008",
       "chapter": "09-reinforcement-learning",
-      "knowledgePoints": [
-        "智能体与环境",
-        "MDP",
-        "Q-learning",
-        "探索与利用"
-      ],
+      "knowledgePoints": ["智能体与环境", "MDP", "Q-learning", "探索与利用"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“MDP”在“强化学习”中的作用。",
       "answer": "MDP 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-09-009",
       "chapter": "09-reinforcement-learning",
-      "knowledgePoints": [
-        "智能体与环境",
-        "MDP",
-        "Q-learning",
-        "探索与利用"
-      ],
+      "knowledgePoints": ["智能体与环境", "MDP", "Q-learning", "探索与利用"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“强化学习”时反复混淆“MDP”和“Q-learning”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 探索与利用 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-09-010",
       "chapter": "09-reinforcement-learning",
-      "knowledgePoints": [
-        "智能体与环境",
-        "MDP",
-        "Q-learning",
-        "探索与利用"
-      ],
+      "knowledgePoints": ["智能体与环境", "MDP", "Q-learning", "探索与利用"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“强化学习”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 智能体与环境 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-10-001",
       "chapter": "10-large-models-and-agents",
-      "knowledgePoints": [
-        "prompting"
-      ],
+      "knowledgePoints": ["prompting"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "一个较完整的 Prompt 通常应包含什么？",
@@ -1802,390 +1100,227 @@
       ],
       "answer": "角色、目标、输入、约束和输出格式",
       "explanation": "结构化 Prompt 能减少歧义，但不能替代知识来源和核验机制。",
-      "errorTags": [
-        "Prompt 结构不清"
-      ]
+      "errorTags": ["Prompt 结构不清"]
     },
     {
       "id": "ai-10-002",
       "chapter": "10-large-models-and-agents",
-      "knowledgePoints": [
-        "rag"
-      ],
+      "knowledgePoints": ["rag"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请按顺序写出 RAG 的核心流程。",
       "answer": "收集文档、切分文本、建立索引、根据问题检索相关片段、把片段作为上下文生成回答、输出来源引用和置信度。",
       "explanation": "RAG 的关键是先检索可信上下文，再让模型基于上下文生成。",
-      "errorTags": [
-        "RAG 流程不清"
-      ]
+      "errorTags": ["RAG 流程不清"]
     },
     {
       "id": "ai-10-003",
       "chapter": "10-large-models-and-agents",
-      "knowledgePoints": [
-        "multi-agent-orchestration"
-      ],
+      "knowledgePoints": ["multi-agent-orchestration"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "多智能体资源生成系统中，质量审核 Agent 可以负责哪些工作？",
-      "options": [
-        "检查来源引用",
-        "发现无来源断言",
-        "标记低置信度内容",
-        "删除全部课程知识库"
-      ],
-      "answer": [
-        "检查来源引用",
-        "发现无来源断言",
-        "标记低置信度内容"
-      ],
+      "options": ["检查来源引用", "发现无来源断言", "标记低置信度内容", "删除全部课程知识库"],
+      "answer": ["检查来源引用", "发现无来源断言", "标记低置信度内容"],
       "explanation": "质量审核 Agent 的职责是提升可信度和安全性，而不是破坏知识库。",
-      "errorTags": [
-        "Agent 职责不清"
-      ]
+      "errorTags": ["Agent 职责不清"]
     },
     {
       "id": "ai-10-004",
       "chapter": "10-large-models-and-agents",
-      "knowledgePoints": [
-        "tool-calling",
-        "multi-agent-orchestration"
-      ],
+      "knowledgePoints": ["tool-calling", "multi-agent-orchestration"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生要求生成讲义、题库、思维导图、视频脚本和代码案例。为什么适合用多智能体协作？",
       "answer": "因为任务类型多、输出格式不同、质量标准不同。可由资源设计、讲义、题库、导图、视频、代码和审核等 Agent 分工处理，并由 Director 编排流程。",
       "explanation": "多智能体的核心是清晰分工、状态追踪和可审计输出。",
-      "errorTags": [
-        "多智能体价值理解不足"
-      ]
+      "errorTags": ["多智能体价值理解不足"]
     },
     {
       "id": "ai-10-005",
       "chapter": "10-large-models-and-agents",
-      "knowledgePoints": [
-        "Prompt",
-        "RAG",
-        "工具调用",
-        "多智能体编排"
-      ],
+      "knowledgePoints": ["Prompt", "RAG", "工具调用", "多智能体编排"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“大模型与智能体”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "Prompt",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["Prompt", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "Prompt",
       "explanation": "Prompt 是理解“大模型与智能体”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-10-006",
       "chapter": "10-large-models-and-agents",
-      "knowledgePoints": [
-        "Prompt",
-        "RAG",
-        "工具调用",
-        "多智能体编排"
-      ],
+      "knowledgePoints": ["Prompt", "RAG", "工具调用", "多智能体编排"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“大模型与智能体”，哪些知识点属于本章重点？",
-      "options": [
-        "Prompt",
-        "RAG",
-        "工具调用",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "Prompt",
-        "RAG",
-        "工具调用"
-      ],
+      "options": ["Prompt", "RAG", "工具调用", "随机选择按钮颜色"],
+      "answer": ["Prompt", "RAG", "工具调用"],
       "explanation": "本章重点围绕 Prompt、RAG、工具调用 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-10-007",
       "chapter": "10-large-models-and-agents",
-      "knowledgePoints": [
-        "Prompt",
-        "RAG",
-        "工具调用",
-        "多智能体编排"
-      ],
+      "knowledgePoints": ["Prompt", "RAG", "工具调用", "多智能体编排"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“大模型与智能体”中，认为接入大模型 API 就等于智能体系统 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-10-008",
       "chapter": "10-large-models-and-agents",
-      "knowledgePoints": [
-        "Prompt",
-        "RAG",
-        "工具调用",
-        "多智能体编排"
-      ],
+      "knowledgePoints": ["Prompt", "RAG", "工具调用", "多智能体编排"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“RAG”在“大模型与智能体”中的作用。",
       "answer": "RAG 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-10-009",
       "chapter": "10-large-models-and-agents",
-      "knowledgePoints": [
-        "Prompt",
-        "RAG",
-        "工具调用",
-        "多智能体编排"
-      ],
+      "knowledgePoints": ["Prompt", "RAG", "工具调用", "多智能体编排"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“大模型与智能体”时反复混淆“RAG”和“工具调用”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 多智能体编排 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-10-010",
       "chapter": "10-large-models-and-agents",
-      "knowledgePoints": [
-        "Prompt",
-        "RAG",
-        "工具调用",
-        "多智能体编排"
-      ],
+      "knowledgePoints": ["Prompt", "RAG", "工具调用", "多智能体编排"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“大模型与智能体”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 Prompt 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-11-001",
       "chapter": "11-ai-safety-and-ethics",
-      "knowledgePoints": [
-        "hallucination-control"
-      ],
+      "knowledgePoints": ["hallucination-control"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "以下哪些措施有助于降低学术内容幻觉风险？",
-      "options": [
-        "RAG 检索",
-        "来源引用",
-        "事实核验 Agent",
-        "无来源也强行输出确定结论"
-      ],
-      "answer": [
-        "RAG 检索",
-        "来源引用",
-        "事实核验 Agent"
-      ],
+      "options": ["RAG 检索", "来源引用", "事实核验 Agent", "无来源也强行输出确定结论"],
+      "answer": ["RAG 检索", "来源引用", "事实核验 Agent"],
       "explanation": "无来源的确定性输出会增加幻觉风险，应标记低置信度或拒答。",
-      "errorTags": [
-        "防幻觉机制不清"
-      ]
+      "errorTags": ["防幻觉机制不清"]
     },
     {
       "id": "ai-11-002",
       "chapter": "11-ai-safety-and-ethics",
-      "knowledgePoints": [
-        "academic-integrity"
-      ],
+      "knowledgePoints": ["academic-integrity"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生请求“直接帮我写一篇可提交的课程论文”。系统应如何处理？",
       "answer": "应拒绝代写成稿，转为提供选题建议、结构提纲、概念解释、资料检索方法、引用规范和自查清单。",
       "explanation": "教学系统应促进学习而不是代替学生完成受评价任务。",
-      "errorTags": [
-        "学术诚信边界不清"
-      ]
+      "errorTags": ["学术诚信边界不清"]
     },
     {
       "id": "ai-11-003",
       "chapter": "11-ai-safety-and-ethics",
-      "knowledgePoints": [
-        "bias-fairness"
-      ],
+      "knowledgePoints": ["bias-fairness"],
       "type": "true_false",
       "difficulty": "easy",
       "stem": "模型输出看起来客观，就一定不存在数据偏见或不公平风险。",
       "answer": "false",
       "explanation": "模型可能继承训练数据或应用场景中的偏差，需要评估和治理。",
-      "errorTags": [
-        "公平性意识不足"
-      ]
+      "errorTags": ["公平性意识不足"]
     },
     {
       "id": "ai-11-004",
       "chapter": "11-ai-safety-and-ethics",
-      "knowledgePoints": [
-        "privacy-security"
-      ],
+      "knowledgePoints": ["privacy-security"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "学习画像系统在隐私保护上应遵循哪些原则？",
       "answer": "最小化收集、明确用途、敏感信息脱敏、访问控制、可删除或更新、避免把个人隐私写入公开输出。",
       "explanation": "学习画像包含学生背景、弱点和行为数据，必须严格控制使用边界。",
-      "errorTags": [
-        "隐私保护措施不足"
-      ]
+      "errorTags": ["隐私保护措施不足"]
     },
     {
       "id": "ai-11-005",
       "chapter": "11-ai-safety-and-ethics",
-      "knowledgePoints": [
-        "幻觉控制",
-        "偏见与公平",
-        "隐私保护",
-        "学术诚信"
-      ],
+      "knowledgePoints": ["幻觉控制", "偏见与公平", "隐私保护", "学术诚信"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“AI 安全与伦理”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "幻觉控制",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["幻觉控制", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "幻觉控制",
       "explanation": "幻觉控制 是理解“AI 安全与伦理”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-11-006",
       "chapter": "11-ai-safety-and-ethics",
-      "knowledgePoints": [
-        "幻觉控制",
-        "偏见与公平",
-        "隐私保护",
-        "学术诚信"
-      ],
+      "knowledgePoints": ["幻觉控制", "偏见与公平", "隐私保护", "学术诚信"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“AI 安全与伦理”，哪些知识点属于本章重点？",
-      "options": [
-        "幻觉控制",
-        "偏见与公平",
-        "隐私保护",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "幻觉控制",
-        "偏见与公平",
-        "隐私保护"
-      ],
+      "options": ["幻觉控制", "偏见与公平", "隐私保护", "随机选择按钮颜色"],
+      "answer": ["幻觉控制", "偏见与公平", "隐私保护"],
       "explanation": "本章重点围绕 幻觉控制、偏见与公平、隐私保护 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-11-007",
       "chapter": "11-ai-safety-and-ethics",
-      "knowledgePoints": [
-        "幻觉控制",
-        "偏见与公平",
-        "隐私保护",
-        "学术诚信"
-      ],
+      "knowledgePoints": ["幻觉控制", "偏见与公平", "隐私保护", "学术诚信"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“AI 安全与伦理”中，认为安全过滤只等于敏感词过滤 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-11-008",
       "chapter": "11-ai-safety-and-ethics",
-      "knowledgePoints": [
-        "幻觉控制",
-        "偏见与公平",
-        "隐私保护",
-        "学术诚信"
-      ],
+      "knowledgePoints": ["幻觉控制", "偏见与公平", "隐私保护", "学术诚信"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“偏见与公平”在“AI 安全与伦理”中的作用。",
       "answer": "偏见与公平 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-11-009",
       "chapter": "11-ai-safety-and-ethics",
-      "knowledgePoints": [
-        "幻觉控制",
-        "偏见与公平",
-        "隐私保护",
-        "学术诚信"
-      ],
+      "knowledgePoints": ["幻觉控制", "偏见与公平", "隐私保护", "学术诚信"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“AI 安全与伦理”时反复混淆“偏见与公平”和“隐私保护”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 学术诚信 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-11-010",
       "chapter": "11-ai-safety-and-ethics",
-      "knowledgePoints": [
-        "幻觉控制",
-        "偏见与公平",
-        "隐私保护",
-        "学术诚信"
-      ],
+      "knowledgePoints": ["幻觉控制", "偏见与公平", "隐私保护", "学术诚信"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“AI 安全与伦理”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 幻觉控制 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     },
     {
       "id": "ai-12-001",
       "chapter": "12-course-project",
-      "knowledgePoints": [
-        "project-scoping"
-      ],
+      "knowledgePoints": ["project-scoping"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "课程项目开始时最应该先明确什么？",
@@ -2197,188 +1332,109 @@
       ],
       "answer": "用户、痛点、输入输出和边界",
       "explanation": "清晰的问题定义是项目闭环的基础。",
-      "errorTags": [
-        "项目范围不清"
-      ]
+      "errorTags": ["项目范围不清"]
     },
     {
       "id": "ai-12-002",
       "chapter": "12-course-project",
-      "knowledgePoints": [
-        "project-data-sources"
-      ],
+      "knowledgePoints": ["project-data-sources"],
       "type": "true_false",
       "difficulty": "easy",
       "stem": "课程问答助手使用的资料来源、使用边界和预处理方式都应在项目文档中说明。",
       "answer": "true",
       "explanation": "来源说明有助于可信、合规和后续复核。",
-      "errorTags": [
-        "来源意识不足"
-      ]
+      "errorTags": ["来源意识不足"]
     },
     {
       "id": "ai-12-003",
       "chapter": "12-course-project",
-      "knowledgePoints": [
-        "project-evaluation"
-      ],
+      "knowledgePoints": ["project-evaluation"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "评价课程问答助手时，可以关注哪些指标？",
-      "options": [
-        "回答准确性",
-        "来源引用完整性",
-        "低置信度处理",
-        "按钮颜色是否越多越好"
-      ],
-      "answer": [
-        "回答准确性",
-        "来源引用完整性",
-        "低置信度处理"
-      ],
+      "options": ["回答准确性", "来源引用完整性", "低置信度处理", "按钮颜色是否越多越好"],
+      "answer": ["回答准确性", "来源引用完整性", "低置信度处理"],
       "explanation": "项目评估应围绕学习效果和可信输出，而不是无关装饰指标。",
-      "errorTags": [
-        "评估指标不清"
-      ]
+      "errorTags": ["评估指标不清"]
     },
     {
       "id": "ai-12-004",
       "chapter": "12-course-project",
-      "knowledgePoints": [
-        "project-demo"
-      ],
+      "knowledgePoints": ["project-demo"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "请设计一个 5 分钟课程项目演示的核心链路。",
       "answer": "示例链路：输入学生问题 -> 检索课程知识库 -> 生成带来源回答 -> 显示置信度和审核结果 -> 推荐练习或下一步学习资源 -> 记录反馈并更新学习画像。",
       "explanation": "演示应展示完整闭环，而不只是最终文本输出。",
-      "errorTags": [
-        "演示闭环不足"
-      ]
+      "errorTags": ["演示闭环不足"]
     },
     {
       "id": "ai-12-005",
       "chapter": "12-course-project",
-      "knowledgePoints": [
-        "问题定义",
-        "知识来源",
-        "项目评估",
-        "演示答辩"
-      ],
+      "knowledgePoints": ["问题定义", "知识来源", "项目评估", "演示答辩"],
       "type": "single_choice",
       "difficulty": "easy",
       "stem": "学习“综合课程项目”时，最应该优先掌握的是哪一项？",
-      "options": [
-        "问题定义",
-        "页面配色数量",
-        "文件压缩格式",
-        "浏览器缓存策略"
-      ],
+      "options": ["问题定义", "页面配色数量", "文件压缩格式", "浏览器缓存策略"],
       "answer": "问题定义",
       "explanation": "问题定义 是理解“综合课程项目”的基础知识点。",
-      "errorTags": [
-        "基础概念薄弱"
-      ]
+      "errorTags": ["基础概念薄弱"]
     },
     {
       "id": "ai-12-006",
       "chapter": "12-course-project",
-      "knowledgePoints": [
-        "问题定义",
-        "知识来源",
-        "项目评估",
-        "演示答辩"
-      ],
+      "knowledgePoints": ["问题定义", "知识来源", "项目评估", "演示答辩"],
       "type": "multiple_choice",
       "difficulty": "medium",
       "stem": "关于“综合课程项目”，哪些知识点属于本章重点？",
-      "options": [
-        "问题定义",
-        "知识来源",
-        "项目评估",
-        "随机选择按钮颜色"
-      ],
-      "answer": [
-        "问题定义",
-        "知识来源",
-        "项目评估"
-      ],
+      "options": ["问题定义", "知识来源", "项目评估", "随机选择按钮颜色"],
+      "answer": ["问题定义", "知识来源", "项目评估"],
       "explanation": "本章重点围绕 问题定义、知识来源、项目评估 展开。",
-      "errorTags": [
-        "重点识别不清"
-      ]
+      "errorTags": ["重点识别不清"]
     },
     {
       "id": "ai-12-007",
       "chapter": "12-course-project",
-      "knowledgePoints": [
-        "问题定义",
-        "知识来源",
-        "项目评估",
-        "演示答辩"
-      ],
+      "knowledgePoints": ["问题定义", "知识来源", "项目评估", "演示答辩"],
       "type": "true_false",
       "difficulty": "medium",
       "stem": "在“综合课程项目”中，只展示模型输出而不展示来源和评估 是合理理解。",
       "answer": "false",
       "explanation": "该说法属于常见误区。学习时应结合定义、流程、例子和评价边界分析。",
-      "errorTags": [
-        "常见误区"
-      ]
+      "errorTags": ["常见误区"]
     },
     {
       "id": "ai-12-008",
       "chapter": "12-course-project",
-      "knowledgePoints": [
-        "问题定义",
-        "知识来源",
-        "项目评估",
-        "演示答辩"
-      ],
+      "knowledgePoints": ["问题定义", "知识来源", "项目评估", "演示答辩"],
       "type": "short_answer",
       "difficulty": "medium",
       "stem": "请用 2-3 句话解释“知识来源”在“综合课程项目”中的作用。",
       "answer": "知识来源 是本章的重要概念，需要说明它解决的问题、输入输出或适用边界，并能结合一个学习场景例子解释。",
       "explanation": "简答题重点考查概念解释和场景化表达能力。",
-      "errorTags": [
-        "表达不完整"
-      ]
+      "errorTags": ["表达不完整"]
     },
     {
       "id": "ai-12-009",
       "chapter": "12-course-project",
-      "knowledgePoints": [
-        "问题定义",
-        "知识来源",
-        "项目评估",
-        "演示答辩"
-      ],
+      "knowledgePoints": ["问题定义", "知识来源", "项目评估", "演示答辩"],
       "type": "case_analysis",
       "difficulty": "medium",
       "stem": "学生在学习“综合课程项目”时反复混淆“知识来源”和“项目评估”。系统应如何推荐学习资源？",
       "answer": "应先推送概念对比讲义和思维导图，再安排分层练习题；如果学生偏好实践，可补充与 演示答辩 相关的案例任务。",
       "explanation": "个性化推荐需要结合薄弱点、资源偏好和前置知识关系。",
-      "errorTags": [
-        "个性化推荐理由不足"
-      ]
+      "errorTags": ["个性化推荐理由不足"]
     },
     {
       "id": "ai-12-010",
       "chapter": "12-course-project",
-      "knowledgePoints": [
-        "问题定义",
-        "知识来源",
-        "项目评估",
-        "演示答辩"
-      ],
+      "knowledgePoints": ["问题定义", "知识来源", "项目评估", "演示答辩"],
       "type": "project_task",
       "difficulty": "hard",
       "stem": "围绕“综合课程项目”设计一个可放入课程项目的小任务，要求包含输入、处理过程、输出和评价方式。",
       "answer": "示例任务：输入学生关于 问题定义 的问题，系统检索课程知识库中相关片段，生成带来源的解释和 3 道练习题；评价方式包括来源命中、回答准确性和练习正确率。",
       "explanation": "项目题考查把章节知识转化为系统闭环的能力。",
-      "errorTags": [
-        "项目闭环不足"
-      ]
+      "errorTags": ["项目闭环不足"]
     }
   ]
 }

@@ -61,11 +61,13 @@ describe('/api/user/knowledge-state', () => {
   it('POST creates a knowledge state and GET returns it', async () => {
     const state = makeState();
 
-    const postRes = await POST(new NextRequest('http://localhost:3000/api/user/knowledge-state', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(state),
-    }));
+    const postRes = await POST(
+      new NextRequest('http://localhost:3000/api/user/knowledge-state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state),
+      }),
+    );
     expect(postRes.status).toBe(200);
 
     const getRes = await GET();
@@ -77,11 +79,13 @@ describe('/api/user/knowledge-state', () => {
   it('POST overrides client-provided userId with authenticated userId', async () => {
     const state = { ...makeState(), userId: 'attacker' };
 
-    const postRes = await POST(new NextRequest('http://localhost:3000/api/user/knowledge-state', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(state),
-    }));
+    const postRes = await POST(
+      new NextRequest('http://localhost:3000/api/user/knowledge-state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state),
+      }),
+    );
     expect(postRes.status).toBe(200);
 
     const getRes = await GET();
@@ -90,11 +94,13 @@ describe('/api/user/knowledge-state', () => {
   });
 
   it('POST rejects invalid knowledge state', async () => {
-    const res = await POST(new NextRequest('http://localhost:3000/api/user/knowledge-state', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nodeId: 'bad-id' }),
-    }));
+    const res = await POST(
+      new NextRequest('http://localhost:3000/api/user/knowledge-state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodeId: 'bad-id' }),
+      }),
+    );
     expect(res.status).toBe(400);
 
     const json = await res.json();

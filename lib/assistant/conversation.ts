@@ -73,10 +73,7 @@ export function getRecentContext(
  * Build a conversation summary for context injection.
  * Summarises the last few exchanges into a brief format string.
  */
-export function summarizeConversation(
-  messages: ChatMessage[],
-  maxExchanges: number = 3,
-): string {
+export function summarizeConversation(messages: ChatMessage[], maxExchanges: number = 3): string {
   const relevant = messages.filter((m) => m.role !== 'system');
   const recent = relevant.slice(-maxExchanges * 2); // pairs of user+assistant
 

@@ -146,7 +146,10 @@ describe('P6-001 Test 1: 课堂创建 → 大纲生成 → 场景生成 → 开�
     test('generates quiz content from outline with AI', async () => {
       const { aiCall } = makeAiCallSequence([VALID_QUIZ_JSON]);
       const content = await generateSceneContent(
-        { ...OUTLINE[1], quizConfig: { questionCount: 3, difficulty: 'easy', questionTypes: ['single'] } },
+        {
+          ...OUTLINE[1],
+          quizConfig: { questionCount: 3, difficulty: 'easy', questionTypes: ['single'] },
+        },
         aiCall,
         { languageDirective: 'Use Chinese.' },
       );
@@ -241,7 +244,10 @@ describe('P6-001 Test 1: 课堂创建 → 大纲生成 → 场景生成 → 开�
     test('quiz scene preserves quiz configuration', async () => {
       const aiCall: AICallFn = async () => VALID_QUIZ_JSON;
       const scene = await buildSceneFromOutline(
-        { ...OUTLINE[1], quizConfig: { questionCount: 3, difficulty: 'easy', questionTypes: ['single'] } },
+        {
+          ...OUTLINE[1],
+          quizConfig: { questionCount: 3, difficulty: 'easy', questionTypes: ['single'] },
+        },
         aiCall,
         'stage-1',
       );

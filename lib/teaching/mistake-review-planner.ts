@@ -79,9 +79,7 @@ export function planMistakeReview(mistakes: MistakeBookEntry[]): MistakeReviewPl
 
   // 2. Build knowledge graph to compute true weak points
   const graph = buildGraphFromEntries(mistakes);
-  const graphWeakPoints = graph.weakPoints.length > 0
-    ? graph.weakPoints
-    : weakPoints.slice(0, 3);
+  const graphWeakPoints = graph.weakPoints.length > 0 ? graph.weakPoints : weakPoints.slice(0, 3);
 
   // 3. Analyze error patterns
   const causeMap = new Map<string, { count: number; examples: string[] }>();
@@ -96,11 +94,13 @@ export function planMistakeReview(mistakes: MistakeBookEntry[]): MistakeReviewPl
       entry.examples.push(m.problemText.slice(0, 60));
     }
   }
-  const errorPatterns = [...causeMap.entries()].map(([cause, data]) => ({
-    cause,
-    count: data.count,
-    examples: data.examples,
-  })).sort((a, b) => b.count - a.count);
+  const errorPatterns = [...causeMap.entries()]
+    .map(([cause, data]) => ({
+      cause,
+      count: data.count,
+      examples: data.examples,
+    }))
+    .sort((a, b) => b.count - a.count);
 
   // 4. Collect prerequisites
   const prerequisiteChain = collectPrerequisites(graphWeakPoints);
@@ -117,7 +117,7 @@ export function planMistakeReview(mistakes: MistakeBookEntry[]): MistakeReviewPl
 
   log.info(
     `Mistake review planned: topic="${topic}", weakPoints=${graphWeakPoints.length}, ` +
-    `patterns=${errorPatterns.length}, prerequisites=${prerequisiteChain.length}`,
+      `patterns=${errorPatterns.length}, prerequisites=${prerequisiteChain.length}`,
   );
 
   return {

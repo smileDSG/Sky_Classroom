@@ -48,9 +48,10 @@ export function getGraphRecommendation(nodes: GraphNode[]): GraphRecommendation 
 
   let summary: string;
   if (weakPoints.length === 0) {
-    summary = totalCount === 0
-      ? '暂无学习数据。完成一些练习后，知识图谱会自动生成。'
-      : '当前没有明显薄弱点，继续保持！';
+    summary =
+      totalCount === 0
+        ? '暂无学习数据。完成一些练习后，知识图谱会自动生成。'
+        : '当前没有明显薄弱点，继续保持！';
   } else if (weakPoints.length <= 2) {
     summary = `发现 ${weakPoints.length} 个薄弱知识点，建议针对性地加强练习。`;
   } else {

@@ -62,7 +62,10 @@ describe('Planning Agent — Style Injection', () => {
     });
 
     it('density affects content density hint', () => {
-      const sparseDNA = { ...defaultDNA, decoration: { ...defaultDNA.decoration, density: 'sparse' } };
+      const sparseDNA = {
+        ...defaultDNA,
+        decoration: { ...defaultDNA.decoration, density: 'sparse' },
+      };
       const richDNA = { ...defaultDNA, decoration: { ...defaultDNA.decoration, density: 'rich' } };
 
       expect(sparseDNA.decoration.density).toBe('sparse');

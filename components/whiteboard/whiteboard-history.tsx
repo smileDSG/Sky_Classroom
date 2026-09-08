@@ -19,7 +19,8 @@ interface WhiteboardHistoryProps {
  * Shows a list of saved whiteboard snapshots with timestamps and element counts.
  * Clicking "Restore" replaces the current whiteboard content with the snapshot.
  */
-export function WhiteboardHistory({ isOpen, onClose }: WhiteboardHistoryProps) {const snapshots = useWhiteboardHistoryStore((s) => s.snapshots);
+export function WhiteboardHistory({ isOpen, onClose }: WhiteboardHistoryProps) {
+  const snapshots = useWhiteboardHistoryStore((s) => s.snapshots);
   const isClearing = useCanvasStore.use.whiteboardClearing();
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -137,8 +138,7 @@ export function WhiteboardHistory({ isOpen, onClose }: WhiteboardHistoryProps) {
                           {`#${realIdx + 1}`}
                         </div>
                         <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                          {formatTime(snap.timestamp)} ·{' '}
-                          {`${snap.elements.length} 个元素`}
+                          {formatTime(snap.timestamp)} · {`${snap.elements.length} 个元素`}
                         </div>
                       </div>
                       <button

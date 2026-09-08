@@ -313,7 +313,7 @@ export function PersonalizationForm() {
           <AlertCircle className="mt-0.5 size-5 shrink-0 text-red-600" />
           <div className="space-y-3">
             <div>
-            <h2 className="font-semibold text-red-900 dark:text-red-100">学习情况加载失败</h2>
+              <h2 className="font-semibold text-red-900 dark:text-red-100">学习情况加载失败</h2>
               <p className="mt-1 text-sm text-red-800 dark:text-red-200">{statusMessage}</p>
             </div>
             <Button type="button" variant="outline" onClick={() => void loadProfile()}>
@@ -656,7 +656,7 @@ export function PersonalizationForm() {
             <span>{statusMessage}</span>
             <Button type="button" variant="outline" size="sm" onClick={() => void loadProfile()}>
               <RefreshCw className="size-4" />
-            加载最新学习情况
+              加载最新学习情况
             </Button>
           </div>
         )}
@@ -675,7 +675,7 @@ export function PersonalizationForm() {
             className="flex items-center gap-2 rounded-xl border bg-muted/40 p-4 text-sm text-muted-foreground"
           >
             <ShieldCheck className="size-4 text-emerald-600" />
-          已连接并保存学习情况
+            已连接并保存学习情况
           </div>
         )}
       </div>

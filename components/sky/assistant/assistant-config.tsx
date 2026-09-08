@@ -32,7 +32,9 @@ export function AssistantConfig() {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-800">
-      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-slate-500">助手配置</p>
+      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-slate-500">
+        助手配置
+      </p>
       <div className="flex items-center gap-3">
         {/* Subject Selector */}
         <div className="flex-1">

@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -33,13 +36,37 @@ export function VerticalPoemCover({ dna, title, subtitle }: Props) {
   const decorations = [] as React.ReactNode[];
   if (density === 'moderate' || density === 'rich') {
     decorations.push(
-      <rect key="vp1" x="0" y="0" width="13.33" height="0.04" fill={`#${colors.accent}`} opacity="0.4" />,
-      <rect key="vp2" x="0" y="7.46" width="13.33" height="0.04" fill={`#${colors.accent}`} opacity="0.4" />,
+      <rect
+        key="vp1"
+        x="0"
+        y="0"
+        width="13.33"
+        height="0.04"
+        fill={`#${colors.accent}`}
+        opacity="0.4"
+      />,
+      <rect
+        key="vp2"
+        x="0"
+        y="7.46"
+        width="13.33"
+        height="0.04"
+        fill={`#${colors.accent}`}
+        opacity="0.4"
+      />,
     );
   }
   if (density === 'rich') {
     decorations.push(
-      <rect key="vp3" x="10.8" y="1.2" width="1.8" height="1.8" fill={`#${colors.accent}`} opacity="0.12" />,
+      <rect
+        key="vp3"
+        x="10.8"
+        y="1.2"
+        width="1.8"
+        height="1.8"
+        fill={`#${colors.accent}`}
+        opacity="0.12"
+      />,
     );
   }
 

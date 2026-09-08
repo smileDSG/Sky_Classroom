@@ -43,9 +43,7 @@ vi.mock('@/lib/knowledge-base/kb-dao', () => ({
     // Count unique docIds per type
     for (const kbType of Object.keys(byType)) {
       const docIds = new Set(
-        [...mockChunks.values()]
-          .filter((c) => c.kbType === kbType)
-          .map((c) => c.docId),
+        [...mockChunks.values()].filter((c) => c.kbType === kbType).map((c) => c.docId),
       );
       byType[kbType].documents = docIds.size;
     }

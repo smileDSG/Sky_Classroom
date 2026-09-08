@@ -110,7 +110,10 @@ export function AccountInfo() {
         <CardContent>
           <dl className="divide-y">
             {fields.map((field) => (
-              <div key={field.label} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+              <div
+                key={field.label}
+                className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+              >
                 <dt className="text-sm text-muted-foreground">{field.label}</dt>
                 <dd className="text-sm font-medium">{field.value}</dd>
               </div>

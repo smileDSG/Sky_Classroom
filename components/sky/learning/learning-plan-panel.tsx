@@ -33,10 +33,7 @@ const VIEW_OPTIONS: Array<{ kind: LearningPlanViewKind; label: string }> = [
   { kind: 'month', label: '未来28天' },
 ];
 
-const STATUS_META: Record<
-  LearningTask['status'],
-  { label: string; className: string }
-> = {
+const STATUS_META: Record<LearningTask['status'], { label: string; className: string }> = {
   pending: {
     label: '待完成',
     className:
@@ -128,9 +125,7 @@ async function readApiPayload(response: Response): Promise<Record<string, unknow
   return payload;
 }
 
-async function requestPlanView(
-  kind: LearningPlanViewKind,
-): Promise<LearningPlanPanelData> {
+async function requestPlanView(kind: LearningPlanViewKind): Promise<LearningPlanPanelData> {
   const response = await fetch(`/api/sky/learning-plan?view=${kind}`, {
     credentials: 'include',
   });
@@ -294,9 +289,7 @@ export function LearningPlanPanel({
           : '后面的任务会按你最新的学习情况重新安排。',
       );
     } catch (replanError) {
-      setOperationError(
-        replanError instanceof Error ? replanError.message : '学习计划更新失败',
-      );
+      setOperationError(replanError instanceof Error ? replanError.message : '学习计划更新失败');
     } finally {
       setReplanning(null);
     }
@@ -398,9 +391,7 @@ export function LearningPlanPanel({
                 key={metric.label}
                 className="border-r border-slate-200 px-3 py-2 last:border-r-0 dark:border-white/10"
               >
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {metric.label}
-                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">{metric.label}</div>
                 <div className="mt-1 text-sm font-semibold text-slate-950 dark:text-white sm:text-base">
                   {metric.value}
                 </div>
@@ -410,9 +401,7 @@ export function LearningPlanPanel({
 
           {!compact && view.weeklyTargets.length > 0 && (
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                周目标
-              </div>
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">周目标</div>
               <div className="grid gap-2 md:grid-cols-2">
                 {view.weeklyTargets.map((target) => (
                   <div
@@ -436,7 +425,12 @@ export function LearningPlanPanel({
             </div>
           )}
 
-          <div className={cn(!compact && 'divide-y divide-slate-200 dark:divide-white/10', compact && 'space-y-2')}>
+          <div
+            className={cn(
+              !compact && 'divide-y divide-slate-200 dark:divide-white/10',
+              compact && 'space-y-2',
+            )}
+          >
             {visibleTasks?.length === 0 ? (
               <div className="border-y border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
                 今天先休息一下，暂时没有必须完成的任务。
@@ -450,7 +444,8 @@ export function LearningPlanPanel({
                     key={task.id}
                     className={cn(
                       'py-5 first:pt-2 last:pb-2',
-                      compact && 'rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-4 dark:border-white/10 dark:bg-white/[0.04]',
+                      compact &&
+                        'rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-4 dark:border-white/10 dark:bg-white/[0.04]',
                     )}
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -549,46 +544,40 @@ export function LearningPlanPanel({
             )}
           </div>
 
-          {!compact && <div className="border-t border-slate-200 pt-4 dark:border-white/10">
-            <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
-              “调整未来48小时”只会更新今天和明天；“重新安排剩余计划”会更新后面的任务。已经开始或完成的任务会保留。
-            </p>
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void replan('micro')}
-                disabled={isReplanning}
-                className="min-h-10 flex-1"
-              >
-                {replanning === 'micro' ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <RotateCw />
-                )}
-                调整未来48小时
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => void replan('full')}
-                disabled={isReplanning}
-                className="min-h-10 flex-1"
-              >
-                {replanning === 'full' ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <CalendarRange />
-                )}
-                重排剩余计划
-              </Button>
-            </div>
-            {notice && (
-              <div className="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-200">
-                {notice}
+          {!compact && (
+            <div className="border-t border-slate-200 pt-4 dark:border-white/10">
+              <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                “调整未来48小时”只会更新今天和明天；“重新安排剩余计划”会更新后面的任务。已经开始或完成的任务会保留。
+              </p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void replan('micro')}
+                  disabled={isReplanning}
+                  className="min-h-10 flex-1"
+                >
+                  {replanning === 'micro' ? <Loader2 className="animate-spin" /> : <RotateCw />}
+                  调整未来48小时
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void replan('full')}
+                  disabled={isReplanning}
+                  className="min-h-10 flex-1"
+                >
+                  {replanning === 'full' ? <Loader2 className="animate-spin" /> : <CalendarRange />}
+                  重排剩余计划
+                </Button>
               </div>
-            )}
-          </div>}
+              {notice && (
+                <div className="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-200">
+                  {notice}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </PanelShell>

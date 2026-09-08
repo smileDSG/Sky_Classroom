@@ -16,7 +16,11 @@ function makeValidDNA(overrides: Partial<DesignDNA> = {}): DesignDNA {
     colors: { ...COLOR_PALETTES['tech-dark-cn'] },
     fonts: { ...FONT_PAIRS['georgia-calibri'] },
     decoration: { motif: 'neon-grid', density: 'moderate', cornerWeight: 'top-right' },
-    components: { cardStyle: 'accent-left-bar', bulletStyle: 'dot', pageNumberStyle: 'number-slash-total' },
+    components: {
+      cardStyle: 'accent-left-bar',
+      bulletStyle: 'dot',
+      pageNumberStyle: 'number-slash-total',
+    },
     mood: '科技前沿',
     bestFor: ['物理', '编程'],
     ...overrides,
@@ -34,7 +38,9 @@ describe('DesignDNA', () => {
     });
 
     it('replaces invalid color with default palette color', () => {
-      const dna = makeValidDNA({ colors: { ...COLOR_PALETTES['tech-dark-cn'], coverBg: 'FF00FF' } });
+      const dna = makeValidDNA({
+        colors: { ...COLOR_PALETTES['tech-dark-cn'], coverBg: 'FF00FF' },
+      });
       const result = validateDesignDNA(dna);
       expect(result.replacementCount).toBeGreaterThan(0);
       expect(result.designDNA.colors.coverBg).not.toBe('FF00FF');
@@ -42,13 +48,25 @@ describe('DesignDNA', () => {
     });
 
     it('replaces invalid motif with geometric-lines', () => {
-      const dna = makeValidDNA({ decoration: { motif: 'invalid-motif' as never, density: 'moderate', cornerWeight: 'top-right' } });
+      const dna = makeValidDNA({
+        decoration: {
+          motif: 'invalid-motif' as never,
+          density: 'moderate',
+          cornerWeight: 'top-right',
+        },
+      });
       const result = validateDesignDNA(dna);
       expect(result.designDNA.decoration.motif).toBe('geometric-lines');
     });
 
     it('replaces invalid card style', () => {
-      const dna = makeValidDNA({ components: { cardStyle: 'bogus' as never, bulletStyle: 'dot', pageNumberStyle: 'simple-number' } });
+      const dna = makeValidDNA({
+        components: {
+          cardStyle: 'bogus' as never,
+          bulletStyle: 'dot',
+          pageNumberStyle: 'simple-number',
+        },
+      });
       const result = validateDesignDNA(dna);
       expect(result.designDNA.components.cardStyle).toBe('accent-left-bar');
     });
@@ -63,7 +81,17 @@ describe('DesignDNA', () => {
 
     it('marks invalid when replacementCount > 3', () => {
       const dna = makeValidDNA({
-        colors: { coverBg: 'FF0001', contentBg: 'FF0002', accent: 'FF0003', accentSecondary: 'FF0004', accentLight: 'FF0005', textPrimary: 'FF0006', textBody: 'FF0007', textMuted: 'FF0008', textOnDark: 'FF0009' },
+        colors: {
+          coverBg: 'FF0001',
+          contentBg: 'FF0002',
+          accent: 'FF0003',
+          accentSecondary: 'FF0004',
+          accentLight: 'FF0005',
+          textPrimary: 'FF0006',
+          textBody: 'FF0007',
+          textMuted: 'FF0008',
+          textOnDark: 'FF0009',
+        },
         decoration: { motif: 'bad' as never, density: 'bad' as never, cornerWeight: '' },
       });
       const result = validateDesignDNA(dna);
@@ -72,7 +100,9 @@ describe('DesignDNA', () => {
     });
 
     it('validates hex color format', () => {
-      const dna = makeValidDNA({ colors: { ...COLOR_PALETTES['tech-dark-cn'], coverBg: 'GGGGGG' } });
+      const dna = makeValidDNA({
+        colors: { ...COLOR_PALETTES['tech-dark-cn'], coverBg: 'GGGGGG' },
+      });
       const result = validateDesignDNA(dna);
       expect(result.designDNA.colors.coverBg).toBe(DEFAULT_COLOR_PALETTE.coverBg);
     });

@@ -74,7 +74,7 @@ export default function MobileProfilePage() {
 
   const handleLogout = async () => {
     await logout();
-    router.push('/m/auth/login?redirect=%2Fm%2Fsky');
+    router.push('/');
   };
 
   if (isLoading) {
@@ -122,89 +122,89 @@ export default function MobileProfilePage() {
 
         <div className="relative space-y-4 px-4 pb-24">
           {!user ? (
-          <section className="rounded-2xl border border-white/10 bg-[#0d1728] p-4 text-center">
-            <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-cyan-300/12 text-cyan-100">
-              <LogIn className="size-5" />
-            </div>
-            <h2 className="mt-3 text-lg font-extrabold text-white">请先登录</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-400">
-              登录后可同步课堂、错题和个性化学习设置。
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Link
-                href="/m/auth/login?redirect=%2Fm%2Fsky%2Fprofile"
-                className="flex h-11 items-center justify-center rounded-xl bg-cyan-300 text-sm font-extrabold text-slate-950"
-              >
-                登录
-              </Link>
-              <Link
-                href="/auth/register"
-                className="flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.045] text-sm font-extrabold text-white"
-              >
-                注册
-              </Link>
-            </div>
-          </section>
-        ) : (
-          <>
-            <section className="rounded-2xl border border-white/10 bg-[#0d1728] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
-              <SectionTitle icon={Flame} title="学习数据" />
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {learningStats.map((item) => (
-                  <LearningStat key={item.label} {...item} />
-                ))}
+            <section className="rounded-2xl border border-white/10 bg-[#0d1728] p-4 text-center">
+              <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-cyan-300/12 text-cyan-100">
+                <LogIn className="size-5" />
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <ProfileStat label="套餐" value={user?.planType ?? 'free'} />
-                <ProfileStat label="加入" value={formatDate(user?.createdAt)} />
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-              <SectionTitle icon={Sparkles} title="学习入口" />
-              <div className="mt-3 space-y-2">
-                {learningActions.map((action) => (
-                  <ProfileAction key={action.href} {...action} />
-                ))}
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-              <SectionTitle icon={Palette} title="显示设置" />
-              <MobileThemeControl className="mt-3 w-full" />
-            </section>
-
-            <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-              <SectionTitle icon={ShieldCheck} title="账户与安全" />
-              <div className="mt-3 space-y-2">
-                <ProfileAction
-                  href="/m/account"
-                  icon={KeyRound}
-                  label="账户安全"
-                  desc="资料、密码和订阅信息"
-                />
-                <ProfileAction
-                  href="/m/settings"
-                  icon={SlidersHorizontal}
-                  label="完整设置"
-                  desc="供应商、导出和系统配置"
-                />
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex h-11 w-full items-center justify-between rounded-xl border border-rose-200/15 bg-rose-300/10 px-3 text-left text-sm font-extrabold text-rose-100"
+              <h2 className="mt-3 text-lg font-extrabold text-white">请先登录</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-400">
+                登录后可同步课堂、错题和个性化学习设置。
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Link
+                  href="/m/auth/login?redirect=%2Fm%2Fsky%2Fprofile"
+                  className="flex h-11 items-center justify-center rounded-xl bg-cyan-300 text-sm font-extrabold text-slate-950"
                 >
-                  <span className="flex items-center gap-2">
-                    <LogOut className="size-4" />
-                    退出登录
-                  </span>
-                  <ChevronRight className="size-4" />
-                </button>
+                  登录
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.045] text-sm font-extrabold text-white"
+                >
+                  注册
+                </Link>
               </div>
             </section>
-          </>
-        )}
-      </div>
+          ) : (
+            <>
+              <section className="rounded-2xl border border-white/10 bg-[#0d1728] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
+                <SectionTitle icon={Flame} title="学习数据" />
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {learningStats.map((item) => (
+                    <LearningStat key={item.label} {...item} />
+                  ))}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <ProfileStat label="套餐" value={user?.planType ?? 'free'} />
+                  <ProfileStat label="加入" value={formatDate(user?.createdAt)} />
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                <SectionTitle icon={Sparkles} title="学习入口" />
+                <div className="mt-3 space-y-2">
+                  {learningActions.map((action) => (
+                    <ProfileAction key={action.href} {...action} />
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                <SectionTitle icon={Palette} title="显示设置" />
+                <MobileThemeControl className="mt-3 w-full" />
+              </section>
+
+              <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                <SectionTitle icon={ShieldCheck} title="账户与安全" />
+                <div className="mt-3 space-y-2">
+                  <ProfileAction
+                    href="/m/account"
+                    icon={KeyRound}
+                    label="账户安全"
+                    desc="资料、密码和订阅信息"
+                  />
+                  <ProfileAction
+                    href="/m/settings"
+                    icon={SlidersHorizontal}
+                    label="完整设置"
+                    desc="供应商、导出和系统配置"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex h-11 w-full items-center justify-between rounded-xl border border-rose-200/15 bg-rose-300/10 px-3 text-left text-sm font-extrabold text-rose-100"
+                  >
+                    <span className="flex items-center gap-2">
+                      <LogOut className="size-4" />
+                      退出登录
+                    </span>
+                    <ChevronRight className="size-4" />
+                  </button>
+                </div>
+              </section>
+            </>
+          )}
+        </div>
       </div>
       <MobileQuickEntranceNav />
     </MobileSkyShell>
@@ -284,7 +284,9 @@ function ProfileAction({
         </span>
         <span className="min-w-0">
           <span className="block truncate text-sm font-extrabold">{label}</span>
-          <span className="mt-0.5 block truncate text-[13px] font-medium text-slate-400">{desc}</span>
+          <span className="mt-0.5 block truncate text-[13px] font-medium text-slate-400">
+            {desc}
+          </span>
         </span>
       </span>
       <ChevronRight className="size-4 shrink-0 text-slate-500" />

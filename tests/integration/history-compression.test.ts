@@ -202,7 +202,13 @@ describe('P6-001 Test 18: 对话历史压缩', () => {
       const messages: ChatMessage[] = [
         { id: '1', role: 'agent', content: 'Teacher speaking', timestamp: 1, agentId: 'teacher' },
         { id: '2', role: 'agent', content: 'Student speaking', timestamp: 2, agentId: 'student-1' },
-        { id: '3', role: 'agent', content: 'Assistant speaking', timestamp: 3, agentId: 'assistant' },
+        {
+          id: '3',
+          role: 'agent',
+          content: 'Assistant speaking',
+          timestamp: 3,
+          agentId: 'assistant',
+        },
       ];
 
       const compressed = compressHistory(messages, 10);

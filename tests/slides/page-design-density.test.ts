@@ -15,8 +15,14 @@ describe('Page Design Agent — Density Rules', () => {
     // moderate → "每页3-5个元素"
     // rich → "每页可包含4-8个元素"
 
-    const sparseDNA = { ...baseDNA, decoration: { ...baseDNA.decoration, density: 'sparse' as const } };
-    const moderateDNA = { ...baseDNA, decoration: { ...baseDNA.decoration, density: 'moderate' as const } };
+    const sparseDNA = {
+      ...baseDNA,
+      decoration: { ...baseDNA.decoration, density: 'sparse' as const },
+    };
+    const moderateDNA = {
+      ...baseDNA,
+      decoration: { ...baseDNA.decoration, density: 'moderate' as const },
+    };
     const richDNA = { ...baseDNA, decoration: { ...baseDNA.decoration, density: 'rich' as const } };
 
     expect(sparseDNA.decoration.density).toBe('sparse');
@@ -26,7 +32,15 @@ describe('Page Design Agent — Density Rules', () => {
 
   it('instruction schema supports all operation types', () => {
     // Verify that the instruction executor can handle all expected ops
-    const ops = ['setBackground', 'addText', 'addShape', 'addImage', 'addTable', 'addChart', 'addFormula'];
+    const ops = [
+      'setBackground',
+      'addText',
+      'addShape',
+      'addImage',
+      'addTable',
+      'addChart',
+      'addFormula',
+    ];
     expect(ops).toContain('setBackground');
     expect(ops).toContain('addText');
     expect(ops).toContain('addShape');

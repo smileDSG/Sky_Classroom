@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -62,7 +65,13 @@ export function BoldAccentCover({ dna, title, subtitle }: Props) {
       </text>
 
       {/* Left accent bar next to title */}
-      <rect x="0.3" y="2.5" width="0.04" height={ptToInch(fonts.headingSize)} fill={`#${colors.accent}`} />
+      <rect
+        x="0.3"
+        y="2.5"
+        width="0.04"
+        height={ptToInch(fonts.headingSize)}
+        fill={`#${colors.accent}`}
+      />
 
       {/* Subtitle */}
       <text

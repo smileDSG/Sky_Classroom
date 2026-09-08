@@ -16,7 +16,11 @@ vi.mock('@/lib/ai/llm', () => ({
 
 vi.mock('@/lib/generation/json-repair', () => ({
   parseJsonResponse: vi.fn().mockImplementation((text: string) => {
-    try { return JSON.parse(text); } catch { return null; }
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
   }),
 }));
 
@@ -29,7 +33,12 @@ vi.mock('@/lib/ai/providers', () => ({
   },
 }));
 
-import { createSolveGraph, buildSolveInitialState, afterCheckBank, afterSolve } from '@/lib/solve/solve-graph';
+import {
+  createSolveGraph,
+  buildSolveInitialState,
+  afterCheckBank,
+  afterSolve,
+} from '@/lib/solve/solve-graph';
 
 describe('buildSolveInitialState', () => {
   test('builds state from problem input', () => {
@@ -51,13 +60,24 @@ describe('buildSolveInitialState', () => {
 
   test('preserves structured problem context', () => {
     const problemSpec = {
-      id: 'p1', stage: '高中' as const, subject: '物理', questionType: '选择题', stem: '题干',
-      options: [], givens: [], asks: [], formulas: [], ambiguities: [], materials: [], subQuestions: [], diagram: null, confidence: 0.9,
+      id: 'p1',
+      stage: '高中' as const,
+      subject: '物理',
+      questionType: '选择题',
+      stem: '题干',
+      options: [],
+      givens: [],
+      asks: [],
+      formulas: [],
+      ambiguities: [],
+      materials: [],
+      subQuestions: [],
+      diagram: null,
+      confidence: 0.9,
     };
     const state = buildSolveInitialState('题干', null, null, problemSpec);
     expect(state.problemSpec).toEqual(problemSpec);
   });
-
 });
 
 describe('createSolveGraph', () => {

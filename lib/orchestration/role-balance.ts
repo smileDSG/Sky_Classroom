@@ -51,10 +51,7 @@ export function recordSpeaker(state: RoleBalanceState, agentId: string): void {
  * Check if speaking distribution is balanced.
  * An agent is overrepresented if it has spoken >2x the average.
  */
-export function checkBalance(
-  state: RoleBalanceState,
-  agents: AgentConfig[],
-): BalanceCheck {
+export function checkBalance(state: RoleBalanceState, agents: AgentConfig[]): BalanceCheck {
   const activeAgents = agents.filter((a) => a.enabled !== false);
   if (activeAgents.length === 0 || state.totalTurns === 0) {
     return {
@@ -103,9 +100,7 @@ export function selectNextByRotation(
   agents: AgentConfig[],
   respondedAgents: Set<string>,
 ): string | null {
-  const available = agents.filter(
-    (a) => a.enabled !== false && !respondedAgents.has(a.id),
-  );
+  const available = agents.filter((a) => a.enabled !== false && !respondedAgents.has(a.id));
 
   if (available.length === 0) return null;
 

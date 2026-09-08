@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -27,14 +30,48 @@ export function CornerDramaCover({ dna, title, subtitle }: Props) {
   const decorations = [] as React.ReactNode[];
   if (density === 'moderate' || density === 'rich') {
     decorations.push(
-      <rect key="cd1" x="8.5" y="0" width="5" height="5" fill={`#${colors.accent}`} opacity="0.08" />,
-      <ellipse key="cd2" cx="11.75" cy="1.75" rx="1.25" ry="1.25" fill={`#${colors.accentSecondary}`} opacity="0.12" />,
+      <rect
+        key="cd1"
+        x="8.5"
+        y="0"
+        width="5"
+        height="5"
+        fill={`#${colors.accent}`}
+        opacity="0.08"
+      />,
+      <ellipse
+        key="cd2"
+        cx="11.75"
+        cy="1.75"
+        rx="1.25"
+        ry="1.25"
+        fill={`#${colors.accentSecondary}`}
+        opacity="0.12"
+      />,
     );
   }
   if (density === 'rich') {
     decorations.push(
-      <line key="cd3" x1="8.5" y1="5" x2="8.5" y2="7.5" stroke={`#${colors.accent}`} strokeWidth="0.015" opacity="0.6" />,
-      <line key="cd4" x1="8.5" y1="5" x2="13.33" y2="5" stroke={`#${colors.accent}`} strokeWidth="0.015" opacity="0.6" />,
+      <line
+        key="cd3"
+        x1="8.5"
+        y1="5"
+        x2="8.5"
+        y2="7.5"
+        stroke={`#${colors.accent}`}
+        strokeWidth="0.015"
+        opacity="0.6"
+      />,
+      <line
+        key="cd4"
+        x1="8.5"
+        y1="5"
+        x2="13.33"
+        y2="5"
+        stroke={`#${colors.accent}`}
+        strokeWidth="0.015"
+        opacity="0.6"
+      />,
     );
   }
 

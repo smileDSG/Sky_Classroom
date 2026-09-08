@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -32,7 +35,14 @@ export function HeroLeftCover({ dna, title, subtitle }: Props) {
   }
   if (density === 'rich') {
     decorations.push(
-      <circle key="c2" cx="11.5" cy="2.0" r="1.2" fill={`#${colors.accentSecondary}`} opacity="0.08" />,
+      <circle
+        key="c2"
+        cx="11.5"
+        cy="2.0"
+        r="1.2"
+        fill={`#${colors.accentSecondary}`}
+        opacity="0.08"
+      />,
       <circle key="c3" cx="9.5" cy="1.5" r="0.5" fill={`#${colors.accent}`} opacity="0.15" />,
     );
   }
@@ -46,7 +56,15 @@ export function HeroLeftCover({ dna, title, subtitle }: Props) {
       <rect x="7.5" y="0" width="5.83" height="7.5" fill={`#${colors.accent}`} opacity="0.05" />
 
       {/* Diagonal line */}
-      <line x1="7.5" y1="7.5" x2="13.33" y2="0" stroke={`#${colors.accent}`} strokeWidth="0.02" opacity="0.6" />
+      <line
+        x1="7.5"
+        y1="7.5"
+        x2="13.33"
+        y2="0"
+        stroke={`#${colors.accent}`}
+        strokeWidth="0.02"
+        opacity="0.6"
+      />
 
       {/* Decorative circles */}
       {decorations}
@@ -64,7 +82,14 @@ export function HeroLeftCover({ dna, title, subtitle }: Props) {
       </text>
 
       {/* Accent line */}
-      <line x1="1.0" y1="1.85" x2="2.2" y2="1.85" stroke={`#${colors.accent}`} strokeWidth="0.035" />
+      <line
+        x1="1.0"
+        y1="1.85"
+        x2="2.2"
+        y2="1.85"
+        stroke={`#${colors.accent}`}
+        strokeWidth="0.035"
+      />
 
       {/* Title */}
       <text

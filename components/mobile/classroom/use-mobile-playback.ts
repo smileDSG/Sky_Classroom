@@ -64,29 +64,24 @@ export function useMobilePlayback(scene: Scene | null): UseMobilePlaybackReturn 
     actionEngineRef.current = actionEngine;
     audioPlayerRef.current = audioPlayer;
 
-    const engine = new PlaybackEngine(
-      [scene],
-      actionEngine,
-      audioPlayer,
-      {
-        onModeChange: (next) => setMode(next),
-        onSpeechStart: (text) => {
-          setCurrentSpeech(text);
-          setTranscript((prev) => [
-            ...prev,
-            { id: `${Date.now()}-${Math.random()}`, text, timestamp: Date.now() },
-          ]);
-        },
-        onSpeechEnd: () => setCurrentSpeech(null),
-        onTopicAppend: (role, text) => {
-          setTranscript((prev) => [
-            ...prev,
-            { id: `${Date.now()}-${Math.random()}`, text, role, timestamp: Date.now() },
-          ]);
-        },
-        onComplete: () => setCurrentSpeech(null),
+    const engine = new PlaybackEngine([scene], actionEngine, audioPlayer, {
+      onModeChange: (next) => setMode(next),
+      onSpeechStart: (text) => {
+        setCurrentSpeech(text);
+        setTranscript((prev) => [
+          ...prev,
+          { id: `${Date.now()}-${Math.random()}`, text, timestamp: Date.now() },
+        ]);
       },
-    );
+      onSpeechEnd: () => setCurrentSpeech(null),
+      onTopicAppend: (role, text) => {
+        setTranscript((prev) => [
+          ...prev,
+          { id: `${Date.now()}-${Math.random()}`, text, role, timestamp: Date.now() },
+        ]);
+      },
+      onComplete: () => setCurrentSpeech(null),
+    });
 
     engineRef.current = engine;
     setMode('idle');

@@ -11,10 +11,7 @@ import type { Slide } from '@/lib/types/slides';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
-function makeTextSlide(
-  content: string,
-  type: Slide['type'] = 'content',
-): Slide {
+function makeTextSlide(content: string, type: Slide['type'] = 'content'): Slide {
   return {
     id: `slide-${Math.random().toString(36).slice(2, 8)}`,
     viewportSize: 1000,
@@ -55,7 +52,11 @@ const defaultConfig: CourseExportConfig = {
 
 describe('exportCourseToPPTX', () => {
   it('returns valid CourseExportResult with blob URL', async () => {
-    const slides = [makeTextSlide('Slide 1', 'cover'), makeTextSlide('Slide 2'), makeTextSlide('Slide 3', 'end')];
+    const slides = [
+      makeTextSlide('Slide 1', 'cover'),
+      makeTextSlide('Slide 2'),
+      makeTextSlide('Slide 3', 'end'),
+    ];
     const result = await exportCourseToPPTX(defaultConfig, slides);
 
     expect(result.fileUrl).toMatch(/^blob:/);
@@ -145,10 +146,7 @@ describe('exportCourseToPPTX', () => {
 
   it('respects avatarName in config', async () => {
     const slides = [makeTextSlide('Content')];
-    const result = await exportCourseToPPTX(
-      { ...defaultConfig, avatarName: '严肃教授' },
-      slides,
-    );
+    const result = await exportCourseToPPTX({ ...defaultConfig, avatarName: '严肃教授' }, slides);
 
     expect(result.fileName).toContain('Test Course');
     expect(result.fileUrl).toMatch(/^blob:/);
@@ -159,12 +157,24 @@ describe('exportCourseToPPTX', () => {
       id: 'slide-shape',
       viewportSize: 1000,
       viewportRatio: 0.5625,
-      theme: { backgroundColor: '#fff', themeColors: ['#000'], fontColor: '#000', fontName: 'Arial' },
+      theme: {
+        backgroundColor: '#fff',
+        themeColors: ['#000'],
+        fontColor: '#000',
+        fontName: 'Arial',
+      },
       elements: [
         {
-          id: 'shape_1', type: 'shape', left: 100, top: 100, width: 200, height: 100,
-          viewBox: '0 0 200 100', path: 'M0 0 L200 0 L200 100 L0 100 Z',
-          fill: '#5b9bd5', rotate: 0,
+          id: 'shape_1',
+          type: 'shape',
+          left: 100,
+          top: 100,
+          width: 200,
+          height: 100,
+          viewBox: '0 0 200 100',
+          path: 'M0 0 L200 0 L200 100 L0 100 Z',
+          fill: '#5b9bd5',
+          rotate: 0,
         },
       ],
     } as unknown as Slide;
@@ -178,11 +188,23 @@ describe('exportCourseToPPTX', () => {
       id: 'slide-latex',
       viewportSize: 1000,
       viewportRatio: 0.5625,
-      theme: { backgroundColor: '#fff', themeColors: ['#000'], fontColor: '#000', fontName: 'Arial' },
+      theme: {
+        backgroundColor: '#fff',
+        themeColors: ['#000'],
+        fontColor: '#000',
+        fontName: 'Arial',
+      },
       elements: [
         {
-          id: 'latex_1', type: 'latex', left: 60, top: 200, width: 400, height: 70,
-          latex: 'a^2 + b^2 = c^2', color: '#000', rotate: 0,
+          id: 'latex_1',
+          type: 'latex',
+          left: 60,
+          top: 200,
+          width: 400,
+          height: 70,
+          latex: 'a^2 + b^2 = c^2',
+          color: '#000',
+          rotate: 0,
         },
       ],
     } as unknown as Slide;
@@ -202,9 +224,7 @@ describe('exportCourseToPPTX', () => {
   }, 15000);
 
   it('includes similar questions when data provided', async () => {
-    const sq = [
-      { problem: 'Solve x+1=2', difficulty: 1, knowledgePoint: 'Algebra' },
-    ];
+    const sq = [{ problem: 'Solve x+1=2', difficulty: 1, knowledgePoint: 'Algebra' }];
 
     const result = await exportCourseToPPTX(
       defaultConfig,

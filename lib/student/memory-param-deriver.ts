@@ -50,7 +50,9 @@ export function deriveMemoryParamsFromProfile(
   }
 
   const relatedErrors = profile.errorPatterns
-    .filter((ep) => weakPoints.some((kp) => ep.knowledgePoint.includes(kp) || kp.includes(ep.knowledgePoint)))
+    .filter((ep) =>
+      weakPoints.some((kp) => ep.knowledgePoint.includes(kp) || kp.includes(ep.knowledgePoint)),
+    )
     .sort((a, b) => b.frequency - a.frequency)
     .slice(0, 3);
 
@@ -64,18 +66,12 @@ export function deriveMemoryParamsFromProfile(
   const content = contentParts.join('\n');
 
   // Card count scales with weak point count
-  const cardCount = Math.min(
-    Math.max(weakPoints.length * 2 + 1, minCards),
-    maxCards,
-  );
+  const cardCount = Math.min(Math.max(weakPoints.length * 2 + 1, minCards), maxCards);
 
   // Difficulty & intervals from average mastery of weak points
   let avgMastery = 50;
   if (weakPoints.length > 0) {
-    const sum = weakPoints.reduce(
-      (s, kp) => s + (profile.masteryByKnowledge[kp] ?? 0),
-      0,
-    );
+    const sum = weakPoints.reduce((s, kp) => s + (profile.masteryByKnowledge[kp] ?? 0), 0);
     avgMastery = sum / weakPoints.length;
   } else if (profile.totalQuestions > 0) {
     avgMastery = (profile.totalCorrect / profile.totalQuestions) * 100;

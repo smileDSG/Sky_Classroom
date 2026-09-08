@@ -17,12 +17,12 @@
 export const AVATAR_DESIGN_SYSTEM = {
   // 颜色系统
   colors: {
-    primary: '#0ea5e9',      // 天蓝
-    secondary: '#38bdf8',    // 浅天蓝
-    accent: '#f472b6',       // 粉色点缀
-    highlight: '#fbbf24',    // 金色阳光
-    dark: '#1e293b',         // 深蓝
-    light: '#f0f9ff',        // 极浅蓝白
+    primary: '#0ea5e9', // 天蓝
+    secondary: '#38bdf8', // 浅天蓝
+    accent: '#f472b6', // 粉色点缀
+    highlight: '#fbbf24', // 金色阳光
+    dark: '#1e293b', // 深蓝
+    light: '#f0f9ff', // 极浅蓝白
     white: '#ffffff',
   },
 
@@ -83,17 +83,20 @@ export const AVATAR_DESIGN_SYSTEM = {
     size: 280,
     viewBox: '0 0 280 280',
     shapeRendering: 'geometricPrecision',
-  }
+  },
 };
 
 /**
  * 生成天空课堂风格的 SVG 头像
  */
-export function generateSkyAvatar(type: 'teacher' | 'student' | 'assistant' | 'user', options?: {
-  primaryColor?: string;
-  secondaryColor?: string;
-  gender?: 'male' | 'female' | 'neutral';
-}): string {
+export function generateSkyAvatar(
+  type: 'teacher' | 'student' | 'assistant' | 'user',
+  options?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    gender?: 'male' | 'female' | 'neutral';
+  },
+): string {
   const colors = AVATAR_DESIGN_SYSTEM.colors;
   const opts = {
     primaryColor: options?.primaryColor || colors.primary,

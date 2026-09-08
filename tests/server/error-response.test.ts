@@ -4,7 +4,12 @@
  * Tests apiError, apiSuccess, and error code definitions.
  */
 import { describe, test, expect } from 'vitest';
-import { apiError, apiSuccess, API_ERROR_CODES, ERROR_CODE_MESSAGES } from '@/lib/server/api-response';
+import {
+  apiError,
+  apiSuccess,
+  API_ERROR_CODES,
+  ERROR_CODE_MESSAGES,
+} from '@/lib/server/api-response';
 import { ERROR_CODE_STATUS } from '@/lib/server/api-error-codes';
 
 // ─── apiError ───
@@ -100,14 +105,32 @@ describe('apiSuccess', () => {
 describe('API_ERROR_CODES', () => {
   test('has all expected codes', () => {
     const expected = [
-      'MISSING_REQUIRED_FIELD', 'MISSING_API_KEY', 'INVALID_REQUEST',
-      'RATE_LIMITED', 'VOXCPM_AUTO_VOICE_REQUIRES_CONTEXT', 'INVALID_URL',
-      'REDIRECT_NOT_ALLOWED', 'CONTENT_SENSITIVE', 'UPSTREAM_ERROR',
-      'GENERATION_FAILED', 'TRANSCRIPTION_FAILED', 'PARSE_FAILED',
-      'INTERNAL_ERROR', 'STORAGE_ERROR', 'NOT_FOUND', 'UNAUTHORIZED',
-      'DUPLICATE_RESOURCE', 'INVALID_CREDENTIALS', 'EMAIL_EXISTS',
-      'USERNAME_EXISTS', 'ACCOUNT_SUSPENDED', 'USAGE_LIMIT_EXCEEDED',
-      'INSUFFICIENT_PLAN', 'ORDER_NOT_FOUND', 'PAYMENT_FAILED', 'FORBIDDEN',
+      'MISSING_REQUIRED_FIELD',
+      'MISSING_API_KEY',
+      'INVALID_REQUEST',
+      'RATE_LIMITED',
+      'VOXCPM_AUTO_VOICE_REQUIRES_CONTEXT',
+      'INVALID_URL',
+      'REDIRECT_NOT_ALLOWED',
+      'CONTENT_SENSITIVE',
+      'UPSTREAM_ERROR',
+      'GENERATION_FAILED',
+      'TRANSCRIPTION_FAILED',
+      'PARSE_FAILED',
+      'INTERNAL_ERROR',
+      'STORAGE_ERROR',
+      'NOT_FOUND',
+      'UNAUTHORIZED',
+      'DUPLICATE_RESOURCE',
+      'INVALID_CREDENTIALS',
+      'EMAIL_EXISTS',
+      'USERNAME_EXISTS',
+      'ACCOUNT_SUSPENDED',
+      'USAGE_LIMIT_EXCEEDED',
+      'INSUFFICIENT_PLAN',
+      'ORDER_NOT_FOUND',
+      'PAYMENT_FAILED',
+      'FORBIDDEN',
     ];
     for (const code of expected) {
       expect(API_ERROR_CODES).toHaveProperty(code);

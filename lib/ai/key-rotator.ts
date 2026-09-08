@@ -75,9 +75,15 @@ export class KeyRotator {
     entry.cooldownUntil = 0;
   }
 
-  getState(): Record<string, Array<{ keySuffix: string; failures: number; cooldownRemaining: number }>> {
+  getState(): Record<
+    string,
+    Array<{ keySuffix: string; failures: number; cooldownRemaining: number }>
+  > {
     const now = Date.now();
-    const result: Record<string, Array<{ keySuffix: string; failures: number; cooldownRemaining: number }>> = {};
+    const result: Record<
+      string,
+      Array<{ keySuffix: string; failures: number; cooldownRemaining: number }>
+    > = {};
     for (const [providerId, pool] of this.pools) {
       result[providerId] = pool.map((e) => ({
         keySuffix: `...${e.key.slice(-4)}`,

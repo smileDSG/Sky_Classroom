@@ -22,7 +22,8 @@ describe('createCsvImporter', () => {
   });
 
   it('handles quoted fields with commas', async () => {
-    const csv = 'subject,content,answer\n数学,"已知 a, b, c 为三边, 求面积",S=\\sqrt{p(p-a)(p-b)(p-c)}';
+    const csv =
+      'subject,content,answer\n数学,"已知 a, b, c 为三边, 求面积",S=\\sqrt{p(p-a)(p-b)(p-c)}';
     const result = await importer.parse(csv);
     expect(result.entries).toHaveLength(1);
     expect(result.entries[0].content).toBe('已知 a, b, c 为三边, 求面积');

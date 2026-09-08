@@ -5,7 +5,8 @@ interface IssueboardPanelProps {
   readonly issueboard: PBLIssueboard;
 }
 
-export function IssueboardPanel({ issueboard }: IssueboardPanelProps) {const sortedIssues = [...issueboard.issues].sort((a, b) => a.index - b.index);
+export function IssueboardPanel({ issueboard }: IssueboardPanelProps) {
+  const sortedIssues = [...issueboard.issues].sort((a, b) => a.index - b.index);
 
   const doneCount = sortedIssues.filter((i) => i.is_done).length;
   const totalCount = sortedIssues.length;
@@ -35,26 +36,21 @@ export function IssueboardPanel({ issueboard }: IssueboardPanelProps) {const so
           <IssueCard key={issue.id} issue={issue} />
         ))}
         {sortedIssues.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            {'暂无任务'}
-          </p>
+          <p className="text-sm text-muted-foreground text-center py-4">{'暂无任务'}</p>
         )}
       </div>
     </div>
   );
 }
 
-function IssueCard({ issue }: { issue: PBLIssue }) {const statusColor = issue.is_done
+function IssueCard({ issue }: { issue: PBLIssue }) {
+  const statusColor = issue.is_done
     ? 'border-green-500/50 bg-green-50 dark:bg-green-950/20'
     : issue.is_active
       ? 'border-primary bg-primary/5'
       : 'border-muted';
 
-  const statusLabel = issue.is_done
-    ? '已完成'
-    : issue.is_active
-      ? '进行中'
-      : '待处理';
+  const statusLabel = issue.is_done ? '已完成' : issue.is_active ? '进行中' : '待处理';
 
   const statusBadgeColor = issue.is_done
     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'

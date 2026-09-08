@@ -62,7 +62,9 @@ function drawHandwrittenText(
 }
 
 export function renderSyntheticCase(sample: SyntheticRecognitionCase, seed = 20260722): Buffer {
-  const random = mulberry32(seed + sample.id.length * 97 + sample.id.charCodeAt(sample.id.length - 1));
+  const random = mulberry32(
+    seed + sample.id.length * 97 + sample.id.charCodeAt(sample.id.length - 1),
+  );
   const base = createCanvas(WIDTH, HEIGHT);
   const baseContext = base.getContext('2d');
   drawPaper(baseContext);

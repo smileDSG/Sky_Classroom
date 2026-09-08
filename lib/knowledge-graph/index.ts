@@ -12,9 +12,7 @@ export type {
   LearningPath,
 } from './types';
 
-export {
-  KNOWLEDGE_RELATIONS,
-} from './relations';
+export { KNOWLEDGE_RELATIONS } from './relations';
 
 export {
   buildKnowledgeGraph,

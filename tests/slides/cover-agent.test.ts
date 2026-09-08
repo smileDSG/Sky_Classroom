@@ -2,7 +2,13 @@
  * Tests for cover-agent.ts — salvageJson, schema validation, assembly, concurrency.
  */
 import { describe, it, expect } from 'vitest';
-import { salvageJson, coverSkeletonSchema, assembleDesignDNA, getMotifsForTopic, type CoverItem } from '@/lib/slides/agent/cover-agent';
+import {
+  salvageJson,
+  coverSkeletonSchema,
+  assembleDesignDNA,
+  getMotifsForTopic,
+  type CoverItem,
+} from '@/lib/slides/agent/cover-agent';
 import type { DesignDNA } from '@/lib/slides/agent/design-dna';
 
 // ══════════════════════════════════════════════════════════════════════
@@ -11,7 +17,8 @@ import type { DesignDNA } from '@/lib/slides/agent/design-dna';
 
 describe('salvageJson', () => {
   it('passes through clean JSON', () => {
-    const input = '{"styleName":"科技暗金","fontId":"georgia-calibri","density":"moderate","mood":"专业","bestFor":["数学"]}';
+    const input =
+      '{"styleName":"科技暗金","fontId":"georgia-calibri","density":"moderate","mood":"专业","bestFor":["数学"]}';
     const result = salvageJson(input);
     expect(result).not.toBeNull();
     expect(JSON.parse(result!)).toEqual({
@@ -24,7 +31,8 @@ describe('salvageJson', () => {
   });
 
   it('strips markdown json fence', () => {
-    const input = '```json\n{"styleName":"极简白","fontId":"noto-sans","density":"sparse","mood":"清爽","bestFor":["语文"]}\n```';
+    const input =
+      '```json\n{"styleName":"极简白","fontId":"noto-sans","density":"sparse","mood":"清爽","bestFor":["语文"]}\n```';
     const result = salvageJson(input);
     expect(result).not.toBeNull();
     const parsed = JSON.parse(result!);
@@ -33,7 +41,8 @@ describe('salvageJson', () => {
   });
 
   it('strips markdown fence without language tag', () => {
-    const input = '```\n{"styleName":"书香墨韵","fontId":"lora-inter","density":"moderate","mood":"典雅","bestFor":["历史"]}\n```';
+    const input =
+      '```\n{"styleName":"书香墨韵","fontId":"lora-inter","density":"moderate","mood":"典雅","bestFor":["历史"]}\n```';
     const result = salvageJson(input);
     expect(result).not.toBeNull();
     const parsed = JSON.parse(result!);
@@ -41,7 +50,8 @@ describe('salvageJson', () => {
   });
 
   it('fixes trailing comma before }', () => {
-    const input = '{"styleName":"测试","fontId":"impact-arial","density":"rich","mood":"科技","bestFor":["物理"],}';
+    const input =
+      '{"styleName":"测试","fontId":"impact-arial","density":"rich","mood":"科技","bestFor":["物理"],}';
     const result = salvageJson(input);
     expect(result).not.toBeNull();
     const parsed = JSON.parse(result!);
@@ -49,7 +59,8 @@ describe('salvageJson', () => {
   });
 
   it('fixes trailing comma before ]', () => {
-    const input = '{"styleName":"测试","fontId":"georgia-calibri","density":"moderate","mood":"测试","bestFor":["数学",]}';
+    const input =
+      '{"styleName":"测试","fontId":"georgia-calibri","density":"moderate","mood":"测试","bestFor":["数学",]}';
     const result = salvageJson(input);
     expect(result).not.toBeNull();
     const parsed = JSON.parse(result!);
@@ -58,7 +69,8 @@ describe('salvageJson', () => {
 
   it('auto-closes truncated JSON (missing final })', () => {
     // Simulates LLM output being cut off before closing brace
-    const input = '{"styleName":"深邃极简","fontId":"impact-arial","density":"sparse","mood":"理性","bestFor":["物理"]';
+    const input =
+      '{"styleName":"深邃极简","fontId":"impact-arial","density":"sparse","mood":"理性","bestFor":["物理"]';
     const result = salvageJson(input);
     expect(result).not.toBeNull();
     const parsed = JSON.parse(result!);
@@ -68,7 +80,8 @@ describe('salvageJson', () => {
 
   it('auto-closes truncated JSON (missing }] at end)', () => {
     // Missing both closing bracket and brace
-    const input = '{"styleName":"科技暗金","fontId":"georgia-calibri","density":"rich","mood":"专业","bestFor":["数学"';
+    const input =
+      '{"styleName":"科技暗金","fontId":"georgia-calibri","density":"rich","mood":"专业","bestFor":["数学"';
     const result = salvageJson(input);
     expect(result).not.toBeNull();
     const parsed = JSON.parse(result!);
@@ -83,7 +96,8 @@ describe('salvageJson', () => {
   });
 
   it('handles control characters', () => {
-    const input = '{\x00"styleName":"测试",\x01"fontId":"georgia-calibri","density":"moderate","mood":"测试","bestFor":["数学"]\x1f}';
+    const input =
+      '{\x00"styleName":"测试",\x01"fontId":"georgia-calibri","density":"moderate","mood":"测试","bestFor":["数学"]\x1f}';
     const result = salvageJson(input);
     expect(result).not.toBeNull();
     const parsed = JSON.parse(result!);
@@ -92,7 +106,8 @@ describe('salvageJson', () => {
 
   it('extracts JSON from text with surrounding content', () => {
     // LLM sometimes adds explanatory text
-    const input = 'Here is the design:\n{"styleName":"极简白","fontId":"noto-sans","density":"sparse","mood":"清爽","bestFor":["英语"]}\nHope this works!';
+    const input =
+      'Here is the design:\n{"styleName":"极简白","fontId":"noto-sans","density":"sparse","mood":"清爽","bestFor":["英语"]}\nHope this works!';
     const result = salvageJson(input);
     expect(result).not.toBeNull();
     const parsed = JSON.parse(result!);
@@ -100,7 +115,8 @@ describe('salvageJson', () => {
   });
 
   it('handles nested braces in string values', () => {
-    const input = '{"styleName":"测试{内容}","fontId":"georgia-calibri","density":"moderate","mood":"{专业}","bestFor":["数学"]}';
+    const input =
+      '{"styleName":"测试{内容}","fontId":"georgia-calibri","density":"moderate","mood":"{专业}","bestFor":["数学"]}';
     const result = salvageJson(input);
     expect(result).not.toBeNull();
     const parsed = JSON.parse(result!);
@@ -126,26 +142,49 @@ describe('coverSkeletonSchema', () => {
   });
 
   it('rejects missing styleName', () => {
-    const input = { fontId: 'georgia-calibri', density: 'moderate', mood: '专业', bestFor: ['数学'] };
+    const input = {
+      fontId: 'georgia-calibri',
+      density: 'moderate',
+      mood: '专业',
+      bestFor: ['数学'],
+    };
     const result = coverSkeletonSchema.safeParse(input);
     expect(result.success).toBe(false);
   });
 
   it('rejects styleName too long (>12)', () => {
     // 18 characters total
-    const input = { styleName: '这是一个超过十二个字的风格名称', fontId: 'georgia-calibri', density: 'moderate', mood: '专业', bestFor: ['数学'] };
+    const input = {
+      styleName: '这是一个超过十二个字的风格名称',
+      fontId: 'georgia-calibri',
+      density: 'moderate',
+      mood: '专业',
+      bestFor: ['数学'],
+    };
     const result = coverSkeletonSchema.safeParse(input);
     expect(result.success).toBe(false);
   });
 
   it('rejects invalid fontId', () => {
-    const input = { styleName: '测试', fontId: 'nonexistent-font', density: 'moderate', mood: '专业', bestFor: ['数学'] };
+    const input = {
+      styleName: '测试',
+      fontId: 'nonexistent-font',
+      density: 'moderate',
+      mood: '专业',
+      bestFor: ['数学'],
+    };
     const result = coverSkeletonSchema.safeParse(input);
     expect(result.success).toBe(false);
   });
 
   it('rejects invalid density', () => {
-    const input = { styleName: '测试', fontId: 'georgia-calibri', density: 'ultra-dense', mood: '专业', bestFor: ['数学'] };
+    const input = {
+      styleName: '测试',
+      fontId: 'georgia-calibri',
+      density: 'ultra-dense',
+      mood: '专业',
+      bestFor: ['数学'],
+    };
     const result = coverSkeletonSchema.safeParse(input);
     expect(result.success).toBe(false);
   });
@@ -176,7 +215,13 @@ describe('coverSkeletonSchema', () => {
   });
 
   it('rejects empty bestFor array', () => {
-    const input = { styleName: '测试', fontId: 'georgia-calibri', density: 'moderate', mood: '专业', bestFor: [] };
+    const input = {
+      styleName: '测试',
+      fontId: 'georgia-calibri',
+      density: 'moderate',
+      mood: '专业',
+      bestFor: [],
+    };
     const result = coverSkeletonSchema.safeParse(input);
     expect(result.success).toBe(false);
   });
@@ -196,7 +241,12 @@ describe('assembleDesignDNA', () => {
   };
 
   it('produces valid DesignDNA', () => {
-    const dna = assembleDesignDNA(validSkeleton, 'midnight-executive', 'geometric-lines', 'hero-centered');
+    const dna = assembleDesignDNA(
+      validSkeleton,
+      'midnight-executive',
+      'geometric-lines',
+      'hero-centered',
+    );
     expect(dna.styleName).toBe('科技暗金');
     expect(dna.mood).toBe('专业学术');
     expect(dna.colors).toBeDefined();
@@ -210,33 +260,63 @@ describe('assembleDesignDNA', () => {
   });
 
   it('falls back to midnight-executive palette for invalid paletteId', () => {
-    const dna = assembleDesignDNA(validSkeleton, '__nonexistent__', 'geometric-lines', 'hero-centered');
+    const dna = assembleDesignDNA(
+      validSkeleton,
+      '__nonexistent__',
+      'geometric-lines',
+      'hero-centered',
+    );
     expect(dna.colors.coverBg).toBe('1E2761'); // midnight-executive default
   });
 
   it('falls back to arial-black-arial for invalid fontId', () => {
     const badSkeleton = { ...validSkeleton, fontId: 'bad-font' as never };
-    const dna = assembleDesignDNA(badSkeleton, 'midnight-executive', 'geometric-lines', 'hero-centered');
+    const dna = assembleDesignDNA(
+      badSkeleton,
+      'midnight-executive',
+      'geometric-lines',
+      'hero-centered',
+    );
     expect(dna.fonts.en).toBe('Arial Black'); // arial-black-arial default
   });
 
   it('derives card style from motif (chinese-seal → accent-left-bar)', () => {
-    const dna = assembleDesignDNA(validSkeleton, 'midnight-executive', 'chinese-seal', 'vertical-poem');
+    const dna = assembleDesignDNA(
+      validSkeleton,
+      'midnight-executive',
+      'chinese-seal',
+      'vertical-poem',
+    );
     expect(dna.components.cardStyle).toBe('accent-left-bar');
   });
 
   it('derives bullet style from motif (chinese-seal → chinese-brush)', () => {
-    const dna = assembleDesignDNA(validSkeleton, 'midnight-executive', 'chinese-seal', 'vertical-poem');
+    const dna = assembleDesignDNA(
+      validSkeleton,
+      'midnight-executive',
+      'chinese-seal',
+      'vertical-poem',
+    );
     expect(dna.components.bulletStyle).toBe('chinese-brush');
   });
 
   it('derives bullet style from motif (geometric-lines → dot)', () => {
-    const dna = assembleDesignDNA(validSkeleton, 'midnight-executive', 'geometric-lines', 'hero-centered');
+    const dna = assembleDesignDNA(
+      validSkeleton,
+      'midnight-executive',
+      'geometric-lines',
+      'hero-centered',
+    );
     expect(dna.components.bulletStyle).toBe('dot');
   });
 
   it('derives page number style from motif (chinese-seal → circle-number)', () => {
-    const dna = assembleDesignDNA(validSkeleton, 'midnight-executive', 'chinese-seal', 'vertical-poem');
+    const dna = assembleDesignDNA(
+      validSkeleton,
+      'midnight-executive',
+      'chinese-seal',
+      'vertical-poem',
+    );
     expect(dna.components.pageNumberStyle).toBe('circle-number');
   });
 
@@ -252,7 +332,8 @@ describe('assembleDesignDNA', () => {
 
 describe('full flow: salvage → schema → assemble', () => {
   it('handles realistic LLM output (markdown fence + valid content)', () => {
-    const rawLLM = '```json\n{"styleName":"极简白","fontId":"noto-sans","density":"sparse","mood":"清爽干净","bestFor":["语文","英语"]}\n```';
+    const rawLLM =
+      '```json\n{"styleName":"极简白","fontId":"noto-sans","density":"sparse","mood":"清爽干净","bestFor":["语文","英语"]}\n```';
 
     const repaired = salvageJson(rawLLM);
     expect(repaired).not.toBeNull();
@@ -270,7 +351,8 @@ describe('full flow: salvage → schema → assemble', () => {
   });
 
   it('handles truncated LLM output (auto-close + valid content)', () => {
-    const rawLLM = '{"styleName":"书香墨韵","fontId":"lora-inter","density":"moderate","mood":"典雅古朴","bestFor":["历史"';
+    const rawLLM =
+      '{"styleName":"书香墨韵","fontId":"lora-inter","density":"moderate","mood":"典雅古朴","bestFor":["历史"';
 
     const repaired = salvageJson(rawLLM);
     expect(repaired).not.toBeNull();
@@ -286,7 +368,8 @@ describe('full flow: salvage → schema → assemble', () => {
   });
 
   it('handles LLM output with explanation text around JSON', () => {
-    const rawLLM = '好的，这是为您设计的封面：\n{"styleName":"深邃极简","fontId":"impact-arial","density":"sparse","mood":"理性科技","bestFor":["物理"]}\n希望您满意！';
+    const rawLLM =
+      '好的，这是为您设计的封面：\n{"styleName":"深邃极简","fontId":"impact-arial","density":"sparse","mood":"理性科技","bestFor":["物理"]}\n希望您满意！';
 
     const repaired = salvageJson(rawLLM);
     expect(repaired).not.toBeNull();
@@ -297,7 +380,8 @@ describe('full flow: salvage → schema → assemble', () => {
   });
 
   it('handles trailing comma + truncated combo', () => {
-    const rawLLM = '{"styleName":"科技暗金","fontId":"georgia-calibri","density":"rich","mood":"专业学术","bestFor":["数学","物理",';
+    const rawLLM =
+      '{"styleName":"科技暗金","fontId":"georgia-calibri","density":"rich","mood":"专业学术","bestFor":["数学","物理",';
 
     const repaired = salvageJson(rawLLM);
     expect(repaired).not.toBeNull();
@@ -318,7 +402,13 @@ describe('getMotifsForTopic', () => {
   });
 
   it('all returned motifs are valid', () => {
-    const validMotifs = ['geometric-lines', 'ink-wash', 'neon-grid', 'organic-circles', 'chinese-seal'];
+    const validMotifs = [
+      'geometric-lines',
+      'ink-wash',
+      'neon-grid',
+      'organic-circles',
+      'chinese-seal',
+    ];
     for (const topic of ['英语', '量子力学', '生物学', '随便什么']) {
       const motifs = getMotifsForTopic(topic);
       for (const m of motifs) {

@@ -29,10 +29,7 @@ export async function POST(request: NextRequest) {
     const { sectionId, chunkOrder, selectedOption, correctAnswer, knowledgePoints, jobId } = body;
 
     if (selectedOption === undefined || selectedOption === null) {
-      return NextResponse.json(
-        { error: 'Missing selectedOption parameter' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Missing selectedOption parameter' }, { status: 400 });
     }
 
     // Use correctAnswer if provided (from structured quiz chunk), otherwise fallback to 0
@@ -41,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     log.info(
       `Quiz answer verified: section=${sectionId}, chunk=${chunkOrder}, ` +
-      `selected=${selectedOption}, expected=${expectedAnswer}, correct=${isCorrect}, user=${userId || 'anonymous'}`
+        `selected=${selectedOption}, expected=${expectedAnswer}, correct=${isCorrect}, user=${userId || 'anonymous'}`,
     );
 
     let resolvedKnowledgePoints = Array.isArray(knowledgePoints)
@@ -121,9 +118,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Quiz answer verification failed:', error);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

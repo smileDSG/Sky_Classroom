@@ -40,7 +40,12 @@ function makeJob(overrides?: Partial<TeachingJob>): TeachingJob {
           hasQuiz: false,
         },
         chunks: [
-          { sectionId: 's1', type: 'text', content: '二次函数是形如 y = ax² + bx + c 的函数，其中 a ≠ 0。', order: 0 },
+          {
+            sectionId: 's1',
+            type: 'text',
+            content: '二次函数是形如 y = ax² + bx + c 的函数，其中 a ≠ 0。',
+            order: 0,
+          },
           { sectionId: 's1', type: 'formula', content: '\\( y = ax^2 + bx + c \\)', order: 1 },
         ],
       },
@@ -88,9 +93,7 @@ describe('buildStudyGroupContext', () => {
           estimatedDuration: 5,
           hasQuiz: false,
         },
-        chunks: [
-          { sectionId: `s${i}`, type: 'text' as const, content: 'a'.repeat(500), order: 0 },
-        ],
+        chunks: [{ sectionId: `s${i}`, type: 'text' as const, content: 'a'.repeat(500), order: 0 }],
       })),
     });
     const ctx = buildStudyGroupContext(job);

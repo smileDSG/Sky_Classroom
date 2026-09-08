@@ -56,8 +56,12 @@ describe('buildStudentProfile', () => {
     const { createQuizAttemptDAO } = await import('@/lib/student/quiz-attempts');
     const { createKnowledgeStateDAO } = await import('@/lib/storage/dao/knowledge-state');
     vi.mocked(getServerStorage).mockResolvedValue(mockStorage);
-    vi.mocked(createMistakeBookDAO).mockReturnValue(mockMistakeDAO as unknown as ReturnType<typeof createMistakeBookDAO>);
-    vi.mocked(createQuizAttemptDAO).mockReturnValue(mockQuizAttemptDAO as unknown as ReturnType<typeof createQuizAttemptDAO>);
+    vi.mocked(createMistakeBookDAO).mockReturnValue(
+      mockMistakeDAO as unknown as ReturnType<typeof createMistakeBookDAO>,
+    );
+    vi.mocked(createQuizAttemptDAO).mockReturnValue(
+      mockQuizAttemptDAO as unknown as ReturnType<typeof createQuizAttemptDAO>,
+    );
     vi.mocked(createKnowledgeStateDAO).mockReturnValue(
       mockKnowledgeStateDAO as unknown as ReturnType<typeof createKnowledgeStateDAO>,
     );

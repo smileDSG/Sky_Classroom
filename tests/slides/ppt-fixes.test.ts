@@ -26,9 +26,26 @@ describe('PPT Fixes — Formula deduplication', () => {
     const sparseLlmOutput = JSON.stringify({
       pageNum: 4,
       instructions: [
-        { op: 'addText', params: { text: '光合作用的过程', x: 0.8, y: 0.5, w: 11.7, h: 0.7, fontSize: 24, bold: true } },
-        { op: 'addText', params: { text: '概念卡片', x: 0.8, y: 1.5, w: 11.7, h: 0.4, fontSize: 16, bold: true } },
-        { op: 'addText', params: { text: '这是概念描述。', x: 0.8, y: 2.0, w: 11.7, h: 1.0, fontSize: 13 } },
+        {
+          op: 'addText',
+          params: {
+            text: '光合作用的过程',
+            x: 0.8,
+            y: 0.5,
+            w: 11.7,
+            h: 0.7,
+            fontSize: 24,
+            bold: true,
+          },
+        },
+        {
+          op: 'addText',
+          params: { text: '概念卡片', x: 0.8, y: 1.5, w: 11.7, h: 0.4, fontSize: 16, bold: true },
+        },
+        {
+          op: 'addText',
+          params: { text: '这是概念描述。', x: 0.8, y: 2.0, w: 11.7, h: 1.0, fontSize: 13 },
+        },
       ],
     });
     mockCallLLM.mockResolvedValueOnce({ text: sparseLlmOutput });
@@ -67,8 +84,14 @@ describe('PPT Fixes — Formula deduplication', () => {
     const sparseLlmOutput = JSON.stringify({
       pageNum: 3,
       instructions: [
-        { op: 'addText', params: { text: '第二章', x: 0.8, y: 0.5, w: 11.7, h: 0.7, fontSize: 24, bold: true } },
-        { op: 'addText', params: { text: '化学方程式与配平', x: 0.8, y: 2.0, w: 11.7, h: 0.5, fontSize: 18 } },
+        {
+          op: 'addText',
+          params: { text: '第二章', x: 0.8, y: 0.5, w: 11.7, h: 0.7, fontSize: 24, bold: true },
+        },
+        {
+          op: 'addText',
+          params: { text: '化学方程式与配平', x: 0.8, y: 2.0, w: 11.7, h: 0.5, fontSize: 18 },
+        },
       ],
     });
     mockCallLLM.mockResolvedValueOnce({ text: sparseLlmOutput });
@@ -91,13 +114,18 @@ describe('PPT Fixes — Instruction Executor', () => {
 
     const instructions = [
       { op: 'addShape', params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1 } },
-      { op: 'addShape', params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1, fillColor: '#FF0000' } },
+      {
+        op: 'addShape',
+        params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1, fillColor: '#FF0000' },
+      },
     ];
 
     const result = await executor.execute(slide, pres, instructions, 1);
     expect(result.errors.length).toBe(0);
     // Only the second shape (with fillColor) should be added
-    const shapesAfter = (slide as unknown as { _slideObjects: Array<{ shape?: string }> })._slideObjects.filter((o) => o.shape);
+    const shapesAfter = (
+      slide as unknown as { _slideObjects: Array<{ shape?: string }> }
+    )._slideObjects.filter((o) => o.shape);
     expect(shapesAfter.length).toBe(1);
   });
 
@@ -107,12 +135,17 @@ describe('PPT Fixes — Instruction Executor', () => {
     const executor = new InstructionExecutor();
 
     const instructions = [
-      { op: 'addShape', params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1, lineColor: '#000000' } },
+      {
+        op: 'addShape',
+        params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1, lineColor: '#000000' },
+      },
     ];
 
     const result = await executor.execute(slide, pres, instructions, 1);
     expect(result.errors.length).toBe(0);
-    const shapesAfter = (slide as unknown as { _slideObjects: Array<{ shape?: string }> })._slideObjects.filter((o) => o.shape);
+    const shapesAfter = (
+      slide as unknown as { _slideObjects: Array<{ shape?: string }> }
+    )._slideObjects.filter((o) => o.shape);
     expect(shapesAfter.length).toBe(1);
   });
 });

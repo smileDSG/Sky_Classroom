@@ -43,11 +43,11 @@ describe('postProcessMathContent', () => {
 describe('postProcessFourPartOutput', () => {
   const mockOutput: FourPartOutput = {
     solution: '解：α = A²，所以 β = γ × δ',
-    answer: "α = A²",
+    answer: 'α = A²',
     steps: [
       {
         label: '步骤1',
-        content: "α = A²，然后 β = γ × δ",
+        content: 'α = A²，然后 β = γ × δ',
         keyPoints: ['注意 α 变化，β²'],
       },
     ],

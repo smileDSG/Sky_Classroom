@@ -104,7 +104,7 @@ beforeEach(async () => {
 // ── GET ────────────────────────────────────────────────────────────
 
 describe('GET /api/sky/mistakes', () => {
-  it('does not reveal another authenticated user\'s mistakes', async () => {
+  it("does not reveal another authenticated user's mistakes", async () => {
     const created = await createMistake({ knowledgePoints: ['A_PRIVATE_POINT'] });
     const id = await extractId(created);
 
@@ -168,7 +168,7 @@ describe('GET /api/sky/mistakes', () => {
 });
 
 describe('GET /api/sky/review/due', () => {
-  it('builds the review schedule from only the authenticated user\'s mistakes', async () => {
+  it("builds the review schedule from only the authenticated user's mistakes", async () => {
     const dao = createMistakeBookDAO(storage);
     const base = {
       problemText: 'due problem',
@@ -191,7 +191,7 @@ describe('GET /api/sky/review/due', () => {
 });
 
 describe('GET /api/sky/knowledge-graph', () => {
-  it('builds graph nodes from only the authenticated user\'s mistakes', async () => {
+  it("builds graph nodes from only the authenticated user's mistakes", async () => {
     const dao = createMistakeBookDAO(storage);
     const base = {
       problemText: 'graph problem',

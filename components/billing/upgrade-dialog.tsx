@@ -5,9 +5,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { PLANS, type PlanType } from '@/lib/server/billing/plans';
 
 interface UpgradeDialogProps {
@@ -67,7 +80,9 @@ export function UpgradeDialog({ open, onClose, currentPlan, onPlanChanged }: Upg
         </DialogHeader>
 
         {message && (
-          <div className={`text-sm p-3 rounded-md ${message.includes('成功') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          <div
+            className={`text-sm p-3 rounded-md ${message.includes('成功') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}
+          >
             {message}
           </div>
         )}
@@ -81,14 +96,22 @@ export function UpgradeDialog({ open, onClose, currentPlan, onPlanChanged }: Upg
               <Card key={plan.type} className={isCurrent ? 'border-primary' : ''}>
                 <CardHeader>
                   <CardTitle className="text-lg">{plan.name}</CardTitle>
-                  <CardDescription>
-                    ¥{plan.price}/月
-                  </CardDescription>
+                  <CardDescription>¥{plan.price}/月</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
-                  <div>AI 调用：{plan.llmCallsPerDay === 0 ? '不限量' : `${plan.llmCallsPerDay}次/天`}</div>
-                  <div>内容生成：{plan.generationsPerDay === 0 ? '不限量' : `${plan.generationsPerDay}次/天`}</div>
-                  <div>存储空间：{plan.storageLimit === 0 ? '不限量' : `${(plan.storageLimit / 1073741824).toFixed(0)} GB`}</div>
+                  <div>
+                    AI 调用：{plan.llmCallsPerDay === 0 ? '不限量' : `${plan.llmCallsPerDay}次/天`}
+                  </div>
+                  <div>
+                    内容生成：
+                    {plan.generationsPerDay === 0 ? '不限量' : `${plan.generationsPerDay}次/天`}
+                  </div>
+                  <div>
+                    存储空间：
+                    {plan.storageLimit === 0
+                      ? '不限量'
+                      : `${(plan.storageLimit / 1073741824).toFixed(0)} GB`}
+                  </div>
                 </CardContent>
                 <CardFooter>
                   {isCurrent ? (

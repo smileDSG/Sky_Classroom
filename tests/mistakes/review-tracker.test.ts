@@ -70,9 +70,7 @@ describe('getDueForReview', () => {
 
   it('excludes reviewed entries', () => {
     const past = Date.now() - 3600000;
-    const entries = [
-      makeEntry({ id: 'a', nextReview: past, reviewed: true }),
-    ];
+    const entries = [makeEntry({ id: 'a', nextReview: past, reviewed: true })];
     expect(getDueForReview(entries)).toHaveLength(0);
   });
 

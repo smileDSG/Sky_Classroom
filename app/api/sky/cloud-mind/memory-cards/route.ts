@@ -75,7 +75,8 @@ export async function POST(req: NextRequest) {
     // Auto-derive parameters from the student profile
     let derived: ReturnType<typeof deriveMemoryParamsFromProfile> | undefined;
     if (auto || !content) {
-      if (!profile) return new Response(JSON.stringify({ error: '学情数据不可用' }), { status: 400 });
+      if (!profile)
+        return new Response(JSON.stringify({ error: '学情数据不可用' }), { status: 400 });
       derived = deriveMemoryParamsFromProfile(profile);
     }
 

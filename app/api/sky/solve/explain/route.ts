@@ -18,7 +18,15 @@ export async function POST(req: Request) {
     if ('error' in quota) return quota.error;
 
     const body = await req.json();
-    const { problem, problemImage, problemSpec: rawProblemSpec, userAnswer, agentId, useHighPrecision, outputFormat } = body;
+    const {
+      problem,
+      problemImage,
+      problemSpec: rawProblemSpec,
+      userAnswer,
+      agentId,
+      useHighPrecision,
+      outputFormat,
+    } = body;
 
     if (!problem) {
       return apiError(
@@ -33,14 +41,24 @@ export async function POST(req: Request) {
       try {
         problemSpec = validateProblemSpec(rawProblemSpec);
       } catch (err) {
-        return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid problemSpec', err instanceof Error ? err.message : String(err));
+        return apiError(
+          API_ERROR_CODES.INVALID_REQUEST,
+          400,
+          'Invalid problemSpec',
+          err instanceof Error ? err.message : String(err),
+        );
       }
     }
 
     log.info(`[Explain] Solving: ${problem.slice(0, 60)}...`);
 
     const graph = createSolveGraph();
-    const initialState = buildSolveInitialState(problem, problemImage ?? null, userAnswer ?? null, problemSpec ?? null);
+    const initialState = buildSolveInitialState(
+      problem,
+      problemImage ?? null,
+      userAnswer ?? null,
+      problemSpec ?? null,
+    );
 
     const startTime = performance.now();
     const finalState = await graph.invoke(initialState);
@@ -48,11 +66,7 @@ export async function POST(req: Request) {
 
     if (finalState.error) {
       log.error(`[Explain] Graph error: ${finalState.error}`);
-      return apiError(
-        API_ERROR_CODES.INTERNAL_ERROR,
-        500,
-        `解题失败: ${finalState.error}`,
-      );
+      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, `解题失败: ${finalState.error}`);
     }
 
     const output = finalState.fourPartOutput ?? {
@@ -77,7 +91,7 @@ export async function POST(req: Request) {
             problemImage: problemImage ?? undefined,
             answer: output.answer,
             solution: output.solution ?? '',
-            knowledgePoints: (output.knowledgePoints ?? []).map(kp => ({
+            knowledgePoints: (output.knowledgePoints ?? []).map((kp) => ({
               name: kp.name,
               description: kp.description,
               difficulty: kp.difficulty,

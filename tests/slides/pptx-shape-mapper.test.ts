@@ -4,11 +4,7 @@
  * Validates shape preset library and high-level mapping behavior.
  */
 import { describe, it, expect } from 'vitest';
-import {
-  mapShapeToPptx,
-  isNativeShape,
-  getShapePreset,
-} from '@/lib/slides/pptx-shape-mapper';
+import { mapShapeToPptx, isNativeShape, getShapePreset } from '@/lib/slides/pptx-shape-mapper';
 
 describe('getShapePreset', () => {
   it('returns preset for known shapes', () => {
@@ -32,7 +28,17 @@ describe('getShapePreset', () => {
   });
 
   it('all presets have non-empty path and viewBox', () => {
-    const knownShapes = ['rect', 'roundRect', 'ellipse', 'triangle', 'arrow', 'chevron', 'cross', 'plus', 'donut'];
+    const knownShapes = [
+      'rect',
+      'roundRect',
+      'ellipse',
+      'triangle',
+      'arrow',
+      'chevron',
+      'cross',
+      'plus',
+      'donut',
+    ];
     for (const name of knownShapes) {
       const preset = getShapePreset(name as any);
       expect(preset).toBeDefined();
@@ -64,7 +70,18 @@ describe('mapShapeToPptx', () => {
   });
 
   it('returns a mapping with shapeType in allowed set', () => {
-    const allowed = ['rect', 'roundRect', 'ellipse', 'triangle', 'arrow', 'chevron', 'cross', 'plus', 'donut', 'custGeom'];
+    const allowed = [
+      'rect',
+      'roundRect',
+      'ellipse',
+      'triangle',
+      'arrow',
+      'chevron',
+      'cross',
+      'plus',
+      'donut',
+      'custGeom',
+    ];
     const preset = getShapePreset('rect');
     const result = mapShapeToPptx(preset!.path, preset!.viewBox);
     expect(result).toBeDefined();

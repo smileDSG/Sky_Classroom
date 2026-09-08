@@ -319,8 +319,7 @@ interface ClassroomCompletePageProps {
   readonly title: string;
   readonly stageId: string;
 }
-export function ClassroomCompletePage({
-  scenes, title, stageId }: ClassroomCompletePageProps) {
+export function ClassroomCompletePage({ scenes, title, stageId }: ClassroomCompletePageProps) {
   const locale = 'zh-CN';
   const t = (key: string) => key;
   const prefersReducedMotion = useReducedMotion();
@@ -378,24 +377,26 @@ export function ClassroomCompletePage({
     const questions = summary.allQuizResults.map((r) => ({
       question: r.question,
       options: r.options,
-      answer: typeof r.correctAnswer === 'number'
-        ? r.correctAnswer
-        : Array.isArray(r.correctAnswer)
-          ? r.correctAnswer[0]
-            ? parseInt(r.correctAnswer[0], 10)
-            : 0
-          : typeof r.correctAnswer === 'string'
-            ? parseInt(r.correctAnswer, 10)
-            : 0,
-      userAnswer: typeof r.userAnswer === 'number'
-        ? r.userAnswer
-        : Array.isArray(r.userAnswer)
-          ? r.userAnswer[0]
-            ? parseInt(r.userAnswer[0], 10)
-            : null
-          : r.userAnswer
-            ? parseInt(r.userAnswer, 10)
-            : null,
+      answer:
+        typeof r.correctAnswer === 'number'
+          ? r.correctAnswer
+          : Array.isArray(r.correctAnswer)
+            ? r.correctAnswer[0]
+              ? parseInt(r.correctAnswer[0], 10)
+              : 0
+            : typeof r.correctAnswer === 'string'
+              ? parseInt(r.correctAnswer, 10)
+              : 0,
+      userAnswer:
+        typeof r.userAnswer === 'number'
+          ? r.userAnswer
+          : Array.isArray(r.userAnswer)
+            ? r.userAnswer[0]
+              ? parseInt(r.userAnswer[0], 10)
+              : null
+            : r.userAnswer
+              ? parseInt(r.userAnswer, 10)
+              : null,
       isCorrect: r.isCorrect,
       knowledgePoints: r.knowledgePoints,
       explanation: r.explanation,
@@ -553,10 +554,7 @@ export function ClassroomCompletePage({
                     }}
                     className="rounded-2xl bg-white/90 dark:bg-slate-900/70 border border-sky-100 dark:border-sky-900/40 shadow-sm px-4 py-4 flex flex-col items-center gap-1.5 backdrop-blur-sm"
                   >
-                    <Icon
-                      className="w-6 h-6 text-sky-500 dark:text-sky-400"
-                      strokeWidth={1.8}
-                    />
+                    <Icon className="w-6 h-6 text-sky-500 dark:text-sky-400" strokeWidth={1.8} />
                     <div className="text-3xl font-black text-slate-900 dark:text-slate-100 leading-none">
                       <AnimatedCounter value={count} delay={cardDelay + 0.15} />
                     </div>
@@ -617,10 +615,6 @@ export function ClassroomCompletePageConnected() {
   const stage = useStageStore((s) => s.stage);
   const scenes = useStageStore((s) => s.scenes);
   return (
-    <ClassroomCompletePage
-      scenes={scenes}
-      title={stage?.name ?? ''}
-      stageId={stage?.id ?? ''}
-    />
+    <ClassroomCompletePage scenes={scenes} title={stage?.name ?? ''} stageId={stage?.id ?? ''} />
   );
 }

@@ -11,15 +11,7 @@ import { AssistantHistory } from '@/components/sky/assistant/assistant-history';
 import { AssistantSettings } from '@/components/sky/assistant/assistant-settings';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
-import {
-  Feather,
-  Wind,
-  Cloud,
-  MessageCircle,
-  Sparkles,
-  History,
-  Settings,
-} from 'lucide-react';
+import { Feather, Wind, Cloud, MessageCircle, Sparkles, History, Settings } from 'lucide-react';
 
 const SIDEBAR_ITEMS = [
   { key: 'chat', label: '对话', icon: MessageCircle, desc: '与小镜交流' },
@@ -72,10 +64,13 @@ function AssistantContent() {
   const [personalizationContext, setPersonalizationContext] =
     useState<PersonalizationContext | null>(null);
 
-  const handleLoadConversation = useCallback((messages: { id: string; role: 'user' | 'assistant'; content: string }[], convId: string) => {
-    setLoadConvId(convId);
-    setActiveSidebar('chat');
-  }, []);
+  const handleLoadConversation = useCallback(
+    (messages: { id: string; role: 'user' | 'assistant'; content: string }[], convId: string) => {
+      setLoadConvId(convId);
+      setActiveSidebar('chat');
+    },
+    [],
+  );
 
   const handleConversationLoaded = useCallback(() => {
     setLoadConvId(null);
@@ -108,7 +103,11 @@ function AssistantContent() {
 
   const handleModeChange = useCallback((newMode: 'anime' | 'normal') => {
     setMode(newMode);
-    try { localStorage.setItem('assistant-panel-mode', newMode); } catch { /* ignore */ }
+    try {
+      localStorage.setItem('assistant-panel-mode', newMode);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const profileTarget =

@@ -19,9 +19,7 @@ import { buildPlanningProjection } from '@/lib/adaptive-learning/profile/project
 import { buildPlanningEvidence } from '@/lib/adaptive-learning/profile/planning-evidence';
 import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import { generateLearningPlan } from '@/lib/adaptive-learning/planning/learning-plan-service';
-import {
-  buildScheduledLearningPlan,
-} from '@/lib/adaptive-learning/planning/scheduled-learning-plan';
+import { buildScheduledLearningPlan } from '@/lib/adaptive-learning/planning/scheduled-learning-plan';
 import { retrieveChunksForPlanning } from '@/lib/adaptive-learning/planning/retrieve-chunks';
 import { generatePlanWithLLM } from '@/lib/adaptive-learning/planning/generate-plan';
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
@@ -84,10 +82,7 @@ async function awaitNarrativePlan<T>(
   });
 }
 
-function normalizePriorities(
-  priorities?: string[],
-  strategy?: string,
-): PriorityStrategy[] {
+function normalizePriorities(priorities?: string[], strategy?: string): PriorityStrategy[] {
   const valid = (priorities ?? []).filter((p): p is PriorityStrategy =>
     VALID_PRIORITY_STRATEGIES.includes(p as PriorityStrategy),
   );
@@ -140,7 +135,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { goalTopic, domainProfileId = 'default', priorities, strategy } = body as {
+    const {
+      goalTopic,
+      domainProfileId = 'default',
+      priorities,
+      strategy,
+    } = body as {
       goalTopic?: string;
       domainProfileId?: string;
       priorities?: string[];
@@ -259,16 +259,11 @@ export async function POST(req: NextRequest) {
     if (previousPlan) {
       await planDAO.update(previousPlan.id, { status: 'superseded' });
     }
-    const narrativePlan = await awaitNarrativePlan(
-      narrativePlanPromise,
-      narrativePlanTimeoutMs,
-    );
+    const narrativePlan = await awaitNarrativePlan(narrativePlanPromise, narrativePlanTimeoutMs);
 
-    return apiSuccess(
-      { data: { path, plan, narrativePlan } },
-      201,
-      { 'x-correlation-id': correlationId },
-    );
+    return apiSuccess({ data: { path, plan, narrativePlan } }, 201, {
+      'x-correlation-id': correlationId,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Learning path generation failed:', message);
@@ -277,13 +272,9 @@ export async function POST(req: NextRequest) {
       return adaptiveLearningApiError(error, correlationId);
     }
 
-    return apiError(
-      API_ERROR_CODES.INTERNAL_ERROR,
-      500,
-      '学习路径生成失败',
-      message,
-      { 'x-correlation-id': correlationId },
-    );
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '学习路径生成失败', message, {
+      'x-correlation-id': correlationId,
+    });
   }
 }
 

@@ -16,9 +16,7 @@
     "masteryByKnowledge": {
       "三角形": 25
     },
-    "weakPoints": [
-      "三角形"
-    ],
+    "weakPoints": ["三角形"],
     "strongPoints": [],
     "errorPatterns": [],
     "totalQuestions": 0,

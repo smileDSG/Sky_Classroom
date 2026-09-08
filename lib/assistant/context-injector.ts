@@ -13,10 +13,7 @@ const MAX_CONTEXT_CHARS = 1200;
 
 // ── Mistake context ────────────────────────────────────────────────
 
-export function injectMistakeContext(
-  basePrompt: string,
-  mistakes: MistakeBookEntry[],
-): string {
+export function injectMistakeContext(basePrompt: string, mistakes: MistakeBookEntry[]): string {
   if (!mistakes || mistakes.length === 0) return basePrompt;
 
   const kpCounts = new Map<string, number>();
@@ -52,33 +49,35 @@ export function injectMistakeContext(
     .join('\n');
 
   const combined = basePrompt + '\n' + context;
-  if (combined.length > basePrompt.length + MAX_CONTEXT_CHARS) return basePrompt + '\n' + context.slice(0, MAX_CONTEXT_CHARS);
+  if (combined.length > basePrompt.length + MAX_CONTEXT_CHARS)
+    return basePrompt + '\n' + context.slice(0, MAX_CONTEXT_CHARS);
   return combined;
 }
 
 // ── Graph context ──────────────────────────────────────────────────
 
-export function injectGraphContext(
-  basePrompt: string,
-  nodes: GraphNode[],
-): string {
+export function injectGraphContext(basePrompt: string, nodes: GraphNode[]): string {
   if (!nodes || nodes.length === 0) return basePrompt;
 
-  const weakNodes = nodes
-    .filter((n) => n.mastery < 50)
-    .sort((a, b) => a.mastery - b.mastery);
+  const weakNodes = nodes.filter((n) => n.mastery < 50).sort((a, b) => a.mastery - b.mastery);
 
   const strongNodes = nodes.filter((n) => n.mastery >= 80);
 
   const parts: string[] = ['', '【学生知识掌握情况】'];
 
   if (strongNodes.length > 0) {
-    const names = strongNodes.slice(0, 3).map((n) => `"${n.name}"（${n.mastery}%）`).join('、');
+    const names = strongNodes
+      .slice(0, 3)
+      .map((n) => `"${n.name}"（${n.mastery}%）`)
+      .join('、');
     parts.push(`掌握较好的知识点：${names}。`);
   }
 
   if (weakNodes.length > 0) {
-    const names = weakNodes.slice(0, 3).map((n) => `"${n.name}"（${n.mastery}%）`).join('、');
+    const names = weakNodes
+      .slice(0, 3)
+      .map((n) => `"${n.name}"（${n.mastery}%）`)
+      .join('、');
     parts.push(`薄弱知识点（需重点辅导）：${names}。`);
   }
 
@@ -88,16 +87,14 @@ export function injectGraphContext(
 
   const context = parts.join('\n');
   const combined = basePrompt + '\n' + context;
-  if (combined.length > basePrompt.length + MAX_CONTEXT_CHARS) return basePrompt + '\n' + context.slice(0, MAX_CONTEXT_CHARS);
+  if (combined.length > basePrompt.length + MAX_CONTEXT_CHARS)
+    return basePrompt + '\n' + context.slice(0, MAX_CONTEXT_CHARS);
   return combined;
 }
 
 // ── Solve history context ────────────────────────────────────────
 
-export function injectSolveHistory(
-  basePrompt: string,
-  entries: QuestionBankEntry[],
-): string {
+export function injectSolveHistory(basePrompt: string, entries: QuestionBankEntry[]): string {
   if (!entries || entries.length === 0) return basePrompt;
 
   const recent = entries.slice(0, 5);
@@ -125,7 +122,8 @@ export function injectSolveHistory(
     .join('\n');
 
   const combined = basePrompt + '\n' + context;
-  if (combined.length > basePrompt.length + MAX_CONTEXT_CHARS) return basePrompt + '\n' + context.slice(0, MAX_CONTEXT_CHARS);
+  if (combined.length > basePrompt.length + MAX_CONTEXT_CHARS)
+    return basePrompt + '\n' + context.slice(0, MAX_CONTEXT_CHARS);
   return combined;
 }
 
@@ -212,7 +210,9 @@ export function injectTeachingProjection(
       ? [
           `强项：${data.strengths
             .slice(0, 3)
-            .map((strength) => `${strength.nodeId}（掌握度 ${Math.round(strength.mastery * 100)}%）`)
+            .map(
+              (strength) => `${strength.nodeId}（掌握度 ${Math.round(strength.mastery * 100)}%）`,
+            )
             .join('、')}。`,
         ]
       : []),
@@ -229,8 +229,7 @@ export function buildSystemPrompt(
   style: string,
   context?: PromptContext,
 ): string {
-  const diffLabel =
-    difficulty === 'junior' ? '初中' : difficulty === 'senior' ? '高中' : '大学';
+  const diffLabel = difficulty === 'junior' ? '初中' : difficulty === 'senior' ? '高中' : '大学';
 
   const styleHint =
     style === 'concise'

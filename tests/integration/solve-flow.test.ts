@@ -18,9 +18,7 @@ const mocks = vi.hoisted(() => ({
         { label: '移项', content: '2x = 6', keyPoints: ['等式两边同时减去3'] },
         { label: '计算', content: 'x = 3', keyPoints: ['等式两边同时除以2'] },
       ],
-      knowledgePoints: [
-        { name: '一元一次方程', description: '基础代数', difficulty: 'easy' },
-      ],
+      knowledgePoints: [{ name: '一元一次方程', description: '基础代数', difficulty: 'easy' }],
       similarQuestions: [
         { problem: '3x + 6 = 15', difficulty: 0.4, knowledgePoint: '一元一次方程' },
       ],
@@ -34,7 +32,11 @@ vi.mock('@/lib/ai/llm', () => ({
 
 vi.mock('@/lib/generation/json-repair', () => ({
   parseJsonResponse: vi.fn().mockImplementation((text: string) => {
-    try { return JSON.parse(text); } catch { return null; }
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
   }),
 }));
 
@@ -98,18 +100,20 @@ describe('P6-001: solve flow integration', () => {
 
   test('question bank hit skips solving and goes straight to output', async () => {
     const { findSimilarQuestions } = await import('@/lib/solve/question-bank');
-    (findSimilarQuestions as any).mockResolvedValueOnce([{
-      id: 'qb_hit',
-      problemHash: 'hash',
-      problemText: '1+1=?',
-      answer: '2',
-      steps: ['直接计算'],
-      knowledgePoints: ['加法'],
-      agentId: 'universal',
-      solvedAt: Date.now(),
-      verified: true,
-      _similarity: 1,
-    }]);
+    (findSimilarQuestions as any).mockResolvedValueOnce([
+      {
+        id: 'qb_hit',
+        problemHash: 'hash',
+        problemText: '1+1=?',
+        answer: '2',
+        steps: ['直接计算'],
+        knowledgePoints: ['加法'],
+        agentId: 'universal',
+        solvedAt: Date.now(),
+        verified: true,
+        _similarity: 1,
+      },
+    ]);
 
     const graph = createSolveGraph();
     const state = buildSolveInitialState('1+1=?');
@@ -165,7 +169,14 @@ describe('P6-001: solve → mistakes pipeline', () => {
 
     const cause = analyzeMistakeCause(problem, correctAnswer, userAnswer);
 
-    const validCauses: MistakeCause[] = ['concept-unclear', 'calculation-error', 'misreading', 'method-wrong', 'careless', 'format-error'];
+    const validCauses: MistakeCause[] = [
+      'concept-unclear',
+      'calculation-error',
+      'misreading',
+      'method-wrong',
+      'careless',
+      'format-error',
+    ];
     expect(validCauses).toContain(cause);
   });
 

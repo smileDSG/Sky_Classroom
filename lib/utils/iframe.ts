@@ -29,7 +29,9 @@ export function patchHtmlForIframe(html: string): string {
   const headIdx = repairedHtml.indexOf('<head>');
   if (headIdx !== -1) {
     const insertPos = headIdx + 6; // after <head>
-    return repairedHtml.substring(0, insertPos) + '\n' + iframeCss + repairedHtml.substring(insertPos);
+    return (
+      repairedHtml.substring(0, insertPos) + '\n' + iframeCss + repairedHtml.substring(insertPos)
+    );
   }
 
   const headWithAttrs = repairedHtml.indexOf('<head ');
@@ -37,7 +39,9 @@ export function patchHtmlForIframe(html: string): string {
     const closeAngle = repairedHtml.indexOf('>', headWithAttrs);
     if (closeAngle !== -1) {
       const insertPos = closeAngle + 1;
-      return repairedHtml.substring(0, insertPos) + '\n' + iframeCss + repairedHtml.substring(insertPos);
+      return (
+        repairedHtml.substring(0, insertPos) + '\n' + iframeCss + repairedHtml.substring(insertPos)
+      );
     }
   }
 

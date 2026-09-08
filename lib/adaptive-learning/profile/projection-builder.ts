@@ -70,14 +70,7 @@ export function buildTeachingProjection(input: TeachingProjectionInput): Teachin
 }
 
 export function buildPlanningProjection(input: PlanningProjectionInput): PlanningProfileProjection {
-  const {
-    userId,
-    snapshotId,
-    profileVersion,
-    eventWatermark,
-    preferences,
-    domainProfile,
-  } = input;
+  const { userId, snapshotId, profileVersion, eventWatermark, preferences, domainProfile } = input;
   const planningMode = input.planningMode ?? 'exam';
   const knowledgeStatus = input.knowledgeStatus ?? 'no-evidence';
   const targetKnowledge = input.targetKnowledge ?? [];

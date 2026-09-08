@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 export interface MobileViewportState {
   width: number;
   height: number;
-  orientation: "portrait" | "landscape";
+  orientation: 'portrait' | 'landscape';
 }
 
 function readViewport(): MobileViewportState {
@@ -14,7 +14,7 @@ function readViewport(): MobileViewportState {
   return {
     width,
     height,
-    orientation: width > height ? "landscape" : "portrait",
+    orientation: width > height ? 'landscape' : 'portrait',
   };
 }
 
@@ -22,17 +22,17 @@ export function useMobileViewport(): MobileViewportState {
   const [viewport, setViewport] = useState<MobileViewportState>({
     width: 0,
     height: 0,
-    orientation: "portrait",
+    orientation: 'portrait',
   });
 
   useEffect(() => {
     const update = () => setViewport(readViewport());
     update();
-    window.addEventListener("resize", update);
-    window.visualViewport?.addEventListener("resize", update);
+    window.addEventListener('resize', update);
+    window.visualViewport?.addEventListener('resize', update);
     return () => {
-      window.removeEventListener("resize", update);
-      window.visualViewport?.removeEventListener("resize", update);
+      window.removeEventListener('resize', update);
+      window.visualViewport?.removeEventListener('resize', update);
     };
   }, []);
 

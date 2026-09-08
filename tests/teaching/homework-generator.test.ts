@@ -33,25 +33,35 @@ vi.mock('@/lib/question-bank/dao', () => ({
 
 // Mock quiz-agent
 vi.mock('@/lib/agents/cloud-mind/quiz-agent', () => ({
-  generateQuiz: vi.fn(async (_subject: string, _difficulty: string, topic: string, count: number) => ({
-    subject: 'math',
-    topic,
-    difficulty: 'medium',
-    questions: Array.from({ length: count }, (_, i) => ({
-      id: i + 1,
-      question: `AI题${i + 1}：关于${topic}`,
-      options: ['A', 'B', 'C', 'D'],
-      answer: 0,
-      explanation: 'AI解析',
-    })),
-  })),
+  generateQuiz: vi.fn(
+    async (_subject: string, _difficulty: string, topic: string, count: number) => ({
+      subject: 'math',
+      topic,
+      difficulty: 'medium',
+      questions: Array.from({ length: count }, (_, i) => ({
+        id: i + 1,
+        question: `AI题${i + 1}：关于${topic}`,
+        options: ['A', 'B', 'C', 'D'],
+        answer: 0,
+        explanation: 'AI解析',
+      })),
+    }),
+  ),
 }));
 
 describe('homework-generator', () => {
   it('generates general reinforcement when no weak points', async () => {
     const hw = await generateHomework(
       [{ sectionId: 's1', feedbackType: 'mastered', knowledgePoints: ['二次函数'], timestamp: 1 }],
-      [{ sectionId: 's1', chunkOrder: 1, knowledgePoints: ['二次函数'], isCorrect: true, timestamp: 1 }],
+      [
+        {
+          sectionId: 's1',
+          chunkOrder: 1,
+          knowledgePoints: ['二次函数'],
+          isCorrect: true,
+          timestamp: 1,
+        },
+      ],
       '二次函数',
       'math',
     );
@@ -62,7 +72,14 @@ describe('homework-generator', () => {
 
   it('generates targeted homework for weak points', async () => {
     const hw = await generateHomework(
-      [{ sectionId: 's1', feedbackType: 'needs_review', knowledgePoints: ['二次函数'], timestamp: 1 }],
+      [
+        {
+          sectionId: 's1',
+          feedbackType: 'needs_review',
+          knowledgePoints: ['二次函数'],
+          timestamp: 1,
+        },
+      ],
       [],
       '二次函数',
       'math',
@@ -75,7 +92,12 @@ describe('homework-generator', () => {
   it('combines bank and AI questions', async () => {
     const hw = await generateHomework(
       [
-        { sectionId: 's1', feedbackType: 'needs_review', knowledgePoints: ['二次函数'], timestamp: 1 },
+        {
+          sectionId: 's1',
+          feedbackType: 'needs_review',
+          knowledgePoints: ['二次函数'],
+          timestamp: 1,
+        },
         { sectionId: 's2', feedbackType: 'needs_review', knowledgePoints: ['导数'], timestamp: 1 },
       ],
       [],

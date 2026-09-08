@@ -18,19 +18,33 @@ export interface AnalysisCardData {
 // ── Display helpers ─────────────────────────────────────────────────
 
 const SUBJECT_LABELS: Record<string, string> = {
-  math: '数学', physics: '物理', chemistry: '化学', biology: '生物',
-  chinese: '语文', english: '英语', history: '历史', geography: '地理',
-  politics: '政治', unknown: '未知',
+  math: '数学',
+  physics: '物理',
+  chemistry: '化学',
+  biology: '生物',
+  chinese: '语文',
+  english: '英语',
+  history: '历史',
+  geography: '地理',
+  politics: '政治',
+  unknown: '未知',
 };
 
 const DIFFICULTY_CONFIG: Record<string, { label: string; badge: string; icon: string }> = {
-  easy:   { label: '基础', badge: 'border-emerald-700 bg-emerald-950/50 text-emerald-300', icon: '🟢' },
+  easy: {
+    label: '基础',
+    badge: 'border-emerald-700 bg-emerald-950/50 text-emerald-300',
+    icon: '🟢',
+  },
   medium: { label: '中等', badge: 'border-amber-700 bg-amber-950/50 text-amber-300', icon: '🟡' },
-  hard:   { label: '困难', badge: 'border-red-700 bg-red-950/50 text-red-300', icon: '🔴' },
+  hard: { label: '困难', badge: 'border-red-700 bg-red-950/50 text-red-300', icon: '🔴' },
 };
 
 const QUESTION_TYPE_LABELS: Record<string, string> = {
-  choice: '选择题', fill: '填空题', solve: '解答题', judge: '判断题',
+  choice: '选择题',
+  fill: '填空题',
+  solve: '解答题',
+  judge: '判断题',
 };
 
 // ── Component ────────────────────────────────────────────────────────
@@ -59,7 +73,10 @@ export function AnalysisCard({ analysis, className }: AnalysisCardProps) {
       <CardContent className="p-4 space-y-3">
         {/* Subject + Difficulty + Type row */}
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="text-xs font-medium border-[var(--probe-primary)]/30 text-[var(--probe-primary-bright)] bg-[var(--probe-primary)]/10">
+          <Badge
+            variant="outline"
+            className="text-xs font-medium border-[var(--probe-primary)]/30 text-[var(--probe-primary-bright)] bg-[var(--probe-primary)]/10"
+          >
             <BookOpen className="h-3 w-3 mr-1" />
             {subjectLabel}
           </Badge>
@@ -68,12 +85,18 @@ export function AnalysisCard({ analysis, className }: AnalysisCardProps) {
             {difficulty.icon} {difficulty.label}
           </Badge>
 
-          <Badge variant="secondary" className="text-xs bg-[var(--probe-accent)]/15 text-[var(--probe-accent)] border border-[var(--probe-accent)]/25">
+          <Badge
+            variant="secondary"
+            className="text-xs bg-[var(--probe-accent)]/15 text-[var(--probe-accent)] border border-[var(--probe-accent)]/25"
+          >
             <Target className="h-3 w-3 mr-1" />
             {typeLabel}
           </Badge>
 
-          <Badge variant="outline" className="text-xs border-[var(--probe-border-strong)] text-[var(--probe-muted)]">
+          <Badge
+            variant="outline"
+            className="text-xs border-[var(--probe-border-strong)] text-[var(--probe-muted)]"
+          >
             <Zap className="h-3 w-3 mr-1" />
             判断把握 {Math.round(analysis.confidence * 100)}%
           </Badge>

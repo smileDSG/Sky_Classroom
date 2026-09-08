@@ -3,15 +3,28 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { analyzeHighlights, splitHighlightedText, HIGHLIGHT_STYLES, getHighlightTooltip } from '@/lib/teaching/personalized-highlighter';
+import {
+  analyzeHighlights,
+  splitHighlightedText,
+  HIGHLIGHT_STYLES,
+  getHighlightTooltip,
+} from '@/lib/teaching/personalized-highlighter';
 import type { StudentProfile } from '@/lib/student/profile-types';
 
 function makeProfile(overrides?: Partial<StudentProfile>): StudentProfile {
   return {
     userId: 'test-user',
     masteryBySubject: {
-      math: 60, physics: 40, chemistry: 0, biology: 0,
-      chinese: 0, english: 0, history: 0, geography: 0, politics: 0, unknown: 0,
+      math: 60,
+      physics: 40,
+      chemistry: 0,
+      biology: 0,
+      chinese: 0,
+      english: 0,
+      history: 0,
+      geography: 0,
+      politics: 0,
+      unknown: 0,
     },
     masteryByKnowledge: {},
     weakPoints: [],
@@ -66,7 +79,12 @@ describe('analyzeHighlights', () => {
     const profile = makeProfile({
       masteryByKnowledge: { 二次函数: 50 },
       errorPatterns: [
-        { knowledgePoint: '二次函数', errorType: 'calculation-error', frequency: 2, lastOccurrence: new Date() },
+        {
+          knowledgePoint: '二次函数',
+          errorType: 'calculation-error',
+          frequency: 2,
+          lastOccurrence: new Date(),
+        },
       ],
     });
     const result = analyzeHighlights('二次函数的图像', profile);
@@ -106,9 +124,7 @@ describe('splitHighlightedText', () => {
   });
 
   it('splits text by highlight points', () => {
-    const highlights = [
-      { point: '二次函数', level: 'weak' as const, mastery: 20, errorCount: 0 },
-    ];
+    const highlights = [{ point: '二次函数', level: 'weak' as const, mastery: 20, errorCount: 0 }];
     const result = splitHighlightedText('二次函数的图像性质', highlights);
     expect(result).toEqual([
       { text: '' },
@@ -118,9 +134,7 @@ describe('splitHighlightedText', () => {
   });
 
   it('handles text without matches', () => {
-    const highlights = [
-      { point: '导数', level: 'weak' as const, mastery: 20, errorCount: 0 },
-    ];
+    const highlights = [{ point: '导数', level: 'weak' as const, mastery: 20, errorCount: 0 }];
     const result = splitHighlightedText('二次函数', highlights);
     expect(result).toEqual([{ text: '二次函数' }]);
   });

@@ -80,7 +80,10 @@ function addCandidate(
   candidates.set(nodeId, previous);
 }
 
-function prerequisiteAncestors(nodeId: string, edges: KnowledgeGraphEdge[]): Array<{ nodeId: string; depth: number }> {
+function prerequisiteAncestors(
+  nodeId: string,
+  edges: KnowledgeGraphEdge[],
+): Array<{ nodeId: string; depth: number }> {
   const result: Array<{ nodeId: string; depth: number }> = [];
   const visited = new Set([nodeId]);
   let frontier = [nodeId];

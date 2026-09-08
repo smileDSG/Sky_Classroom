@@ -40,12 +40,15 @@ const formulaItemSchema = z.object({
 const conceptContentSchema = z.object({
   type: z.literal('concept'),
   title: z.string().min(1).max(60),
-  cards: z.array(
-    z.object({
-      title: z.string().min(1).max(40),
-      desc: z.string().min(30).max(300),
-    }),
-  ).min(2).max(6),
+  cards: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(40),
+        desc: z.string().min(30).max(300),
+      }),
+    )
+    .min(2)
+    .max(6),
   summary: z.string().min(10).max(200).optional(),
   formulas: z.array(formulaItemSchema).max(3).optional(),
 });
@@ -53,12 +56,15 @@ const conceptContentSchema = z.object({
 const caseContentSchema = z.object({
   type: z.literal('case'),
   title: z.string().min(1).max(60),
-  scenarios: z.array(
-    z.object({
-      problem: z.string().min(20).max(400),
-      solution: z.string().min(20).max(400),
-    }),
-  ).min(1).max(3),
+  scenarios: z
+    .array(
+      z.object({
+        problem: z.string().min(20).max(400),
+        solution: z.string().min(20).max(400),
+      }),
+    )
+    .min(1)
+    .max(3),
   highlight: z.string().min(1).max(100).optional(),
   formulas: z.array(formulaItemSchema).max(3).optional(),
 });
@@ -80,13 +86,16 @@ const compareContentSchema = z.object({
 const processContentSchema = z.object({
   type: z.literal('process'),
   title: z.string().min(1).max(60),
-  steps: z.array(
-    z.object({
-      num: z.string().min(1).max(5),
-      title: z.string().min(1).max(40),
-      desc: z.string().min(20).max(300),
-    }),
-  ).min(2).max(6),
+  steps: z
+    .array(
+      z.object({
+        num: z.string().min(1).max(5),
+        title: z.string().min(1).max(40),
+        desc: z.string().min(20).max(300),
+      }),
+    )
+    .min(2)
+    .max(6),
   formulas: z.array(formulaItemSchema).max(3).optional(),
 });
 
@@ -102,7 +111,10 @@ const tableContentSchema = z.object({
   type: z.literal('table'),
   title: z.string().min(1).max(60),
   headers: z.array(z.string().min(1).max(40)).min(2).max(6),
-  rows: z.array(z.array(z.string().min(1).max(200))).min(1).max(8),
+  rows: z
+    .array(z.array(z.string().min(1).max(200)))
+    .min(1)
+    .max(8),
   summary: z.string().min(10).max(200),
 });
 
@@ -175,7 +187,18 @@ const CONTENT_TYPE_RULES: ContentTypeRule[] = [
   },
   {
     type: 'formula',
-    keywords: ['公式', 'equation', 'formula', '反应式', '方程式', '化学式', '计算', '推导', '定理', '定律'],
+    keywords: [
+      '公式',
+      'equation',
+      'formula',
+      '反应式',
+      '方程式',
+      '化学式',
+      '计算',
+      '推导',
+      '定理',
+      '定律',
+    ],
   },
   {
     type: 'compare',
@@ -187,7 +210,19 @@ const CONTENT_TYPE_RULES: ContentTypeRule[] = [
   },
   {
     type: 'process',
-    keywords: ['过程', '步骤', '流程', 'stage', 'step', 'process', 'procedure', '机制', '如何', '怎样', '顺序'],
+    keywords: [
+      '过程',
+      '步骤',
+      '流程',
+      'stage',
+      'step',
+      'process',
+      'procedure',
+      '机制',
+      '如何',
+      '怎样',
+      '顺序',
+    ],
   },
   {
     type: 'summary',
@@ -216,12 +251,15 @@ const CONTENT_TYPE_RULES: ContentTypeRule[] = [
  * Uses keyword matching on title, description, and keyPoints.
  */
 export function inferContentTypeFromOutline(outline: SceneOutline): ContentType {
-  const text = `${outline.title} ${outline.description || ''} ${(outline.keyPoints || []).join(' ')}`.toLowerCase();
+  const text =
+    `${outline.title} ${outline.description || ''} ${(outline.keyPoints || []).join(' ')}`.toLowerCase();
 
   for (const rule of CONTENT_TYPE_RULES) {
     for (const kw of rule.keywords) {
       if (text.includes(kw.toLowerCase())) {
-        log.info(`[ContentAgent] Inferred type=${rule.type} for "${outline.title}" (matched keyword: "${kw}")`);
+        log.info(
+          `[ContentAgent] Inferred type=${rule.type} for "${outline.title}" (matched keyword: "${kw}")`,
+        );
         return rule.type;
       }
     }
@@ -310,7 +348,9 @@ export async function generateStructuredContent(
   } = options;
 
   const inferredType = explicitType ?? inferContentTypeFromOutline(outline);
-  log.info(`[ContentAgent] Generating structured content for "${outline.title}" (type=${inferredType}, theme=${themePaletteName ?? 'default'})`);
+  log.info(
+    `[ContentAgent] Generating structured content for "${outline.title}" (type=${inferredType}, theme=${themePaletteName ?? 'default'})`,
+  );
 
   let systemPrompt: string;
   let userPrompt: string;
@@ -373,12 +413,18 @@ export async function generateStructuredContent(
 
     const validation = structuredContentSchema.safeParse(parsed);
     if (!validation.success) {
-      const issues = validation.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
-      log.error(`[ContentAgent] Schema validation failed for "${outline.title}": ${issues.slice(0, 300)}`);
+      const issues = validation.error.issues
+        .map((i) => `${i.path.join('.')}: ${i.message}`)
+        .join('; ');
+      log.error(
+        `[ContentAgent] Schema validation failed for "${outline.title}": ${issues.slice(0, 300)}`,
+      );
       return { success: false, error: `Schema validation failed: ${issues.slice(0, 300)}` };
     }
 
-    log.info(`[ContentAgent] Successfully generated ${validation.data.type} for "${outline.title}"`);
+    log.info(
+      `[ContentAgent] Successfully generated ${validation.data.type} for "${outline.title}"`,
+    );
     return { success: true, data: validation.data };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

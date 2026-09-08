@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-export function SecurityForm() {const [currentPassword, setCurrentPassword] = useState('');
+export function SecurityForm() {
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -50,9 +51,7 @@ export function SecurityForm() {const [currentPassword, setCurrentPassword] = u
     <Card>
       <CardHeader>
         <CardTitle className="text-base">{'修改密码'}</CardTitle>
-        <CardDescription>
-          {'密码至少 6 位'}
-        </CardDescription>
+        <CardDescription>{'密码至少 6 位'}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4 max-w-md">

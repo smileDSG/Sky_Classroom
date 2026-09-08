@@ -53,7 +53,11 @@ export const PLANS: Record<PlanType, PlanDefinition> = {
   },
 };
 
-export function getPlanLimits(planType: PlanType): { llmCallsPerDay: number; generationsPerDay: number; storageLimit: number } {
+export function getPlanLimits(planType: PlanType): {
+  llmCallsPerDay: number;
+  generationsPerDay: number;
+  storageLimit: number;
+} {
   const plan = PLANS[planType];
   return {
     llmCallsPerDay: plan.llmCallsPerDay,

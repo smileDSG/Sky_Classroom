@@ -279,7 +279,9 @@ export async function POST(req: NextRequest) {
           type: 'decision_context',
           data: { decisionId, sessionId, correlationId },
         };
-        writer.write(encoder.encode(`data: ${JSON.stringify(decisionContext)}\n\n`)).catch(() => {});
+        writer
+          .write(encoder.encode(`data: ${JSON.stringify(decisionContext)}\n\n`))
+          .catch(() => {});
 
         // Default: thinking disabled for low-latency chat. UI requests send
         // `thinkingConfig`; eval harnesses can still opt in via `thinking`.

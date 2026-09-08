@@ -47,11 +47,7 @@ export async function retrieveRelevantMemories(
   });
 
   // 3. Search for memories relevant to the current message
-  const relevantMemories = await searchMemoriesByKeywords(
-    agentId,
-    currentMessage,
-    options?.userId,
-  );
+  const relevantMemories = await searchMemoriesByKeywords(agentId, currentMessage, options?.userId);
 
   // Merge and deduplicate
   const allMemories = [...coreMemories, ...importantMemories, ...relevantMemories];
@@ -113,15 +109,97 @@ async function searchMemoriesByKeywords(
 function extractKeywords(text: string): string[] {
   // Remove common stop words and short words
   const stopWords = new Set([
-    '的', '了', '是', '在', '我', '有', '和', '就', '不', '人', '都', '一',
-    '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有',
-    '看', '好', '自己', '这', '他', '她', '它', '什么', '怎么', '那', '这个',
-    '那个', '吗', '呢', '吧', '啊', '哦', '嗯', '能', '可以', '请', '帮',
-    'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-    'should', 'may', 'might', 'shall', 'can', 'need', 'dare', 'ought',
-    'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her',
-    'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their',
+    '的',
+    '了',
+    '是',
+    '在',
+    '我',
+    '有',
+    '和',
+    '就',
+    '不',
+    '人',
+    '都',
+    '一',
+    '一个',
+    '上',
+    '也',
+    '很',
+    '到',
+    '说',
+    '要',
+    '去',
+    '你',
+    '会',
+    '着',
+    '没有',
+    '看',
+    '好',
+    '自己',
+    '这',
+    '他',
+    '她',
+    '它',
+    '什么',
+    '怎么',
+    '那',
+    '这个',
+    '那个',
+    '吗',
+    '呢',
+    '吧',
+    '啊',
+    '哦',
+    '嗯',
+    '能',
+    '可以',
+    '请',
+    '帮',
+    'the',
+    'a',
+    'an',
+    'is',
+    'are',
+    'was',
+    'were',
+    'be',
+    'been',
+    'being',
+    'have',
+    'has',
+    'had',
+    'do',
+    'does',
+    'did',
+    'will',
+    'would',
+    'could',
+    'should',
+    'may',
+    'might',
+    'shall',
+    'can',
+    'need',
+    'dare',
+    'ought',
+    'i',
+    'you',
+    'he',
+    'she',
+    'it',
+    'we',
+    'they',
+    'me',
+    'him',
+    'her',
+    'us',
+    'them',
+    'my',
+    'your',
+    'his',
+    'its',
+    'our',
+    'their',
   ]);
 
   // Split by common delimiters
@@ -197,9 +275,7 @@ export function buildMemoryContext(memories: AgentMemoryRecord[]): string {
 }
 
 /** Group memories by type */
-function groupByType(
-  memories: AgentMemoryRecord[],
-): Record<MemoryType, AgentMemoryRecord[]> {
+function groupByType(memories: AgentMemoryRecord[]): Record<MemoryType, AgentMemoryRecord[]> {
   const result: Record<MemoryType, AgentMemoryRecord[]> = {
     core: [],
     preference: [],
@@ -217,10 +293,7 @@ function groupByType(
 }
 
 /** Inject memory context into a system prompt */
-export function injectMemoryIntoPrompt(
-  basePrompt: string,
-  memories: AgentMemoryRecord[],
-): string {
+export function injectMemoryIntoPrompt(basePrompt: string, memories: AgentMemoryRecord[]): string {
   const context = buildMemoryContext(memories);
   if (!context) return basePrompt;
 

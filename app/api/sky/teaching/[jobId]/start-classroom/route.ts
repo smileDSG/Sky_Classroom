@@ -96,7 +96,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ job
           const researchContext = formatSearchResultsAsContext(searchResult);
           if (researchContext) {
             outlineOnlyResult = { ...outlineOnlyResult, researchContext };
-            log.info(`Start classroom web search returned ${searchResult.sources.length} sources for job ${jobId}`);
+            log.info(
+              `Start classroom web search returned ${searchResult.sources.length} sources for job ${jobId}`,
+            );
           }
         } else {
           log.warn(`enableWebSearch is true but no provider configured for job ${jobId}`);
@@ -142,7 +144,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ job
     // 7. Record usage
     await recordUsage(quota.userId, quota.planType, 'generationCount');
 
-    log.info(`Teaching job ${jobId} started classroom job ${newJobId} with ${outlineOnlyResult.outlines.length} outlines`);
+    log.info(
+      `Teaching job ${jobId} started classroom job ${newJobId} with ${outlineOnlyResult.outlines.length} outlines`,
+    );
 
     // 注意：前端教学面板统一期望 { success: true, data: {...} } 的包装格式，
     // 不要直接用 apiSuccess（它会展开 data），避免 jobId 取不到。
@@ -159,7 +163,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ job
       { status: 201 },
     );
   } catch (err) {
-    log.error(`Start classroom from teaching job failed [jobId=${resolvedJobId ?? 'unknown'}]:`, err);
+    log.error(
+      `Start classroom from teaching job failed [jobId=${resolvedJobId ?? 'unknown'}]:`,
+      err,
+    );
     return apiError(
       'INTERNAL_ERROR',
       500,

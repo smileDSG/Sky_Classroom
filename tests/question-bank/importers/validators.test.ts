@@ -3,11 +3,14 @@ import { validateRow, validateRows } from '@/lib/question-bank/importers/validat
 
 describe('validateRow', () => {
   it('accepts valid row', () => {
-    const result = validateRow({
-      subject: '数学',
-      content: '1+1=?',
-      answer: '2',
-    }, 1);
+    const result = validateRow(
+      {
+        subject: '数学',
+        content: '1+1=?',
+        answer: '2',
+      },
+      1,
+    );
     expect(result.valid).toBe(true);
     expect(result.data).toBeDefined();
     expect(result.data!.subject).toBe('数学');
@@ -34,46 +37,61 @@ describe('validateRow', () => {
   });
 
   it('coerces Chinese difficulty labels', () => {
-    const result = validateRow({ subject: '数学', content: 'x', answer: '1', difficulty: '困难' }, 1);
+    const result = validateRow(
+      { subject: '数学', content: 'x', answer: '1', difficulty: '困难' },
+      1,
+    );
     expect(result.valid).toBe(true);
     expect(result.data!.difficulty).toBe('hard');
   });
 
   it('coerces Chinese question type labels', () => {
-    const result = validateRow({ subject: '数学', content: 'x', answer: '1', questionType: '选择题' }, 1);
+    const result = validateRow(
+      { subject: '数学', content: 'x', answer: '1', questionType: '选择题' },
+      1,
+    );
     expect(result.valid).toBe(true);
     expect(result.data!.questionType).toBe('choice');
   });
 
   it('coerces JSON string arrays', () => {
-    const result = validateRow({
-      subject: '数学',
-      content: 'x',
-      answer: '1',
-      knowledgePoints: '["代数", "方程"]',
-    }, 1);
+    const result = validateRow(
+      {
+        subject: '数学',
+        content: 'x',
+        answer: '1',
+        knowledgePoints: '["代数", "方程"]',
+      },
+      1,
+    );
     expect(result.valid).toBe(true);
     expect(result.data!.knowledgePoints).toEqual(['代数', '方程']);
   });
 
   it('coerces comma-separated strings to arrays', () => {
-    const result = validateRow({
-      subject: '数学',
-      content: 'x',
-      answer: '1',
-      knowledgePoints: '代数, 方程',
-    }, 1);
+    const result = validateRow(
+      {
+        subject: '数学',
+        content: 'x',
+        answer: '1',
+        knowledgePoints: '代数, 方程',
+      },
+      1,
+    );
     expect(result.valid).toBe(true);
     expect(result.data!.knowledgePoints).toEqual(['代数', '方程']);
   });
 
   it('coerces verified boolean from string', () => {
-    const result = validateRow({
-      subject: '数学',
-      content: 'x',
-      answer: '1',
-      verified: '是',
-    }, 1);
+    const result = validateRow(
+      {
+        subject: '数学',
+        content: 'x',
+        answer: '1',
+        verified: '是',
+      },
+      1,
+    );
     expect(result.valid).toBe(true);
     expect(result.data!.verified).toBe(true);
   });

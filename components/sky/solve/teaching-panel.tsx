@@ -196,11 +196,12 @@ const SectionCard = React.memo(function SectionCard({
   const hasFailed = sortedChunks.some((c) => c.failed);
   const typeBadge = TYPE_BADGE[section.contentType] ?? TYPE_BADGE.explanation;
   const [feedbackLoading, setFeedbackLoading] = useState<'mastered' | 'needs_review' | null>(null);
-  const [submittedFeedback, setSubmittedFeedback] = useState<
-    'mastered' | 'needs_review' | null
-  >(null);
-  const [feedbackProfileUpdate, setFeedbackProfileUpdate] =
-    useState<TeachingProfileUpdate | null>(null);
+  const [submittedFeedback, setSubmittedFeedback] = useState<'mastered' | 'needs_review' | null>(
+    null,
+  );
+  const [feedbackProfileUpdate, setFeedbackProfileUpdate] = useState<TeachingProfileUpdate | null>(
+    null,
+  );
 
   const handleRetry = () => {
     if (onRetry) {
@@ -454,7 +455,7 @@ const SectionCard = React.memo(function SectionCard({
             <div className="rounded-xl border border-cyan-200 bg-gradient-to-r from-cyan-50 to-indigo-50 p-3 dark:border-cyan-200/15 dark:from-cyan-950/35 dark:to-indigo-950/30">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
                 <Brain className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
-                    章节反馈已更新学习情况
+                章节反馈已更新学习情况
               </div>
               <p className="mt-1 text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">
                 这是自我评价，参考程度低于随堂答题；它会帮助调整掌握情况并影响复习安排，不会直接判定你完全学会。
@@ -1912,7 +1913,9 @@ export function TeachingPanel({
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-base font-semibold text-[var(--teaching-text)]">学习情况报告</h3>
+                <h3 className="text-base font-semibold text-[var(--teaching-text)]">
+                  学习情况报告
+                </h3>
                 <p className="text-sm text-[var(--teaching-muted)] mt-0.5">
                   {diagnosticResult.accuracy >= 80
                     ? '前置知识掌握良好，可以进入正式授课'
@@ -2229,10 +2232,7 @@ export function TeachingPanel({
                       }
                       className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white/15 px-2.5 py-1.5 text-[10px] font-semibold dark:bg-slate-950 dark:text-white"
                     >
-                      {
-                        getTeachingDecisionTarget(latestFeedbackProfileUpdate.learnerDecision)
-                          .label
-                      }
+                      {getTeachingDecisionTarget(latestFeedbackProfileUpdate.learnerDecision).label}
                       <ArrowRight className="h-3 w-3" />
                     </Link>
                   </div>

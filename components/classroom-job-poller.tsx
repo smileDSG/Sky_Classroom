@@ -4,7 +4,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { fetchClassroomJob } from '@/lib/classroom/classroom-job-client';
-import { getActiveJobEntries, removeActiveJobEntry, type StoredJobEntry } from '@/lib/classroom/classroom-session';
+import {
+  getActiveJobEntries,
+  removeActiveJobEntry,
+  type StoredJobEntry,
+} from '@/lib/classroom/classroom-session';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -188,7 +192,13 @@ export function ClassroomJobPoller() {
     };
   }, [pathname]);
 
-  const activeDialog = completedJob ? 'completed' : readyJob ? 'ready' : generatingJob ? 'generating' : null;
+  const activeDialog = completedJob
+    ? 'completed'
+    : readyJob
+      ? 'ready'
+      : generatingJob
+        ? 'generating'
+        : null;
 
   return (
     <AlertDialog
@@ -210,7 +220,8 @@ export function ClassroomJobPoller() {
                 课堂生成完成
               </AlertDialogTitle>
               <AlertDialogDescription>
-                课堂「{completedJob.topic}」共 {completedJob.scenesCount} 个场景已生成完毕，是否立即进入？
+                课堂「{completedJob.topic}」共 {completedJob.scenesCount}{' '}
+                个场景已生成完毕，是否立即进入？
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -227,7 +238,8 @@ export function ClassroomJobPoller() {
                 大纲已生成
               </AlertDialogTitle>
               <AlertDialogDescription>
-                课堂「{readyJob.topic}」共 {readyJob.sceneCount} 个场景的大纲已就绪，是否立即前往审阅？
+                课堂「{readyJob.topic}」共 {readyJob.sceneCount}{' '}
+                个场景的大纲已就绪，是否立即前往审阅？
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

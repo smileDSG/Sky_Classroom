@@ -54,7 +54,7 @@ export interface ImportMeta {
 // ── Field mapping ───────────────────────────────────────────────────
 
 export interface FieldMappingResult {
-  mapping: Record<string, string>;      // raw column → canonical field
-  unmapped: string[];                    // columns that could not be mapped
-  conflicts: string[];                   // multiple raw columns mapped to same canonical field
+  mapping: Record<string, string>; // raw column → canonical field
+  unmapped: string[]; // columns that could not be mapped
+  conflicts: string[]; // multiple raw columns mapped to same canonical field
 }

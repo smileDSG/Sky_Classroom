@@ -9,10 +9,7 @@ import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:SolveJobStatus');
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ jobId: string }> },
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ jobId: string }> }) {
   try {
     const auth = await requireAuth();
     if ('error' in auth) return auth.error;

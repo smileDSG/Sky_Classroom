@@ -1,1 +1,19 @@
-{"success":true,"pptxUrl":"/temp/pptx/人工智能基础入门_tech_1779704602138.pptx","fileName":"人工智能基础入门_tech_1779704602138.pptx","filledCount":37,"totalFields":37,"templateId":"tech","generationTime":80241,"slideImages":["/temp/preview/3d6f8fd25d424e8e/images/Slide_1.png","/temp/preview/3d6f8fd25d424e8e/images/Slide_2.png","/temp/preview/3d6f8fd25d424e8e/images/Slide_3.png","/temp/preview/3d6f8fd25d424e8e/images/Slide_4.png","/temp/preview/3d6f8fd25d424e8e/images/Slide_5.png","/temp/preview/3d6f8fd25d424e8e/images/Slide_6.png","/temp/preview/3d6f8fd25d424e8e/images/Slide_7.png"],"previewId":"3d6f8fd25d424e8e"}
+{
+  "success": true,
+  "pptxUrl": "/temp/pptx/人工智能基础入门_tech_1779704602138.pptx",
+  "fileName": "人工智能基础入门_tech_1779704602138.pptx",
+  "filledCount": 37,
+  "totalFields": 37,
+  "templateId": "tech",
+  "generationTime": 80241,
+  "slideImages": [
+    "/temp/preview/3d6f8fd25d424e8e/images/Slide_1.png",
+    "/temp/preview/3d6f8fd25d424e8e/images/Slide_2.png",
+    "/temp/preview/3d6f8fd25d424e8e/images/Slide_3.png",
+    "/temp/preview/3d6f8fd25d424e8e/images/Slide_4.png",
+    "/temp/preview/3d6f8fd25d424e8e/images/Slide_5.png",
+    "/temp/preview/3d6f8fd25d424e8e/images/Slide_6.png",
+    "/temp/preview/3d6f8fd25d424e8e/images/Slide_7.png"
+  ],
+  "previewId": "3d6f8fd25d424e8e"
+}

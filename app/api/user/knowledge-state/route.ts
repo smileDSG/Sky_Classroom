@@ -43,7 +43,12 @@ export async function POST(req: NextRequest) {
     });
 
     if (!parsed.success) {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '知识状态格式错误', parsed.error.message);
+      return apiError(
+        API_ERROR_CODES.INVALID_REQUEST,
+        400,
+        '知识状态格式错误',
+        parsed.error.message,
+      );
     }
 
     const storage = await getRequiredServerStorage();

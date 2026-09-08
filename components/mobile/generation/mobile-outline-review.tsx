@@ -42,7 +42,9 @@ export function MobileOutlineReview({
           </span>
           <div>
             <h2 className="text-base font-bold text-white">大纲已生成</h2>
-            <p className="text-xs text-slate-400">{totalScenes ?? outlines.length} 个场景 · 可编辑调整</p>
+            <p className="text-xs text-slate-400">
+              {totalScenes ?? outlines.length} 个场景 · 可编辑调整
+            </p>
           </div>
         </div>
       </section>
@@ -76,11 +78,7 @@ export function MobileOutlineReview({
           disabled={isLoading || outlines.length === 0}
           className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-500 py-3.5 text-sm font-bold text-white shadow-lg shadow-sky-500/20 transition-transform active:scale-[0.98] disabled:opacity-50"
         >
-          {isLoading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Check className="size-4" />
-          )}
+          {isLoading ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
           确认大纲
         </button>
       </div>

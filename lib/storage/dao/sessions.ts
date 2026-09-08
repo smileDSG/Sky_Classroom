@@ -27,7 +27,7 @@ async function ensureProvider(): Promise<StorageProvider> {
 }
 
 export async function createSessionDAO(storage?: StorageProvider) {
-  const s = storage ?? await ensureProvider();
+  const s = storage ?? (await ensureProvider());
 
   return {
     async create(session: Omit<SessionEntry, 'createdAt'>): Promise<void> {

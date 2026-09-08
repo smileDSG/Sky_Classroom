@@ -19,6 +19,7 @@ import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { addActiveTeachingJobEntry } from '@/lib/teaching/teaching-session';
+import { MathRenderer } from '@/components/sky/solve/math-renderer';
 import { ReviewSession } from './review-session';
 
 /** Must match the Ebbinghaus intervals in storage/dao/mistakes.ts */
@@ -573,17 +574,19 @@ export function MistakeBook() {
                   </button>
                   <div className="min-w-0 flex-1">
                     {/* Problem — 2-line clamp */}
-                    <p className="line-clamp-2 text-sm font-medium text-gray-800 dark:text-slate-100">
-                      {m.problem}
-                    </p>
+                    <div className="line-clamp-2 text-sm font-medium text-gray-800 dark:text-slate-100">
+                      <MathRenderer content={m.problem} />
+                    </div>
 
                     {/* User answer (red) + correct answer (green) */}
                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                       <span className="text-red-500 dark:text-red-400">
-                        我的答案：{m.userAnswer}
+                        我的答案：
+                        <MathRenderer content={m.userAnswer} />
                       </span>
                       <span className="text-[#10B981] dark:text-emerald-400">
-                        正确答案：{m.correctAnswer}
+                        正确答案：
+                        <MathRenderer content={m.correctAnswer} />
                       </span>
                     </div>
 

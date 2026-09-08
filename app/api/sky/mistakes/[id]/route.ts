@@ -12,10 +12,7 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:SkyMistakes');
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth();
   if ('error' in auth) return auth.error;
 

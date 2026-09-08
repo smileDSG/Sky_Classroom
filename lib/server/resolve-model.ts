@@ -8,7 +8,12 @@
 import type { NextRequest } from 'next/server';
 import { getModel, parseModelString, type ModelWithInfo } from '@/lib/ai/providers';
 import type { ThinkingConfig } from '@/lib/types/provider';
-import { resolveApiKey, resolveApiKeyPool, resolveBaseUrl, resolveProxy } from '@/lib/server/provider-config';
+import {
+  resolveApiKey,
+  resolveApiKeyPool,
+  resolveBaseUrl,
+  resolveProxy,
+} from '@/lib/server/provider-config';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 
 export interface ResolvedModel extends ModelWithInfo {
@@ -57,9 +62,7 @@ export async function resolveModel(params: {
   const apiKey = clientBaseUrl
     ? params.apiKey || ''
     : resolveApiKey(providerId, params.apiKey || '');
-  const keyPool = clientBaseUrl
-    ? [apiKey]
-    : resolveApiKeyPool(providerId, params.apiKey || '');
+  const keyPool = clientBaseUrl ? [apiKey] : resolveApiKeyPool(providerId, params.apiKey || '');
   const baseUrl = clientBaseUrl ? clientBaseUrl : resolveBaseUrl(providerId, params.baseUrl);
   const proxy = resolveProxy(providerId);
   const { model, modelInfo } = getModel({

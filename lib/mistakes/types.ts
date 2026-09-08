@@ -45,7 +45,7 @@ export interface MistakeStats {
   totalCount: number;
   reviewedCount: number;
   causeDistribution: Record<MistakeCause, number>;
-  recentCount: number;  // last 7 days
+  recentCount: number; // last 7 days
 }
 
 export interface MistakeReviewKnowledgeChange {

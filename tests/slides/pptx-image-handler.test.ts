@@ -7,7 +7,11 @@ function mockSlide() {
     addImage: vi.fn(),
     addShape: vi.fn(),
     addText: vi.fn(),
-  } as unknown as { addImage: ReturnType<typeof vi.fn>; addShape: ReturnType<typeof vi.fn>; addText: ReturnType<typeof vi.fn> };
+  } as unknown as {
+    addImage: ReturnType<typeof vi.fn>;
+    addShape: ReturnType<typeof vi.fn>;
+    addText: ReturnType<typeof vi.fn>;
+  };
 }
 
 function baseTheme(): ThemeToken {
@@ -150,7 +154,8 @@ describe('pptx-image-handler', () => {
   });
 
   it('resolveImages handles base64 src directly', async () => {
-    const src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    const src =
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     const result = await resolveImages([{ id: 'img-1', src }]);
     expect(result.has('img-1')).toBe(true);
     expect(result.get('img-1')?.startsWith('data:')).toBe(true);

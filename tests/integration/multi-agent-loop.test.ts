@@ -6,8 +6,14 @@
  * behavior in the multi-agent orchestration system.
  */
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { createAgentFactory, createAgentsFromTemplates } from '@/lib/orchestration/registry/factory';
-import { getCombinationRule, recommendAgentCombination } from '@/lib/orchestration/registry/combination-rules';
+import {
+  createAgentFactory,
+  createAgentsFromTemplates,
+} from '@/lib/orchestration/registry/factory';
+import {
+  getCombinationRule,
+  recommendAgentCombination,
+} from '@/lib/orchestration/registry/combination-rules';
 import { parseDirectorDecision } from '@/lib/orchestration/director-prompt';
 import type { AgentConfig, AgentRole } from '@/lib/orchestration/registry/types';
 
@@ -103,16 +109,12 @@ describe('P6-001 Test 2: 多智能体对话循环', () => {
     });
 
     test('director selects assistant as follow-up', () => {
-      const decision = parseDirectorDecision(
-        '{"next_agent":"agent-assistant"}',
-      );
+      const decision = parseDirectorDecision('{"next_agent":"agent-assistant"}');
       expect(decision.nextAgentId).toBe('agent-assistant');
     });
 
     test('director selects student for questioning', () => {
-      const decision = parseDirectorDecision(
-        '{"next_agent":"agent-student-1"}',
-      );
+      const decision = parseDirectorDecision('{"next_agent":"agent-student-1"}');
       expect(decision.nextAgentId).toBe('agent-student-1');
     });
 

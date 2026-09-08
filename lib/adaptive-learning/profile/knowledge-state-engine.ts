@@ -281,8 +281,7 @@ export async function applyLearningEvent(
       }
       existingStates = [
         ...existingStates.filter(
-          (existing) =>
-            existing.nodeId !== target.nodeId && existing.nodeId !== aliasState?.nodeId,
+          (existing) => existing.nodeId !== target.nodeId && existing.nodeId !== aliasState?.nodeId,
         ),
         validated,
       ];

@@ -121,10 +121,7 @@ function splitFor(index: number, count: number): SyntheticSplit {
   return 'test';
 }
 
-export function buildSyntheticCases(
-  count = 50,
-  seed = 20260722,
-): SyntheticRecognitionCase[] {
+export function buildSyntheticCases(count = 50, seed = 20260722): SyntheticRecognitionCase[] {
   if (!Number.isInteger(count) || count <= 0) {
     throw new Error('count must be a positive integer');
   }

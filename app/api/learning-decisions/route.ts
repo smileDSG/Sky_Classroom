@@ -4,7 +4,10 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { requireAuth } from '@/lib/server/auth/helpers';
 import { getRequiredServerStorage } from '@/lib/server/server-storage';
 import { createInterventionDecisionDAO } from '@/lib/adaptive-learning/data/intervention-decisions';
-import { recordInterventionPlanned, recordInterventionSelected } from '@/lib/adaptive-learning/profile/event-recorder';
+import {
+  recordInterventionPlanned,
+  recordInterventionSelected,
+} from '@/lib/adaptive-learning/profile/event-recorder';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
 
 const decisionInputSchema = z
@@ -23,11 +26,18 @@ export async function POST(request: Request) {
 
   const parsed = decisionInputSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return apiError('INVALID_REQUEST', 400, 'Invalid learning decision', parsed.error.issues[0]?.message);
+    return apiError(
+      'INVALID_REQUEST',
+      400,
+      'Invalid learning decision',
+      parsed.error.issues[0]?.message,
+    );
   }
 
   const storage = await getRequiredServerStorage();
-  const preferences = await new LearnerProfileRepository(storage).getLatestPreferences(auth.user.id);
+  const preferences = await new LearnerProfileRepository(storage).getLatestPreferences(
+    auth.user.id,
+  );
   if (!preferences?.privacy.optionalBehaviorSignals) {
     return apiSuccess({ recorded: false, decision: null });
   }

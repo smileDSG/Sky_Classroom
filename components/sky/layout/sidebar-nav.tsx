@@ -36,7 +36,8 @@ function isSectionActive(pathname: string, section: SkySection): boolean {
 
   if (section === 'resources') {
     return (
-      (pathname.startsWith('/sky/cloud-mind') && !pathname.startsWith('/sky/cloud-mind/teaching')) ||
+      (pathname.startsWith('/sky/cloud-mind') &&
+        !pathname.startsWith('/sky/cloud-mind/teaching')) ||
       pathname.startsWith('/sky/assistant') ||
       pathname.startsWith('/sky/solve') ||
       pathname.startsWith('/sky/slides')

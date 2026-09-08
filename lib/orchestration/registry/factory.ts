@@ -56,10 +56,7 @@ export class AgentFactory {
    * Create an AgentConfig from a registered template.
    * Optionally override any field via `overrides`.
    */
-  createFromTemplate(
-    templateId: string,
-    overrides?: Partial<AgentConfig>,
-  ): AgentConfig | null {
+  createFromTemplate(templateId: string, overrides?: Partial<AgentConfig>): AgentConfig | null {
     const template = this.templates.get(templateId);
     if (!template) return null;
 
@@ -128,10 +125,12 @@ export class AgentFactory {
       color: params.color || fallbackColor || '#888888',
       allowedActions: getActionsForRole(params.role),
       priority:
-        params.priority ??
-        (params.role === 'teacher' ? 10 : params.role === 'assistant' ? 7 : 5),
+        params.priority ?? (params.role === 'teacher' ? 10 : params.role === 'assistant' ? 7 : 5),
       voiceConfig: params.voiceConfig
-        ? { providerId: params.voiceConfig.providerId as TTSProviderId, voiceId: params.voiceConfig.voiceId }
+        ? {
+            providerId: params.voiceConfig.providerId as TTSProviderId,
+            voiceId: params.voiceConfig.voiceId,
+          }
         : undefined,
       createdAt: now,
       updatedAt: now,
@@ -158,7 +157,10 @@ export class AgentFactory {
       allowedActions: params.allowedActions ?? getActionsForRole(params.role),
       priority: params.priority ?? 5,
       voiceConfig: params.voiceConfig
-        ? { providerId: params.voiceConfig.providerId as TTSProviderId, voiceId: params.voiceConfig.voiceId }
+        ? {
+            providerId: params.voiceConfig.providerId as TTSProviderId,
+            voiceId: params.voiceConfig.voiceId,
+          }
         : undefined,
       createdAt: now,
       updatedAt: now,

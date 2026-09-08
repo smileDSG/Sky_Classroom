@@ -104,10 +104,9 @@ class TelemetryCollector {
     if (this.queue.length === 0) return;
 
     try {
-      const blob = new Blob(
-        [JSON.stringify({ events: this.queue.splice(0) })],
-        { type: 'application/json' },
-      );
+      const blob = new Blob([JSON.stringify({ events: this.queue.splice(0) })], {
+        type: 'application/json',
+      });
       navigator.sendBeacon('/api/telemetry', blob);
     } catch {}
   }

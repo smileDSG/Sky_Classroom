@@ -59,9 +59,7 @@ describe('injectMistakeContext', () => {
   });
 
   it('with mistakes → prompt includes error type analysis', () => {
-    const result = injectMistakeContext(BASE_PROMPT, [
-      makeMistake({ errorType: 'concept' }),
-    ]);
+    const result = injectMistakeContext(BASE_PROMPT, [makeMistake({ errorType: 'concept' })]);
     expect(result).toContain('概念不清');
   });
 
@@ -192,7 +190,9 @@ describe('buildSystemPrompt', () => {
       },
     };
 
-    const prompt = buildSystemPrompt('数学', 'junior', 'concise', { teachingProjection: projection });
+    const prompt = buildSystemPrompt('数学', 'junior', 'concise', {
+      teachingProjection: projection,
+    });
     expect(prompt).toContain('学习者画像');
     expect(prompt).toContain('小云');
     expect(prompt).toContain('讲解深度：详细');
@@ -270,7 +270,12 @@ function makeHistoryEntry(overrides: Partial<QuestionBankEntry> = {}): QuestionB
 
 describe('injectSolveHistory', () => {
   it('with solve history entries includes entry count', () => {
-    const entries = [makeHistoryEntry({ problemText: 'test', knowledgePoints: [{ name: '代数', description: '', difficulty: 'easy' }] })];
+    const entries = [
+      makeHistoryEntry({
+        problemText: 'test',
+        knowledgePoints: [{ name: '代数', description: '', difficulty: 'easy' }],
+      }),
+    ];
     const result = injectSolveHistory(BASE_PROMPT, entries);
     expect(result).toContain('该学生已解答 1 道题目');
     expect(result).toContain(BASE_PROMPT);

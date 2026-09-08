@@ -6,10 +6,7 @@
  */
 
 import type { SearchResult, SubjectId, GradeLevel } from './types';
-import {
-  ALLOWED_DOMAINS,
-  buildSearchQueries,
-} from './config';
+import { ALLOWED_DOMAINS, buildSearchQueries } from './config';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('Enrichment:Search');
@@ -96,7 +93,7 @@ async function searchTavily(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         query,
@@ -176,7 +173,7 @@ async function searchBing(
     const resp = await fetch(`${BING_API_ENDPOINT}?${params}`, {
       headers: {
         'Ocp-Apim-Subscription-Key': apiKey,
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
       signal: AbortSignal.timeout(10_000),
     });
@@ -207,10 +204,7 @@ async function searchBing(
 
 // ── Unified search ──────────────────────────────────────────────────
 
-async function searchUnified(
-  query: string,
-  maxResults: number = 10,
-): Promise<SearchResult[]> {
+async function searchUnified(query: string, maxResults: number = 10): Promise<SearchResult[]> {
   // Try Tavily first (already configured)
   if (isTavilyConfigured()) {
     const results = await searchTavily(query, maxResults);
@@ -244,13 +238,13 @@ export interface SearchForSubjectOptions {
  *
  * Uses Tavily first (already configured), Bing as fallback.
  */
-export async function searchForSubject(
-  opts: SearchForSubjectOptions,
-): Promise<SearchResult[]> {
+export async function searchForSubject(opts: SearchForSubjectOptions): Promise<SearchResult[]> {
   const { subject, gradeLevel, maxResults = 30, filterAllowedDomains = true } = opts;
 
   if (!isSearchConfigured()) {
-    log.warn('[Search] No search API key configured — add TAVILY_API_KEY or BING_API_KEY to .env.local');
+    log.warn(
+      '[Search] No search API key configured — add TAVILY_API_KEY or BING_API_KEY to .env.local',
+    );
     return [];
   }
 

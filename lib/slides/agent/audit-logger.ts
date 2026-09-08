@@ -231,9 +231,15 @@ export function getAuditSummary(jobId: string): string {
     `Pages: ${audit.pageCount ?? '?'} | QA: ${audit.qaScore ?? '?'}/100 ${audit.qaPassed ? 'PASS' : 'FAIL'}`,
     `LLM Calls: ${audit.llmCalls.length}`,
     'Steps:',
-    ...audit.steps.map((s) => `  ${s.name}: ${s.durationMs ?? '?'}ms ${s.status === 'error' ? `[ERROR: ${s.error}]` : ''}`),
+    ...audit.steps.map(
+      (s) =>
+        `  ${s.name}: ${s.durationMs ?? '?'}ms ${s.status === 'error' ? `[ERROR: ${s.error}]` : ''}`,
+    ),
     'LLM Details:',
-    ...audit.llmCalls.map((c) => `  ${c.step}: ${c.model} | ${c.durationMs}ms | ${c.promptTokens ?? '?'}→${c.completionTokens ?? '?'}`),
+    ...audit.llmCalls.map(
+      (c) =>
+        `  ${c.step}: ${c.model} | ${c.durationMs}ms | ${c.promptTokens ?? '?'}→${c.completionTokens ?? '?'}`,
+    ),
     '================================',
   ];
 

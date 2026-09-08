@@ -9,14 +9,14 @@ import type { StorageProvider, StorageEntry } from '../storage-types';
 
 export interface UserStatsEntry {
   userId: string;
-  date: string;             // YYYY-MM-DD
-  studySeconds: number;     // Real study time in seconds
-  checkinStreak: number;    // Consecutive check-in days
-  masteryScore: number;     // Comprehensive mastery score (0-100)
+  date: string; // YYYY-MM-DD
+  studySeconds: number; // Real study time in seconds
+  checkinStreak: number; // Consecutive check-in days
+  masteryScore: number; // Comprehensive mastery score (0-100)
   problemsAttempted: number;
   problemsCorrect: number;
   scenesCompleted: number;
-  lastActiveAt: number;     // Timestamp of last activity
+  lastActiveAt: number; // Timestamp of last activity
 }
 
 const TABLE = 'user_stats';
@@ -57,7 +57,11 @@ export function createUserStatsDAO(storage: StorageProvider) {
     },
 
     /** Update stats for today (merge patch into existing) */
-    async update(userId: string, patch: Partial<Omit<UserStatsEntry, 'userId' | 'date'>>, date?: string): Promise<UserStatsEntry> {
+    async update(
+      userId: string,
+      patch: Partial<Omit<UserStatsEntry, 'userId' | 'date'>>,
+      date?: string,
+    ): Promise<UserStatsEntry> {
       const d = date ?? todayStr();
       const existing = await this.getOrCreate(userId, d);
       const updated: UserStatsEntry = {
@@ -79,28 +83,40 @@ export function createUserStatsDAO(storage: StorageProvider) {
     async addStudySeconds(userId: string, seconds: number, date?: string): Promise<UserStatsEntry> {
       const d = date ?? todayStr();
       const existing = await this.getOrCreate(userId, d);
-      return this.update(userId, {
-        studySeconds: existing.studySeconds + seconds,
-      }, d);
+      return this.update(
+        userId,
+        {
+          studySeconds: existing.studySeconds + seconds,
+        },
+        d,
+      );
     },
 
     /** Increment problem counters */
     async recordProblem(userId: string, correct: boolean, date?: string): Promise<UserStatsEntry> {
       const d = date ?? todayStr();
       const existing = await this.getOrCreate(userId, d);
-      return this.update(userId, {
-        problemsAttempted: existing.problemsAttempted + 1,
-        problemsCorrect: existing.problemsCorrect + (correct ? 1 : 0),
-      }, d);
+      return this.update(
+        userId,
+        {
+          problemsAttempted: existing.problemsAttempted + 1,
+          problemsCorrect: existing.problemsCorrect + (correct ? 1 : 0),
+        },
+        d,
+      );
     },
 
     /** Increment scenes completed */
     async recordSceneCompletion(userId: string, date?: string): Promise<UserStatsEntry> {
       const d = date ?? todayStr();
       const existing = await this.getOrCreate(userId, d);
-      return this.update(userId, {
-        scenesCompleted: existing.scenesCompleted + 1,
-      }, d);
+      return this.update(
+        userId,
+        {
+          scenesCompleted: existing.scenesCompleted + 1,
+        },
+        d,
+      );
     },
 
     /** Set check-in streak */

@@ -20,7 +20,8 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('GeneralSettings');
 
-export function GeneralSettings() {// Clear cache state
+export function GeneralSettings() {
+  // Clear cache state
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [confirmInput, setConfirmInput] = useState('');
   const [clearing, setClearing] = useState(false);
@@ -89,7 +90,9 @@ export function GeneralSettings() {// Clear cache state
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">{'清空本地缓存'}</p>
               <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                {'删除所有本地存储的数据，包括课堂记录、对话历史、音频缓存和应用配置。此操作不可撤销。'}
+                {
+                  '删除所有本地存储的数据，包括课堂记录、对话历史、音频缓存和应用配置。此操作不可撤销。'
+                }
               </p>
             </div>
             <Button

@@ -25,9 +25,7 @@ export function MobileHomeRail({
       <div className="flex items-end justify-between gap-3 px-0.5">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-slate-300/70">
-            {description}
-          </p>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-slate-300/70">{description}</p>
         </div>
         <Link
           href={moreHref}

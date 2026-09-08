@@ -33,9 +33,7 @@ export function BaseShapeElement({ elementInfo }: BaseShapeElementProps) {
   const fontFamily = text.defaultFontName?.trim() || SLIDE_FONT_STACK;
 
   return (
-    <div
-      className="base-element-shape relative w-full h-full"
-    >
+    <div className="base-element-shape relative w-full h-full">
       <div
         className="rotate-wrapper w-full h-full"
         style={{ transform: `rotate(${elementInfo.rotate}deg)` }}
@@ -71,8 +69,13 @@ export function BaseShapeElement({ elementInfo }: BaseShapeElementProps) {
               )}
             </defs>
             <g
-              transform={`scale(${elementInfo.width / (typeof elementInfo.viewBox === 'string' ? (elementInfo.viewBox.split(' ').map(Number)[2] || 1) : (Array.isArray(elementInfo.viewBox) ? elementInfo.viewBox[0] : 1))}, ${
-                elementInfo.height / (typeof elementInfo.viewBox === 'string' ? (elementInfo.viewBox.split(' ').map(Number)[3] || 1) : (Array.isArray(elementInfo.viewBox) ? elementInfo.viewBox[1] : 1))
+              transform={`scale(${elementInfo.width / (typeof elementInfo.viewBox === 'string' ? elementInfo.viewBox.split(' ').map(Number)[2] || 1 : Array.isArray(elementInfo.viewBox) ? elementInfo.viewBox[0] : 1)}, ${
+                elementInfo.height /
+                (typeof elementInfo.viewBox === 'string'
+                  ? elementInfo.viewBox.split(' ').map(Number)[3] || 1
+                  : Array.isArray(elementInfo.viewBox)
+                    ? elementInfo.viewBox[1]
+                    : 1)
               }) translate(0,0) matrix(1,0,0,1,0,0)`}
             >
               <path

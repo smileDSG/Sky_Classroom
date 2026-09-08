@@ -106,7 +106,8 @@ function QuizCover({
   questionCount: number;
   totalPoints: number;
   onStart: () => void;
-}) {return (
+}) {
+  return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-4 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-0 right-0 p-6 opacity-[0.03]">
@@ -293,7 +294,8 @@ function MultipleChoiceQuestion({
     } else {
       onChange([...selected, optValue]);
     }
-  };return (
+  };
+  return (
     <QuestionCard question={question} index={index} result={result}>
       {!isReview && (
         <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
@@ -382,7 +384,8 @@ function ShortAnswerQuestion({
   disabled?: boolean;
   result?: QuestionResult;
 }) {
-  const isReview = !!result;// Ref to track latest value for voice transcription append
+  const isReview = !!result;
+  // Ref to track latest value for voice transcription append
   const valueRef = useRef(value);
   useEffect(() => {
     valueRef.current = value;
@@ -416,11 +419,7 @@ function ShortAnswerQuestion({
         <div className="space-y-3">
           <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{'你的回答：'}</p>
-            {value || (
-              <span className="text-gray-400 dark:text-gray-500 italic">
-                {'未作答'}
-              </span>
-            )}
+            {value || <span className="text-gray-400 dark:text-gray-500 italic">{'未作答'}</span>}
           </div>
           {result.aiComment && (
             <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-violet-50 dark:bg-violet-900/30 border border-violet-100 dark:border-violet-800">
@@ -455,7 +454,8 @@ function QuestionCard({
   index: number;
   result?: QuestionResult;
   children: React.ReactNode;
-}) {const isReview = !!result;
+}) {
+  const isReview = !!result;
   const pts = question.points ?? 1;
 
   return (
@@ -507,11 +507,7 @@ function QuestionCard({
               {question.question}
             </p>
             <p className="text-xs text-gray-400 mt-0.5">
-              {question.type === 'single'
-                ? '单选'
-                : question.type === 'multiple'
-                  ? '多选'
-                  : '简答'}
+              {question.type === 'single' ? '单选' : question.type === 'multiple' ? '多选' : '简答'}
               {' · '}
               {pts} {'分'}
             </p>
@@ -539,7 +535,8 @@ function ScoreBanner({
   score: number;
   total: number;
   results: QuestionResult[];
-}) {const pct = total > 0 ? Math.round((score / total) * 100) : 0;
+}) {
+  const pct = total > 0 ? Math.round((score / total) * 100) : 0;
   const correctCount = results.filter((r) => r.status === 'correct').length;
   const incorrectCount = results.filter((r) => r.status === 'incorrect').length;
 
@@ -625,9 +622,9 @@ function ScoreBanner({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export function QuizView({
-  questions, sceneId, knowledgePoints }: QuizViewProps) {
-  const locale = 'zh-CN';// Rehydrate submitted state from localStorage on first mount. Runs once.
+export function QuizView({ questions, sceneId, knowledgePoints }: QuizViewProps) {
+  const locale = 'zh-CN';
+  // Rehydrate submitted state from localStorage on first mount. Runs once.
   const [initialSubmitted] = useState<SubmittedState>(() => readSubmittedState(sceneId));
 
   const [phase, setPhase] = useState<Phase>(() => {

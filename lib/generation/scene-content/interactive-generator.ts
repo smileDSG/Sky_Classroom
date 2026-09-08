@@ -212,9 +212,10 @@ export function auditInteractiveHtml(html: string, widgetType?: WidgetType): str
   }
 
   const perspectiveTilt = /transform\s*:\s*[^;]*perspective\(/i.test(html);
-  const wholePageTilt = /(body|#app|\.app|#root|\.root)[^{]*\{[^}]*transform\s*:\s*[^;]*(rotateX|rotateY|perspective)/i.test(
-    html,
-  );
+  const wholePageTilt =
+    /(body|#app|\.app|#root|\.root)[^{]*\{[^}]*transform\s*:\s*[^;]*(rotateX|rotateY|perspective)/i.test(
+      html,
+    );
   if (perspectiveTilt || wholePageTilt) {
     problems.push('whole-page 3D perspective/tilt transform detected');
   }

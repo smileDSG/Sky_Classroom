@@ -73,10 +73,7 @@ export async function retrieveRelevantContext(
 /**
  * 使用 LLM 对检索结果重排序
  */
-async function llmRerank(
-  query: string,
-  chunks: DocumentChunk[],
-): Promise<DocumentChunk[]> {
+async function llmRerank(query: string, chunks: DocumentChunk[]): Promise<DocumentChunk[]> {
   const apiKey = resolveApiKey('deepseek');
   const baseUrl = resolveBaseUrl('deepseek') || 'https://api.deepseek.com/v1';
 
@@ -85,9 +82,7 @@ async function llmRerank(
   try {
     const deepseek = createOpenAI({ apiKey, baseURL: baseUrl });
 
-    const numbered = chunks
-      .map((c, i) => `[${i}] ${c.content.slice(0, 300)}`)
-      .join('\n---\n');
+    const numbered = chunks.map((c, i) => `[${i}] ${c.content.slice(0, 300)}`).join('\n---\n');
 
     const prompt = `请根据以下查询，对文档片段进行相关性排序。只输出排序后的编号（用逗号分隔）。
 

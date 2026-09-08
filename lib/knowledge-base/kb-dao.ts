@@ -54,12 +54,19 @@ function parseTags(value: unknown): string[] {
   try {
     const parsed: unknown = JSON.parse(value);
     if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
-    if (typeof parsed === 'string') return parsed.split(',').map((tag) => tag.trim()).filter(Boolean);
+    if (typeof parsed === 'string')
+      return parsed
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean);
   } catch {
     // Older rows stored tags as comma-separated text.
   }
 
-  return value.split(',').map((tag) => tag.trim()).filter(Boolean);
+  return value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 }
 
 function rowToChunk(row: KBRow): KBChunk {
@@ -117,10 +124,17 @@ export async function upsertChunk(chunk: KBChunk): Promise<void> {
        content = VALUES(content), tags = VALUES(tags), verified = VALUES(verified),
        usage_count = VALUES(usage_count), updated_at = CURRENT_TIMESTAMP`,
     [
-      chunk.id, chunk.kbType, chunk.docId, chunk.docTitle,
-      chunk.chunkIndex, chunk.totalChunks, chunk.content,
-      JSON.stringify(chunk.tags), chunk.sourceId,
-      chunk.verified ? 1 : 0, chunk.usageCount,
+      chunk.id,
+      chunk.kbType,
+      chunk.docId,
+      chunk.docTitle,
+      chunk.chunkIndex,
+      chunk.totalChunks,
+      chunk.content,
+      JSON.stringify(chunk.tags),
+      chunk.sourceId,
+      chunk.verified ? 1 : 0,
+      chunk.usageCount,
     ],
   );
 }
@@ -140,10 +154,17 @@ export async function upsertChunks(chunks: KBChunk[]): Promise<void> {
            content = VALUES(content), tags = VALUES(tags), verified = VALUES(verified),
            usage_count = VALUES(usage_count), updated_at = CURRENT_TIMESTAMP`,
         [
-          chunk.id, chunk.kbType, chunk.docId, chunk.docTitle,
-          chunk.chunkIndex, chunk.totalChunks, chunk.content,
-          JSON.stringify(chunk.tags), chunk.sourceId,
-          chunk.verified ? 1 : 0, chunk.usageCount,
+          chunk.id,
+          chunk.kbType,
+          chunk.docId,
+          chunk.docTitle,
+          chunk.chunkIndex,
+          chunk.totalChunks,
+          chunk.content,
+          JSON.stringify(chunk.tags),
+          chunk.sourceId,
+          chunk.verified ? 1 : 0,
+          chunk.usageCount,
         ],
       );
     }
@@ -159,10 +180,9 @@ export async function upsertChunks(chunks: KBChunk[]): Promise<void> {
 /** Get all chunks for a kb_type */
 export async function getChunksByType(kbType: KBType): Promise<KBChunk[]> {
   const pool = await getPool();
-  const [rows] = await pool.query<KBRow[]>(
-    'SELECT * FROM knowledge_base WHERE kb_type = ?',
-    [kbType],
-  );
+  const [rows] = await pool.query<KBRow[]>('SELECT * FROM knowledge_base WHERE kb_type = ?', [
+    kbType,
+  ]);
   return rows.map(rowToChunk);
 }
 
@@ -191,19 +211,15 @@ export async function deleteByType(kbType: KBType): Promise<void> {
 /** Increment usage count for a chunk */
 export async function incrementUsage(chunkId: string): Promise<void> {
   const pool = await getPool();
-  await pool.query(
-    'UPDATE knowledge_base SET usage_count = usage_count + 1 WHERE id = ?',
-    [chunkId],
-  );
+  await pool.query('UPDATE knowledge_base SET usage_count = usage_count + 1 WHERE id = ?', [
+    chunkId,
+  ]);
 }
 
 /** Mark chunks as verified by source_id */
 export async function verifyBySource(sourceId: string): Promise<void> {
   const pool = await getPool();
-  await pool.query(
-    'UPDATE knowledge_base SET verified = 1 WHERE source_id = ?',
-    [sourceId],
-  );
+  await pool.query('UPDATE knowledge_base SET verified = 1 WHERE source_id = ?', [sourceId]);
 }
 
 /** Get stats */

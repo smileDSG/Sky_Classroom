@@ -188,7 +188,7 @@ export type LearnerBehaviorEventInput = {
   | {
       type: 'self-reported';
       payload: { level: 'confused' | 'understood'; knowledgePoints?: string[] };
-  }
+    }
 );
 
 export interface LearnerBehaviorEventResult {

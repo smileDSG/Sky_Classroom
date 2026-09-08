@@ -23,9 +23,7 @@ export function getDefaultAgentsState() {
 
 export function createAgentsActions(
   set: (
-    partial:
-      | Partial<AgentsSliceState>
-      | ((state: AgentsSliceState) => Partial<AgentsSliceState>),
+    partial: Partial<AgentsSliceState> | ((state: AgentsSliceState) => Partial<AgentsSliceState>),
   ) => void,
 ): AgentsSliceActions {
   return {

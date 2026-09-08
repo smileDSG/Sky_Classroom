@@ -97,7 +97,13 @@ const CoverCard = memo(function CoverCard({
             className="absolute top-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded-full shadow-lg"
             style={{ background: 'var(--celestial-dawn)' }}
           >
-            <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <svg
+              className="h-3.5 w-3.5 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={3}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -112,7 +118,9 @@ const CoverCard = memo(function CoverCard({
         <div className="flex items-center gap-1.5">
           <span
             className={`text-[13px] font-bold truncate tracking-tight transition-colors ${
-              isSelected ? 'text-[var(--celestial-starlight)]' : 'text-[var(--celestial-starlight)]/60'
+              isSelected
+                ? 'text-[var(--celestial-starlight)]'
+                : 'text-[var(--celestial-starlight)]/60'
             }`}
           >
             {cover.styleName}
@@ -124,7 +132,15 @@ const CoverCard = memo(function CoverCard({
 });
 
 /* ─── Main Component ─── */
-export function CoverGallery({ open, topic, covers, showRefresh, onSelect, onRefresh, onClose }: CoverGalleryProps) {
+export function CoverGallery({
+  open,
+  topic,
+  covers,
+  showRefresh,
+  onSelect,
+  onRefresh,
+  onClose,
+}: CoverGalleryProps) {
   if (!open) return null;
 
   return (
@@ -148,7 +164,9 @@ export function CoverGallery({ open, topic, covers, showRefresh, onSelect, onRef
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--celestial-haze)]/10">
           <div>
-            <h2 className="text-base font-bold text-[var(--celestial-starlight)] tracking-tight">选择课件风格</h2>
+            <h2 className="text-base font-bold text-[var(--celestial-starlight)] tracking-tight">
+              选择课件风格
+            </h2>
             <p className="mt-0.5 text-[11px] text-[var(--celestial-starlight)]/30">
               {topic ? `AI 为"${topic}"设计了 ${covers.length} 套封面方案` : '请选择课件风格'}
             </p>
@@ -167,7 +185,13 @@ export function CoverGallery({ open, topic, covers, showRefresh, onSelect, onRef
               onClick={onClose}
               className="flex h-8 w-8 items-center justify-center rounded-xl text-[var(--celestial-starlight)]/30 hover:bg-[var(--celestial-starlight)]/[0.03] hover:text-[var(--celestial-starlight)]/60 transition-all duration-200"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -184,10 +208,31 @@ export function CoverGallery({ open, topic, covers, showRefresh, onSelect, onRef
       </div>
 
       <style jsx global>{`
-        .scrollbar-hide::-webkit-scrollbar { display: none !important; }
-        .scrollbar-hide { -ms-overflow-style: none !important; scrollbar-width: none !important; }
-        @keyframes cgFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes cgSlideUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none !important;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
+        }
+        @keyframes cgFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes cgSlideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
       `}</style>
     </div>
   );

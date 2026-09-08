@@ -41,7 +41,13 @@ const LASER_FADE_MS = 600;
 
 // ── Shape preview ──────────────────────────────────────────────────────
 
-function ShapePreview({ type, w, h, color, fill }: {
+function ShapePreview({
+  type,
+  w,
+  h,
+  color,
+  fill,
+}: {
   type: ShapeSubType;
   w: number;
   h: number;
@@ -56,8 +62,10 @@ function ShapePreview({ type, w, h, color, fill }: {
     case 'rect':
       return (
         <rect
-          x={strokeW} y={strokeW}
-          width={w - strokeW * 2} height={h - strokeW * 2}
+          x={strokeW}
+          y={strokeW}
+          width={w - strokeW * 2}
+          height={h - strokeW * 2}
           fill={fill ? color : 'none'}
           stroke={color}
           strokeWidth={strokeW}
@@ -68,7 +76,10 @@ function ShapePreview({ type, w, h, color, fill }: {
       const ry = h / 2 - strokeW;
       return (
         <ellipse
-          cx={cx} cy={cy} rx={Math.max(rx, 0)} ry={Math.max(ry, 0)}
+          cx={cx}
+          cy={cy}
+          rx={Math.max(rx, 0)}
+          ry={Math.max(ry, 0)}
           fill={fill ? color : 'none'}
           stroke={color}
           strokeWidth={strokeW}
@@ -119,10 +130,16 @@ export function DrawingCanvas({ canvasWidth, canvasHeight }: DrawingCanvasProps)
   const isDrawingRef = useRef(false);
   const [laserPoints, setLaserPoints] = useState<LaserPoint[]>([]);
   const [previewRect, setPreviewRect] = useState<{
-    x: number; y: number; w: number; h: number;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
   } | null>(null);
   const [textPreviewRect, setTextPreviewRect] = useState<{
-    x: number; y: number; w: number; h: number;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
   } | null>(null);
   const previewStartRef = useRef<PenPoint | null>(null);
   const textStartRef = useRef<PenPoint | null>(null);
@@ -328,7 +345,11 @@ export function DrawingCanvas({ canvasWidth, canvasHeight }: DrawingCanvasProps)
       }
 
       if (store.activeTool === 'shape' && previewStartRef.current) {
-        store.setDrawingShape({ type: store.shapeSubType, start: previewStartRef.current, end: pt });
+        store.setDrawingShape({
+          type: store.shapeSubType,
+          start: previewStartRef.current,
+          end: pt,
+        });
         const x = Math.min(previewStartRef.current.x, pt.x);
         const y = Math.min(previewStartRef.current.y, pt.y);
         const w = Math.abs(pt.x - previewStartRef.current.x);
@@ -358,88 +379,93 @@ export function DrawingCanvas({ canvasWidth, canvasHeight }: DrawingCanvasProps)
     [getCanvasPoint],
   );
 
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      if (!isDrawingRef.current) return;
-      isDrawingRef.current = false;
-      const store = useUserWhiteboardStore.getState();
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!isDrawingRef.current) return;
+    isDrawingRef.current = false;
+    const store = useUserWhiteboardStore.getState();
 
-      if (store.activeTool === 'laser') {
-        return;
-      }
+    if (store.activeTool === 'laser') {
+      return;
+    }
 
-      if (store.activeTool === 'eraser') {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        return;
-      }
+    if (store.activeTool === 'eraser') {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      return;
+    }
 
-      if (store.activeTool === 'text') {
-        const rect = textStartRef.current;
-        if (rect) {
-          const pt = getCanvasPoint(e);
-          const endPt = pt || rect;
-          const x = Math.min(rect.x, endPt.x);
-          const y = Math.min(rect.y, endPt.y);
-          const w = Math.abs(endPt.x - rect.x);
-          const h = Math.abs(endPt.y - rect.y);
-          const minSize = 20;
-          const element = {
-            id: `text_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-            type: 'text',
-            left: x,
-            top: y,
-            width: Math.max(w, minSize),
-            height: Math.max(h, minSize),
-            content: '',
-            defaultFontName: 'Microsoft YaHei',
-            defaultColor: store.shapeColor,
-            fill: 'transparent',
-            rotate: 0,
-          } as unknown as PPTElement;
-          store.commitTextElement(element);
-          store.setEditingTextId(element.id);
-        }
-        setTextPreviewRect(null);
-        textStartRef.current = null;
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        return;
+    if (store.activeTool === 'text') {
+      const rect = textStartRef.current;
+      if (rect) {
+        const pt = getCanvasPoint(e);
+        const endPt = pt || rect;
+        const x = Math.min(rect.x, endPt.x);
+        const y = Math.min(rect.y, endPt.y);
+        const w = Math.abs(endPt.x - rect.x);
+        const h = Math.abs(endPt.y - rect.y);
+        const minSize = 20;
+        const element = {
+          id: `text_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          type: 'text',
+          left: x,
+          top: y,
+          width: Math.max(w, minSize),
+          height: Math.max(h, minSize),
+          content: '',
+          defaultFontName: 'Microsoft YaHei',
+          defaultColor: store.shapeColor,
+          fill: 'transparent',
+          rotate: 0,
+        } as unknown as PPTElement;
+        store.commitTextElement(element);
+        store.setEditingTextId(element.id);
       }
+      setTextPreviewRect(null);
+      textStartRef.current = null;
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      return;
+    }
 
-      if (store.activeTool === 'shape') {
-        store.commitShape();
-        setPreviewRect(null);
-        previewStartRef.current = null;
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        return;
-      }
+    if (store.activeTool === 'shape') {
+      store.commitShape();
+      setPreviewRect(null);
+      previewStartRef.current = null;
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      return;
+    }
 
-      if (store.activeTool === 'line') {
-        store.commitLine();
-        previewStartRef.current = null;
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        return;
-      }
+    if (store.activeTool === 'line') {
+      store.commitLine();
+      previewStartRef.current = null;
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      return;
+    }
 
-      if (store.activeTool === 'pen' || store.activeTool === 'highlighter') {
-        store.commitStroke();
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      }
-    },
-    [],
-  );
+    if (store.activeTool === 'pen' || store.activeTool === 'highlighter') {
+      store.commitStroke();
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    }
+  }, []);
 
   // ── Cursor style ───────────────────────────────────────────────────
 
   const cursor = (() => {
     switch (activeTool) {
-      case 'pen': return 'crosshair';
-      case 'highlighter': return 'crosshair';
-      case 'eraser': return 'crosshair';
-      case 'text': return 'text';
-      case 'laser': return 'none';
-      case 'shape': return 'crosshair';
-      case 'line': return 'crosshair';
-      default: return 'default';
+      case 'pen':
+        return 'crosshair';
+      case 'highlighter':
+        return 'crosshair';
+      case 'eraser':
+        return 'crosshair';
+      case 'text':
+        return 'text';
+      case 'laser':
+        return 'none';
+      case 'shape':
+        return 'crosshair';
+      case 'line':
+        return 'crosshair';
+      default:
+        return 'default';
     }
   })();
 

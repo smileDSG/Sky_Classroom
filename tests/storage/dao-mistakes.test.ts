@@ -63,7 +63,10 @@ describe('MistakeBookDAO', () => {
     test('updates fields', async () => {
       const m = makeMistake();
       await dao.add(USER_ID, m);
-      await dao.update(USER_ID, m.id, { reviewed: true, errorExplanation: 'Simple arithmetic error' });
+      await dao.update(USER_ID, m.id, {
+        reviewed: true,
+        errorExplanation: 'Simple arithmetic error',
+      });
       const found = await dao.get(USER_ID, m.id);
       expect(found?.reviewed).toBe(true);
       expect(found?.errorExplanation).toBe('Simple arithmetic error');
@@ -200,18 +203,27 @@ describe('MistakeBookDAO', () => {
     });
 
     test('excludes mistakes not yet due', async () => {
-      await dao.add(USER_ID, makeMistake({
-        id: 'not-due',
-        nextReview: Date.now() + 86400000, // tomorrow
-        reviewed: false,
-      }));
+      await dao.add(
+        USER_ID,
+        makeMistake({
+          id: 'not-due',
+          nextReview: Date.now() + 86400000, // tomorrow
+          reviewed: false,
+        }),
+      );
       const due = await dao.getDueForReview(USER_ID);
       expect(due.some((d) => d.id === 'not-due')).toBe(false);
     });
 
     test('sorts by nextReview ascending', async () => {
-      await dao.add(USER_ID, makeMistake({ id: 'm2', nextReview: Date.now() - 500, reviewed: false }));
-      await dao.add(USER_ID, makeMistake({ id: 'm1', nextReview: Date.now() - 1000, reviewed: false }));
+      await dao.add(
+        USER_ID,
+        makeMistake({ id: 'm2', nextReview: Date.now() - 500, reviewed: false }),
+      );
+      await dao.add(
+        USER_ID,
+        makeMistake({ id: 'm1', nextReview: Date.now() - 1000, reviewed: false }),
+      );
       const due = await dao.getDueForReview(USER_ID);
       expect(due[0].id).toBe('m1');
       expect(due[1].id).toBe('m2');

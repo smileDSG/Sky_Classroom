@@ -17,7 +17,10 @@ export function SuccessState({ fileName, onDownload, onRegenerate }: SuccessStat
       <CelestialCanvas starCount={80} parallax={false} nebula grid={false} />
 
       {/* Nebula bloom */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+      <div
+        className="pointer-events-none absolute inset-0 flex items-center justify-center"
+        aria-hidden="true"
+      >
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1.5, opacity: 1 }}
@@ -64,9 +67,7 @@ export function SuccessState({ fileName, onDownload, onRegenerate }: SuccessStat
           <h2 className="text-lg font-extrabold tracking-tight text-[var(--celestial-starlight)]">
             课件已凝结为星图
           </h2>
-          <p className="mt-1 text-sm text-[var(--celestial-starlight)]/40">
-            {fileName}
-          </p>
+          <p className="mt-1 text-sm text-[var(--celestial-starlight)]/40">{fileName}</p>
         </div>
 
         {/* File container */}
@@ -105,9 +106,11 @@ export function SuccessState({ fileName, onDownload, onRegenerate }: SuccessStat
             whileTap={{ scale: 0.98 }}
             className="group relative flex-1 h-10 overflow-hidden rounded-xl border border-[var(--celestial-starlight)]/15 bg-transparent text-sm font-semibold text-[var(--celestial-starlight)]/60 transition-all duration-300 hover:border-[var(--celestial-starlight)]/30 hover:text-[var(--celestial-starlight)]/80"
           >
-            <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            <div
+              className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
               style={{
-                background: 'conic-gradient(from 0deg, transparent, rgba(245,230,200,0.1), transparent)',
+                background:
+                  'conic-gradient(from 0deg, transparent, rgba(245,230,200,0.1), transparent)',
               }}
             />
             <span className="relative z-10 flex items-center justify-center gap-2">

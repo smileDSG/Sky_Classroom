@@ -20,7 +20,14 @@ const FIELD_ALIASES: Record<string, string[]> = {
   content: ['content', '题目', '题干', '问题', 'question', '题目内容', '试题'],
   answer: ['answer', '答案', '解答', '正确答案', '标准答案'],
   explanation: ['explanation', '解析', '说明', '答案解析', '题目解析'],
-  knowledgePoints: ['knowledgePoints', '知识点', '考点', '知识要点', 'knowledge_points', 'knowledge points'],
+  knowledgePoints: [
+    'knowledgePoints',
+    '知识点',
+    '考点',
+    '知识要点',
+    'knowledge_points',
+    'knowledge points',
+  ],
   image: ['image', '图片', '图像', '配图'],
   options: ['options', '选项', 'choices', '备选答案', 'choice'],
   source: ['source', '来源', '出处', '试卷来源'],
@@ -68,7 +75,9 @@ export function detectFieldMapping(rawColumns: string[]): FieldMappingResult {
     // 3. Substring match (fuzzy fallback)
     for (const [canonical, aliases] of Object.entries(FIELD_ALIASES)) {
       const lowerAliases = aliases.map((a) => a.toLowerCase());
-      if (lowerAliases.some((alias) => normalizedRaw.includes(alias) || alias.includes(normalizedRaw))) {
+      if (
+        lowerAliases.some((alias) => normalizedRaw.includes(alias) || alias.includes(normalizedRaw))
+      ) {
         mapping[raw] = canonical;
         usedCanonical.add(canonical);
         matched = true;

@@ -62,9 +62,7 @@ describe('Solver Templates', () => {
   describe('subject isolation', () => {
     it('no subject overlap between science and humanities', () => {
       const scienceSubjects = new Set(scienceSolverTemplate.subjects);
-      const intersection = humanitiesSolverTemplate.subjects.filter((s) =>
-        scienceSubjects.has(s)
-      );
+      const intersection = humanitiesSolverTemplate.subjects.filter((s) => scienceSubjects.has(s));
       expect(intersection).toEqual([]);
     });
   });

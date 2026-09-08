@@ -19,8 +19,14 @@ describe('Task 1: structuredContentSchema', () => {
       title: '光合作用的概念',
       cards: [
         { title: '光反应', desc: '光反应是光合作用的第一阶段，发生在类囊体膜上，需要光能驱动。' },
-        { title: '暗反应', desc: '暗反应是光合作用的第二阶段，发生在叶绿体基质中，不需要光能直接参与。' },
-        { title: '能量转化', desc: '光合作用将光能转化为化学能，储存在有机物中，为生物提供能量来源。' },
+        {
+          title: '暗反应',
+          desc: '暗反应是光合作用的第二阶段，发生在叶绿体基质中，不需要光能直接参与。',
+        },
+        {
+          title: '能量转化',
+          desc: '光合作用将光能转化为化学能，储存在有机物中，为生物提供能量来源。',
+        },
       ],
       summary: '光合作用是植物利用光能将二氧化碳和水转化为有机物的过程。',
     };
@@ -34,12 +40,13 @@ describe('Task 1: structuredContentSchema', () => {
       title: '光合作用的概念',
       cards: [
         { title: '光反应', desc: '光反应是光合作用的第一阶段，发生在类囊体膜上，需要光能驱动。' },
-        { title: '暗反应', desc: '暗反应是光合作用的第二阶段，发生在叶绿体基质中，不需要光能直接参与。' },
+        {
+          title: '暗反应',
+          desc: '暗反应是光合作用的第二阶段，发生在叶绿体基质中，不需要光能直接参与。',
+        },
       ],
       summary: '光合作用是植物利用光能将二氧化碳和水转化为有机物的过程。',
-      formulas: [
-        { label: '总反应式', latex: '6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2' },
-      ],
+      formulas: [{ label: '总反应式', latex: '6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2' }],
     };
     const result = structuredContentSchema.safeParse(concept);
     expect(result.success).toBe(true);
@@ -50,8 +57,16 @@ describe('Task 1: structuredContentSchema', () => {
       type: 'case',
       title: '光合作用案例分析',
       scenarios: [
-        { problem: '为什么植物在光照不足时会出现生长缓慢的现象？请从光合作用的角度进行分析。', solution: '光照不足导致光反应减弱，ATP和NADPH生成减少，进而影响暗反应中碳的固定，最终导致有机物合成减少。' },
-        { problem: '在实际农业生产中，如何提高大棚作物的产量？请提出具体可行的措施。', solution: '可以通过增加光照强度、延长光照时间、提高二氧化碳浓度、合理施肥等方式来促进光合作用，从而提高作物产量。' },
+        {
+          problem: '为什么植物在光照不足时会出现生长缓慢的现象？请从光合作用的角度进行分析。',
+          solution:
+            '光照不足导致光反应减弱，ATP和NADPH生成减少，进而影响暗反应中碳的固定，最终导致有机物合成减少。',
+        },
+        {
+          problem: '在实际农业生产中，如何提高大棚作物的产量？请提出具体可行的措施。',
+          solution:
+            '可以通过增加光照强度、延长光照时间、提高二氧化碳浓度、合理施肥等方式来促进光合作用，从而提高作物产量。',
+        },
       ],
       highlight: '光照是光合作用的关键因素',
     };
@@ -63,8 +78,24 @@ describe('Task 1: structuredContentSchema', () => {
     const compare: StructuredContent = {
       type: 'compare',
       title: '光反应与暗反应对比',
-      left: { title: '光反应', items: ['必须在有光照条件下才能进行反应', '在叶绿体的类囊体膜上进行', '能够产生ATP和NADPH供暗反应使用', '分解水分子并释放氧气到大气中'] },
-      right: { title: '暗反应', items: ['不需要光照直接参与反应过程', '在叶绿体基质中进行酶促反应', '消耗光反应产生的ATP和NADPH', '固定二氧化碳并生成有机物'] },
+      left: {
+        title: '光反应',
+        items: [
+          '必须在有光照条件下才能进行反应',
+          '在叶绿体的类囊体膜上进行',
+          '能够产生ATP和NADPH供暗反应使用',
+          '分解水分子并释放氧气到大气中',
+        ],
+      },
+      right: {
+        title: '暗反应',
+        items: [
+          '不需要光照直接参与反应过程',
+          '在叶绿体基质中进行酶促反应',
+          '消耗光反应产生的ATP和NADPH',
+          '固定二氧化碳并生成有机物',
+        ],
+      },
       conclusion: '光反应和暗反应相互配合，共同完成光合作用，缺一不可。',
     };
     const result = structuredContentSchema.safeParse(compare);
@@ -76,9 +107,21 @@ describe('Task 1: structuredContentSchema', () => {
       type: 'process',
       title: '光合作用过程',
       steps: [
-        { num: '1', title: '光吸收', desc: '叶绿素分子吸收光能后，电子被激发到高能级状态，这是光反应的起始步骤。' },
-        { num: '2', title: '电子传递', desc: '激发态电子通过类囊体膜上的电子传递链传递，逐步释放能量用于合成ATP。' },
-        { num: '3', title: '碳固定', desc: '二氧化碳与RuBP结合，经过卡尔文循环的一系列酶促反应生成有机物。' },
+        {
+          num: '1',
+          title: '光吸收',
+          desc: '叶绿素分子吸收光能后，电子被激发到高能级状态，这是光反应的起始步骤。',
+        },
+        {
+          num: '2',
+          title: '电子传递',
+          desc: '激发态电子通过类囊体膜上的电子传递链传递，逐步释放能量用于合成ATP。',
+        },
+        {
+          num: '3',
+          title: '碳固定',
+          desc: '二氧化碳与RuBP结合，经过卡尔文循环的一系列酶促反应生成有机物。',
+        },
       ],
     };
     const result = structuredContentSchema.safeParse(process);
@@ -142,7 +185,12 @@ describe('Task 1: structuredContentSchema', () => {
     const concept = {
       type: 'concept',
       title: 'Test',
-      cards: [{ title: 'Only one', desc: 'This is the only card with enough description text to pass validation.' }],
+      cards: [
+        {
+          title: 'Only one',
+          desc: 'This is the only card with enough description text to pass validation.',
+        },
+      ],
       summary: 'Summary text here.',
     };
     const result = structuredContentSchema.safeParse(concept);
@@ -288,16 +336,27 @@ describe('Task 2: inferContentTypeFromOutline', () => {
 
 describe('Task 3: generateStructuredContent', () => {
   it('calls aiCallFn with correct prompt structure', async () => {
-    const mockAICall = vi.fn<AICallFn>().mockResolvedValue(JSON.stringify({
-      type: 'concept',
-      title: '光合作用',
-      cards: [
-        { title: '定义', desc: '光合作用是绿色植物利用光能将二氧化碳和水转化为有机物并释放氧气的生化过程。' },
-        { title: '场所', desc: '光合作用主要在叶绿体中进行，叶绿体含有叶绿素等光合色素，能够捕获光能。' },
-        { title: '意义', desc: '光合作用是地球上最重要的化学反应之一，为几乎所有生物提供能量和氧气来源。' },
-      ],
-      summary: '光合作用是植物利用光能合成有机物的过程，对生命系统至关重要。',
-    }));
+    const mockAICall = vi.fn<AICallFn>().mockResolvedValue(
+      JSON.stringify({
+        type: 'concept',
+        title: '光合作用',
+        cards: [
+          {
+            title: '定义',
+            desc: '光合作用是绿色植物利用光能将二氧化碳和水转化为有机物并释放氧气的生化过程。',
+          },
+          {
+            title: '场所',
+            desc: '光合作用主要在叶绿体中进行，叶绿体含有叶绿素等光合色素，能够捕获光能。',
+          },
+          {
+            title: '意义',
+            desc: '光合作用是地球上最重要的化学反应之一，为几乎所有生物提供能量和氧气来源。',
+          },
+        ],
+        summary: '光合作用是植物利用光能合成有机物的过程，对生命系统至关重要。',
+      }),
+    );
 
     const outline: SceneOutline = {
       id: '1',
@@ -368,11 +427,13 @@ describe('Task 3: generateStructuredContent', () => {
   });
 
   it('returns error when AI returns JSON that fails schema validation', async () => {
-    const mockAICall = vi.fn<AICallFn>().mockResolvedValue(JSON.stringify({
-      type: 'concept',
-      title: 'Test',
-      // missing required cards and summary
-    }));
+    const mockAICall = vi.fn<AICallFn>().mockResolvedValue(
+      JSON.stringify({
+        type: 'concept',
+        title: 'Test',
+        // missing required cards and summary
+      }),
+    );
 
     const outline: SceneOutline = {
       id: '1',
@@ -425,12 +486,15 @@ describe('Task 3: generateStructuredContent', () => {
   });
 
   it('passes inferred content type to prompt', async () => {
-    const mockAICall = vi.fn<AICallFn>().mockResolvedValue(JSON.stringify({
-      type: 'formula',
-      title: '质能方程',
-      mainFormula: 'E = mc^2',
-      derivation: '爱因斯坦在狭义相对论中提出，质量和能量可以相互转化。当物体释放能量时，其质量会相应减少。',
-    }));
+    const mockAICall = vi.fn<AICallFn>().mockResolvedValue(
+      JSON.stringify({
+        type: 'formula',
+        title: '质能方程',
+        mainFormula: 'E = mc^2',
+        derivation:
+          '爱因斯坦在狭义相对论中提出，质量和能量可以相互转化。当物体释放能量时，其质量会相应减少。',
+      }),
+    );
 
     const outline: SceneOutline = {
       id: '1',
@@ -452,13 +516,21 @@ describe('Task 3: generateStructuredContent', () => {
   });
 
   it('handles compare content generation', async () => {
-    const mockAICall = vi.fn<AICallFn>().mockResolvedValue(JSON.stringify({
-      type: 'compare',
-      title: '对比分析',
-      left: { title: 'A方案', items: ['实施成本相对较低容易接受', '技术成熟稳定风险较小', '适用范围广泛兼容性好'] },
-      right: { title: 'B方案', items: ['长期效益显著回报率高', '创新程度高技术领先行业', '可持续发展性强环保节能'] },
-      conclusion: '两种方案各有优势和不足，需根据实际需求和预算进行选择。',
-    }));
+    const mockAICall = vi.fn<AICallFn>().mockResolvedValue(
+      JSON.stringify({
+        type: 'compare',
+        title: '对比分析',
+        left: {
+          title: 'A方案',
+          items: ['实施成本相对较低容易接受', '技术成熟稳定风险较小', '适用范围广泛兼容性好'],
+        },
+        right: {
+          title: 'B方案',
+          items: ['长期效益显著回报率高', '创新程度高技术领先行业', '可持续发展性强环保节能'],
+        },
+        conclusion: '两种方案各有优势和不足，需根据实际需求和预算进行选择。',
+      }),
+    );
 
     const outline: SceneOutline = {
       id: '1',
@@ -480,13 +552,18 @@ describe('Task 3: generateStructuredContent', () => {
   });
 
   it('handles table content generation', async () => {
-    const mockAICall = vi.fn<AICallFn>().mockResolvedValue(JSON.stringify({
-      type: 'table',
-      title: '数据表格',
-      headers: ['项目', '数值A', '数值B'],
-      rows: [['第一组数据', '数值内容b', '数值内容c'], ['第二组数据', '数值内容e', '数值内容f']],
-      summary: '表格展示了各组数据的对比情况，可以清晰看出差异。',
-    }));
+    const mockAICall = vi.fn<AICallFn>().mockResolvedValue(
+      JSON.stringify({
+        type: 'table',
+        title: '数据表格',
+        headers: ['项目', '数值A', '数值B'],
+        rows: [
+          ['第一组数据', '数值内容b', '数值内容c'],
+          ['第二组数据', '数值内容e', '数值内容f'],
+        ],
+        summary: '表格展示了各组数据的对比情况，可以清晰看出差异。',
+      }),
+    );
 
     const outline: SceneOutline = {
       id: '1',

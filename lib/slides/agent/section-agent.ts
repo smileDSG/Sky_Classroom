@@ -10,7 +10,15 @@ import type { LanguageModel } from 'ai';
 import type { DesignDNA } from './design-dna';
 import type { SectionPlan } from './planning-agent';
 import { z } from 'zod';
-import { SCHEMA_DESCRIPTIONS, CONTENT_SCHEMAS, autoFixContent, convertInlineLatexToUnicode, cleanJsonText, unicodeMathToLatex, extractFormulasFromText } from './content-schemas';
+import {
+  SCHEMA_DESCRIPTIONS,
+  CONTENT_SCHEMAS,
+  autoFixContent,
+  convertInlineLatexToUnicode,
+  cleanJsonText,
+  unicodeMathToLatex,
+  extractFormulasFromText,
+} from './content-schemas';
 
 const log = createLogger('SectionAgent');
 
@@ -131,16 +139,23 @@ scenarios[0].solution: "选择这两个典故并非偶然。庄生梦蝶出自�
 { "sectionId": number, "pages": [{ "pageNum": number, "pageType": "concept", "content": { ... } }] }`;
 }
 
-export function buildUserPrompt(section: SectionPlan, topic: string, nextSectionTitle?: string, educationLevel?: string): string {
-  const pagesDesc = section.pages.map((p) => {
-    const concepts = p.contentOutline.keyConcepts?.length
-      ? `\n    - keyConcepts: ${p.contentOutline.keyConcepts.join(' / ')}`
-      : '';
-    const notes = p.contentOutline.notes
-      ? `\n    - notes: [创作指引，仅设计师可见，禁止混入正文] ${p.contentOutline.notes}`
-      : '';
-    return `- Page ${p.pageNum} [${p.type}]: "${p.title}"\n    - focus: ${p.contentOutline.focus}${concepts}${notes}`;
-  }).join('\n\n');
+export function buildUserPrompt(
+  section: SectionPlan,
+  topic: string,
+  nextSectionTitle?: string,
+  educationLevel?: string,
+): string {
+  const pagesDesc = section.pages
+    .map((p) => {
+      const concepts = p.contentOutline.keyConcepts?.length
+        ? `\n    - keyConcepts: ${p.contentOutline.keyConcepts.join(' / ')}`
+        : '';
+      const notes = p.contentOutline.notes
+        ? `\n    - notes: [创作指引，仅设计师可见，禁止混入正文] ${p.contentOutline.notes}`
+        : '';
+      return `- Page ${p.pageNum} [${p.type}]: "${p.title}"\n    - focus: ${p.contentOutline.focus}${concepts}${notes}`;
+    })
+    .join('\n\n');
 
   const nextChapterHint = nextSectionTitle
     ? `\n## 下一章信息\nsummary 页面的 preview 字段必须基于下一章实际标题来写："${nextSectionTitle}"。严禁自行推测不存在的章节主题。`
@@ -250,43 +265,81 @@ export function postProcessContent(
   }
 
   const contentStr = JSON.stringify(content);
-  const hasFormulaKeyword = /反应式|方程式|公式|化学式|总反应|电极反应|电势|能斯特|半反应|氧化还原|浓度商|吉布斯|自由能|能量传递|电荷分离|量子效率|荧光量子|电子传递|光合磷酸化|光抑制|光氧化|光系统/.test(contentStr);
+  const hasFormulaKeyword =
+    /反应式|方程式|公式|化学式|总反应|电极反应|电势|能斯特|半反应|氧化还原|浓度商|吉布斯|自由能|能量传递|电荷分离|量子效率|荧光量子|电子传递|光合磷酸化|光抑制|光氧化|光系统/.test(
+      contentStr,
+    );
   if (hasFormulaKeyword) {
-    const hasFormulas = Array.isArray(content.formulas) && (content.formulas as Array<unknown>).length > 0;
-    const hasMainFormula = typeof (content as { mainFormula?: string }).mainFormula === 'string' && (content as { mainFormula?: string }).mainFormula!.length > 0;
+    const hasFormulas =
+      Array.isArray(content.formulas) && (content.formulas as Array<unknown>).length > 0;
+    const hasMainFormula =
+      typeof (content as { mainFormula?: string }).mainFormula === 'string' &&
+      (content as { mainFormula?: string }).mainFormula!.length > 0;
 
     // ── 增强型公式提取：扫描所有文本字段 ──
     const formulas: Array<{ label: string; latex: string }> = [];
 
     // Helper: 从任意文本中提取公式，如果只有标签则尝试构建示意公式
-    function extractOrBuildFormula(text: string, label: string): { label: string; latex: string } | null {
+    function extractOrBuildFormula(
+      text: string,
+      label: string,
+    ): { label: string; latex: string } | null {
       // 1. 尝试提取已有公式
       const extracted = extractFormulasFromText(text);
       if (extracted.length > 0) {
         return { label, latex: extracted[0] };
       }
       // 2. 从文本中提取化学符号，构建示意公式
-      const chemSymbols = [...text.matchAll(/(?:CO_2|CO₂|H_2O|H₂O|O_2|O₂|N_2|N₂|CH_4|CH₄|NH_3|NH₃|C_6H_{12}O_6|C₆H₁₂O₆|ATP|ADP|NADPH|NADP\+|NADP⁺|NADH|FADH2|葡萄糖|RuBP|3-PGA|G3P|PEP|Pi|P_i|H\+|H⁺|e\-|e⁻|H_2|H₂|C_5|C_3|C_4|C_6|Fe|Ca|Mg|SiO₂|Al₂O₃)/gi)].map(m => m[0]);
+      const chemSymbols = [
+        ...text.matchAll(
+          /(?:CO_2|CO₂|H_2O|H₂O|O_2|O₂|N_2|N₂|CH_4|CH₄|NH_3|NH₃|C_6H_{12}O_6|C₆H₁₂O₆|ATP|ADP|NADPH|NADP\+|NADP⁺|NADH|FADH2|葡萄糖|RuBP|3-PGA|G3P|PEP|Pi|P_i|H\+|H⁺|e\-|e⁻|H_2|H₂|C_5|C_3|C_4|C_6|Fe|Ca|Mg|SiO₂|Al₂O₃)/gi,
+        ),
+      ].map((m) => m[0]);
       const uniqueSymbols = [...new Set(chemSymbols)].slice(0, 6);
       if (uniqueSymbols.length >= 2) {
-        const latexParts = uniqueSymbols.map(s =>
-          s.replace(/CO₂/gi, 'CO_2').replace(/H₂O/gi, 'H_2O').replace(/O₂/gi, 'O_2')
-           .replace(/N₂/gi, 'N_2').replace(/CH₄/gi, 'CH_4').replace(/NH₃/gi, 'NH_3')
-           .replace(/C₆H₁₂O₆/gi, 'C_6H_{12}O_6').replace(/葡萄糖/gi, 'C_6H_{12}O_6')
-           .replace(/NADP⁺/gi, 'NADP^+').replace(/NADP\+/gi, 'NADP^+')
-           .replace(/FADH2/gi, 'FADH_2').replace(/P_i/gi, 'P_i').replace(/Pi/gi, 'P_i')
-           .replace(/H⁺/gi, 'H^+').replace(/H\+/gi, 'H^+').replace(/e⁻/gi, 'e^-').replace(/e\-/gi, 'e^-')
-           .replace(/H₂/gi, 'H_2').replace(/C_5/gi, 'C_5').replace(/C_3/gi, 'C_3').replace(/C_4/gi, 'C_4').replace(/C_6/gi, 'C_6')
-           .replace(/SiO₂/gi, 'SiO_2').replace(/Al₂O₃/gi, 'Al_2O_3')
+        const latexParts = uniqueSymbols.map((s) =>
+          s
+            .replace(/CO₂/gi, 'CO_2')
+            .replace(/H₂O/gi, 'H_2O')
+            .replace(/O₂/gi, 'O_2')
+            .replace(/N₂/gi, 'N_2')
+            .replace(/CH₄/gi, 'CH_4')
+            .replace(/NH₃/gi, 'NH_3')
+            .replace(/C₆H₁₂O₆/gi, 'C_6H_{12}O_6')
+            .replace(/葡萄糖/gi, 'C_6H_{12}O_6')
+            .replace(/NADP⁺/gi, 'NADP^+')
+            .replace(/NADP\+/gi, 'NADP^+')
+            .replace(/FADH2/gi, 'FADH_2')
+            .replace(/P_i/gi, 'P_i')
+            .replace(/Pi/gi, 'P_i')
+            .replace(/H⁺/gi, 'H^+')
+            .replace(/H\+/gi, 'H^+')
+            .replace(/e⁻/gi, 'e^-')
+            .replace(/e\-/gi, 'e^-')
+            .replace(/H₂/gi, 'H_2')
+            .replace(/C_5/gi, 'C_5')
+            .replace(/C_3/gi, 'C_3')
+            .replace(/C_4/gi, 'C_4')
+            .replace(/C_6/gi, 'C_6')
+            .replace(/SiO₂/gi, 'SiO_2')
+            .replace(/Al₂O₃/gi, 'Al_2O_3'),
         );
         return { label, latex: latexParts.join(' + ') + ' \\rightarrow \\text{产物}' };
       }
       // 3. 如果只有一个化学符号，也尝试构建一个简单公式
       if (uniqueSymbols.length === 1) {
         const s = uniqueSymbols[0];
-        const latex = s.replace(/CO₂/gi, 'CO_2').replace(/H₂O/gi, 'H_2O').replace(/O₂/gi, 'O_2')
-           .replace(/C₆H₁₂O₆/gi, 'C_6H_{12}O_6').replace(/NADP⁺/gi, 'NADP^+').replace(/NADP\+/gi, 'NADP^+')
-           .replace(/H⁺/gi, 'H^+').replace(/e⁻/gi, 'e^-').replace(/SiO₂/gi, 'SiO_2').replace(/Al₂O₃/gi, 'Al_2O_3');
+        const latex = s
+          .replace(/CO₂/gi, 'CO_2')
+          .replace(/H₂O/gi, 'H_2O')
+          .replace(/O₂/gi, 'O_2')
+          .replace(/C₆H₁₂O₆/gi, 'C_6H_{12}O_6')
+          .replace(/NADP⁺/gi, 'NADP^+')
+          .replace(/NADP\+/gi, 'NADP^+')
+          .replace(/H⁺/gi, 'H^+')
+          .replace(/e⁻/gi, 'e^-')
+          .replace(/SiO₂/gi, 'SiO_2')
+          .replace(/Al₂O₃/gi, 'Al_2O_3');
         return { label, latex: latex + ' \\rightarrow \\text{产物}' };
       }
       // 4. 兜底：如果标签包含已知反应类型，构建通用示意公式
@@ -309,14 +362,25 @@ export function postProcessContent(
 
     if (pageType === 'concept' && Array.isArray(content.cards)) {
       for (const card of content.cards as Array<{ title: string; desc: string }>) {
-        const titleHasFormulaKw = /反应式|方程式|公式|化学式|总反应|电极反应|电势|能斯特/.test(card.title);
+        const titleHasFormulaKw = /反应式|方程式|公式|化学式|总反应|电极反应|电势|能斯特/.test(
+          card.title,
+        );
         const descHasFormulaKw = /反应式|方程式|公式|化学式|总反应/.test(card.desc || '');
-        const descHasMath = /[=→←⇌↔][^。，]{3,60}/.test(card.desc || '') || /[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻₀₁₂₃₄₅₆₇₈₉][A-Za-z]|[A-Za-z][⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻₀₁₂₃₄₅₆₇₈₉]/.test(card.desc || '');
+        const descHasMath =
+          /[=→←⇌↔][^。，]{3,60}/.test(card.desc || '') ||
+          /[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻₀₁₂₃₄₅₆₇₈₉][A-Za-z]|[A-Za-z][⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻₀₁₂₃₄₅₆₇₈₉]/.test(card.desc || '');
 
         if (titleHasFormulaKw || descHasFormulaKw) {
-          const built = extractOrBuildFormula((card.desc || '') + ' ' + (card.title || ''), card.title || '相关方程式');
+          const built = extractOrBuildFormula(
+            (card.desc || '') + ' ' + (card.title || ''),
+            card.title || '相关方程式',
+          );
           if (built) formulas.push(built);
-          else formulas.push({ label: card.title || '相关方程式', latex: `\\text{${card.title || '方程式'}（详见教材）}` });
+          else
+            formulas.push({
+              label: card.title || '相关方程式',
+              latex: `\\text{${card.title || '方程式'}（详见教材）}`,
+            });
         } else if (descHasMath) {
           const extracted = extractFormulasFromText(card.desc || '');
           for (const latex of extracted.slice(0, 1)) {
@@ -337,16 +401,47 @@ export function postProcessContent(
           if (built) {
             formulas.push(built);
           } else {
-            const allChem = [...context.matchAll(/(?:CO₂|H₂O|O₂|ATP|ADP|NADPH|NADP⁺|Fe|Ca|Mg|SiO₂|Al₂O₃|C₆H₁₂O₆|H⁺|e⁻|C_5|C_3|C_4)/gi)].map(m => m[0]);
+            const allChem = [
+              ...context.matchAll(
+                /(?:CO₂|H₂O|O₂|ATP|ADP|NADPH|NADP⁺|Fe|Ca|Mg|SiO₂|Al₂O₃|C₆H₁₂O₆|H⁺|e⁻|C_5|C_3|C_4)/gi,
+              ),
+            ].map((m) => m[0]);
             const uniqChem = [...new Set(allChem)].slice(0, 4);
             if (uniqChem.length >= 2) {
-              const latex = uniqChem.map(s => s.replace(/CO₂/gi, 'CO_2').replace(/H₂O/gi, 'H_2O').replace(/O₂/gi, 'O_2').replace(/SiO₂/gi, 'SiO_2').replace(/Al₂O₃/gi, 'Al_2O_3').replace(/C₆H₁₂O₆/gi, 'C_6H_{12}O_6').replace(/NADP⁺/gi, 'NADP^+').replace(/H⁺/gi, 'H^+').replace(/e⁻/gi, 'e^-').replace(/Fe/gi, 'Fe')).join(' + ') + ' \\rightarrow \\text{产物}';
+              const latex =
+                uniqChem
+                  .map((s) =>
+                    s
+                      .replace(/CO₂/gi, 'CO_2')
+                      .replace(/H₂O/gi, 'H_2O')
+                      .replace(/O₂/gi, 'O_2')
+                      .replace(/SiO₂/gi, 'SiO_2')
+                      .replace(/Al₂O₃/gi, 'Al_2O_3')
+                      .replace(/C₆H₁₂O₆/gi, 'C_6H_{12}O_6')
+                      .replace(/NADP⁺/gi, 'NADP^+')
+                      .replace(/H⁺/gi, 'H^+')
+                      .replace(/e⁻/gi, 'e^-')
+                      .replace(/Fe/gi, 'Fe'),
+                  )
+                  .join(' + ') + ' \\rightarrow \\text{产物}';
               formulas.push({ label: bullet.replace(/[：:]$/, '') || '相关公式', latex });
             } else if (uniqChem.length === 1) {
-              const latex = uniqChem[0].replace(/CO₂/gi, 'CO_2').replace(/H₂O/gi, 'H_2O').replace(/O₂/gi, 'O_2').replace(/NADP⁺/gi, 'NADP^+').replace(/H⁺/gi, 'H^+').replace(/e⁻/gi, 'e^-');
-              formulas.push({ label: bullet.replace(/[：:]$/, '') || '相关公式', latex: latex + ' \\rightarrow \\text{产物}' });
+              const latex = uniqChem[0]
+                .replace(/CO₂/gi, 'CO_2')
+                .replace(/H₂O/gi, 'H_2O')
+                .replace(/O₂/gi, 'O_2')
+                .replace(/NADP⁺/gi, 'NADP^+')
+                .replace(/H⁺/gi, 'H^+')
+                .replace(/e⁻/gi, 'e^-');
+              formulas.push({
+                label: bullet.replace(/[：:]$/, '') || '相关公式',
+                latex: latex + ' \\rightarrow \\text{产物}',
+              });
             } else {
-              formulas.push({ label: bullet.replace(/[：:]$/, '') || '相关公式', latex: `\\text{${bullet}（详见教材）}` });
+              formulas.push({
+                label: bullet.replace(/[：:]$/, '') || '相关公式',
+                latex: `\\text{${bullet}（详见教材）}`,
+              });
             }
           }
         } else {
@@ -381,16 +476,44 @@ export function postProcessContent(
             formulas.push(built);
           } else {
             // 从全文提取常见化学式作为兜底
-            const allChem = [...context.matchAll(/(?:CO₂|H₂O|O₂|ATP|ADP|NADPH|NADP⁺|RuBP|3-PGA|G3P|PEP|C₆H₁₂O₆|H⁺|e⁻|C_5|C_3|C_4)/gi)].map(m => m[0]);
+            const allChem = [
+              ...context.matchAll(
+                /(?:CO₂|H₂O|O₂|ATP|ADP|NADPH|NADP⁺|RuBP|3-PGA|G3P|PEP|C₆H₁₂O₆|H⁺|e⁻|C_5|C_3|C_4)/gi,
+              ),
+            ].map((m) => m[0]);
             const uniqChem = [...new Set(allChem)].slice(0, 4);
             if (uniqChem.length >= 2) {
-              const latex = uniqChem.map(s => s.replace(/CO₂/gi, 'CO_2').replace(/H₂O/gi, 'H_2O').replace(/O₂/gi, 'O_2').replace(/C₆H₁₂O₆/gi, 'C_6H_{12}O_6').replace(/NADP⁺/gi, 'NADP^+').replace(/H⁺/gi, 'H^+').replace(/e⁻/gi, 'e^-')).join(' + ') + ' \\rightarrow \\text{产物}';
+              const latex =
+                uniqChem
+                  .map((s) =>
+                    s
+                      .replace(/CO₂/gi, 'CO_2')
+                      .replace(/H₂O/gi, 'H_2O')
+                      .replace(/O₂/gi, 'O_2')
+                      .replace(/C₆H₁₂O₆/gi, 'C_6H_{12}O_6')
+                      .replace(/NADP⁺/gi, 'NADP^+')
+                      .replace(/H⁺/gi, 'H^+')
+                      .replace(/e⁻/gi, 'e^-'),
+                  )
+                  .join(' + ') + ' \\rightarrow \\text{产物}';
               formulas.push({ label: point.replace(/[：:]$/, '') || '核心公式', latex });
             } else if (uniqChem.length === 1) {
-              const latex = uniqChem[0].replace(/CO₂/gi, 'CO_2').replace(/H₂O/gi, 'H_2O').replace(/O₂/gi, 'O_2').replace(/NADP⁺/gi, 'NADP^+').replace(/H⁺/gi, 'H^+').replace(/e⁻/gi, 'e^-');
-              formulas.push({ label: point.replace(/[：:]$/, '') || '核心公式', latex: latex + ' \\rightarrow \\text{产物}' });
+              const latex = uniqChem[0]
+                .replace(/CO₂/gi, 'CO_2')
+                .replace(/H₂O/gi, 'H_2O')
+                .replace(/O₂/gi, 'O_2')
+                .replace(/NADP⁺/gi, 'NADP^+')
+                .replace(/H⁺/gi, 'H^+')
+                .replace(/e⁻/gi, 'e^-');
+              formulas.push({
+                label: point.replace(/[：:]$/, '') || '核心公式',
+                latex: latex + ' \\rightarrow \\text{产物}',
+              });
             } else {
-              formulas.push({ label: point.replace(/[：:]$/, '') || '核心公式', latex: `\\text{${point}（详见教材）}` });
+              formulas.push({
+                label: point.replace(/[：:]$/, '') || '核心公式',
+                latex: `\\text{${point}（详见教材）}`,
+              });
             }
           }
         } else {
@@ -403,10 +526,18 @@ export function postProcessContent(
     }
 
     if (pageType === 'formula') {
-      if (!content.mainFormula || typeof content.mainFormula !== 'string' || (content.mainFormula as string).length === 0) {
+      if (
+        !content.mainFormula ||
+        typeof content.mainFormula !== 'string' ||
+        (content.mainFormula as string).length === 0
+      ) {
         content.mainFormula = '\\text{公式内容详见教材}';
       }
-      if (!content.derivation || typeof content.derivation !== 'string' || (content.derivation as string).length === 0) {
+      if (
+        !content.derivation ||
+        typeof content.derivation !== 'string' ||
+        (content.derivation as string).length === 0
+      ) {
         content.derivation = '推导过程详见教材。';
       }
     }
@@ -420,9 +551,9 @@ export function postProcessContent(
       }
     }
 
-    const uniqueFormulas = formulas.filter((f, i, arr) =>
-      arr.findIndex((x) => x.latex === f.latex) === i
-    ).slice(0, 3);
+    const uniqueFormulas = formulas
+      .filter((f, i, arr) => arr.findIndex((x) => x.latex === f.latex) === i)
+      .slice(0, 3);
 
     if (uniqueFormulas.length > 0) {
       content.formulas = uniqueFormulas;
@@ -430,7 +561,8 @@ export function postProcessContent(
 
     // D. Title 级公式强制兜底：若 title 含"方程式/反应式"但无任何公式，从全文提取或注入占位
     const titleHasFormulaKw = /方程式|反应式|总反应/.test(content.title as string);
-    const nowHasFormulas = Array.isArray(content.formulas) && (content.formulas as Array<unknown>).length > 0;
+    const nowHasFormulas =
+      Array.isArray(content.formulas) && (content.formulas as Array<unknown>).length > 0;
     if (titleHasFormulaKw && !nowHasFormulas && !hasMainFormula) {
       let allText = String(content.title || '') + ' ';
       if (pageType === 'concept' && Array.isArray(content.cards)) {
@@ -447,7 +579,12 @@ export function postProcessContent(
       if (built) {
         content.formulas = [built];
       } else {
-        content.formulas = [{ label: String(content.title || '相关方程式'), latex: `\\text{${String(content.title || '方程式')}（详见教材）}` }];
+        content.formulas = [
+          {
+            label: String(content.title || '相关方程式'),
+            latex: `\\text{${String(content.title || '方程式')}（详见教材）}`,
+          },
+        ];
       }
     }
   }
@@ -466,8 +603,10 @@ export function postProcessContent(
           const pageText = [
             content.title,
             content.summary,
-            ...(content.keyPoints as string[] || []),
-          ].filter(Boolean).join(' ');
+            ...((content.keyPoints as string[]) || []),
+          ]
+            .filter(Boolean)
+            .join(' ');
           const pageExtracted = extractFormulasFromText(pageText);
           if (pageExtracted.length > 0) return { ...f, latex: pageExtracted[0] };
           // 兜底：用 label 生成文本公式
@@ -497,7 +636,10 @@ export function postProcessContent(
     const derivation = String(content.derivation || '');
     const application = String(content.application || '');
     // application 若与 derivation 高度重复则清空
-    if (application.length > 20 && derivation.includes(application.slice(0, Math.min(application.length, 40)))) {
+    if (
+      application.length > 20 &&
+      derivation.includes(application.slice(0, Math.min(application.length, 40)))
+    ) {
       content.application = '';
     }
     // derivation 内部段落去重（LLM 常把同一段话写两遍）
@@ -530,7 +672,12 @@ export function postProcessContent(
         result = result.replace(pattern, '').replace(/^[：，。\s]+/, '');
       }
     }
-    if (result.length < 10 || /需完整呈现|应分步展示|逻辑清晰|强调物理意义|面向学生|禁止混入|仅设计师|创作指引|设计说明/.test(result)) {
+    if (
+      result.length < 10 ||
+      /需完整呈现|应分步展示|逻辑清晰|强调物理意义|面向学生|禁止混入|仅设计师|创作指引|设计说明/.test(
+        result,
+      )
+    ) {
       result = fallback;
     }
     return result || fallback;
@@ -539,7 +686,10 @@ export function postProcessContent(
   if (pageType === 'concept') {
     const cards = (content.cards as Array<{ title: string; desc: string }>) || [];
     for (const card of cards) {
-      card.desc = sanitizeDirectiveText(card.desc, `${card.title}是本节的重要知识点，涉及核心概念的定义、原理机制及其在实际情境中的应用。理解这一知识点有助于建立完整的知识框架，为后续学习奠定基础。`);
+      card.desc = sanitizeDirectiveText(
+        card.desc,
+        `${card.title}是本节的重要知识点，涉及核心概念的定义、原理机制及其在实际情境中的应用。理解这一知识点有助于建立完整的知识框架，为后续学习奠定基础。`,
+      );
     }
     content.cards = cards;
   }
@@ -547,21 +697,30 @@ export function postProcessContent(
   if (pageType === 'case') {
     const scenarios = (content.scenarios as Array<{ problem: string; solution: string }>) || [];
     for (const s of scenarios) {
-      s.problem = sanitizeDirectiveText(s.problem, '请结合本节所学知识，分析以下问题：某情境中出现了特定现象，需要运用相关原理进行解释和计算。');
-      s.solution = sanitizeDirectiveText(s.solution, '针对上述问题，首先明确已知条件和待求量，然后选择适当的公式或方法进行分析，最后给出完整的解答过程和结论。');
+      s.problem = sanitizeDirectiveText(
+        s.problem,
+        '请结合本节所学知识，分析以下问题：某情境中出现了特定现象，需要运用相关原理进行解释和计算。',
+      );
+      s.solution = sanitizeDirectiveText(
+        s.solution,
+        '针对上述问题，首先明确已知条件和待求量，然后选择适当的公式或方法进行分析，最后给出完整的解答过程和结论。',
+      );
     }
     content.scenarios = scenarios;
   }
 
   if (pageType === 'summary' && Array.isArray(content.keyPoints)) {
     content.keyPoints = (content.keyPoints as string[]).map((p) =>
-      sanitizeDirectiveText(p, '本节核心内容要点，涵盖关键概念、重要原理及其应用场景，需要重点掌握。')
+      sanitizeDirectiveText(
+        p,
+        '本节核心内容要点，涵盖关键概念、重要原理及其应用场景，需要重点掌握。',
+      ),
     );
   }
 
   // D. 专有名词拼写纠正（兜底修复）
   const TECH_SPELLING_FIXES: Record<string, string> = {
-    'Respons': 'Response',
+    Respons: 'Response',
     'Ollam ': 'Ollama ',
     'Ollam,': 'Ollama,',
     'Ollam.': 'Ollama.',
@@ -613,18 +772,24 @@ export function postProcessContent(
     const trimmed = text.trim();
     // 如果以明显截断标志结尾，尝试补全常见表述
     if (/[奠]$/.test(trimmed)) return trimmed + '定基础';
-    if (/[为]$/.test(trimmed) && !/成为|作为|因为|为了/.test(trimmed.slice(-4))) return trimmed + '生产级应用';
-    if (/[在]$/.test(trimmed) && !/正在|存在|处在/.test(trimmed.slice(-4))) return trimmed + '实践中';
+    if (/[为]$/.test(trimmed) && !/成为|作为|因为|为了/.test(trimmed.slice(-4)))
+      return trimmed + '生产级应用';
+    if (/[在]$/.test(trimmed) && !/正在|存在|处在/.test(trimmed.slice(-4)))
+      return trimmed + '实践中';
     if (/[和]$/.test(trimmed)) return trimmed + '优化';
-    if (/[是]$/.test(trimmed) && !/可是|但是|还是|就是/.test(trimmed.slice(-4))) return trimmed + '企业级AI开发的重要工具';
+    if (/[是]$/.test(trimmed) && !/可是|但是|还是|就是/.test(trimmed.slice(-4)))
+      return trimmed + '企业级AI开发的重要工具';
     if (/[，,]$/.test(trimmed)) return trimmed.slice(0, -1) + '。';
     return text;
   }
-  if (typeof content.subtitle === 'string') content.subtitle = fixTruncatedSentence(content.subtitle);
+  if (typeof content.subtitle === 'string')
+    content.subtitle = fixTruncatedSentence(content.subtitle);
   if (typeof content.summary === 'string') content.summary = fixTruncatedSentence(content.summary);
   if (typeof content.preview === 'string') content.preview = fixTruncatedSentence(content.preview);
-  if (typeof content.conclusion === 'string') content.conclusion = fixTruncatedSentence(content.conclusion);
-  if (typeof content.highlight === 'string') content.highlight = fixTruncatedSentence(content.highlight);
+  if (typeof content.conclusion === 'string')
+    content.conclusion = fixTruncatedSentence(content.conclusion);
+  if (typeof content.highlight === 'string')
+    content.highlight = fixTruncatedSentence(content.highlight);
 
   return content;
 }
@@ -685,7 +850,9 @@ export async function generateSectionContent(
   const system = buildSystemPrompt(topic, difficulty, designDNA, pageTypes, educationLevel);
   const user = buildUserPrompt(section, topic, nextSectionTitle, educationLevel);
 
-  log.info(`Generating content for section ${section.sectionId} (${section.pages.length} pages) [types: ${pageTypes.join(',')}]`);
+  log.info(
+    `Generating content for section ${section.sectionId} (${section.pages.length} pages) [types: ${pageTypes.join(',')}]`,
+  );
 
   // Validate function checks per-page schema correctness so callLLM retries
   // on actual content errors, not just format.
@@ -718,8 +885,11 @@ export async function generateSectionContent(
         // 内容质量校验 B：公式缺失检测
         const contentStr = JSON.stringify(content);
         if (/反应式|方程式|公式|化学式|总反应|电极反应/.test(contentStr)) {
-          const hasFormulas = Array.isArray(content.formulas) && (content.formulas as Array<unknown>).length > 0;
-          const hasMainFormula = typeof (content as { mainFormula?: string }).mainFormula === 'string' && (content as { mainFormula?: string }).mainFormula!.length > 0;
+          const hasFormulas =
+            Array.isArray(content.formulas) && (content.formulas as Array<unknown>).length > 0;
+          const hasMainFormula =
+            typeof (content as { mainFormula?: string }).mainFormula === 'string' &&
+            (content as { mainFormula?: string }).mainFormula!.length > 0;
           if (!hasFormulas && !hasMainFormula) return false;
         }
 
@@ -733,8 +903,15 @@ export async function generateSectionContent(
           if (cards?.some((c) => directivePatterns.some((p) => p.test(c.desc || '')))) return false;
         }
         if (page.pageType === 'case') {
-          const scenarios = (content as { scenarios?: Array<{ problem?: string; solution?: string }> }).scenarios;
-          if (scenarios?.some((s) => directivePatterns.some((p) => p.test(s.problem || '') || p.test(s.solution || '')))) return false;
+          const scenarios = (
+            content as { scenarios?: Array<{ problem?: string; solution?: string }> }
+          ).scenarios;
+          if (
+            scenarios?.some((s) =>
+              directivePatterns.some((p) => p.test(s.problem || '') || p.test(s.solution || '')),
+            )
+          )
+            return false;
         }
 
         // 内容质量校验 D：内容密度检测（防止空洞页面）
@@ -758,9 +935,14 @@ export async function generateSectionContent(
           if (shortPoints > 1) return false;
         }
         if (page.pageType === 'case') {
-          const scenarios = (content as { scenarios?: Array<{ problem?: string; solution?: string }> }).scenarios;
+          const scenarios = (
+            content as { scenarios?: Array<{ problem?: string; solution?: string }> }
+          ).scenarios;
           if (!scenarios || scenarios.length === 0) return false;
-          const totalLen = scenarios.reduce((sum, s) => sum + (s.problem?.length || 0) + (s.solution?.length || 0), 0);
+          const totalLen = scenarios.reduce(
+            (sum, s) => sum + (s.problem?.length || 0) + (s.solution?.length || 0),
+            0,
+          );
           if (totalLen < 80) return false;
           for (const s of scenarios) {
             if ((s.problem?.length || 0) < 30) return false;
@@ -829,7 +1011,13 @@ export async function generateSectionContent(
 
   try {
     const result = await callLLM(
-      { model: languageModel, system, prompt: user, maxOutputTokens: Math.min(8192, section.pages.length * 1800 + 600), temperature: 0.5 },
+      {
+        model: languageModel,
+        system,
+        prompt: user,
+        maxOutputTokens: Math.min(8192, section.pages.length * 1800 + 600),
+        temperature: 0.5,
+      },
       `section-agent-${section.sectionId}`,
       { retries: 2, timeoutMs: 600_000, validate: validateSectionOutput },
       { mode: 'disabled', enabled: false },
@@ -844,7 +1032,9 @@ export async function generateSectionContent(
       try {
         parsed = JSON.parse(jsonText);
         if (repairRound > 0) {
-          log.info(`Section ${section.sectionId} JSON parse succeeded after ${repairRound} repair round(s)`);
+          log.info(
+            `Section ${section.sectionId} JSON parse succeeded after ${repairRound} repair round(s)`,
+          );
         }
         break; // success
       } catch (parseErr) {
@@ -859,7 +1049,9 @@ export async function generateSectionContent(
         }
 
         const ctx = jsonText.slice(Math.max(0, pos - 40), Math.min(jsonText.length, pos + 40));
-        log.warn(`Section ${section.sectionId} JSON parse failed at pos=${pos} (round ${repairRound + 1}). Context: ...${ctx}...`);
+        log.warn(
+          `Section ${section.sectionId} JSON parse failed at pos=${pos} (round ${repairRound + 1}). Context: ...${ctx}...`,
+        );
 
         let repaired = false;
 
@@ -869,7 +1061,9 @@ export async function generateSectionContent(
           try {
             JSON.parse(candidate); // test only
             jsonText = candidate;
-            log.info(`Section ${section.sectionId} JSON repaired by escaping quote at pos=${pos - 1} (round ${repairRound + 1})`);
+            log.info(
+              `Section ${section.sectionId} JSON repaired by escaping quote at pos=${pos - 1} (round ${repairRound + 1})`,
+            );
             repaired = true;
           } catch {
             // Try backward scan for the nearest unescaped quote
@@ -877,7 +1071,9 @@ export async function generateSectionContent(
             try {
               JSON.parse(repaired2); // test only
               jsonText = repaired2;
-              log.info(`Section ${section.sectionId} JSON repaired by backward quote scan (round ${repairRound + 1})`);
+              log.info(
+                `Section ${section.sectionId} JSON repaired by backward quote scan (round ${repairRound + 1})`,
+              );
               repaired = true;
             } catch {
               /* fall through */
@@ -886,27 +1082,40 @@ export async function generateSectionContent(
         }
 
         // ── Strategy 2: wrong terminator (} vs ]) ──
-        if (!repaired && (
-          errMsg.includes("Expected ',' or ']' after array element") ||
-          errMsg.includes("Expected ',' or '}' after property value")
-        )) {
+        if (
+          !repaired &&
+          (errMsg.includes("Expected ',' or ']' after array element") ||
+            errMsg.includes("Expected ',' or '}' after property value"))
+        ) {
           if (errMsg.includes("Expected ',' or ']' after array element") && jsonText[pos] === '}') {
             const candidate = jsonText.slice(0, pos) + ']' + jsonText.slice(pos + 1);
             try {
               JSON.parse(candidate);
               jsonText = candidate;
-              log.info(`Section ${section.sectionId} JSON repaired by replacing '}' with ']' at pos=${pos} (round ${repairRound + 1})`);
+              log.info(
+                `Section ${section.sectionId} JSON repaired by replacing '}' with ']' at pos=${pos} (round ${repairRound + 1})`,
+              );
               repaired = true;
-            } catch { /* fall through */ }
+            } catch {
+              /* fall through */
+            }
           }
-          if (!repaired && errMsg.includes("Expected ',' or '}' after property value") && jsonText[pos] === ']') {
+          if (
+            !repaired &&
+            errMsg.includes("Expected ',' or '}' after property value") &&
+            jsonText[pos] === ']'
+          ) {
             const candidate = jsonText.slice(0, pos) + '}' + jsonText.slice(pos + 1);
             try {
               JSON.parse(candidate);
               jsonText = candidate;
-              log.info(`Section ${section.sectionId} JSON repaired by replacing ']' with '}' at pos=${pos} (round ${repairRound + 1})`);
+              log.info(
+                `Section ${section.sectionId} JSON repaired by replacing ']' with '}' at pos=${pos} (round ${repairRound + 1})`,
+              );
               repaired = true;
-            } catch { /* fall through */ }
+            } catch {
+              /* fall through */
+            }
           }
 
           // ── Strategy 3: missing comma between values ──
@@ -917,7 +1126,9 @@ export async function generateSectionContent(
                 try {
                   JSON.parse(candidate);
                   jsonText = candidate;
-                  log.info(`Section ${section.sectionId} JSON repaired by inserting comma at pos=${i + 1} (round ${repairRound + 1})`);
+                  log.info(
+                    `Section ${section.sectionId} JSON repaired by inserting comma at pos=${i + 1} (round ${repairRound + 1})`,
+                  );
                   repaired = true;
                   break;
                 } catch {
@@ -935,13 +1146,19 @@ export async function generateSectionContent(
           try {
             JSON.parse(candidate);
             jsonText = candidate;
-            log.info(`Section ${section.sectionId} JSON repaired by inserting comma before quote at pos=${pos} (round ${repairRound + 1})`);
+            log.info(
+              `Section ${section.sectionId} JSON repaired by inserting comma before quote at pos=${pos} (round ${repairRound + 1})`,
+            );
             repaired = true;
-          } catch { /* fall through */ }
+          } catch {
+            /* fall through */
+          }
         }
 
         if (!repaired) {
-          log.warn(`Section ${section.sectionId} no viable repair strategy for pos=${pos}, giving up after ${repairRound + 1} round(s)`);
+          log.warn(
+            `Section ${section.sectionId} no viable repair strategy for pos=${pos}, giving up after ${repairRound + 1} round(s)`,
+          );
           break; // Can't repair further
         }
         // If repaired, loop again to parse the patched text
@@ -950,8 +1167,13 @@ export async function generateSectionContent(
 
     if (parsed === undefined) {
       const finalErr = lastParseErr instanceof Error ? lastParseErr.message : String(lastParseErr);
-      log.error(`Section ${section.sectionId} JSON parse failed after all repair attempts: ${finalErr}`);
-      return { success: false, error: `Section ${section.sectionId} "${section.title}" failed: ${finalErr}` };
+      log.error(
+        `Section ${section.sectionId} JSON parse failed after all repair attempts: ${finalErr}`,
+      );
+      return {
+        success: false,
+        error: `Section ${section.sectionId} "${section.title}" failed: ${finalErr}`,
+      };
     }
     const validated = sectionOutputSchema.safeParse(parsed);
 
@@ -971,7 +1193,9 @@ export async function generateSectionContent(
     for (const page of validated.data.pages) {
       if (Array.isArray(page.content.formulas)) {
         const cleaned = (page.content.formulas as Array<{ label: string; latex: string }>)
-          .map((f) => FORMULA_PH_RE.test(f.latex) ? { ...f, latex: `\\text{${f.label || '公式'}}` } : f)
+          .map((f) =>
+            FORMULA_PH_RE.test(f.latex) ? { ...f, latex: `\\text{${f.label || '公式'}}` } : f,
+          )
           .filter((f) => !FORMULA_PH_RE.test(f.latex));
         if (cleaned.length > 0) {
           page.content.formulas = cleaned;
@@ -979,7 +1203,10 @@ export async function generateSectionContent(
           delete page.content.formulas;
         }
       }
-      if (typeof page.content.mainFormula === 'string' && FORMULA_PH_RE.test(page.content.mainFormula)) {
+      if (
+        typeof page.content.mainFormula === 'string' &&
+        FORMULA_PH_RE.test(page.content.mainFormula)
+      ) {
         page.content.mainFormula = `\\text{${String(page.content.title || '主公式')}}`;
       }
     }
@@ -990,7 +1217,9 @@ export async function generateSectionContent(
       if (page.pageType === 'chapter') {
         const actualNum = (page.content as { num?: string }).num;
         if (actualNum !== expectedNum) {
-          log.warn(`Section ${section.sectionId} Page ${page.pageNum} chapter num mismatch: "${actualNum}" → "${expectedNum}"`);
+          log.warn(
+            `Section ${section.sectionId} Page ${page.pageNum} chapter num mismatch: "${actualNum}" → "${expectedNum}"`,
+          );
           (page.content as { num: string }).num = expectedNum;
         }
       }
@@ -1005,20 +1234,33 @@ export async function generateSectionContent(
         continue;
       }
       const contentStr = JSON.stringify(page.content);
-      if (/反应式|方程式|公式|化学式|总反应|电极反应|电势|能斯特|半反应|氧化还原|浓度商|吉布斯|自由能/.test(contentStr)) {
-        const hasFormulas = Array.isArray(page.content.formulas) && (page.content.formulas as Array<unknown>).length > 0;
-        const hasMainFormula = typeof (page.content as { mainFormula?: string }).mainFormula === 'string' && (page.content as { mainFormula?: string }).mainFormula!.length > 0;
+      if (
+        /反应式|方程式|公式|化学式|总反应|电极反应|电势|能斯特|半反应|氧化还原|浓度商|吉布斯|自由能/.test(
+          contentStr,
+        )
+      ) {
+        const hasFormulas =
+          Array.isArray(page.content.formulas) &&
+          (page.content.formulas as Array<unknown>).length > 0;
+        const hasMainFormula =
+          typeof (page.content as { mainFormula?: string }).mainFormula === 'string' &&
+          (page.content as { mainFormula?: string }).mainFormula!.length > 0;
         if (!hasFormulas && !hasMainFormula) {
-          log.warn(`Section ${section.sectionId} Page ${page.pageNum} still missing formulas after postProcess, injecting placeholder`);
+          log.warn(
+            `Section ${section.sectionId} Page ${page.pageNum} still missing formulas after postProcess, injecting placeholder`,
+          );
           // Extract the most relevant text snippet as the formula placeholder
-          const fallbackFormula = (page.content as { focus?: string; notes?: string }).focus
-            || (page.content as { focus?: string; notes?: string }).notes
-            || '\\text{待补充公式}';
+          const fallbackFormula =
+            (page.content as { focus?: string; notes?: string }).focus ||
+            (page.content as { focus?: string; notes?: string }).notes ||
+            '\\text{待补充公式}';
           if (page.pageType === 'formula') {
             page.content.mainFormula = `\\text{${fallbackFormula.slice(0, 60)}}`;
             if (!page.content.derivation) page.content.derivation = '推导过程待补充。';
           } else {
-            page.content.formulas = [{ label: '相关方程式', latex: `\\text{${fallbackFormula.slice(0, 60)}}` }];
+            page.content.formulas = [
+              { label: '相关方程式', latex: `\\text{${fallbackFormula.slice(0, 60)}}` },
+            ];
           }
         }
       }
@@ -1035,13 +1277,17 @@ export async function generateSectionContent(
       }
       const contentResult = schema.safeParse(page.content);
       if (!contentResult.success) {
-        log.warn(`Section ${section.sectionId} Page ${page.pageNum} (${page.pageType}) content failed schema, auto-fixing`);
+        log.warn(
+          `Section ${section.sectionId} Page ${page.pageNum} (${page.pageType}) content failed schema, auto-fixing`,
+        );
         page.content = autoFixContent(page.pageType, page.content as Record<string, unknown>);
         fixCount++;
         // Re-validate after fix — if still failing, return error
         const reResult = schema.safeParse(page.content);
         if (!reResult.success) {
-          const issues = reResult.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+          const issues = reResult.error.issues
+            .map((i) => `${i.path.join('.')}: ${i.message}`)
+            .join('; ');
           const errMsg = `Section ${section.sectionId} Page ${page.pageNum} (${page.pageType}) auto-fix failed: ${issues.slice(0, 200)}`;
           log.error(errMsg);
           return { success: false, error: errMsg };

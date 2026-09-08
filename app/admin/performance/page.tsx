@@ -7,13 +7,26 @@
 import { useEffect, useState, useRef } from 'react';
 import * as echarts from 'echarts/core';
 import { BarChart, LineChart } from 'echarts/charts';
-import { GridComponent, TooltipComponent, TitleComponent, LegendComponent } from 'echarts/components';
+import {
+  GridComponent,
+  TooltipComponent,
+  TitleComponent,
+  LegendComponent,
+} from 'echarts/components';
 import { SVGRenderer } from 'echarts/renderers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getVitalsHistory, type WebVitalEntry } from '@/lib/monitoring/web-vitals';
 
-echarts.use([BarChart, LineChart, GridComponent, TooltipComponent, TitleComponent, LegendComponent, SVGRenderer]);
+echarts.use([
+  BarChart,
+  LineChart,
+  GridComponent,
+  TooltipComponent,
+  TitleComponent,
+  LegendComponent,
+  SVGRenderer,
+]);
 
 export default function PerformanceDashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -82,7 +95,13 @@ export default function PerformanceDashboardPage() {
   };
 
   const ratingColor = (r?: string | null) =>
-    r === 'good' ? 'bg-green-500' : r === 'needs-improvement' ? 'bg-yellow-500' : r === 'poor' ? 'bg-red-500' : 'bg-gray-400';
+    r === 'good'
+      ? 'bg-green-500'
+      : r === 'needs-improvement'
+        ? 'bg-yellow-500'
+        : r === 'poor'
+          ? 'bg-red-500'
+          : 'bg-gray-400';
 
   if (loading) return <p className="text-center py-8">Loading...</p>;
 
@@ -102,7 +121,9 @@ export default function PerformanceDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">{avg !== null ? `${avg}${name === 'CLS' ? '' : 'ms'}` : '—'}</span>
+                  <span className="text-2xl font-bold">
+                    {avg !== null ? `${avg}${name === 'CLS' ? '' : 'ms'}` : '—'}
+                  </span>
                   <Badge className={ratingColor(rating || undefined)}>{rating ?? 'n/a'}</Badge>
                 </div>
               </CardContent>

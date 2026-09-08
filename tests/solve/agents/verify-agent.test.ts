@@ -71,4 +71,3 @@ describe('verifyAnswer', () => {
     expect(result.isCorrect).toBe(false);
   });
 });
-

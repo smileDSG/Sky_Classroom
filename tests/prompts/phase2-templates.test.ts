@@ -36,10 +36,25 @@ const baseAgent: AgentConfig = {
 
 const slideStoreState: StatelessChatRequest['storeState'] = {
   stage: { id: 's1', name: 'Test', createdAt: 0, updatedAt: 0 },
-  scenes: [{
-    id: 'sc1', stageId: 's1', type: 'slide', title: 'Slide', order: 0,
-    content: { type: 'slide', canvas: { id: 'c1', viewportSize: 1000, viewportRatio: 0.5625, theme: { backgroundColor: '#fff', themeColors: [], fontColor: '#333', fontName: 'Arial' }, elements: [] } },
-  }],
+  scenes: [
+    {
+      id: 'sc1',
+      stageId: 's1',
+      type: 'slide',
+      title: 'Slide',
+      order: 0,
+      content: {
+        type: 'slide',
+        canvas: {
+          id: 'c1',
+          viewportSize: 1000,
+          viewportRatio: 0.5625,
+          theme: { backgroundColor: '#fff', themeColors: [], fontColor: '#333', fontName: 'Arial' },
+          elements: [],
+        },
+      },
+    },
+  ],
   currentSceneId: 'sc1',
   mode: 'autonomous',
   whiteboardOpen: false,
@@ -216,13 +231,9 @@ describe('role loading integration', () => {
   });
 
   test('buildDirectorPrompt with discussion context works correctly', () => {
-    const out = buildDirectorPrompt(
-      [baseAgent],
-      'Some history',
-      [],
-      0,
-      { topic: 'Test discussion' },
-    );
+    const out = buildDirectorPrompt([baseAgent], 'Some history', [], 0, {
+      topic: 'Test discussion',
+    });
     expect(out).toContain('Discussion Mode');
     expect(out).toContain('Test discussion');
   });
@@ -232,7 +243,10 @@ describe('role loading integration', () => {
 
 describe('edge cases', () => {
   test('buildStructuredPrompt works with empty language directive', () => {
-    const state = { ...slideStoreState, stage: { ...slideStoreState.stage!, languageDirective: undefined } };
+    const state = {
+      ...slideStoreState,
+      stage: { ...slideStoreState.stage!, languageDirective: undefined },
+    };
     const out = buildStructuredPrompt(baseAgent, state);
     expect(out).toBeTruthy();
     expect(out.length).toBeGreaterThan(0);

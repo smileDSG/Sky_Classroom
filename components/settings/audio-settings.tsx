@@ -74,9 +74,9 @@ interface AudioSettingsProps {
   onSave?: () => void;
 }
 
-export function AudioSettings({
-  onSave }: AudioSettingsProps = {}) {
-  const locale = 'zh-CN';// TTS state
+export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
+  const locale = 'zh-CN';
+  // TTS state
   const ttsProviderId = useSettingsStore((state) => state.ttsProviderId);
   const ttsVoice = useSettingsStore((state) => state.ttsVoice);
   const ttsProvidersConfig = useSettingsStore((state) => state.ttsProvidersConfig);
@@ -370,9 +370,7 @@ export function AudioSettings({
                   .json()
                   .catch(() => ({ error: response.statusText }));
                 // Show details if available, otherwise show error message
-                setASRTestMessage(
-                  errorData.details || errorData.error || '语音识别失败',
-                );
+                setASRTestMessage(errorData.details || errorData.error || '语音识别失败');
               }
             } catch (error) {
               log.error('ASR test failed:', error);
@@ -442,7 +440,9 @@ export function AudioSettings({
             ttsEnabled ? 'opacity-100' : 'opacity-40 max-h-0 pointer-events-none',
           )}
         >
-          <p className="text-xs text-muted-foreground">{'每个AI角色的音色可在首页「课堂角色配置」中设置'}</p>
+          <p className="text-xs text-muted-foreground">
+            {'每个AI角色的音色可在首页「课堂角色配置」中设置'}
+          </p>
 
           <div className="space-y-2">
             <Label className="text-sm">{'TTS 提供商'}</Label>
@@ -571,7 +571,9 @@ export function AudioSettings({
             >
               {'语音识别 (ASR)'}
             </h3>
-            <p className="text-xs text-muted-foreground">{'开启后，学生可使用麦克风进行语音输入'}</p>
+            <p className="text-xs text-muted-foreground">
+              {'开启后，学生可使用麦克风进行语音输入'}
+            </p>
           </div>
           <Switch
             checked={asrEnabled}

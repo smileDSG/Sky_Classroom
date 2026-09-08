@@ -40,7 +40,8 @@ export function ModelEditDialog({
   providerType,
   requiresApiKey,
   isServerConfigured,
-}: ModelEditDialogProps) {const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+}: ModelEditDialogProps) {
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
 
   // Reset test status when dialog closes
@@ -106,16 +107,12 @@ export function ModelEditDialog({
           {editingModel.modelIndex === null ? '新建模型' : '编辑模型'}
         </DialogTitle>
         <DialogDescription className="sr-only">
-          {editingModel.modelIndex === null
-            ? '添加新的模型配置'
-            : '编辑模型配置和能力'}
+          {editingModel.modelIndex === null ? '添加新的模型配置' : '编辑模型配置和能力'}
         </DialogDescription>
         <div className="space-y-4">
           <div className="pb-3 border-b">
             <h2 className="text-lg font-semibold">
-              {editingModel.modelIndex === null
-                ? '新建模型'
-                : '编辑模型'}
+              {editingModel.modelIndex === null ? '新建模型' : '编辑模型'}
             </h2>
           </div>
 

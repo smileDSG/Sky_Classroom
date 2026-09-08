@@ -19,7 +19,8 @@ const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const FILE_INPUT_ID = 'user-avatar-upload';
 
-export function UserProfileCard() {const avatar = useUserProfileStore((s) => s.avatar);
+export function UserProfileCard() {
+  const avatar = useUserProfileStore((s) => s.avatar);
   const nickname = useUserProfileStore((s) => s.nickname);
   const bio = useUserProfileStore((s) => s.bio);
   const setAvatar = useUserProfileStore((s) => s.setAvatar);
@@ -169,7 +170,9 @@ export function UserProfileCard() {const avatar = useUserProfileStore((s) => s.
               <Pencil className="size-3 text-muted-foreground/40 opacity-0 group-hover/name:opacity-100 transition-opacity" />
             </button>
           )}
-          <p className="text-[10px] text-muted-foreground/50 mt-0.5">{'你的头像将显示在课堂讨论和对话中'}</p>
+          <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+            {'你的头像将显示在课堂讨论和对话中'}
+          </p>
         </div>
       </div>
 

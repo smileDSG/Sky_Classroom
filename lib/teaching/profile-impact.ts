@@ -59,9 +59,10 @@ export function buildTeachingKnowledgeImpacts(input: {
   });
 }
 
-export function getTeachingDecisionTarget(
-  decision: LearnerDecision,
-): { href: string; label: string } {
+export function getTeachingDecisionTarget(decision: LearnerDecision): {
+  href: string;
+  label: string;
+} {
   const topic = decision.topic ? `?topic=${encodeURIComponent(decision.topic)}` : '';
   if (decision.action === 'teach') {
     return { href: `/sky/cloud-mind/teaching${topic}`, label: '继续补充讲解' };

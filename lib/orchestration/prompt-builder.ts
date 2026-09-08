@@ -191,7 +191,8 @@ export function buildStructuredPrompt(
 
   // Load role content from new modular templates (with legacy fallback)
   const roleContent = loadRoleContent(agentConfig.role);
-  const personaContent = agentConfig.role === 'student' ? loadPersonaContent(agentConfig.personaType) : '';
+  const personaContent =
+    agentConfig.role === 'student' ? loadPersonaContent(agentConfig.personaType) : '';
   const combinedRoleGuideline = [roleContent, personaContent].filter(Boolean).join('\n\n');
 
   const vars = {
@@ -210,12 +211,14 @@ export function buildStructuredPrompt(
     mutualExclusionNote: hasSlideActions ? MUTUAL_EXCLUSION_NOTE : '',
     stateContext: buildStateContext(storeState),
     virtualWhiteboardContext: buildVirtualWhiteboardContext(storeState, whiteboardLedger),
-    lengthGuidelines: extractSection(roleContent, 'Length Constraint', 'Whiteboard Permissions')
-      || extractSection(roleContent, 'Length Constraint', '## Examples')
-      || '',
-    whiteboardGuidelines: extractSection(roleContent, 'Whiteboard Permissions', null)
-      || extractSection(roleContent, '## Whiteboard Permissions', null)
-      || '',
+    lengthGuidelines:
+      extractSection(roleContent, 'Length Constraint', 'Whiteboard Permissions') ||
+      extractSection(roleContent, 'Length Constraint', '## Examples') ||
+      '',
+    whiteboardGuidelines:
+      extractSection(roleContent, 'Whiteboard Permissions', null) ||
+      extractSection(roleContent, '## Whiteboard Permissions', null) ||
+      '',
     discussionContextSection: buildDiscussionContextSection(discussionContext, agentResponses),
     memorySection: memory ? formatAgentMemory(memory) : '',
     teachingProjectionSection: buildTeachingProjectionSection(teachingProjection),

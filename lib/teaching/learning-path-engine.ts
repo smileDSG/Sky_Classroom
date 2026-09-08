@@ -162,7 +162,8 @@ export function resolveWeights(options?: PathGenerationOptions): ScoreWeights {
   // Multi-select explicit priorities take precedence
   if (priorities && priorities.length > 0 && !strategy) {
     const selected = new Set(priorities);
-    const pick = (key: PriorityStrategy) => (selected.has(key) ? 1.5 : selected.has('balanced') ? 1.0 : 0.5);
+    const pick = (key: PriorityStrategy) =>
+      selected.has(key) ? 1.5 : selected.has('balanced') ? 1.0 : 0.5;
     return {
       weakness: pick('weakness'),
       reviewUrgency: pick('review'),
@@ -174,16 +175,46 @@ export function resolveWeights(options?: PathGenerationOptions): ScoreWeights {
 
   switch (strategy) {
     case 'weakness-first':
-      return { weakness: 2.0, reviewUrgency: 0.5, errorPattern: 0.5, recentQuiz: 0.5, goalBoost: 0.3 };
+      return {
+        weakness: 2.0,
+        reviewUrgency: 0.5,
+        errorPattern: 0.5,
+        recentQuiz: 0.5,
+        goalBoost: 0.3,
+      };
     case 'review-first':
-      return { weakness: 0.5, reviewUrgency: 2.0, errorPattern: 0.5, recentQuiz: 0.3, goalBoost: 0.3 };
+      return {
+        weakness: 0.5,
+        reviewUrgency: 2.0,
+        errorPattern: 0.5,
+        recentQuiz: 0.3,
+        goalBoost: 0.3,
+      };
     case 'error-first':
-      return { weakness: 0.5, reviewUrgency: 0.5, errorPattern: 2.0, recentQuiz: 0.5, goalBoost: 0.3 };
+      return {
+        weakness: 0.5,
+        reviewUrgency: 0.5,
+        errorPattern: 2.0,
+        recentQuiz: 0.5,
+        goalBoost: 0.3,
+      };
     case 'goal-topic':
-      return { weakness: 0.5, reviewUrgency: 0.3, errorPattern: 0.3, recentQuiz: 0.3, goalBoost: 2.5 };
+      return {
+        weakness: 0.5,
+        reviewUrgency: 0.3,
+        errorPattern: 0.3,
+        recentQuiz: 0.3,
+        goalBoost: 2.5,
+      };
     case 'balanced':
     default:
-      return { weakness: 1.0, reviewUrgency: 1.0, errorPattern: 1.0, recentQuiz: 0.8, goalBoost: 0.5 };
+      return {
+        weakness: 1.0,
+        reviewUrgency: 1.0,
+        errorPattern: 1.0,
+        recentQuiz: 0.8,
+        goalBoost: 0.5,
+      };
   }
 }
 
@@ -315,10 +346,10 @@ export function scoreKnowledgePoints(
 
     const score = Math.round(
       weakness * weights.weakness +
-      reviewUrgency * weights.reviewUrgency +
-      errorPattern * weights.errorPattern +
-      recentQuiz * weights.recentQuiz +
-      goalBoost * weights.goalBoost,
+        reviewUrgency * weights.reviewUrgency +
+        errorPattern * weights.errorPattern +
+        recentQuiz * weights.recentQuiz +
+        goalBoost * weights.goalBoost,
     );
 
     result.push({
@@ -394,7 +425,8 @@ export function buildInitialPathFromContext(
   const weakSet = new Set(context.knowledgeGraph.weakPoints);
   const goalDistances = computeGoalDistanceMap(goalTopic);
   const filtered = uniquePoints.filter((p, idx) => {
-    const mastery = profile.masteryByKnowledge[p] ??
+    const mastery =
+      profile.masteryByKnowledge[p] ??
       context.knowledgeGraph.nodes.find((n) => n.name === p)?.mastery ??
       0;
     const isWeak = weakSet.has(p);
@@ -403,7 +435,9 @@ export function buildInitialPathFromContext(
       const prereqs = KNOWLEDGE_RELATIONS[later]?.prereqs ?? [];
       return prereqs.includes(p);
     });
-    return isWeak || isGoalRelated || isPrereqForLater || mastery < config.masteryThresholdCompleted;
+    return (
+      isWeak || isGoalRelated || isPrereqForLater || mastery < config.masteryThresholdCompleted
+    );
   });
 
   // Ensure minimum nodes
@@ -506,10 +540,9 @@ function calculatePostMastery(
   job: TeachingJob,
   profile: StudentProfile,
 ): number {
-  const baseMastery = knowledgePoints.reduce(
-    (sum, kp) => sum + (profile.masteryByKnowledge[kp] ?? 0),
-    0,
-  ) / knowledgePoints.length;
+  const baseMastery =
+    knowledgePoints.reduce((sum, kp) => sum + (profile.masteryByKnowledge[kp] ?? 0), 0) /
+    knowledgePoints.length;
 
   // Feedback signals
   const feedbacks = job.sectionFeedbacks ?? [];
@@ -551,10 +584,11 @@ export function updatePathAfterJob(
 
   // Find the node that matches this job's topic or knowledge points
   const jobKPs = new Set(job.plan?.focusPoints ?? [job.topic]);
-  const nodeIndex = updatedNodes.findIndex((n) =>
-    n.teachingJobId === job.id ||
-    n.knowledgePoints.some((kp) => jobKPs.has(kp)) ||
-    n.topic === job.topic,
+  const nodeIndex = updatedNodes.findIndex(
+    (n) =>
+      n.teachingJobId === job.id ||
+      n.knowledgePoints.some((kp) => jobKPs.has(kp)) ||
+      n.topic === job.topic,
   );
 
   if (nodeIndex >= 0) {
@@ -571,9 +605,7 @@ export function updatePathAfterJob(
 
     // If completed, mark next pending node as in_progress
     if (masteryAfter >= config.masteryThresholdCompleted) {
-      const nextIndex = updatedNodes.findIndex(
-        (n, i) => i > nodeIndex && n.status === 'pending',
-      );
+      const nextIndex = updatedNodes.findIndex((n, i) => i > nodeIndex && n.status === 'pending');
       if (nextIndex >= 0) {
         updatedNodes[nextIndex] = {
           ...updatedNodes[nextIndex],
@@ -613,9 +645,7 @@ export function updatePathAfterJob(
  * Get the next recommended topic from a learning path.
  */
 export function getNextRecommendedTopic(path: LearningPath): string | null {
-  const nextNode = path.nodes.find(
-    (n) => n.status === 'pending' || n.status === 'in_progress',
-  );
+  const nextNode = path.nodes.find((n) => n.status === 'pending' || n.status === 'in_progress');
   return nextNode?.topic ?? null;
 }
 

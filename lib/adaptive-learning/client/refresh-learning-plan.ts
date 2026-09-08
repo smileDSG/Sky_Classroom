@@ -16,9 +16,10 @@ export async function refreshLearningPlanAfterEvidence(): Promise<LearningPlanRe
       credentials: 'include',
       cache: 'no-store',
     });
-    const payload = (await response.json().catch(() => null)) as
-      | { success?: boolean; data?: LearningPlanRefreshData }
-      | null;
+    const payload = (await response.json().catch(() => null)) as {
+      success?: boolean;
+      data?: LearningPlanRefreshData;
+    } | null;
     if (!response.ok || !payload?.success || !payload.data) return null;
     return payload.data;
   } catch {

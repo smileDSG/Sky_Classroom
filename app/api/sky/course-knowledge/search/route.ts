@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server';
 
-import { loadAiIntroCourseIndex, searchAiIntroCourse } from '@/lib/course-knowledge/ai-intro-loader';
+import {
+  loadAiIntroCourseIndex,
+  searchAiIntroCourse,
+} from '@/lib/course-knowledge/ai-intro-loader';
 
 function parseLimit(value: string | null): number {
   const parsed = Number.parseInt(value || '8', 10);

@@ -134,4 +134,4 @@ export const zhOverrides: Record<string, string> = {
 };
 
 // Prevent unused import warning when other locales aren't created yet
-void (zhOverrides);
+void zhOverrides;

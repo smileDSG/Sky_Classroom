@@ -46,9 +46,7 @@ describe('handwriting recognition quality response', () => {
           givens: [],
           asks: ['x'],
           formulas: ['x+1=2'],
-          ambiguities: [
-            { field: 'stem', candidates: ['1', 'l'], reason: '手写字符不清晰' },
-          ],
+          ambiguities: [{ field: 'stem', candidates: ['1', 'l'], reason: '手写字符不清晰' }],
           confidence: 0.62,
         },
       ],

@@ -56,9 +56,7 @@ export function buildProfileContextPrompt(
     context += `\n### 薄弱知识点（需重点强化）\n`;
     for (const kp of weakPoints) {
       const mastery = profile.masteryByKnowledge[kp] ?? 0;
-      context += includeKnowledgeMastery
-        ? `- ${kp}（掌握度 ${mastery}%）\n`
-        : `- ${kp}\n`;
+      context += includeKnowledgeMastery ? `- ${kp}（掌握度 ${mastery}%）\n` : `- ${kp}\n`;
     }
   }
 
@@ -66,9 +64,7 @@ export function buildProfileContextPrompt(
     context += `\n### 已掌握知识点（可快速复习或跳过基础）\n`;
     for (const kp of strongPoints) {
       const mastery = profile.masteryByKnowledge[kp] ?? 0;
-      context += includeKnowledgeMastery
-        ? `- ${kp}（掌握度 ${mastery}%）\n`
-        : `- ${kp}\n`;
+      context += includeKnowledgeMastery ? `- ${kp}（掌握度 ${mastery}%）\n` : `- ${kp}\n`;
     }
   }
 
@@ -98,8 +94,7 @@ export function buildProfileContextPrompt(
     for (const kp of highlightKnowledgePoints) {
       const mastery = profile.masteryByKnowledge[kp];
       if (mastery !== undefined) {
-        const level =
-          mastery < 30 ? '薄弱' : mastery > 80 ? '已掌握' : '需强化';
+        const level = mastery < 30 ? '薄弱' : mastery > 80 ? '已掌握' : '需强化';
         context += `- ${kp}：${mastery}%（${level}）\n`;
       }
     }

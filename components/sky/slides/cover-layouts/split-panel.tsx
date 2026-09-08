@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -32,7 +35,14 @@ export function SplitPanelCover({ dna, title, subtitle }: Props) {
   }
   if (density === 'rich') {
     decorations.push(
-      <circle key="sp2" cx="11.0" cy="5.0" r="1.0" fill={`#${colors.accentSecondary}`} opacity="0.06" />,
+      <circle
+        key="sp2"
+        cx="11.0"
+        cy="5.0"
+        r="1.0"
+        fill={`#${colors.accentSecondary}`}
+        opacity="0.06"
+      />,
       <circle key="sp3" cx="9.0" cy="4.0" r="0.6" fill={`#${colors.accent}`} opacity="0.1" />,
     );
   }

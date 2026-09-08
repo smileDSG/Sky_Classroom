@@ -43,8 +43,14 @@ describe('media prompt condition wiring', () => {
         type: 'concept',
         title: 'Evaporation Motion',
         cards: [
-          { title: 'A', desc: 'Description of point a with enough length to pass validation and be meaningful for the test.' },
-          { title: 'B', desc: 'Description of point b with enough length to pass validation and be meaningful for the test.' },
+          {
+            title: 'A',
+            desc: 'Description of point a with enough length to pass validation and be meaningful for the test.',
+          },
+          {
+            title: 'B',
+            desc: 'Description of point b with enough length to pass validation and be meaningful for the test.',
+          },
         ],
         summary: 'This is a comprehensive summary that meets the minimum length requirement.',
       });

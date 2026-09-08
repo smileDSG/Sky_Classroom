@@ -59,7 +59,11 @@ export function MobilePlaybackBar({
             className="flex size-14 items-center justify-center rounded-full bg-gradient-to-r from-sky-500 to-blue-500 text-white shadow-lg shadow-sky-500/25 transition-transform active:scale-95"
             aria-label={isPlaying ? '暂停' : '播放'}
           >
-            {isPlaying ? <Pause className="size-7 fill-current" /> : <Play className="size-7 fill-current" />}
+            {isPlaying ? (
+              <Pause className="size-7 fill-current" />
+            ) : (
+              <Play className="size-7 fill-current" />
+            )}
           </button>
 
           <button

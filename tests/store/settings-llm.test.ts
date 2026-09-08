@@ -111,9 +111,7 @@ describe('settings-llm — LLM 设置', () => {
       store.getState().setProviderConfig('anthropic', { apiKey: 'sk-anthropic' });
 
       expect(store.getState().providersConfig.openai.apiKey).toBe('sk-openai');
-      expect(store.getState().providersConfig.anthropic.apiKey).toBe(
-        'sk-anthropic',
-      );
+      expect(store.getState().providersConfig.anthropic.apiKey).toBe('sk-anthropic');
     });
   });
 

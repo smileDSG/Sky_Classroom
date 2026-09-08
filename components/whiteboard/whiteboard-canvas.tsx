@@ -388,7 +388,8 @@ export type WhiteboardCanvasProps = {
 };
 
 export const WhiteboardCanvas = forwardRef<WhiteboardCanvasHandle, WhiteboardCanvasProps>(
-  function WhiteboardCanvas({ onViewModifiedChange }, ref) {const stage = useStageStore.use.stage();
+  function WhiteboardCanvas({ onViewModifiedChange }, ref) {
+    const stage = useStageStore.use.stage();
     const isClearing = useCanvasStore.use.whiteboardClearing();
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });

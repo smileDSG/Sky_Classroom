@@ -8,7 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from './math-renderer';
-import { sendTeachingChat, type ChatMessage, type TeachingChatReply } from '@/lib/teaching/teaching-job-client';
+import {
+  sendTeachingChat,
+  type ChatMessage,
+  type TeachingChatReply,
+} from '@/lib/teaching/teaching-job-client';
 import { toast } from 'sonner';
 
 interface TeachingChatProps {
@@ -104,9 +108,7 @@ export function TeachingChat({ jobId, sectionId, sectionTitle, onReply }: Teachi
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       className={cn(
         'fixed z-50 shadow-2xl',
-        isMinimized
-          ? 'bottom-6 right-6 w-72'
-          : 'bottom-6 right-6 w-96 h-[500px]',
+        isMinimized ? 'bottom-6 right-6 w-72' : 'bottom-6 right-6 w-96 h-[500px]',
       )}
     >
       <Card className="h-full flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-sky-200/50 dark:border-sky-800/30">
@@ -141,9 +143,7 @@ export function TeachingChat({ jobId, sectionId, sectionTitle, onReply }: Teachi
             </div>
           </div>
           {!isMinimized && sectionTitle && (
-            <p className="text-xs text-muted-foreground mt-1">
-              可以就当前章节内容向 AI 教师提问
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">可以就当前章节内容向 AI 教师提问</p>
           )}
         </CardHeader>
 
@@ -166,10 +166,7 @@ export function TeachingChat({ jobId, sectionId, sectionTitle, onReply }: Teachi
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
-                    className={cn(
-                      'flex',
-                      msg.role === 'user' ? 'justify-end' : 'justify-start',
-                    )}
+                    className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}
                   >
                     <div
                       className={cn(

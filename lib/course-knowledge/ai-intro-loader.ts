@@ -91,10 +91,7 @@ async function loadMarkdownDirectory(
   return docs;
 }
 
-async function loadJsonDocument(
-  filePath: string,
-  title: string,
-): Promise<AiIntroDocument> {
+async function loadJsonDocument(filePath: string, title: string): Promise<AiIntroDocument> {
   const content = await readText(filePath);
   const file = toRepoPath(filePath);
   return {
@@ -153,7 +150,16 @@ export async function loadAiIntroCourseIndex(force = false): Promise<AiIntroCour
     loadJsonDocument(path.join(COURSE_ROOT, 'question-bank.json'), '初始题库'),
   ]);
 
-  const documents = [syllabus, ...chapters, ...cases, ...mediaScripts, readings, rubric, graph, questionBank];
+  const documents = [
+    syllabus,
+    ...chapters,
+    ...cases,
+    ...mediaScripts,
+    readings,
+    rubric,
+    graph,
+    questionBank,
+  ];
   cachedIndex = {
     courseId,
     title: meta.title || '人工智能导论',
@@ -219,10 +225,7 @@ function makeSnippet(content: string, query: string, tokens: string[]): string {
   return content.slice(start, end).replace(/\s+/g, ' ').trim();
 }
 
-export async function searchAiIntroCourse(
-  query: string,
-  limit = 8,
-): Promise<AiIntroSearchHit[]> {
+export async function searchAiIntroCourse(query: string, limit = 8): Promise<AiIntroSearchHit[]> {
   const index = await loadAiIntroCourseIndex();
   const tokens = tokenize(query);
   const maxResults = Math.min(Math.max(limit, 1), 30);

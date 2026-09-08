@@ -5,16 +5,8 @@
  * collection, error tracking, and reporting.
  */
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import {
-  PerformanceMonitor,
-  resetPerfMonitor,
-  getPerfMonitor,
-} from '@/lib/monitoring/performance';
-import {
-  ErrorTracker,
-  resetErrorTracker,
-  getErrorTracker,
-} from '@/lib/monitoring/error-tracker';
+import { PerformanceMonitor, resetPerfMonitor, getPerfMonitor } from '@/lib/monitoring/performance';
+import { ErrorTracker, resetErrorTracker, getErrorTracker } from '@/lib/monitoring/error-tracker';
 
 // ─── Tests ───
 
@@ -56,8 +48,18 @@ describe('P6-001 Test 14: 性能监控 + 错误追踪', () => {
     });
 
     test('aggregates multiple calls by source', () => {
-      monitor.recordLLMCall({ model: 'a', source: 'scene-content', durationMs: 1000, success: true });
-      monitor.recordLLMCall({ model: 'a', source: 'scene-content', durationMs: 2000, success: true });
+      monitor.recordLLMCall({
+        model: 'a',
+        source: 'scene-content',
+        durationMs: 1000,
+        success: true,
+      });
+      monitor.recordLLMCall({
+        model: 'a',
+        source: 'scene-content',
+        durationMs: 2000,
+        success: true,
+      });
       monitor.recordLLMCall({ model: 'b', source: 'chat', durationMs: 500, success: true });
 
       const stats = monitor.getStats();

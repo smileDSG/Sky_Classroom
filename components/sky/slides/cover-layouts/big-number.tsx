@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -28,13 +31,27 @@ export function BigNumberCover({ dna, title, subtitle }: Props) {
   const decorations = [] as React.ReactNode[];
   if (density === 'moderate' || density === 'rich') {
     decorations.push(
-      <circle key="bn1" cx="11.5" cy="1.5" r="0.8" fill={`#${colors.accentSecondary}`} opacity="0.08" />,
+      <circle
+        key="bn1"
+        cx="11.5"
+        cy="1.5"
+        r="0.8"
+        fill={`#${colors.accentSecondary}`}
+        opacity="0.08"
+      />,
     );
   }
   if (density === 'rich') {
     decorations.push(
       <circle key="bn2" cx="1.5" cy="6.0" r="0.5" fill={`#${colors.accent}`} opacity="0.1" />,
-      <circle key="bn3" cx="12.5" cy="6.5" r="0.4" fill={`#${colors.accentSecondary}`} opacity="0.06" />,
+      <circle
+        key="bn3"
+        cx="12.5"
+        cy="6.5"
+        r="0.4"
+        fill={`#${colors.accentSecondary}`}
+        opacity="0.06"
+      />,
     );
   }
 
@@ -75,7 +92,14 @@ export function BigNumberCover({ dna, title, subtitle }: Props) {
       </text>
 
       {/* Bottom info bar */}
-      <rect x="0" y="5.5" width="13.33" height="2.0" fill={`#${colors.textPrimary}`} opacity="0.15" />
+      <rect
+        x="0"
+        y="5.5"
+        width="13.33"
+        height="2.0"
+        fill={`#${colors.textPrimary}`}
+        opacity="0.15"
+      />
 
       {/* Title */}
       <text

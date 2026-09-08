@@ -2,14 +2,20 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Shared mock state (vi.hoisted ensures it runs before vi.mock factories)
 const mocks = vi.hoisted(() => ({
-  llmResult: { text: JSON.stringify({
-    solution: '解：2x = 6, x = 3',
-    answer: 'x = 3',
-    confidence: 0.9,
-    steps: [{ label: '移项', content: '2x = 6', keyPoints: ['等式两边同时除以2'] }],
-    knowledgePoints: [{ name: '一元一次方程', description: '基础代数', difficulty: 'easy' as const }],
-    similarQuestions: [{ problem: '3x + 2 = 8', difficulty: 0.4, knowledgePoint: '一元一次方程' }],
-  }) },
+  llmResult: {
+    text: JSON.stringify({
+      solution: '解：2x = 6, x = 3',
+      answer: 'x = 3',
+      confidence: 0.9,
+      steps: [{ label: '移项', content: '2x = 6', keyPoints: ['等式两边同时除以2'] }],
+      knowledgePoints: [
+        { name: '一元一次方程', description: '基础代数', difficulty: 'easy' as const },
+      ],
+      similarQuestions: [
+        { problem: '3x + 2 = 8', difficulty: 0.4, knowledgePoint: '一元一次方程' },
+      ],
+    }),
+  },
   llmError: null as Error | null,
 }));
 
@@ -22,7 +28,11 @@ vi.mock('@/lib/ai/llm', () => ({
 
 vi.mock('@/lib/generation/json-repair', () => ({
   parseJsonResponse: vi.fn().mockImplementation((text: string) => {
-    try { return JSON.parse(text); } catch { return null; }
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
   }),
 }));
 
@@ -38,18 +48,20 @@ vi.mock('@/lib/ai/providers', () => ({
 vi.mock('@/lib/solve/question-bank', () => ({
   findSimilarQuestions: vi.fn().mockImplementation(async (problemText: string) => {
     if (problemText === '1+1=?') {
-      return [{
-        id: 'qb_hit',
-        problemHash: 'hash',
-        problemText: '1+1=?',
-        answer: '2',
-        steps: ['直接计算'],
-        knowledgePoints: ['加法'],
-        agentId: 'universal',
-        solvedAt: Date.now(),
-        verified: true,
-        _similarity: 1,
-      }];
+      return [
+        {
+          id: 'qb_hit',
+          problemHash: 'hash',
+          problemText: '1+1=?',
+          answer: '2',
+          steps: ['直接计算'],
+          knowledgePoints: ['加法'],
+          agentId: 'universal',
+          solvedAt: Date.now(),
+          verified: true,
+          _similarity: 1,
+        },
+      ];
     }
     return [];
   }),

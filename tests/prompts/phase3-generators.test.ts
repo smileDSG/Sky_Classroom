@@ -62,7 +62,7 @@ describe('Phase 3: Generator templates', () => {
     }
 
     test('all 11 generator files are present', () => {
-      const files = fs.readdirSync(generatorsDir).filter(f => f.endsWith('.md'));
+      const files = fs.readdirSync(generatorsDir).filter((f) => f.endsWith('.md'));
       expect(files.length).toBeGreaterThanOrEqual(11);
     });
   });
@@ -477,7 +477,12 @@ describe('Phase 3: Generator composition integration', () => {
     // Register the image-instructions snippet so it resolves
     const snippetsDir = path.join(promptsDir, 'snippets');
     const imageSnippet = fs.readFileSync(path.join(snippetsDir, 'image-instructions.md'), 'utf-8');
-    composer.register({ id: 'image-instructions', category: 'snippet', content: imageSnippet, priority: 5 });
+    composer.register({
+      id: 'image-instructions',
+      category: 'snippet',
+      content: imageSnippet,
+      priority: 5,
+    });
 
     const result = composer.compose({
       fragments: ['outline'],
@@ -497,7 +502,16 @@ describe('Phase 3: Generator composition integration', () => {
 
     const result = composer.compose({
       fragments: ['slide-content'],
-      variables: { theme_palette_name: 'midnight-executive', mood: '专业稳重', title: '测试标题', description: '测试描述', keyPoints: '1. 第一点\n2. 第二点', languageDirective: '讲中文', teacherContext: '', mediaElementEnabled: false },
+      variables: {
+        theme_palette_name: 'midnight-executive',
+        mood: '专业稳重',
+        title: '测试标题',
+        description: '测试描述',
+        keyPoints: '1. 第一点\n2. 第二点',
+        languageDirective: '讲中文',
+        teacherContext: '',
+        mediaElementEnabled: false,
+      },
     });
 
     expect(result.system).toContain('midnight-executive');
@@ -543,7 +557,8 @@ describe('Phase 3: Generator composition integration', () => {
         projectDescription: 'Create a real-time dashboard displaying weather data',
         targetSkills: ['React', 'API Integration', 'Data Visualization'],
         issueCount: 4,
-        languageDirective: 'Deliver all project content in English. Use clear technical vocabulary.',
+        languageDirective:
+          'Deliver all project content in English. Use clear technical vocabulary.',
       },
     });
 
@@ -575,7 +590,7 @@ describe('Phase 3: Generator composition integration', () => {
 
     // Register snippets
     const snippetsDir = path.join(promptsDir, 'snippets');
-    for (const snippetFile of fs.readdirSync(snippetsDir).filter(f => f.endsWith('.md'))) {
+    for (const snippetFile of fs.readdirSync(snippetsDir).filter((f) => f.endsWith('.md'))) {
       const snippetId = snippetFile.replace('.md', '');
       const snippetContent = fs.readFileSync(path.join(snippetsDir, snippetFile), 'utf-8');
       composer.register({
@@ -666,11 +681,18 @@ describe('Phase 3: Generator composition integration', () => {
 
   test('generator output formats specify no markdown fences', () => {
     const contentGenerators = ['outline.md', 'slide-content.md', 'quiz.md'];
-    const actionGenerators = ['slide-actions.md', 'quiz-actions.md', 'interactive-actions.md', 'pbl-actions.md'];
+    const actionGenerators = [
+      'slide-actions.md',
+      'quiz-actions.md',
+      'interactive-actions.md',
+      'pbl-actions.md',
+    ];
 
     for (const filename of contentGenerators) {
       const content = loadGenerator(filename);
-      expect(content).toMatch(/(?:no|never|do not).*(?:explanation|code fenc|markdown|additional text)/i);
+      expect(content).toMatch(
+        /(?:no|never|do not).*(?:explanation|code fenc|markdown|additional text)/i,
+      );
     }
     for (const filename of actionGenerators) {
       const content = loadGenerator(filename);

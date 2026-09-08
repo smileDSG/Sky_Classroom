@@ -1,1 +1,5 @@
-{"success":false,"errorCode":"INTERNAL_ERROR","error":"生成失败: 正文生成失败: 主题相关性过低 (0%)"}
+{
+  "success": false,
+  "errorCode": "INTERNAL_ERROR",
+  "error": "生成失败: 正文生成失败: 主题相关性过低 (0%)"
+}

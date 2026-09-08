@@ -2,15 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  History,
-  MessageCircle,
-  Trash2,
-  Search,
-  Clock,
-  ChevronRight,
-  Loader2,
-} from 'lucide-react';
+import { History, MessageCircle, Trash2, Search, Clock, ChevronRight, Loader2 } from 'lucide-react';
 import {
   listConversations,
   deleteConversation,
@@ -21,7 +13,10 @@ import type { AssistantMessage } from '@/lib/utils/database';
 
 interface AssistantHistoryProps {
   mode: 'anime' | 'normal';
-  onLoadConversation: (messages: { id: string; role: 'user' | 'assistant'; content: string }[], convId: string) => void;
+  onLoadConversation: (
+    messages: { id: string; role: 'user' | 'assistant'; content: string }[],
+    convId: string,
+  ) => void;
 }
 
 export function AssistantHistory({ mode, onLoadConversation }: AssistantHistoryProps) {
@@ -59,27 +54,28 @@ export function AssistantHistory({ mode, onLoadConversation }: AssistantHistoryP
     }
   }, []);
 
-  const handleLoad = useCallback(async (convId: string) => {
-    try {
-      const conv = await getConversation(convId);
-      if (!conv) return;
-      const loadedMessages = conv.messages
-        .filter((m: AssistantMessage) => m.role !== 'system')
-        .map((m: AssistantMessage, i: number) => ({
-          id: m.id || `loaded-${i}`,
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-        }));
-      onLoadConversation(loadedMessages, conv.id);
-    } catch {
-      // ignore
-    }
-  }, [onLoadConversation]);
+  const handleLoad = useCallback(
+    async (convId: string) => {
+      try {
+        const conv = await getConversation(convId);
+        if (!conv) return;
+        const loadedMessages = conv.messages
+          .filter((m: AssistantMessage) => m.role !== 'system')
+          .map((m: AssistantMessage, i: number) => ({
+            id: m.id || `loaded-${i}`,
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+          }));
+        onLoadConversation(loadedMessages, conv.id);
+      } catch {
+        // ignore
+      }
+    },
+    [onLoadConversation],
+  );
 
   const filtered = searchQuery.trim()
-    ? conversations.filter(
-        (c) => c.title && c.title.includes(searchQuery),
-      )
+    ? conversations.filter((c) => c.title && c.title.includes(searchQuery))
     : conversations;
 
   const modeLabel = mode === 'anime' ? '二次元' : '常规';
@@ -143,9 +139,7 @@ export function AssistantHistory({ mode, onLoadConversation }: AssistantHistoryP
                       {conv.title || '未命名对话'}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-slate-400">
-                        {conv.messageCount} 条消息
-                      </span>
+                      <span className="text-[10px] text-slate-400">{conv.messageCount} 条消息</span>
                       <span className="text-[10px] text-slate-300">·</span>
                       <span className="flex items-center gap-1 text-[10px] text-slate-400">
                         <Clock className="h-2.5 w-2.5" />

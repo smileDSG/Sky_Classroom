@@ -17,7 +17,11 @@ vi.mock('@/lib/ai/llm', () => ({
 
 vi.mock('@/lib/generation/json-repair', () => ({
   parseJsonResponse: vi.fn().mockImplementation((text: string) => {
-    try { return JSON.parse(text); } catch { return null; }
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
   }),
 }));
 

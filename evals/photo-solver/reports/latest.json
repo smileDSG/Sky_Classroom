@@ -53,9 +53,7 @@
           }
         ],
         "answer": "A",
-        "evidence": [
-          "牛顿定律"
-        ],
+        "evidence": ["牛顿定律"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -120,9 +118,7 @@
           }
         ],
         "answer": "2",
-        "evidence": [
-          "比例关系"
-        ],
+        "evidence": ["比例关系"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -187,9 +183,7 @@
           }
         ],
         "answer": "改革",
-        "evidence": [
-          "历史事实"
-        ],
+        "evidence": ["历史事实"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -254,9 +248,7 @@
           }
         ],
         "answer": "3",
-        "evidence": [
-          "移项"
-        ],
+        "evidence": ["移项"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -321,9 +313,7 @@
           }
         ],
         "answer": "相等",
-        "evidence": [
-          "全等"
-        ],
+        "evidence": ["全等"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -388,9 +378,7 @@
           }
         ],
         "answer": "B",
-        "evidence": [
-          "文本语境"
-        ],
+        "evidence": ["文本语境"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -455,9 +443,7 @@
           }
         ],
         "answer": "C",
-        "evidence": [
-          "电场定律"
-        ],
+        "evidence": ["电场定律"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -522,9 +508,7 @@
           }
         ],
         "answer": "1",
-        "evidence": [
-          "导数"
-        ],
+        "evidence": ["导数"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -589,9 +573,7 @@
           }
         ],
         "answer": "4",
-        "evidence": [
-          "动量守恒"
-        ],
+        "evidence": ["动量守恒"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -661,10 +643,7 @@
           }
         ],
         "answer": "开放",
-        "evidence": [
-          "史料一",
-          "史料二"
-        ],
+        "evidence": ["史料一", "史料二"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -729,9 +708,7 @@
           }
         ],
         "answer": "成立",
-        "evidence": [
-          "单调性"
-        ],
+        "evidence": ["单调性"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -860,9 +837,7 @@
           }
         ],
         "answer": "5",
-        "evidence": [
-          "欧姆定律"
-        ],
+        "evidence": ["欧姆定律"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -927,9 +902,7 @@
           }
         ],
         "answer": "因果",
-        "evidence": [
-          "因果关系"
-        ],
+        "evidence": ["因果关系"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -994,9 +967,7 @@
           }
         ],
         "answer": "A",
-        "evidence": [
-          "概率定义"
-        ],
+        "evidence": ["概率定义"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -1061,9 +1032,7 @@
           }
         ],
         "answer": "0",
-        "evidence": [
-          "积分"
-        ],
+        "evidence": ["积分"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -1128,9 +1097,7 @@
           }
         ],
         "answer": "6",
-        "evidence": [
-          "波函数"
-        ],
+        "evidence": ["波函数"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -1200,10 +1167,7 @@
           }
         ],
         "answer": "证毕",
-        "evidence": [
-          "定理一",
-          "定理二"
-        ],
+        "evidence": ["定理一", "定理二"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,
@@ -1332,9 +1296,7 @@
           }
         ],
         "answer": "B",
-        "evidence": [
-          "材料性质"
-        ],
+        "evidence": ["材料性质"],
         "timing": {
           "recognitionMs": 0,
           "retrievalMs": 0,

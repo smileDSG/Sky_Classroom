@@ -73,12 +73,23 @@ export async function POST(req: NextRequest) {
     });
 
     // Save quiz attempt
-    const validSubjects = ['math', 'physics', 'chemistry', 'biology', 'chinese', 'english', 'history', 'geography', 'politics', 'unknown'] as const;
+    const validSubjects = [
+      'math',
+      'physics',
+      'chemistry',
+      'biology',
+      'chinese',
+      'english',
+      'history',
+      'geography',
+      'politics',
+      'unknown',
+    ] as const;
     const validSubject = validSubjects.includes(subject) ? subject : 'math';
 
     const attempt = await quizAttemptDAO.add({
       userId,
-      subject: validSubject as typeof validSubjects[number],
+      subject: validSubject as (typeof validSubjects)[number],
       difficulty: 'medium',
       topic: (topic as string) || '',
       source: 'ai',
@@ -88,7 +99,9 @@ export async function POST(req: NextRequest) {
     // Invalidate profile cache so Teaching module rebuilds profile with new data
     await invalidateProfileCache(userId);
 
-    log.info(`Classroom result reflowed for user ${userId}, stage ${stageId}, attempt ${attempt.id}`);
+    log.info(
+      `Classroom result reflowed for user ${userId}, stage ${stageId}, attempt ${attempt.id}`,
+    );
 
     return apiSuccess({ attemptId: attempt.id }, 201);
   } catch (err) {

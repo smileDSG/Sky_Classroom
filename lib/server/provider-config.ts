@@ -18,7 +18,7 @@ const log = createLogger('ServerProviderConfig');
 
 interface ServerProviderEntry {
   apiKey: string;
-  apiKeys?: string[];  // multiple keys for round-robin rotation
+  apiKeys?: string[]; // multiple keys for round-robin rotation
   baseUrl?: string;
   models?: string[];
   proxy?: string;
@@ -164,9 +164,7 @@ function loadEnvSection(
     for (const [id, entry] of Object.entries(yamlSection)) {
       const hasKeys = entry?.apiKeys?.length || entry?.apiKey;
       if (
-        requiresBaseUrl
-          ? !!entry?.baseUrl
-          : hasKeys || (entry?.baseUrl && keylessProviders.has(id))
+        requiresBaseUrl ? !!entry?.baseUrl : hasKeys || (entry?.baseUrl && keylessProviders.has(id))
       ) {
         const apiKeys = entry?.apiKeys?.length
           ? entry.apiKeys
@@ -190,7 +188,10 @@ function loadEnvSection(
     const envBaseUrl = process.env[`${prefix}_BASE_URL`] || undefined;
     const envModelsStr = process.env[`${prefix}_MODELS`];
     const envModels = envModelsStr
-      ? envModelsStr.split(',').map((m) => m.trim()).filter(Boolean)
+      ? envModelsStr
+          .split(',')
+          .map((m) => m.trim())
+          .filter(Boolean)
       : undefined;
 
     if (result[providerId]) {

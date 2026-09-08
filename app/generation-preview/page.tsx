@@ -37,7 +37,8 @@ const log = createLogger('GenerationPreview');
 const OUTLINE_REVIEW_AUTO_CONTINUE_MS = 2500;
 
 function GenerationPreviewContent() {
-  const router = useRouter();const hasStartedRef = useRef(false);
+  const router = useRouter();
+  const hasStartedRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const outlineReviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const outlineReviewResolveRef = useRef<((outlines: SceneOutline[]) => void) | null>(null);
@@ -587,7 +588,9 @@ function GenerationPreviewContent() {
         currentSession = updatedSession;
         setStreamingOutlines(outlines);
 
-        setStatusMessage(shouldReviewOutlines ? '' : '如不审阅，大纲生成后会自动继续生成课程内容。');
+        setStatusMessage(
+          shouldReviewOutlines ? '' : '如不审阅，大纲生成后会自动继续生成课程内容。',
+        );
         setIsConfirmingOutlines(false);
         outlines = await waitForOutlineReviewChoice(outlines, shouldReviewOutlines, signal);
         clearOutlineReviewTimer();
@@ -768,9 +771,10 @@ function GenerationPreviewContent() {
         // Filter out stale generated agent IDs that may linger in settings
         const registry = useAgentRegistry.getState();
         // Use agentIds from session if available, otherwise fall back to settings
-        const agentIdsToUse = currentSession.agentIds && currentSession.agentIds.length > 0
-          ? currentSession.agentIds
-          : settings.selectedAgentIds;
+        const agentIdsToUse =
+          currentSession.agentIds && currentSession.agentIds.length > 0
+            ? currentSession.agentIds
+            : settings.selectedAgentIds;
         const presetAgentIds = agentIdsToUse.filter((id) => {
           const a = registry.getAgent(id);
           return a && !a.isGenerated;
@@ -1159,9 +1163,7 @@ function GenerationPreviewContent() {
     // live streaming buffer so the editor can render mid-stream after expansion.
     // Filter out any outlines the user deleted during streaming.
     const rawEditorOutlines = session.sceneOutlines ?? streamingOutlines ?? [];
-    const editorOutlines = rawEditorOutlines.filter(
-      (o) => !deletedOutlineIdsRef.current.has(o.id),
-    );
+    const editorOutlines = rawEditorOutlines.filter((o) => !deletedOutlineIdsRef.current.has(o.id));
 
     return (
       <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center p-4 relative overflow-hidden">
@@ -1188,9 +1190,7 @@ function GenerationPreviewContent() {
             </div>
 
             <div className="max-w-2xl space-y-2 text-center mx-auto">
-              <h2 className="text-2xl font-bold tracking-tight">
-                {'审阅课程大纲'}
-              </h2>
+              <h2 className="text-2xl font-bold tracking-tight">{'审阅课程大纲'}</h2>
               <p className="text-muted-foreground text-sm md:text-base">
                 {isOutlineStreaming
                   ? '大纲正在流式生成中，完成后即可编辑。'
@@ -1316,11 +1316,7 @@ function GenerationPreviewContent() {
                     className="space-y-2"
                   >
                     <h2 className="text-2xl font-bold tracking-tight">
-                      {error
-                        ? '生成失败'
-                        : isComplete
-                          ? '生成完成！'
-                          : activeStep.title}
+                      {error ? '生成失败' : isComplete ? '生成完成！' : activeStep.title}
                     </h2>
                     <p className="text-muted-foreground text-base">
                       {error

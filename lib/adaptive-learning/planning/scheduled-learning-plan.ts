@@ -62,9 +62,7 @@ function startOfWeek(value: Date): Date {
 }
 
 function inclusiveDays(from: Date, to: Date): number {
-  return (
-    Math.floor((startOfUtcDay(to).getTime() - startOfUtcDay(from).getTime()) / DAY_MS) + 1
-  );
+  return Math.floor((startOfUtcDay(to).getTime() - startOfUtcDay(from).getTime()) / DAY_MS) + 1;
 }
 
 function resolveHorizonDays(projection: PlanningProfileProjection, now: Date): number {
@@ -97,7 +95,7 @@ function signalForPathNode(
   return projection.data.targetKnowledge.find(
     (signal) =>
       candidates.has(signal.nodeId) ||
-    (signal.displayName !== undefined && candidates.has(signal.displayName)),
+      (signal.displayName !== undefined && candidates.has(signal.displayName)),
   );
 }
 
@@ -137,12 +135,17 @@ function orderPathNodes(
     const eligible = [...remaining]
       .map((nodeId) => nodesById.get(nodeId)!)
       .filter((node) => !hasPendingPrerequisite(node));
-    const pool = eligible.length > 0 ? eligible : [...remaining].map((nodeId) => nodesById.get(nodeId)!);
+    const pool =
+      eligible.length > 0 ? eligible : [...remaining].map((nodeId) => nodesById.get(nodeId)!);
 
     pool.sort((left, right) => {
-      const statusOrder = Number(right.status === 'in_progress') - Number(left.status === 'in_progress');
+      const statusOrder =
+        Number(right.status === 'in_progress') - Number(left.status === 'in_progress');
       if (statusOrder !== 0) return statusOrder;
-      return priorityRank(left) - priorityRank(right) || pathOrder.get(left.id)! - pathOrder.get(right.id)!;
+      return (
+        priorityRank(left) - priorityRank(right) ||
+        pathOrder.get(left.id)! - pathOrder.get(right.id)!
+      );
     });
 
     const next = pool[0];
@@ -161,10 +164,7 @@ function taskMinutes(type: LearningTask['type'], sessionMinutes: number): number
   return sessionMinutes;
 }
 
-function taskDifficulty(
-  type: LearningTask['type'],
-  mastery: number | undefined,
-): number {
+function taskDifficulty(type: LearningTask['type'], mastery: number | undefined): number {
   if (type === 'diagnostic') return 1;
   if (type === 'learn' || type === 'worked-example') {
     return mastery !== undefined && mastery >= 0.7 ? 3 : 2;
@@ -212,42 +212,39 @@ function buildCandidates(
     ),
   );
 
-  return orderPathNodes(path, projection)
-    .flatMap((node) => {
-      const signal = signalForPathNode(node, projection);
-      const topic = node.topic || node.knowledgePoints[0] || node.id;
-      const nodeId = signal?.nodeId ?? normalizeNodeId(node.knowledgePoints[0] ?? topic);
-      const reasonCodes = Array.from(
-        new Set([...(signal?.reasonCodes ?? ['no-evidence']), 'path-sequence']),
-      );
+  return orderPathNodes(path, projection).flatMap((node) => {
+    const signal = signalForPathNode(node, projection);
+    const topic = node.topic || node.knowledgePoints[0] || node.id;
+    const nodeId = signal?.nodeId ?? normalizeNodeId(node.knowledgePoints[0] ?? topic);
+    const reasonCodes = Array.from(
+      new Set([...(signal?.reasonCodes ?? ['no-evidence']), 'path-sequence']),
+    );
 
-      return taskTypesForNode(signal).map((type) => ({
-        pathNodeId: node.id,
-        nodeId,
-        type,
-        title:
-          type === 'diagnostic'
-            ? `诊断：${topic}`
-            : type === 'learn'
-              ? `学习：${topic}`
-              : type === 'worked-example'
-                ? `例题：${topic}`
-                : type === 'review'
-                  ? `复习：${topic}`
-                  : `练习：${topic}`,
-        objective: `推进个人路径中的“${topic}”节点`,
-        plannedMinutes: taskMinutes(type, sessionMinutes),
-        difficulty: taskDifficulty(type, signal?.mastery),
-        resourceIds: [],
-        successCriteria: [
-          type === 'diagnostic'
-            ? '完成诊断并产生可用于更新画像的学习证据'
-            : '完成任务并提交学习结果',
-        ],
-        reasonCodes,
-        actionHref: taskHref(type, topic),
-      }));
-    });
+    return taskTypesForNode(signal).map((type) => ({
+      pathNodeId: node.id,
+      nodeId,
+      type,
+      title:
+        type === 'diagnostic'
+          ? `诊断：${topic}`
+          : type === 'learn'
+            ? `学习：${topic}`
+            : type === 'worked-example'
+              ? `例题：${topic}`
+              : type === 'review'
+                ? `复习：${topic}`
+                : `练习：${topic}`,
+      objective: `推进个人路径中的“${topic}”节点`,
+      plannedMinutes: taskMinutes(type, sessionMinutes),
+      difficulty: taskDifficulty(type, signal?.mastery),
+      resourceIds: [],
+      successCriteria: [
+        type === 'diagnostic' ? '完成诊断并产生可用于更新画像的学习证据' : '完成任务并提交学习结果',
+      ],
+      reasonCodes,
+      actionHref: taskHref(type, topic),
+    }));
+  });
 }
 
 function dailyBudget(projection: PlanningProfileProjection, date: Date): number {
@@ -276,9 +273,7 @@ export function buildWeeklyTargets(tasks: LearningTask[]): LearningPlan['weeklyT
     }));
 }
 
-export function buildScheduledLearningPlan(
-  input: BuildScheduledLearningPlanInput,
-): LearningPlan {
+export function buildScheduledLearningPlan(input: BuildScheduledLearningPlanInput): LearningPlan {
   const generatedAt = input.now ?? new Date();
   const validFromDate = planningDateFromInstant(generatedAt);
   const horizonDays = resolveHorizonDays(input.projection, validFromDate);
@@ -298,8 +293,7 @@ export function buildScheduledLearningPlan(
     const weekStart = formatDate(startOfWeek(date));
     const remainingWeek = Math.max(
       0,
-      input.projection.data.availability.weeklyAvailableMinutes -
-        (weeklyUsed.get(weekStart) ?? 0),
+      input.projection.data.availability.weeklyAvailableMinutes - (weeklyUsed.get(weekStart) ?? 0),
     );
     const budget = Math.min(dailyBudget(input.projection, date), remainingWeek);
     let usedToday = 0;

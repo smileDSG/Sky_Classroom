@@ -42,7 +42,10 @@ function cleanExpired() {
 
 export async function createCloudMindQuizJob(
   id: string,
-  input: Pick<CloudMindQuizJob, 'userId' | 'subject' | 'difficulty' | 'topic' | 'count' | 'profileInjected'> & {
+  input: Pick<
+    CloudMindQuizJob,
+    'userId' | 'subject' | 'difficulty' | 'topic' | 'count' | 'profileInjected'
+  > & {
     derived?: CloudMindQuizJob['derived'];
   },
 ): Promise<CloudMindQuizJob> {
@@ -77,7 +80,10 @@ export function getCloudMindQuizJob(id: string): CloudMindQuizJob | null {
   return job;
 }
 
-export function updateCloudMindQuizJob(id: string, patch: Partial<CloudMindQuizJob>): CloudMindQuizJob | null {
+export function updateCloudMindQuizJob(
+  id: string,
+  patch: Partial<CloudMindQuizJob>,
+): CloudMindQuizJob | null {
   const job = jobs.get(id);
   if (!job) return null;
   Object.assign(job, patch, { updatedAt: Date.now() });

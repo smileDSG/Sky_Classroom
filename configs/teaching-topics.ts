@@ -14,16 +14,7 @@ export const HOT_TOPICS: TopicCategory[] = [
   {
     subject: 'math',
     label: '数学',
-    topics: [
-      '二次函数',
-      '不等式',
-      '三角函数',
-      '数列',
-      '导数',
-      '概率统计',
-      '立体几何',
-      '解析几何',
-    ],
+    topics: ['二次函数', '不等式', '三角函数', '数列', '导数', '概率统计', '立体几何', '解析几何'],
   },
   {
     subject: 'physics',

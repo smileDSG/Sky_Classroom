@@ -81,11 +81,31 @@ export function GreetingSection() {
     return () => clearInterval(interval);
   }, [user]);
 
-  const dynamicStats = user ? [
-    { label: '今日学习', value: formatStudyTime(stats.todayStudyMinutes), icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: '连续打卡', value: stats.streakDays > 0 ? `${stats.streakDays} 天` : '—', icon: Sparkles, color: 'text-rose-500', bg: 'bg-rose-500/10' },
-    { label: '知识掌握', value: stats.masteryPercent > 0 ? `${stats.masteryPercent}%` : '—', icon: Brain, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  ] : [];
+  const dynamicStats = user
+    ? [
+        {
+          label: '今日学习',
+          value: formatStudyTime(stats.todayStudyMinutes),
+          icon: Zap,
+          color: 'text-amber-500',
+          bg: 'bg-amber-500/10',
+        },
+        {
+          label: '连续打卡',
+          value: stats.streakDays > 0 ? `${stats.streakDays} 天` : '—',
+          icon: Sparkles,
+          color: 'text-rose-500',
+          bg: 'bg-rose-500/10',
+        },
+        {
+          label: '知识掌握',
+          value: stats.masteryPercent > 0 ? `${stats.masteryPercent}%` : '—',
+          icon: Brain,
+          color: 'text-emerald-500',
+          bg: 'bg-emerald-500/10',
+        },
+      ]
+    : [];
 
   return (
     <motion.div
@@ -127,11 +147,15 @@ export function GreetingSection() {
                 whileHover={{ scale: 1.05, y: -2 }}
                 className="flex items-center gap-3 rounded-xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-3 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-slate-900/30 transition-shadow cursor-default"
               >
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.bg}`}>
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.bg}`}
+                >
                   <Icon className={`h-4 w-4 ${stat.color}`} />
                 </div>
                 <div>
-                  <div className="text-base font-bold text-slate-800 dark:text-slate-100">{stat.value}</div>
+                  <div className="text-base font-bold text-slate-800 dark:text-slate-100">
+                    {stat.value}
+                  </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">{stat.label}</div>
                 </div>
               </motion.div>

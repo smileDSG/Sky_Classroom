@@ -34,7 +34,9 @@ export default function MobileSlidesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [previewImages, setPreviewImages] = useState<string[] | null>(null);
-  const [generatedPptx, setGeneratedPptx] = useState<{ url: string; fileName: string } | null>(null);
+  const [generatedPptx, setGeneratedPptx] = useState<{ url: string; fileName: string } | null>(
+    null,
+  );
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -134,7 +136,7 @@ export default function MobileSlidesPage() {
         }
       }, POLL_INTERVAL_MS);
     },
-    [clearPoll, router, resolveProgress]
+    [clearPoll, router, resolveProgress],
   );
 
   const handleGenerate = useCallback(async () => {

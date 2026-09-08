@@ -31,8 +31,18 @@ export interface DifficultyConfig {
 }
 
 export const DIFFICULTY_CONFIG: DifficultyConfig[] = [
-  { id: 'easy', label: '基础', desc: '巩固基础概念和公式', masteryRange: [0, PROFILE_THRESHOLDS.weak] },
-  { id: 'medium', label: '进阶', desc: '提升理解与应用能力', masteryRange: [PROFILE_THRESHOLDS.weak, 70] },
+  {
+    id: 'easy',
+    label: '基础',
+    desc: '巩固基础概念和公式',
+    masteryRange: [0, PROFILE_THRESHOLDS.weak],
+  },
+  {
+    id: 'medium',
+    label: '进阶',
+    desc: '提升理解与应用能力',
+    masteryRange: [PROFILE_THRESHOLDS.weak, 70],
+  },
   { id: 'hard', label: '挑战', desc: '强化综合与思维深度', masteryRange: [70, 100] },
 ];
 
@@ -56,15 +66,55 @@ export interface SubjectConfig {
 }
 
 export const SUBJECT_CONFIG: SubjectConfig[] = [
-  { id: 'math', label: '数学', promptHint: '注重计算过程、公式运用和逻辑推理', dot: 'bg-violet-400' },
-  { id: 'physics', label: '物理', promptHint: '注重物理情景理解、公式选择和实验分析', dot: 'bg-sky-400' },
-  { id: 'chemistry', label: '化学', promptHint: '注重反应原理、物质结构和实验操作', dot: 'bg-emerald-400' },
-  { id: 'biology', label: '生物', promptHint: '注重概念辨析、生理过程和生命现象', dot: 'bg-green-400' },
-  { id: 'chinese', label: '语文', promptHint: '注重文学常识、阅读理解和语言表达', dot: 'bg-rose-400' },
+  {
+    id: 'math',
+    label: '数学',
+    promptHint: '注重计算过程、公式运用和逻辑推理',
+    dot: 'bg-violet-400',
+  },
+  {
+    id: 'physics',
+    label: '物理',
+    promptHint: '注重物理情景理解、公式选择和实验分析',
+    dot: 'bg-sky-400',
+  },
+  {
+    id: 'chemistry',
+    label: '化学',
+    promptHint: '注重反应原理、物质结构和实验操作',
+    dot: 'bg-emerald-400',
+  },
+  {
+    id: 'biology',
+    label: '生物',
+    promptHint: '注重概念辨析、生理过程和生命现象',
+    dot: 'bg-green-400',
+  },
+  {
+    id: 'chinese',
+    label: '语文',
+    promptHint: '注重文学常识、阅读理解和语言表达',
+    dot: 'bg-rose-400',
+  },
   { id: 'english', label: '英语', promptHint: '注重语法、词汇运用和阅读理解', dot: 'bg-amber-400' },
-  { id: 'history', label: '历史', promptHint: '注重史实脉络、时代背景和因果分析', dot: 'bg-orange-400' },
-  { id: 'politics', label: '政治', promptHint: '注重概念理解、材料分析和观点辨析', dot: 'bg-red-400' },
-  { id: 'geography', label: '地理', promptHint: '注重区域认知、图表信息和自然人文联系', dot: 'bg-teal-400' },
+  {
+    id: 'history',
+    label: '历史',
+    promptHint: '注重史实脉络、时代背景和因果分析',
+    dot: 'bg-orange-400',
+  },
+  {
+    id: 'politics',
+    label: '政治',
+    promptHint: '注重概念理解、材料分析和观点辨析',
+    dot: 'bg-red-400',
+  },
+  {
+    id: 'geography',
+    label: '地理',
+    promptHint: '注重区域认知、图表信息和自然人文联系',
+    dot: 'bg-teal-400',
+  },
 ];
 
 export const SUBJECT_IDS = SUBJECT_CONFIG.map((s) => s.id);

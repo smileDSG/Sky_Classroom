@@ -53,7 +53,10 @@ export function CircularProgress({
   const activeColor = color === '#722ed1' && value > 0 ? statusColor : color;
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       {/* Glow effect behind */}
       <div
         className="absolute inset-0 rounded-full opacity-20 blur-xl transition-colors duration-700"
@@ -81,7 +84,9 @@ export function CircularProgress({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           style={{
-            transition: animate ? 'stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1)' : undefined,
+            transition: animate
+              ? 'stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1)'
+              : undefined,
             filter: `drop-shadow(0 0 4px ${activeColor}40)`,
           }}
         />

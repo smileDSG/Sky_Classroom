@@ -49,8 +49,7 @@ describe('responsive — 响应式布局', () => {
 
   it('平板端断点 (min-width: 640px) and (max-width: 1023px)', () => {
     vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({
-      matches:
-        query.includes('min-width: 640px') && query.includes('max-width: 1023px'),
+      matches: query.includes('min-width: 640px') && query.includes('max-width: 1023px'),
       media: query,
       onchange: null,
       addEventListener: vi.fn(),
@@ -60,10 +59,7 @@ describe('responsive — 响应式布局', () => {
       dispatchEvent: vi.fn(),
     }));
 
-    const isTablet = window.matchMedia(
-      '(min-width: 640px) and (max-width: 1023px)',
-    ).matches;
+    const isTablet = window.matchMedia('(min-width: 640px) and (max-width: 1023px)').matches;
     expect(isTablet).toBe(true);
   });
-
 });

@@ -42,10 +42,7 @@ function splitToSentences(text: string): string[] {
 
 // ── Element → narration ───────────────────────────────────────────────
 
-function elementToSpeech(
-  el: PPTElement,
-  slideIndex: number,
-): SpeechSegment[] {
+function elementToSpeech(el: PPTElement, slideIndex: number): SpeechSegment[] {
   const segments: SpeechSegment[] = [];
 
   switch (el.type) {
@@ -161,10 +158,7 @@ function formulaToSpeech(latex: string): string {
 
 // ── Slide → script ─────────────────────────────────────────────────────
 
-export function buildSlideScript(
-  slide: Slide,
-  slideIndex: number,
-): SlideScript {
+export function buildSlideScript(slide: Slide, slideIndex: number): SlideScript {
   const allSegments: SpeechSegment[] = [];
 
   // Process elements in order: title-like text first, then body, then others

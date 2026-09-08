@@ -1,7 +1,4 @@
-import {
-  createInitialAbilityState,
-  updateAbilityFromAnswer,
-} from './ability-engine';
+import { createInitialAbilityState, updateAbilityFromAnswer } from './ability-engine';
 import type { AbilityState } from '@/lib/adaptive-learning/contracts';
 
 export interface AbilityReplayResponse {
@@ -31,10 +28,12 @@ function round(value: number): number {
 
 function brier(rows: AbilityReplayRow[], constant?: number): number {
   if (rows.length === 0) return 0;
-  return rows.reduce((sum, row) => {
-    const prediction = constant ?? row.predictedCorrectness;
-    return sum + (prediction - Number(row.correct)) ** 2;
-  }, 0) / rows.length;
+  return (
+    rows.reduce((sum, row) => {
+      const prediction = constant ?? row.predictedCorrectness;
+      return sum + (prediction - Number(row.correct)) ** 2;
+    }, 0) / rows.length
+  );
 }
 
 function auc(rows: AbilityReplayRow[]): number {

@@ -10,12 +10,24 @@ const log = createLogger('AnalyzeAgent');
 
 /** Map common Chinese subject names returned by LLMs to typed Subject values. */
 const SUBJECT_MAP: Record<string, Subject> = {
-  '数学': 'math', '物理': 'physics', '化学': 'chemistry', '生物': 'biology',
-  '语文': 'chinese', '英语': 'english', '历史': 'history', '地理': 'geography',
-  '政治': 'politics',
-  'math': 'math', 'physics': 'physics', 'chemistry': 'chemistry', 'biology': 'biology',
-  'chinese': 'chinese', 'english': 'english', 'history': 'history', 'geography': 'geography',
-  'politics': 'politics',
+  数学: 'math',
+  物理: 'physics',
+  化学: 'chemistry',
+  生物: 'biology',
+  语文: 'chinese',
+  英语: 'english',
+  历史: 'history',
+  地理: 'geography',
+  政治: 'politics',
+  math: 'math',
+  physics: 'physics',
+  chemistry: 'chemistry',
+  biology: 'biology',
+  chinese: 'chinese',
+  english: 'english',
+  history: 'history',
+  geography: 'geography',
+  politics: 'politics',
 };
 
 /** Validate and normalize subject name. */
@@ -66,12 +78,15 @@ export async function analyzeProblem(problemText: string): Promise<AnalysisResul
       questionType: ['choice', 'fill', 'solve', 'judge'].includes(parsed.questionType as string)
         ? (parsed.questionType as AnalysisResult['questionType'])
         : DEFAULT_ANALYSIS.questionType,
-      confidence: typeof parsed.confidence === 'number'
-        ? Math.max(0, Math.min(1, parsed.confidence))
-        : DEFAULT_ANALYSIS.confidence,
+      confidence:
+        typeof parsed.confidence === 'number'
+          ? Math.max(0, Math.min(1, parsed.confidence))
+          : DEFAULT_ANALYSIS.confidence,
     };
 
-    log.info(`[AnalyzeAgent] Done in ${Date.now() - t0}ms: subject=${analysis.subject}, type=${analysis.questionType}, difficulty=${analysis.difficulty}`);
+    log.info(
+      `[AnalyzeAgent] Done in ${Date.now() - t0}ms: subject=${analysis.subject}, type=${analysis.questionType}, difficulty=${analysis.difficulty}`,
+    );
     return analysis;
   } catch (err) {
     log.warn(`[AnalyzeAgent] Failed after ${Date.now() - t0}ms:`, err);

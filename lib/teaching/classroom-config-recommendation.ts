@@ -38,10 +38,15 @@ export function recommendAgentsFromLessonPlan(
   const studentIds = [...DEFAULT_STUDENT_IDS];
 
   const topic = (plan?.title || '').toLowerCase();
-  const allKps = sections.flatMap((s) => s.section.knowledgePoints).join(' ').toLowerCase();
+  const allKps = sections
+    .flatMap((s) => s.section.knowledgePoints)
+    .join(' ')
+    .toLowerCase();
   const text = `${topic} ${allKps}`;
 
-  const isMathScienceCode = /数学|物理|化学|编程|代码|python|算法|几何|函数|方程|统计|微积分/.test(text);
+  const isMathScienceCode = /数学|物理|化学|编程|代码|python|算法|几何|函数|方程|统计|微积分/.test(
+    text,
+  );
   const isLanguageHumanities = /语文|英语|历史|地理|文学|单词|背诵|语法|阅读|政治|经济/.test(text);
   const isArt = /美术|音乐|设计|绘画|创意|艺术|摄影/.test(text);
 

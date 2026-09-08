@@ -29,12 +29,19 @@ export async function POST(req: NextRequest) {
   if ('error' in auth) return auth.error;
 
   try {
-    const body = await req.json().catch(() => ({})) as RunRequest;
+    const body = (await req.json().catch(() => ({}))) as RunRequest;
 
     // Validate subjects if provided
     const VALID_SUBJECTS = new Set<SubjectId>([
-      'math', 'physics', 'chemistry', 'chinese', 'english',
-      'biology', 'history', 'geography', 'politics',
+      'math',
+      'physics',
+      'chemistry',
+      'chinese',
+      'english',
+      'biology',
+      'history',
+      'geography',
+      'politics',
     ]);
     const VALID_GRADES = new Set<GradeLevel>(['senior', 'college']);
 
@@ -74,11 +81,13 @@ export async function POST(req: NextRequest) {
       subjects: body.subjects,
       gradeLevels: body.gradeLevels ?? ['senior', 'college'],
       maxQuestions: body.maxQuestions,
-    }).then((job) => {
-      log.info(`[Enrichment] Job ${job.id} finished: ${job.stats.totalStored} stored`);
-    }).catch((err) => {
-      log.error(`[Enrichment] Job failed:`, err);
-    });
+    })
+      .then((job) => {
+        log.info(`[Enrichment] Job ${job.id} finished: ${job.stats.totalStored} stored`);
+      })
+      .catch((err) => {
+        log.error(`[Enrichment] Job failed:`, err);
+      });
 
     // Return immediately — job runs in background
     return apiSuccess({

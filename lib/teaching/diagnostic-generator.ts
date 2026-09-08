@@ -34,10 +34,7 @@ export interface DiagnosticQuiz {
  * Extract prerequisite knowledge points for a given topic.
  * Uses KNOWLEDGE_RELATIONS and student profile to find weak prerequisites.
  */
-export function extractPrerequisites(
-  topic: string,
-  profile: StudentProfile,
-): string[] {
+export function extractPrerequisites(topic: string, profile: StudentProfile): string[] {
   // 1. Find directly related knowledge points from KNOWLEDGE_RELATIONS
   const relatedPoints = new Set<string>();
 
@@ -86,8 +83,8 @@ export function extractPrerequisites(
 
   // 4. If no prerequisites found via relations, use profile weak points that match topic
   if (weakPrereqs.length === 0) {
-    const topicWeakPoints = profile.weakPoints.filter((wp) =>
-      wp.includes(topic) || topic.includes(wp),
+    const topicWeakPoints = profile.weakPoints.filter(
+      (wp) => wp.includes(topic) || topic.includes(wp),
     );
     if (topicWeakPoints.length > 0) {
       return topicWeakPoints.slice(0, 5);

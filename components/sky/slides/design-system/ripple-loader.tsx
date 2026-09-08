@@ -14,7 +14,10 @@ export function RippleLoader({
   className = '',
 }: RippleLoaderProps) {
   return (
-    <div className={`relative inline-flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
+    <div
+      className={`relative inline-flex items-center justify-center ${className}`}
+      style={{ width: size, height: size }}
+    >
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}

@@ -104,8 +104,10 @@ export async function exportCourseToPPTX(
   onProgress?: (progress: CourseExportProgress) => void,
 ): Promise<CourseExportResult> {
   const hasSlides = config.includeSlides && slides.length > 0;
-  const hasKnowledge = config.includeKnowledgePoints && knowledgePoints && knowledgePoints.length > 0;
-  const hasSimilar = config.includeSimilarQuestions && similarQuestions && similarQuestions.length > 0;
+  const hasKnowledge =
+    config.includeKnowledgePoints && knowledgePoints && knowledgePoints.length > 0;
+  const hasSimilar =
+    config.includeSimilarQuestions && similarQuestions && similarQuestions.length > 0;
 
   const totalSteps = 1 + (hasSlides ? 1 + slides.length : 0) + (hasKnowledge ? 1 : 0) + 1;
   let step = 0;
@@ -171,24 +173,40 @@ function addCoverSlide(pptx: pptxgen, config: CourseExportConfig, et: ExportThem
 
   // Title
   slide.addText(config.title, {
-    x: 0.5, y: 1.5, w: 9, h: 1.5,
-    fontSize: 36, fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
-    color: et?.coverTitleColor ?? '#FFFFFF', bold: true, align: 'center',
+    x: 0.5,
+    y: 1.5,
+    w: 9,
+    h: 1.5,
+    fontSize: 36,
+    fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
+    color: et?.coverTitleColor ?? '#FFFFFF',
+    bold: true,
+    align: 'center',
   });
 
   // Subtitle
   slide.addText('Sky Classroom · AI 生成课件', {
-    x: 0.5, y: 3.2, w: 9, h: 0.6,
-    fontSize: 16, fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
-    color: et?.coverSubColor ?? '#94a3b8', align: 'center',
+    x: 0.5,
+    y: 3.2,
+    w: 9,
+    h: 0.6,
+    fontSize: 16,
+    fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
+    color: et?.coverSubColor ?? '#94a3b8',
+    align: 'center',
   });
 
   // Avatar watermark
   if (config.avatarName) {
     slide.addText(`讲解人: ${config.avatarName}`, {
-      x: 6.5, y: 5.2, w: 3, h: 0.4,
-      fontSize: 11, fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
-      color: et?.mutedColor ?? '#64748b', align: 'right',
+      x: 6.5,
+      y: 5.2,
+      w: 3,
+      h: 0.4,
+      fontSize: 11,
+      fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
+      color: et?.mutedColor ?? '#64748b',
+      align: 'right',
     });
   }
 }
@@ -198,9 +216,14 @@ function addTOCSlide(pptx: pptxgen, slides: Slide[], et: ExportTheme) {
   slide.background = { fill: et.tocBg };
 
   slide.addText('目录', {
-    x: 0.8, y: 0.5, w: 8, h: 0.8,
-    fontSize: 28, fontFace: et.fontFamily,
-    color: et.bodyColor, bold: true,
+    x: 0.8,
+    y: 0.5,
+    w: 8,
+    h: 0.8,
+    fontSize: 28,
+    fontFace: et.fontFamily,
+    color: et.bodyColor,
+    bold: true,
   });
 
   const contentSlides = slides.filter((s) => s.type !== 'cover' && s.type !== 'end');
@@ -211,14 +234,23 @@ function addTOCSlide(pptx: pptxgen, slides: Slide[], et: ExportTheme) {
 
   if (items.length > 0) {
     slide.addText(items, {
-      x: 1.2, y: 1.8, w: 7.6, h: 0.4,
-      fontSize: 16, fontFace: et.fontFamily,
-      color: et.bodyColor, lineSpacingMultiple: 2.2,
+      x: 1.2,
+      y: 1.8,
+      w: 7.6,
+      h: 0.4,
+      fontSize: 16,
+      fontFace: et.fontFamily,
+      color: et.bodyColor,
+      lineSpacingMultiple: 2.2,
     });
   } else {
     slide.addText('（无内容页）', {
-      x: 1.2, y: 1.8, w: 7.6, h: 0.4,
-      fontSize: 14, fontFace: et.fontFamily,
+      x: 1.2,
+      y: 1.8,
+      w: 7.6,
+      h: 0.4,
+      fontSize: 14,
+      fontFace: et.fontFamily,
       color: et.mutedColor,
     });
   }
@@ -275,22 +307,37 @@ function addKnowledgeSlide(
   slide.background = { fill: et?.knowledgeBg ?? '#f8fafc' };
 
   slide.addText('知识点总结', {
-    x: 0.8, y: 0.5, w: 8, h: 0.8,
-    fontSize: 28, fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
-    color: et?.bodyColor ?? '#1e293b', bold: true,
+    x: 0.8,
+    y: 0.5,
+    w: 8,
+    h: 0.8,
+    fontSize: 28,
+    fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
+    color: et?.bodyColor ?? '#1e293b',
+    bold: true,
   });
 
   // Table rows: [Name, Description, Difficulty]
   const rows: pptxgen.TableRow[] = [
     [
-      { text: '知识点', options: { bold: true, fontSize: 13, fill: { color: et?.dividerColor ?? '#e2e8f0' } } },
-      { text: '说明', options: { bold: true, fontSize: 13, fill: { color: et?.dividerColor ?? '#e2e8f0' } } },
-      { text: '难度', options: { bold: true, fontSize: 13, fill: { color: et?.dividerColor ?? '#e2e8f0' } } },
+      {
+        text: '知识点',
+        options: { bold: true, fontSize: 13, fill: { color: et?.dividerColor ?? '#e2e8f0' } },
+      },
+      {
+        text: '说明',
+        options: { bold: true, fontSize: 13, fill: { color: et?.dividerColor ?? '#e2e8f0' } },
+      },
+      {
+        text: '难度',
+        options: { bold: true, fontSize: 13, fill: { color: et?.dividerColor ?? '#e2e8f0' } },
+      },
     ],
   ];
 
   for (const kp of knowledgePoints) {
-    const diffColor = kp.difficulty === 'easy' ? '#10b981' : kp.difficulty === 'hard' ? '#ef4444' : '#f59e0b';
+    const diffColor =
+      kp.difficulty === 'easy' ? '#10b981' : kp.difficulty === 'hard' ? '#ef4444' : '#f59e0b';
     rows.push([
       { text: kp.name, options: { fontSize: 12 } },
       { text: kp.description, options: { fontSize: 11 } },
@@ -299,7 +346,9 @@ function addKnowledgeSlide(
   }
 
   slide.addTable(rows, {
-    x: 0.5, y: 1.6, w: 9,
+    x: 0.5,
+    y: 1.6,
+    w: 9,
     colW: [2.5, 5.0, 1.5],
     border: { type: 'solid', pt: 0.5, color: et?.mutedColor ?? '#cbd5e1' },
     rowH: 0.4,
@@ -310,9 +359,14 @@ function addKnowledgeSlide(
     const qSlide = pptx.addSlide();
     qSlide.background = { fill: et?.knowledgeBg ?? '#f8fafc' };
     qSlide.addText('相似题目推荐', {
-      x: 0.8, y: 0.5, w: 8, h: 0.8,
-      fontSize: 28, fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
-      color: et?.bodyColor ?? '#1e293b', bold: true,
+      x: 0.8,
+      y: 0.5,
+      w: 8,
+      h: 0.8,
+      fontSize: 28,
+      fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
+      color: et?.bodyColor ?? '#1e293b',
+      bold: true,
     });
 
     const items = similarQuestions.slice(0, 8).map((q, i) => ({
@@ -321,8 +375,12 @@ function addKnowledgeSlide(
     }));
 
     qSlide.addText(items, {
-      x: 0.8, y: 1.6, w: 8.4, h: 0.4,
-      lineSpacingMultiple: 1.8, color: et?.bodyColor ?? '#334155',
+      x: 0.8,
+      y: 1.6,
+      w: 8.4,
+      h: 0.4,
+      lineSpacingMultiple: 1.8,
+      color: et?.bodyColor ?? '#334155',
     });
   }
 }
@@ -332,22 +390,38 @@ function addEndSlide(pptx: pptxgen, config: CourseExportConfig, et: ExportTheme 
   slide.background = { fill: et?.endBg ?? '#1e3a5f' };
 
   slide.addText('感谢观看', {
-    x: 0.5, y: 2.0, w: 9, h: 1.2,
-    fontSize: 40, fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
-    color: et?.textOnDark ?? '#FFFFFF', bold: true, align: 'center',
+    x: 0.5,
+    y: 2.0,
+    w: 9,
+    h: 1.2,
+    fontSize: 40,
+    fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
+    color: et?.textOnDark ?? '#FFFFFF',
+    bold: true,
+    align: 'center',
   });
 
   slide.addText(config.title, {
-    x: 0.5, y: 3.3, w: 9, h: 0.5,
-    fontSize: 18, fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
-    color: et?.mutedColor ?? '#94a3b8', align: 'center',
+    x: 0.5,
+    y: 3.3,
+    w: 9,
+    h: 0.5,
+    fontSize: 18,
+    fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
+    color: et?.mutedColor ?? '#94a3b8',
+    align: 'center',
   });
 
   if (config.avatarName) {
     slide.addText(`讲解人: ${config.avatarName}`, {
-      x: 0.5, y: 4.5, w: 9, h: 0.4,
-      fontSize: 12, fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
-      color: et?.mutedColor ?? '#64748b', align: 'center',
+      x: 0.5,
+      y: 4.5,
+      w: 9,
+      h: 0.4,
+      fontSize: 12,
+      fontFace: et?.fontFamily ?? DEFAULT_FONT_FAMILY,
+      color: et?.mutedColor ?? '#64748b',
+      align: 'center',
     });
   }
 }
@@ -361,7 +435,13 @@ function convertElement(
   ratioPx2Pt: number,
   et?: ExportTheme | null,
 ) {
-  const { left, top, width, height, rotate = 0 } = el as PPTElement & { height: number; rotate: number };
+  const {
+    left,
+    top,
+    width,
+    height,
+    rotate = 0,
+  } = el as PPTElement & { height: number; rotate: number };
   const x = left / ratioPx2Inch;
   const y = top / ratioPx2Inch;
   const w = width / ratioPx2Inch;
@@ -371,7 +451,11 @@ function convertElement(
     case 'text': {
       const textProps = formatHTML(el.content, ratioPx2Pt);
       pptxSlide.addText(textProps, {
-        x, y, w, h, rotate,
+        x,
+        y,
+        w,
+        h,
+        rotate,
         fontFace: el.defaultFontName || et?.fontFamily || DEFAULT_FONT_FAMILY,
         fontSize: DEFAULT_FONT_SIZE,
         color: el.defaultColor || et?.bodyColor || '#333333',
@@ -400,13 +484,26 @@ function convertElement(
       try {
         const svgPoints = toPoints(path);
         const points = formatPoints(svgPoints, ratioPx2Inch, { x: scaleX, y: scaleY });
-        const fillColor = shapeEl.fill || (shapeEl.gradient?.colors[0]?.color) || et?.accent || '#5b9bd5';
-        pptxSlide.addShape('custGeom' as pptxgen.ShapeType, {
-          x, y, w, h, rotate: rotate || 0,
-          fill: { color: fillColor },
-          line: shapeEl.outline ? getOutlineOption(shapeEl.outline as Parameters<typeof getOutlineOption>[0], ratioPx2Pt) : undefined,
-          custGeom: { points },
-        } as pptxgen.ShapeProps);
+        const fillColor =
+          shapeEl.fill || shapeEl.gradient?.colors[0]?.color || et?.accent || '#5b9bd5';
+        pptxSlide.addShape(
+          'custGeom' as pptxgen.ShapeType,
+          {
+            x,
+            y,
+            w,
+            h,
+            rotate: rotate || 0,
+            fill: { color: fillColor },
+            line: shapeEl.outline
+              ? getOutlineOption(
+                  shapeEl.outline as Parameters<typeof getOutlineOption>[0],
+                  ratioPx2Pt,
+                )
+              : undefined,
+            custGeom: { points },
+          } as pptxgen.ShapeProps,
+        );
       } catch {
         log.warn(`Shape ${el.id}: SVG path conversion failed, skipping`);
       }
@@ -418,11 +515,21 @@ function convertElement(
       try {
         const svgPoints = toPoints(linePath);
         const points = formatPoints(svgPoints, ratioPx2Inch);
-        pptxSlide.addShape('custGeom' as pptxgen.ShapeType, {
-          x, y, w, h, rotate: rotate || 0,
-          line: { color: (el as { color?: string }).color || et?.bodyColor || '#333333', width: 1 },
-          custGeom: { points },
-        } as pptxgen.ShapeProps);
+        pptxSlide.addShape(
+          'custGeom' as pptxgen.ShapeType,
+          {
+            x,
+            y,
+            w,
+            h,
+            rotate: rotate || 0,
+            line: {
+              color: (el as { color?: string }).color || et?.bodyColor || '#333333',
+              width: 1,
+            },
+            custGeom: { points },
+          } as pptxgen.ShapeProps,
+        );
       } catch {
         log.warn(`Line ${el.id}: SVG path conversion failed, skipping`);
       }
@@ -435,7 +542,10 @@ function convertElement(
         const omml = latexToOmml(latexEl.latex, 16);
         if (omml) {
           pptxSlide.addFormula({
-            x, y, w, h,
+            x,
+            y,
+            w,
+            h,
             data: omml,
           } as unknown as pptxgen.FormulaProps);
         }
@@ -455,10 +565,7 @@ function convertElement(
 
 const TEMPLATE_SCALE = 128; // 1280px = 10inch → 1px = 1/128 inch
 
-function applyTemplateBackground(
-  pptxSlide: pptxgen.Slide,
-  templateData: TemplateSlideData,
-) {
+function applyTemplateBackground(pptxSlide: pptxgen.Slide, templateData: TemplateSlideData) {
   const bg = templateData.page.background;
   if (!bg) return;
 
@@ -593,17 +700,20 @@ function convertTemplateElement(
       const lineC = el.border
         ? resolveTemplateColor(el.border.color, theme, et?.bodyColor || '#333333')
         : formatColor(et?.bodyColor || '#333333');
-      pptxSlide.addShape('line' as never, {
-        x: inchX,
-        y: inchY,
-        w: inchW,
-        h: inchH,
-        line: {
-          color: lineC.color,
-          transparency: (1 - lineC.alpha) * 100,
-          width: el.border ? el.border.width / TEMPLATE_SCALE : 1,
-        },
-      } as never);
+      pptxSlide.addShape(
+        'line' as never,
+        {
+          x: inchX,
+          y: inchY,
+          w: inchW,
+          h: inchH,
+          line: {
+            color: lineC.color,
+            transparency: (1 - lineC.alpha) * 100,
+            width: el.border ? el.border.width / TEMPLATE_SCALE : 1,
+          },
+        } as never,
+      );
       break;
     }
 

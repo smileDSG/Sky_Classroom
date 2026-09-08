@@ -94,7 +94,10 @@ describe('InstructionExecutor', () => {
         [
           { op: 'addText', params: { text: '\\Delta G = -nFE，电动势', x: 1, y: 2, w: 8, h: 1 } },
           { op: 'addText', params: { text: '温度 \\approx 298 K', x: 1, y: 3, w: 8, h: 1 } },
-          { op: 'addText', params: { text: '\\alpha + \\beta \\rightarrow \\gamma', x: 1, y: 4, w: 8, h: 1 } },
+          {
+            op: 'addText',
+            params: { text: '\\alpha + \\beta \\rightarrow \\gamma', x: 1, y: 4, w: 8, h: 1 },
+          },
         ],
         1,
       );
@@ -139,7 +142,9 @@ describe('InstructionExecutor', () => {
                 ['3', '4'],
                 ['5', '6'],
               ],
-              x: 1, y: 2, w: 8,
+              x: 1,
+              y: 2,
+              w: 8,
             },
           },
         ],
@@ -169,7 +174,9 @@ describe('InstructionExecutor', () => {
                 ['1', '2'],
                 [{ text: '3' } as unknown as string, '4'],
               ],
-              x: 1, y: 2, w: 8,
+              x: 1,
+              y: 2,
+              w: 8,
             },
           },
         ],
@@ -195,7 +202,10 @@ describe('InstructionExecutor', () => {
         slide as unknown as Slide,
         mockPres,
         [
-          { op: 'addFormula', params: { latex: 'x^2 + y^2 = r^2', x: 1, y: 2, w: 8, h: 1, fontSize: 16 } },
+          {
+            op: 'addFormula',
+            params: { latex: 'x^2 + y^2 = r^2', x: 1, y: 2, w: 8, h: 1, fontSize: 16 },
+          },
         ],
         1,
       );
@@ -220,9 +230,7 @@ describe('InstructionExecutor', () => {
       const result = await executor.execute(
         slide as unknown as Slide,
         mockPres,
-        [
-          { op: 'addFormula', params: { latex: '\\frac{a}{b}', x: 1, y: 2, w: 8, h: 1 } },
-        ],
+        [{ op: 'addFormula', params: { latex: '\\frac{a}{b}', x: 1, y: 2, w: 8, h: 1 } }],
         1,
       );
 
@@ -243,9 +251,7 @@ describe('InstructionExecutor', () => {
       const result = await executor.execute(
         slide as unknown as Slide,
         mockPres,
-        [
-          { op: 'addFormula', params: { latex: '\\Delta G', x: 1, y: 2, w: 8, h: 1 } },
-        ],
+        [{ op: 'addFormula', params: { latex: '\\Delta G', x: 1, y: 2, w: 8, h: 1 } }],
         1,
       );
 

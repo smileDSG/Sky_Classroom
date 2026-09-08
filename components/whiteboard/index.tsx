@@ -23,7 +23,8 @@ interface WhiteboardProps {
 /**
  * Whiteboard component
  */
-export function Whiteboard({ isOpen, onClose }: WhiteboardProps) {const stage = useStageStore.use.stage();
+export function Whiteboard({ isOpen, onClose }: WhiteboardProps) {
+  const stage = useStageStore.use.stage();
   const isClearing = useCanvasStore.use.whiteboardClearing();
   const clearingRef = useRef(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -203,95 +204,138 @@ export function Whiteboard({ isOpen, onClose }: WhiteboardProps) {const stage =
             </div>
 
             {/* Whiteboard Content Area */}
-            <div
-              className="flex-1 relative bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#374151_1px,transparent_1px)] [background-size:24px_24px] overflow-hidden"
-            >
+            <div className="flex-1 relative bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#374151_1px,transparent_1px)] [background-size:24px_24px] overflow-hidden">
               <WhiteboardCanvas ref={canvasRef} onViewModifiedChange={setViewModified} />
 
               {/* DrawingCanvas overlay */}
               <DrawingCanvas canvasWidth={DRAW_W} canvasHeight={DRAW_H} />
 
               {/* User-drawn elements */}
-              <div className="absolute inset-0 z-[126] pointer-events-none" style={{ width: '100%', height: '100%' }}>
+              <div
+                className="absolute inset-0 z-[126] pointer-events-none"
+                style={{ width: '100%', height: '100%' }}
+              >
                 {/* Editing textarea overlay */}
-                {editingTextId && (() => {
-                  const editingEl = userElements.find((e) => e.id === editingTextId) as { id: string; left: number; top: number; width: number; height: number; content: string; defaultColor: string; defaultFontName: string } | undefined;
-                  if (!editingEl) return null;
-                  const fs = useUserWhiteboardStore.getState().fontSize;
-                  const handleCommit = () => {
-                    const el = document.getElementById(`whiteboard-textarea-${editingTextId}`) as HTMLTextAreaElement | null;
-                    if (el) {
-                      const text = el.value;
-                      if (text.trim()) {
-                        updateTextContent(editingTextId, text);
-                      } else {
-                        // Delete empty text element
-                        useUserWhiteboardStore.getState().deleteUserElement(editingTextId);
-                      }
-                    }
-                    setEditingTextId(null);
-                  };
-                  return (
-                    <textarea
-                      id={`whiteboard-textarea-${editingTextId}`}
-                      ref={textareaRef}
-                      className="absolute resize-none outline-none pointer-events-auto"
-                      style={{
-                        left: `${(editingEl.left / DRAW_W) * 100}%`,
-                        top: `${(editingEl.top / DRAW_H) * 100}%`,
-                        width: `${(editingEl.width / DRAW_W) * 100}%`,
-                        height: `${(editingEl.height / DRAW_H) * 100}%`,
-                        fontSize: `${fs}px`,
-                        color: editingEl.defaultColor,
-                        fontFamily: editingEl.defaultFontName,
-                        background: 'transparent',
-                        border: '1px solid #6366f1',
-                        borderRadius: '4px',
-                        padding: '8px',
-                        lineHeight: '1.5',
-                        overflow: 'auto',
-                      }}
-                      defaultValue={editingEl.content || ''}
-                      onBlur={handleCommit}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          e.preventDefault();
-                          handleCommit();
+                {editingTextId &&
+                  (() => {
+                    const editingEl = userElements.find((e) => e.id === editingTextId) as
+                      | {
+                          id: string;
+                          left: number;
+                          top: number;
+                          width: number;
+                          height: number;
+                          content: string;
+                          defaultColor: string;
+                          defaultFontName: string;
                         }
-                      }}
-                    />
-                  );
-                })()}
-                {userElements.filter((e) => e.id !== editingTextId).map((element, index) => {
-                  // Calculate bounding box - lines use start/end, others use left/top/width/height
-                  const isLine = element.type === 'line';
-                  const lineEl = isLine ? (element as { left: number; top: number; start: [number, number]; end: [number, number] }) : null;
-                  const boxLeft = isLine && lineEl ? Math.min(lineEl.left + lineEl.start[0], lineEl.left + lineEl.end[0]) : ((element as { left: number }).left);
-                  const boxTop = isLine && lineEl ? Math.min(lineEl.top + lineEl.start[1], lineEl.top + lineEl.end[1]) : ((element as { top: number }).top);
-                  const boxW = isLine && lineEl ? Math.max(Math.abs(lineEl.end[0] - lineEl.start[0]), 24) : ((element as { width: number }).width);
-                  const boxH = isLine && lineEl ? Math.max(Math.abs(lineEl.end[1] - lineEl.start[1]), 24) : (('height' in element) ? (element as { height: number }).height : undefined);
-                  // Adjust internal coordinates relative to bounding box origin
-                  const positioned = isLine && lineEl
-                    ? { ...element, left: lineEl.left + lineEl.start[0] - boxLeft, top: lineEl.top + lineEl.start[1] - boxTop }
-                    : { ...element, left: 0, top: 0 };
-                  return (
-                    <div
-                      key={element.id}
-                      className="absolute"
-                      style={{
-                        left: `${(boxLeft / DRAW_W) * 100}%`,
-                        top: `${(boxTop / DRAW_H) * 100}%`,
-                        width: `${(boxW / DRAW_W) * 100}%`,
-                        ...(boxH != null ? { height: `${(boxH / DRAW_H) * 100}%` } : {}),
-                        pointerEvents: activeTool === 'select' ? 'auto' : 'none',
-                      }}
-                    >
-                      <div className="absolute inset-0">
-                        <ScreenElement elementInfo={positioned} elementIndex={index} />
+                      | undefined;
+                    if (!editingEl) return null;
+                    const fs = useUserWhiteboardStore.getState().fontSize;
+                    const handleCommit = () => {
+                      const el = document.getElementById(
+                        `whiteboard-textarea-${editingTextId}`,
+                      ) as HTMLTextAreaElement | null;
+                      if (el) {
+                        const text = el.value;
+                        if (text.trim()) {
+                          updateTextContent(editingTextId, text);
+                        } else {
+                          // Delete empty text element
+                          useUserWhiteboardStore.getState().deleteUserElement(editingTextId);
+                        }
+                      }
+                      setEditingTextId(null);
+                    };
+                    return (
+                      <textarea
+                        id={`whiteboard-textarea-${editingTextId}`}
+                        ref={textareaRef}
+                        className="absolute resize-none outline-none pointer-events-auto"
+                        style={{
+                          left: `${(editingEl.left / DRAW_W) * 100}%`,
+                          top: `${(editingEl.top / DRAW_H) * 100}%`,
+                          width: `${(editingEl.width / DRAW_W) * 100}%`,
+                          height: `${(editingEl.height / DRAW_H) * 100}%`,
+                          fontSize: `${fs}px`,
+                          color: editingEl.defaultColor,
+                          fontFamily: editingEl.defaultFontName,
+                          background: 'transparent',
+                          border: '1px solid #6366f1',
+                          borderRadius: '4px',
+                          padding: '8px',
+                          lineHeight: '1.5',
+                          overflow: 'auto',
+                        }}
+                        defaultValue={editingEl.content || ''}
+                        onBlur={handleCommit}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            e.preventDefault();
+                            handleCommit();
+                          }
+                        }}
+                      />
+                    );
+                  })()}
+                {userElements
+                  .filter((e) => e.id !== editingTextId)
+                  .map((element, index) => {
+                    // Calculate bounding box - lines use start/end, others use left/top/width/height
+                    const isLine = element.type === 'line';
+                    const lineEl = isLine
+                      ? (element as {
+                          left: number;
+                          top: number;
+                          start: [number, number];
+                          end: [number, number];
+                        })
+                      : null;
+                    const boxLeft =
+                      isLine && lineEl
+                        ? Math.min(lineEl.left + lineEl.start[0], lineEl.left + lineEl.end[0])
+                        : (element as { left: number }).left;
+                    const boxTop =
+                      isLine && lineEl
+                        ? Math.min(lineEl.top + lineEl.start[1], lineEl.top + lineEl.end[1])
+                        : (element as { top: number }).top;
+                    const boxW =
+                      isLine && lineEl
+                        ? Math.max(Math.abs(lineEl.end[0] - lineEl.start[0]), 24)
+                        : (element as { width: number }).width;
+                    const boxH =
+                      isLine && lineEl
+                        ? Math.max(Math.abs(lineEl.end[1] - lineEl.start[1]), 24)
+                        : 'height' in element
+                          ? (element as { height: number }).height
+                          : undefined;
+                    // Adjust internal coordinates relative to bounding box origin
+                    const positioned =
+                      isLine && lineEl
+                        ? {
+                            ...element,
+                            left: lineEl.left + lineEl.start[0] - boxLeft,
+                            top: lineEl.top + lineEl.start[1] - boxTop,
+                          }
+                        : { ...element, left: 0, top: 0 };
+                    return (
+                      <div
+                        key={element.id}
+                        className="absolute"
+                        style={{
+                          left: `${(boxLeft / DRAW_W) * 100}%`,
+                          top: `${(boxTop / DRAW_H) * 100}%`,
+                          width: `${(boxW / DRAW_W) * 100}%`,
+                          ...(boxH != null ? { height: `${(boxH / DRAW_H) * 100}%` } : {}),
+                          pointerEvents: activeTool === 'select' ? 'auto' : 'none',
+                        }}
+                      >
+                        <div className="absolute inset-0">
+                          <ScreenElement elementInfo={positioned} elementIndex={index} />
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
 
               {/* WhiteboardToolbar */}

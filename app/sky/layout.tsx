@@ -3,10 +3,6 @@ export const metadata = {
   description: '智眸无界的天空课堂 — AI 驱动的智能教学平台',
 };
 
-export default function SkyLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function SkyLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

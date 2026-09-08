@@ -14,7 +14,10 @@ function makeQuestion(overrides: Partial<QuestionBankEntry> = {}): QuestionBankE
     problemText: 'Solve for x: x + 1 = 2',
     answer: 'x = 1',
     steps: ['Subtract 1 from both sides', 'x = 1'],
-    knowledgePoints: [{ name: 'linear equation', description: '', difficulty: 'easy' }, { name: 'algebra', description: '', difficulty: 'easy' }],
+    knowledgePoints: [
+      { name: 'linear equation', description: '', difficulty: 'easy' },
+      { name: 'algebra', description: '', difficulty: 'easy' },
+    ],
     agentId: 'science-agent',
     verified: false,
     ...overrides,
@@ -64,7 +67,9 @@ describe('QuestionBankDAO', () => {
   describe('search', () => {
     test('finds questions by substring match', async () => {
       await dao.upsert(makeQuestion({ problemHash: 'h1', problemText: 'Solve for x: x + 1 = 2' }));
-      await dao.upsert(makeQuestion({ problemHash: 'h2', problemText: 'What is the derivative of sin(x)?' }));
+      await dao.upsert(
+        makeQuestion({ problemHash: 'h2', problemText: 'What is the derivative of sin(x)?' }),
+      );
       const results = await dao.search('derivative');
       expect(results).toHaveLength(1);
       expect(results[0].problemHash).toBe('h2');
@@ -103,34 +108,48 @@ describe('QuestionBankDAO', () => {
 
   describe('findByKnowledgePoint', () => {
     test('finds questions by knowledge point', async () => {
-      await dao.upsert(makeQuestion({
-        problemHash: 'h1',
-        knowledgePoints: [{ name: 'algebra', description: '', difficulty: 'easy' }, { name: 'equation', description: '', difficulty: 'easy' }],
-      }));
-      await dao.upsert(makeQuestion({
-        problemHash: 'h2',
-        knowledgePoints: [{ name: 'geometry', description: '', difficulty: 'easy' }, { name: 'triangle', description: '', difficulty: 'easy' }],
-      }));
+      await dao.upsert(
+        makeQuestion({
+          problemHash: 'h1',
+          knowledgePoints: [
+            { name: 'algebra', description: '', difficulty: 'easy' },
+            { name: 'equation', description: '', difficulty: 'easy' },
+          ],
+        }),
+      );
+      await dao.upsert(
+        makeQuestion({
+          problemHash: 'h2',
+          knowledgePoints: [
+            { name: 'geometry', description: '', difficulty: 'easy' },
+            { name: 'triangle', description: '', difficulty: 'easy' },
+          ],
+        }),
+      );
       const results = await dao.findByKnowledgePoint('algebra');
       expect(results).toHaveLength(1);
       expect(results[0].problemHash).toBe('h1');
     });
 
     test('case-insensitive knowledge point match', async () => {
-      await dao.upsert(makeQuestion({
-        problemHash: 'h1',
-        knowledgePoints: [{ name: 'Algebra', description: '', difficulty: 'easy' }],
-      }));
+      await dao.upsert(
+        makeQuestion({
+          problemHash: 'h1',
+          knowledgePoints: [{ name: 'Algebra', description: '', difficulty: 'easy' }],
+        }),
+      );
       const results = await dao.findByKnowledgePoint('algebra');
       expect(results).toHaveLength(1);
     });
 
     test('respects limit parameter', async () => {
       for (let i = 0; i < 5; i++) {
-        await dao.upsert(makeQuestion({
-          problemHash: `h${i}`,
-          knowledgePoints: [{ name: 'math', description: '', difficulty: 'easy' }],
-        }));
+        await dao.upsert(
+          makeQuestion({
+            problemHash: `h${i}`,
+            knowledgePoints: [{ name: 'math', description: '', difficulty: 'easy' }],
+          }),
+        );
       }
       const results = await dao.findByKnowledgePoint('math', 3);
       expect(results).toHaveLength(3);

@@ -76,52 +76,32 @@ describe('P6-001: mistakes ↔ knowledge graph integration', () => {
 
 describe('P6-001: mistake cause analysis', () => {
   test('calculation error detected for wrong numbers', () => {
-    const result = analyzeMistakeCause(
-      '计算 2×3 = ?',
-      '6',
-      '5',
-    );
+    const result = analyzeMistakeCause('计算 2×3 = ?', '6', '5');
 
     expect(result).toBeDefined();
     expect(typeof result).toBe('string');
   });
 
   test('method wrong detected for wrong formula', () => {
-    const result = analyzeMistakeCause(
-      '三角形面积 = ?',
-      '底×高÷2',
-      '底×高',
-    );
+    const result = analyzeMistakeCause('三角形面积 = ?', '底×高÷2', '底×高');
 
     expect(result).toBeDefined();
   });
 
   test('careless detected for nearly-correct answer', () => {
-    const result = analyzeMistakeCause(
-      '2 + 2 = ?',
-      '4',
-      '5',
-    );
+    const result = analyzeMistakeCause('2 + 2 = ?', '4', '5');
 
     expect(result).toBeDefined();
   });
 
   test('concept unclear for conceptual question', () => {
-    const result = analyzeMistakeCause(
-      '什么是函数？',
-      '函数是一种映射关系',
-      '函数就是计算器',
-    );
+    const result = analyzeMistakeCause('什么是函数？', '函数是一种映射关系', '函数就是计算器');
 
     expect(result).toBeDefined();
   });
 
   test('empty answer returns concept-unclear', () => {
-    const result = analyzeMistakeCause(
-      '2x = 4',
-      'x = 2',
-      '',
-    );
+    const result = analyzeMistakeCause('2x = 4', 'x = 2', '');
 
     expect(result).toBe('concept-unclear');
   });

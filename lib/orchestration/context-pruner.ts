@@ -37,7 +37,7 @@ const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
   'gpt-4o-mini': 128_000,
   'gemini-2.5-flash': 1_000_000,
   'deepseek-v4-pro': 128_000,
-  'qwen3': 131_072,
+  qwen3: 131_072,
 };
 
 /**
@@ -112,9 +112,7 @@ export function pruneContext(
   return compressed.map((m, i) => {
     const original = messages.find(
       (orig) =>
-        orig.role === m.role &&
-        typeof orig.content === 'string' &&
-        orig.content === m.content,
+        orig.role === m.role && typeof orig.content === 'string' && orig.content === m.content,
     );
     return original || { role: m.role as MessageRole, content: m.content };
   });

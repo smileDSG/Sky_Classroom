@@ -122,7 +122,9 @@ describe('Cover Layouts', () => {
         </svg>,
       );
       const rects = Array.from(container.querySelectorAll('rect'));
-      const stripe = rects.find((r) => r.getAttribute('x') === '6' && r.getAttribute('width') === '0.04');
+      const stripe = rects.find(
+        (r) => r.getAttribute('x') === '6' && r.getAttribute('width') === '0.04',
+      );
       expect(stripe).toBeTruthy();
     });
   });
@@ -189,7 +191,9 @@ describe('Cover Layouts', () => {
         </svg>,
       );
       const rects = Array.from(container.querySelectorAll('rect'));
-      const topBar = rects.find((r) => r.getAttribute('y') === '0' && r.getAttribute('height') === '1.2');
+      const topBar = rects.find(
+        (r) => r.getAttribute('y') === '0' && r.getAttribute('height') === '1.2',
+      );
       expect(topBar).toBeTruthy();
     });
 

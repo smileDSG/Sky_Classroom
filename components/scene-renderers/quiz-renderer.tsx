@@ -68,16 +68,18 @@ export function QuizRenderer({ content, mode, sceneId: _sceneId }: QuizRendererP
                     const letterPrefix = String.fromCharCode(65 + optIndex);
 
                     if (question.type === 'multiple') {
-                      const selected = ((answers[question.id] as string[] | undefined) ?? []).includes(
-                        optionValue || letterPrefix,
-                      );
+                      const selected = (
+                        (answers[question.id] as string[] | undefined) ?? []
+                      ).includes(optionValue || letterPrefix);
                       return (
                         <label
                           key={`${question.id}-opt-${optIndex}`}
                           className={cn(
                             'flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted',
                             selected && 'bg-muted',
-                            submitted && (question.answer ?? []).includes(optionValue || letterPrefix) && 'bg-emerald-50',
+                            submitted &&
+                              (question.answer ?? []).includes(optionValue || letterPrefix) &&
+                              'bg-emerald-50',
                           )}
                         >
                           <input
@@ -86,7 +88,11 @@ export function QuizRenderer({ content, mode, sceneId: _sceneId }: QuizRendererP
                             checked={selected}
                             disabled={submitted}
                             onChange={(e) =>
-                              handleMultipleChange(question.id, optionValue || letterPrefix, e.target.checked)
+                              handleMultipleChange(
+                                question.id,
+                                optionValue || letterPrefix,
+                                e.target.checked,
+                              )
                             }
                             className="size-4"
                           />
@@ -104,7 +110,9 @@ export function QuizRenderer({ content, mode, sceneId: _sceneId }: QuizRendererP
                         className={cn(
                           'flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted',
                           selected && 'bg-muted',
-                          submitted && (question.answer ?? [])[0] === (optionValue || letterPrefix) && 'bg-emerald-50',
+                          submitted &&
+                            (question.answer ?? [])[0] === (optionValue || letterPrefix) &&
+                            'bg-emerald-50',
                         )}
                       >
                         <input
@@ -151,7 +159,14 @@ export function QuizRenderer({ content, mode, sceneId: _sceneId }: QuizRendererP
             <p className="text-lg font-semibold">
               Score: {score.correct} / {score.total}
             </p>
-            <Button variant="outline" onClick={() => { setSubmitted(false); setScore(null); setAnswers({}); }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSubmitted(false);
+                setScore(null);
+                setAnswers({});
+              }}
+            >
               Retry
             </Button>
           </div>

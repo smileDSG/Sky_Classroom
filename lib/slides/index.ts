@@ -40,8 +40,5 @@ export type { SpeechSegment, SlideScript } from './speech-script';
 export { exportPptx } from './pptx-exporter';
 export type { PptxExportOptions, PptxExportResult } from './pptx-exporter';
 
-export {
-  getPptxTheme,
-  getTheme,
-} from './pptx-themes';
+export { getPptxTheme, getTheme } from './pptx-themes';
 export type { PptxTheme } from './pptx-themes';

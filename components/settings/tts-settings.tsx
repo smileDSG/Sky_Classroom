@@ -72,8 +72,7 @@ interface TTSSettingsProps {
   selectedProviderId: TTSProviderId;
 }
 
-export function TTSSettings({
-  selectedProviderId }: TTSSettingsProps) {
+export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
   const locale = 'zh-CN';
   const ttsVoice = useSettingsStore((state) => state.ttsVoice);
   const ttsSpeed = useSettingsStore((state) => state.ttsSpeed);
@@ -317,9 +316,7 @@ export function TTSSettings({
                   {requestUrl}
                 </code>
               ) : (
-                <span className="min-w-0 flex-1 truncate">
-                  {'填写 Base URL 后生成'}
-                </span>
+                <span className="min-w-0 flex-1 truncate">{'填写 Base URL 后生成'}</span>
               )}
             </div>
           </div>
@@ -339,9 +336,7 @@ export function TTSSettings({
                         autoCorrect="off"
                         spellCheck={false}
                         placeholder={
-                          isServerConfigured
-                            ? '可选，留空则使用服务端配置'
-                            : '输入 API Key'
+                          isServerConfigured ? '可选，留空则使用服务端配置' : '输入 API Key'
                         }
                         value={doubaoAppId}
                         onChange={(e) => setDoubaoCompoundKey(e.target.value, doubaoAccessKey)}
@@ -367,9 +362,7 @@ export function TTSSettings({
                         autoCorrect="off"
                         spellCheck={false}
                         placeholder={
-                          isServerConfigured
-                            ? '可选，留空则使用服务端配置'
-                            : '输入 API Key'
+                          isServerConfigured ? '可选，留空则使用服务端配置' : '输入 API Key'
                         }
                         value={doubaoAccessKey}
                         onChange={(e) => setDoubaoCompoundKey(doubaoAppId, e.target.value)}
@@ -397,9 +390,7 @@ export function TTSSettings({
                       autoCorrect="off"
                       spellCheck={false}
                       placeholder={
-                        isServerConfigured
-                          ? '可选，留空则使用服务端配置'
-                          : '输入 API Key'
+                        isServerConfigured ? '可选，留空则使用服务端配置' : '输入 API Key'
                       }
                       value={ttsProvidersConfig[selectedProviderId]?.apiKey || ''}
                       onChange={(e) =>
@@ -515,9 +506,7 @@ export function TTSSettings({
               </div>
             ))}
           </div>
-          <p className="text-[11px] text-muted-foreground/60">
-            {'模型随音色选择自动确定'}
-          </p>
+          <p className="text-[11px] text-muted-foreground/60">{'模型随音色选择自动确定'}</p>
         </div>
       )}
 
@@ -581,7 +570,9 @@ export function TTSSettings({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground/50 italic">{'暂无音色，请在下方添加以支持 Agent 选择不同音色。'}</p>
+            <p className="text-sm text-muted-foreground/50 italic">
+              {'暂无音色，请在下方添加以支持 Agent 选择不同音色。'}
+            </p>
           )}
           <AddVoiceRow
             existingIds={(
@@ -716,9 +707,7 @@ function VoxCPMVoiceManager() {
               setCloneFile(file);
               if (!cloneName.trim()) setCloneName('录制音色');
             } catch (error) {
-              toast.error(
-                error instanceof Error ? error.message : '录音转换失败',
-              );
+              toast.error(error instanceof Error ? error.message : '录音转换失败');
             }
           }
           recordingChunksRef.current = [];
@@ -745,9 +734,7 @@ function VoxCPMVoiceManager() {
       setIsRecordingReference(false);
       stopRecordingTimer();
       stopRecordingStream();
-      toast.error(
-        error instanceof Error ? error.message : '无法开始录音',
-      );
+      toast.error(error instanceof Error ? error.message : '无法开始录音');
     }
   };
 
@@ -844,9 +831,7 @@ function VoxCPMVoiceManager() {
       setCloneFile(file);
     } catch (error) {
       setCloneFile(null);
-      toast.error(
-        error instanceof Error ? error.message : '参考音频无效',
-      );
+      toast.error(error instanceof Error ? error.message : '参考音频无效');
     }
   };
 
@@ -909,9 +894,7 @@ function VoxCPMVoiceManager() {
           <section className="border-b border-border/60 lg:border-b-0 lg:border-r">
             <div className="flex h-12 items-center justify-between border-b border-border/60 px-4">
               <span className="text-sm font-medium">{'音色池'}</span>
-              <span className="text-xs text-muted-foreground">
-                {`${profiles.length + 1} 条`}
-              </span>
+              <span className="text-xs text-muted-foreground">{`${profiles.length + 1} 条`}</span>
             </div>
             <div className="max-h-[420px] overflow-y-auto">
               <VoiceProfileRow
@@ -1149,7 +1132,8 @@ function VoiceProfileRow({
       ? 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800/70 dark:bg-violet-950/40 dark:text-violet-300'
       : badgeTone === 'warning'
         ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-300'
-        : 'border-border/70 bg-background text-muted-foreground';return (
+        : 'border-border/70 bg-background text-muted-foreground';
+  return (
     <div
       className={cn(
         'group relative flex min-h-16 items-center gap-3 border-t border-border/50 px-4 py-3 first:border-t-0',
@@ -1183,9 +1167,7 @@ function VoiceProfileRow({
           variant="ghost"
           size="icon"
           onClick={() => onPreview()}
-          aria-label={
-            previewing ? '停止试听' : '试听音色'
-          }
+          aria-label={previewing ? '停止试听' : '试听音色'}
           className="h-8 w-8 text-muted-foreground opacity-70 hover:text-foreground group-hover:opacity-100"
         >
           {previewing ? (
@@ -1216,7 +1198,8 @@ function AddVoiceRow({
 }: {
   onAdd: (id: string, name: string) => void;
   existingIds: string[];
-}) {const [voiceId, setVoiceId] = useState('');
+}) {
+  const [voiceId, setVoiceId] = useState('');
   const [voiceName, setVoiceName] = useState('');
 
   const handleAdd = () => {

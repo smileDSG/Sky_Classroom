@@ -25,20 +25,20 @@ export function buildVerifyPrompt(
 ): string {
   const recognitionContext = problemSpec
     ? `\n\n【学生已确认的识别证据】\n${JSON.stringify({
-      id: problemSpec.id,
-      stage: problemSpec.stage,
-      subject: problemSpec.subject,
-      questionType: problemSpec.questionType,
-      stem: problemSpec.stem,
-      options: problemSpec.options,
-      givens: problemSpec.givens,
-      asks: problemSpec.asks,
-      formulas: problemSpec.formulas,
-      ambiguities: problemSpec.ambiguities,
-      materials: problemSpec.materials,
-      subQuestions: problemSpec.subQuestions,
-      diagram: problemSpec.diagram,
-      confidence: problemSpec.confidence,
+        id: problemSpec.id,
+        stage: problemSpec.stage,
+        subject: problemSpec.subject,
+        questionType: problemSpec.questionType,
+        stem: problemSpec.stem,
+        options: problemSpec.options,
+        givens: problemSpec.givens,
+        asks: problemSpec.asks,
+        formulas: problemSpec.formulas,
+        ambiguities: problemSpec.ambiguities,
+        materials: problemSpec.materials,
+        subQuestions: problemSpec.subQuestions,
+        diagram: problemSpec.diagram,
+        confidence: problemSpec.confidence,
       })}`
     : '';
   return `题目：${problemText}${recognitionContext}\n\n请独立解答这道题目，给出你的答案和简要推理过程。`;

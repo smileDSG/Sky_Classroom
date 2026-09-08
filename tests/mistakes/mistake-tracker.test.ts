@@ -183,7 +183,7 @@ describe('mistake-tracker', () => {
   describe('getMistakes 筛选', () => {
     const oldDate = new Date('2024-01-15');
     const midDate = new Date('2025-06-01');
-    const recentDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);  // 2 days ago
+    const recentDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
 
     beforeEach(async () => {
       const base: MistakeRecord[] = [
@@ -307,9 +307,7 @@ describe('mistake-tracker', () => {
     });
 
     it('不存在的 id 抛出错误', async () => {
-      await expect(markReviewed('nonexistent-id')).rejects.toThrow(
-        'Mistake record not found',
-      );
+      await expect(markReviewed('nonexistent-id')).rejects.toThrow('Mistake record not found');
     });
   });
 
@@ -346,9 +344,7 @@ describe('mistake-tracker', () => {
     });
 
     it('causeDistribution 未出现的错因默认为 undefined', async () => {
-      const records: MistakeRecord[] = [
-        makeTestMistake({ cause: 'calculation-error' }),
-      ];
+      const records: MistakeRecord[] = [makeTestMistake({ cause: 'calculation-error' })];
       await seedMistakes(records);
 
       const stats = await getMistakeStats();
@@ -358,7 +354,7 @@ describe('mistake-tracker', () => {
 
     it('recentCount（7天内）正确', async () => {
       const now = Date.now();
-      const within7Days = new Date(now - 3 * 24 * 60 * 60 * 1000);   // 3 天前
+      const within7Days = new Date(now - 3 * 24 * 60 * 60 * 1000); // 3 天前
       const outside7Days = new Date(now - 10 * 24 * 60 * 60 * 1000); // 10 天前
 
       const records: MistakeRecord[] = [
@@ -378,9 +374,7 @@ describe('mistake-tracker', () => {
       expect(stats.reviewedCount).toBe(0);
       expect(stats.recentCount).toBe(0);
       // causeDistribution 为空对象
-      const distributions = Object.values(stats.causeDistribution).filter(
-        (v) => v !== undefined,
-      );
+      const distributions = Object.values(stats.causeDistribution).filter((v) => v !== undefined);
       expect(distributions).toHaveLength(0);
     });
   });

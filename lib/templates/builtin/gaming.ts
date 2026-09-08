@@ -31,7 +31,8 @@ export const GAMING_TEMPLATES: CourseTemplate[] = [
     subject: 'gaming',
     description: {
       'zh-CN': '从零开始学习游戏开发，了解引擎选择与开发流程',
-      'en-US': 'Start learning game development from scratch — engine selection and development workflow',
+      'en-US':
+        'Start learning game development from scratch — engine selection and development workflow',
     },
     icon: '🕹️',
     isBuiltIn: true,

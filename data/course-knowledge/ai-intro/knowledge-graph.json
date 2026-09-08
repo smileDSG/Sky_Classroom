@@ -449,10 +449,18 @@
     { "from": "ontology", "to": "knowledge-graph", "relation": "prerequisite" },
     { "from": "ai-ml-dl-llm-agent", "to": "ml-workflow", "relation": "prerequisite" },
     { "from": "ml-workflow", "to": "train-validation-test", "relation": "prerequisite" },
-    { "from": "train-validation-test", "to": "overfitting-generalization", "relation": "prerequisite" },
+    {
+      "from": "train-validation-test",
+      "to": "overfitting-generalization",
+      "relation": "prerequisite"
+    },
     { "from": "train-validation-test", "to": "classification-metrics", "relation": "prerequisite" },
     { "from": "ml-workflow", "to": "supervised-learning", "relation": "prerequisite" },
-    { "from": "supervised-learning", "to": "classification-regression", "relation": "prerequisite" },
+    {
+      "from": "supervised-learning",
+      "to": "classification-regression",
+      "relation": "prerequisite"
+    },
     { "from": "classification-regression", "to": "knn", "relation": "prerequisite" },
     { "from": "classification-regression", "to": "decision-tree", "relation": "prerequisite" },
     { "from": "overfitting-generalization", "to": "decision-tree", "relation": "related_risk" },

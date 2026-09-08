@@ -33,6 +33,8 @@ const STATIC_PREFIXES = [
   '/avatars/',
   '/logo-icon.svg',
   '/logo-horizontal.png',
+  '/logo-app-icon.png',
+  '/sky-observatory.png',
   '/temp/',
 ];
 
@@ -47,8 +49,8 @@ function isApiRoute(pathname: string): boolean {
   return pathname.startsWith('/api/');
 }
 
-function getLoginPath(pathname: string): string {
-  return pathname === '/m' || pathname.startsWith('/m/') ? '/m/auth/login' : '/auth/login';
+function getLoginPath(): string {
+  return '/';
 }
 
 function isPublicReadRequest(request: NextRequest): boolean {
@@ -95,7 +97,7 @@ export default async function proxy(request: NextRequest) {
  */
 function redirectToLogin(request: NextRequest, pathname: string): NextResponse {
   const redirectPathname = normalizeMobileRedirectPath(pathname);
-  const loginUrl = new URL(getLoginPath(redirectPathname), request.url);
+  const loginUrl = new URL(getLoginPath(), request.url);
   const { search } = request.nextUrl;
   loginUrl.searchParams.set('redirect', search ? `${redirectPathname}${search}` : redirectPathname);
   loginUrl.searchParams.set('reason', 'login_required');
@@ -104,6 +106,6 @@ function redirectToLogin(request: NextRequest, pathname: string): NextResponse {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png|logo-app-icon\\.png|sky-observatory\\.png).*)',
   ],
 };

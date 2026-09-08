@@ -104,11 +104,7 @@ function MobileGenerationProgressContent() {
         {/* Loading / Generating / Generating slides */}
         {(phase === 'loading' || phase === 'generating' || phase === 'generating_slides') && (
           <div className="space-y-4">
-            <MobileGenerationStatusCard
-              phase={phase}
-              stepLabel={stepLabel}
-              progress={progress}
-            />
+            <MobileGenerationStatusCard phase={phase} stepLabel={stepLabel} progress={progress} />
             <MobileGenerationSteps
               step={step}
               scenesGenerated={scenesGenerated}

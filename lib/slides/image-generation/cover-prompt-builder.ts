@@ -11,9 +11,7 @@ import type { ThemeToken } from '@/lib/slides/types';
  * Build a prompt for a cover background image.
  */
 export function buildCoverPrompt(topic: string, theme: ThemeToken): string {
-  const palette = [theme.accent, theme.accentSecondary, theme.coverBg]
-    .filter(Boolean)
-    .join(', ');
+  const palette = [theme.accent, theme.accentSecondary, theme.coverBg].filter(Boolean).join(', ');
 
   return `Educational presentation cover illustration for "${topic}".
 Style: Clean, modern, flat design with subtle gradients. Abstract conceptual art.

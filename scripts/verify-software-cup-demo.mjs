@@ -22,12 +22,21 @@ const dimensions = Object.keys(profile.dimensions || {});
 const resourceTypes = new Set((generated.resources || []).map((resource) => resource.type));
 
 check('software-cup page exists', exists('app/sky/software-cup/page.tsx'));
-check('software-cup client component exists', exists('components/sky/software-cup/software-cup-page.tsx'));
-check('profile conversation API exists', exists('app/api/sky/student/profile/conversation/route.ts'));
+check(
+  'software-cup client component exists',
+  exists('components/sky/software-cup/software-cup-page.tsx'),
+);
+check(
+  'profile conversation API exists',
+  exists('app/api/sky/student/profile/conversation/route.ts'),
+);
 check('course knowledge search API exists', exists('app/api/sky/course-knowledge/search/route.ts'));
 check('resource generation API exists', exists('app/api/sky/resource-generation/jobs/route.ts'));
 check('content safety API exists', exists('app/api/sky/content-safety/check/route.ts'));
-check('academic verification API exists', exists('app/api/sky/content-safety/verify-academic/route.ts'));
+check(
+  'academic verification API exists',
+  exists('app/api/sky/content-safety/verify-academic/route.ts'),
+);
 check('learning effect API exists', exists('app/api/sky/learning-effect/evaluate/route.ts'));
 check('profile dimensions >= 8', dimensions.length >= 8);
 check('resource types >= 5', resourceTypes.size >= 5);

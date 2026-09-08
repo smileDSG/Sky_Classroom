@@ -55,14 +55,8 @@ function detectConflict(
 }
 
 function calculateOverlap(a: WhiteboardElement, b: WhiteboardElement): number {
-  const xOverlap = Math.max(
-    0,
-    Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x),
-  );
-  const yOverlap = Math.max(
-    0,
-    Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y),
-  );
+  const xOverlap = Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x));
+  const yOverlap = Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
   const overlapArea = xOverlap * yOverlap;
   const areaA = a.width * a.height;
   return overlapArea / areaA;

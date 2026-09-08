@@ -14,12 +14,18 @@ function makeValidOutline(): Outline {
   return {
     sections: [
       {
-        sectionId: 1, title: 'Intro',
+        sectionId: 1,
+        title: 'Intro',
         pages: [
           { pageNum: 1, type: 'cover', title: '封面', contentOutline: { focus: '封面' } },
           { pageNum: 2, type: 'toc', title: '目录', contentOutline: { focus: '目录' } },
           { pageNum: 3, type: 'chapter', title: 'Ch1', contentOutline: { focus: 'Ch1' } },
-          { pageNum: 4, type: 'concept', title: '概念', contentOutline: { focus: '概念', keyConcepts: ['a'] } },
+          {
+            pageNum: 4,
+            type: 'concept',
+            title: '概念',
+            contentOutline: { focus: '概念', keyConcepts: ['a'] },
+          },
           { pageNum: 5, type: 'end', title: '结束', contentOutline: { focus: '结束' } },
         ],
       },
@@ -45,14 +51,26 @@ describe('QAAgent', () => {
 
   it('passes a well-structured valid PPT', async () => {
     mockCallLLM.mockResolvedValueOnce({ text: JSON.stringify({ contentScore: 95, issues: [] }) });
-    const result = await runQA('测试', '高中', makeValidOutline(), [makeValidContent()], 5, mockModel);
+    const result = await runQA(
+      '测试',
+      '高中',
+      makeValidOutline(),
+      [makeValidContent()],
+      5,
+      mockModel,
+    );
     expect(result.pass).toBe(true);
     expect(result.totalScore).toBe(95);
   });
 
   it('detects missing cover page', async () => {
     const outline = makeValidOutline();
-    outline.sections[0].pages[0] = { pageNum: 1, type: 'content' as never, title: 'not cover', contentOutline: { focus: 'x' } };
+    outline.sections[0].pages[0] = {
+      pageNum: 1,
+      type: 'content' as never,
+      title: 'not cover',
+      contentOutline: { focus: 'x' },
+    };
 
     const result = await runQA('测试', '高中', outline, [makeValidContent()], 5, mockModel);
     expect(result.issues.some((i) => i.type === 'missing_cover')).toBe(true);
@@ -61,7 +79,12 @@ describe('QAAgent', () => {
 
   it('detects missing end page', async () => {
     const outline = makeValidOutline();
-    outline.sections[0].pages[4] = { pageNum: 5, type: 'content' as never, title: 'not end', contentOutline: { focus: 'x' } };
+    outline.sections[0].pages[4] = {
+      pageNum: 5,
+      type: 'content' as never,
+      title: 'not end',
+      contentOutline: { focus: 'x' },
+    };
 
     const result = await runQA('测试', '高中', outline, [makeValidContent()], 5, mockModel);
     expect(result.issues.some((i) => i.type === 'missing_end')).toBe(true);
@@ -81,7 +104,11 @@ describe('QAAgent', () => {
     const outline = makeValidOutline();
     const content = makeValidContent();
     // Chapter page (pageNum 3) mentions "方程式" in subtitle but has no formulas field by design
-    content.pages[2].content = { num: '02', title: '化学方程式', subtitle: '掌握化学方程式的书写与配平方法' };
+    content.pages[2].content = {
+      num: '02',
+      title: '化学方程式',
+      subtitle: '掌握化学方程式的书写与配平方法',
+    };
 
     const result = await runQA('化学', '高中', outline, [content], 5, mockModel);
     const formulaIssues = result.issues.filter((i) => i.type === 'missing_formula');
@@ -93,7 +120,11 @@ describe('QAAgent', () => {
     const outline = makeValidOutline();
     const content = makeValidContent();
     // Concept page (pageNum 4) mentions "化学方程式" but provides no formulas array
-    content.pages[3].content = { title: '氧化还原反应', cards: [{ title: '定义', desc: '氧化还原反应的本质是电子转移。' }], summary: '化学方程式是描述化学反应的重要工具。' };
+    content.pages[3].content = {
+      title: '氧化还原反应',
+      cards: [{ title: '定义', desc: '氧化还原反应的本质是电子转移。' }],
+      summary: '化学方程式是描述化学反应的重要工具。',
+    };
 
     const result = await runQA('化学', '高中', outline, [content], 5, mockModel);
     const formulaIssues = result.issues.filter((i) => i.type === 'missing_formula');

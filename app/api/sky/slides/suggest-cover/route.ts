@@ -57,11 +57,17 @@ export async function POST(req: NextRequest) {
       log.error(`[API:SuggestCover] style recommendation threw: ${msg}`);
       return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '风格推荐异常', msg);
     }
-    log.info(`[API:SuggestCover] style recommendation took ${Date.now() - styleStart}ms, success=${styleResult.success}`);
+    log.info(
+      `[API:SuggestCover] style recommendation took ${Date.now() - styleStart}ms, success=${styleResult.success}`,
+    );
 
     if (!styleResult.success || !styleResult.designDNA) {
       log.error(`[API:SuggestCover] style recommendation failed: ${styleResult.error}`);
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, `风格推荐失败: ${styleResult.error || '请重试'}`);
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        `风格推荐失败: ${styleResult.error || '请重试'}`,
+      );
     }
 
     // Step 2: Best-effort server preview. The smart-cover UI renders from
@@ -84,7 +90,9 @@ export async function POST(req: NextRequest) {
       coversDir,
       0, // index 0 for suggested cover
     );
-    log.info(`[API:SuggestCover] PPTX render took ${Date.now() - renderStart}ms, success=${renderResult.success}`);
+    log.info(
+      `[API:SuggestCover] PPTX render took ${Date.now() - renderStart}ms, success=${renderResult.success}`,
+    );
 
     if (!renderResult.success || !renderResult.pptxPath) {
       previewError = renderResult.error || 'PPTX preview render failed';
@@ -93,7 +101,9 @@ export async function POST(req: NextRequest) {
       // Step 3: Convert to PNG
       const pngStart = Date.now();
       const pngResult = await convertPptxToPng(renderResult.pptxPath, coversDir);
-      log.info(`[API:SuggestCover] PNG conversion took ${Date.now() - pngStart}ms, success=${pngResult.success}`);
+      log.info(
+        `[API:SuggestCover] PNG conversion took ${Date.now() - pngStart}ms, success=${pngResult.success}`,
+      );
 
       if (pngResult.success && pngResult.pngPath) {
         pngUrl = '/temp/covers/' + path.basename(pngResult.pngPath);
@@ -104,7 +114,9 @@ export async function POST(req: NextRequest) {
     }
     const totalDuration = Date.now() - reqStart;
 
-    log.info(`[API:SuggestCover] complete in ${totalDuration}ms — png=${pngUrl}, style=${designDNA.styleName}`);
+    log.info(
+      `[API:SuggestCover] complete in ${totalDuration}ms — png=${pngUrl}, style=${designDNA.styleName}`,
+    );
 
     await recordUsage(quota.userId, quota.planType, 'llmCalls');
     return apiSuccess({

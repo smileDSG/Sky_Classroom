@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
-import { BookOpen, ExternalLink } from "lucide-react";
-import Link from "next/link";
+import { cn } from '@/lib/utils';
+import { BookOpen, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 
 export interface MobileSource {
   title: string;
@@ -14,18 +14,13 @@ interface MobileSourceListProps {
   className?: string;
 }
 
-export function MobileSourceList({
-  sources,
-  className,
-}: MobileSourceListProps) {
+export function MobileSourceList({ sources, className }: MobileSourceListProps) {
   if (sources.length === 0) {
-    return (
-      <p className="text-[13px] text-slate-500 dark:text-slate-400">暂无来源引用</p>
-    );
+    return <p className="text-[13px] text-slate-500 dark:text-slate-400">暂无来源引用</p>;
   }
 
   return (
-    <ul className={cn("space-y-2", className)}>
+    <ul className={cn('space-y-2', className)}>
       {sources.map((source, index) => {
         const content = (
           <>
@@ -46,9 +41,7 @@ export function MobileSourceList({
                   </p>
                 )}
               </div>
-              {source.href && (
-                <ExternalLink className="size-3.5 shrink-0 text-slate-400" />
-              )}
+              {source.href && <ExternalLink className="size-3.5 shrink-0 text-slate-400" />}
             </div>
           </>
         );

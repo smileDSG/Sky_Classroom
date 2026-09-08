@@ -16,7 +16,7 @@ const phaseMessages: Record<string, string> = {
 };
 
 export function SolutionSkeleton({ phase, className }: SolutionSkeletonProps) {
-  const message = phase ? phaseMessages[phase] ?? '处理中...' : '处理中...';
+  const message = phase ? (phaseMessages[phase] ?? '处理中...') : '处理中...';
 
   return (
     <Card className={cn('overflow-hidden probe-panel', className)}>

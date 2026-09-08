@@ -196,10 +196,7 @@ async function buildStudentProfileInternal(userId: string): Promise<StudentProfi
       `${quizAttempts.length} quiz attempts, ${knowledgeStates.length} knowledge states loaded`,
   );
 
-  const quizKnowledgeStats = new Map<
-    string,
-    { name: string; correct: number; total: number }
-  >();
+  const quizKnowledgeStats = new Map<string, { name: string; correct: number; total: number }>();
   const quizSubjectStats = new Map<Subject, { correct: number; total: number }>();
   for (const attempt of quizAttempts) {
     for (const question of attempt.questions) {

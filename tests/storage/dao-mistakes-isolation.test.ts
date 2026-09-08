@@ -69,7 +69,10 @@ describe('MistakeBookDAO cross-user isolation', () => {
     const entry = makeEntry(ALICE, { id: 'original-id' });
     await dao.add(ALICE, entry);
 
-    await dao.update(ALICE, entry.id, { userId: BOB, id: 'hijacked-id' } as unknown as Partial<MistakeBookEntry>);
+    await dao.update(ALICE, entry.id, {
+      userId: BOB,
+      id: 'hijacked-id',
+    } as unknown as Partial<MistakeBookEntry>);
 
     const found = await dao.get(ALICE, entry.id);
     expect(found).not.toBeNull();
@@ -119,8 +122,14 @@ describe('MistakeBookDAO cross-user isolation', () => {
   });
 
   test('getDueForReview excludes other users due items', async () => {
-    await dao.add(ALICE, makeEntry(ALICE, { id: 'alice-due', nextReview: Date.now() - 1_000, reviewed: false }));
-    await dao.add(BOB, makeEntry(BOB, { id: 'bob-due', nextReview: Date.now() - 1_000, reviewed: false }));
+    await dao.add(
+      ALICE,
+      makeEntry(ALICE, { id: 'alice-due', nextReview: Date.now() - 1_000, reviewed: false }),
+    );
+    await dao.add(
+      BOB,
+      makeEntry(BOB, { id: 'bob-due', nextReview: Date.now() - 1_000, reviewed: false }),
+    );
 
     const due = await dao.getDueForReview(ALICE);
     expect(due.map((d) => d.id)).toEqual(['alice-due']);

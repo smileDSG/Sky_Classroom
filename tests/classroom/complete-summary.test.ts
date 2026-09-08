@@ -6,7 +6,11 @@ import { describe, it, expect } from 'vitest';
 import { summarizeScenes } from '@/lib/classroom/complete-summary';
 import type { Scene, QuizContent } from '@/lib/types/stage';
 
-function makeQuizScene(id: string, questions: QuizContent['questions'], knowledgePoints?: string[]): Scene {
+function makeQuizScene(
+  id: string,
+  questions: QuizContent['questions'],
+  knowledgePoints?: string[],
+): Scene {
   return {
     id,
     type: 'quiz',
@@ -49,7 +53,10 @@ describe('summarizeScenes', () => {
         id: 'q1',
         type: 'single',
         question: '2+2=?',
-        options: [{ label: '3', value: 'A' }, { label: '4', value: 'B' }],
+        options: [
+          { label: '3', value: 'A' },
+          { label: '4', value: 'B' },
+        ],
         answer: ['B'],
       },
     ];
@@ -69,7 +76,10 @@ describe('summarizeScenes', () => {
         id: 'q1',
         type: 'single',
         question: '2+2=?',
-        options: [{ label: '3', value: 'A' }, { label: '4', value: 'B' }],
+        options: [
+          { label: '3', value: 'A' },
+          { label: '4', value: 'B' },
+        ],
         answer: ['B'],
       },
     ];
@@ -88,7 +98,10 @@ describe('summarizeScenes', () => {
         id: 'q1',
         type: 'single',
         question: 'What is the capital of France?',
-        options: [{ label: 'Paris', value: 'A' }, { label: 'London', value: 'B' }],
+        options: [
+          { label: 'Paris', value: 'A' },
+          { label: 'London', value: 'B' },
+        ],
         answer: ['A'],
       },
     ];
@@ -100,9 +113,36 @@ describe('summarizeScenes', () => {
 
   it('calculates accuracy percentage', () => {
     const questions: QuizContent['questions'] = [
-      { id: 'q1', type: 'single', question: 'Q1', options: [{ label: 'A', value: 'A' }, { label: 'B', value: 'B' }], answer: ['A'] },
-      { id: 'q2', type: 'single', question: 'Q2', options: [{ label: 'A', value: 'A' }, { label: 'B', value: 'B' }], answer: ['B'] },
-      { id: 'q3', type: 'single', question: 'Q3', options: [{ label: 'A', value: 'A' }, { label: 'B', value: 'B' }], answer: ['A'] },
+      {
+        id: 'q1',
+        type: 'single',
+        question: 'Q1',
+        options: [
+          { label: 'A', value: 'A' },
+          { label: 'B', value: 'B' },
+        ],
+        answer: ['A'],
+      },
+      {
+        id: 'q2',
+        type: 'single',
+        question: 'Q2',
+        options: [
+          { label: 'A', value: 'A' },
+          { label: 'B', value: 'B' },
+        ],
+        answer: ['B'],
+      },
+      {
+        id: 'q3',
+        type: 'single',
+        question: 'Q3',
+        options: [
+          { label: 'A', value: 'A' },
+          { label: 'B', value: 'B' },
+        ],
+        answer: ['A'],
+      },
     ];
     const scenes = [makeQuizScene('s1', questions)];
     const summary = summarizeScenes(scenes, () => ({ q1: 'A', q2: 'A', q3: 'A' }));

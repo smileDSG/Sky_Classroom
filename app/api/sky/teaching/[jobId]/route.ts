@@ -9,10 +9,7 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { requireQuota } from '@/lib/server/billing/require-quota';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ jobId: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {
   // Auth check
   const quota = await requireQuota('generationCount');
   if ('error' in quota) return quota.error;

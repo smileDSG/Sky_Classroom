@@ -283,9 +283,7 @@ export async function callLLM<T extends GenerateTextParams>(
 
   // If a separate system prompt is provided, merge it into params.
   // Anthropic adapter requires system as a top-level field, not in messages.
-  const effectiveParams = system
-    ? { ...params, system } as T
-    : params;
+  const effectiveParams = system ? ({ ...params, system } as T) : params;
 
   // Resolve injected params once (thinking config is per-call stable)
   const effectiveThinking = thinking ?? getGlobalThinkingConfig();
@@ -301,7 +299,9 @@ export async function callLLM<T extends GenerateTextParams>(
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => {
-      log.warn(`[callLLM] ABORT triggered for source=${source} after ${timeoutMs}ms (attempt ${attempt})`);
+      log.warn(
+        `[callLLM] ABORT triggered for source=${source} after ${timeoutMs}ms (attempt ${attempt})`,
+      );
       abortController.abort(new Error('LLM call timeout'));
     }, timeoutMs);
     const startTime = performance.now();
@@ -321,7 +321,8 @@ export async function callLLM<T extends GenerateTextParams>(
         source,
         durationMs,
         promptTokens: (result.usage as unknown as Record<string, number> | undefined)?.promptTokens,
-        completionTokens: (result.usage as unknown as Record<string, number> | undefined)?.completionTokens,
+        completionTokens: (result.usage as unknown as Record<string, number> | undefined)
+          ?.completionTokens,
         success: true,
       });
 
@@ -354,7 +355,9 @@ export async function callLLM<T extends GenerateTextParams>(
         durationMs,
         success: false,
       });
-      log.warn(`[callLLM] source=${source} attempt=${attempt}/${maxAttempts} failed after ${durationMs}ms: ${error instanceof Error ? error.message : String(error)}`);
+      log.warn(
+        `[callLLM] source=${source} attempt=${attempt}/${maxAttempts} failed after ${durationMs}ms: ${error instanceof Error ? error.message : String(error)}`,
+      );
 
       // Key rotation on 429 (rate limit)
       if (isRateLimitError(error) && providerId) {
@@ -382,15 +385,22 @@ export async function callLLM<T extends GenerateTextParams>(
 
       if (attempt < maxAttempts) {
         // Only retry on transient errors (network, timeout, 5xx, rate limit)
-        const isRetryable = !(error instanceof Error && (
-          error.message.includes('401') ||
-          error.message.includes('403') ||
-          error.message.includes('API key') ||
-          error.message.includes('invalid') ||
-          error.message.includes('bad request')
-        )) || (error instanceof Error && /terminated|aborted|ECONNRESET|ETIMEDOUT|timeout/i.test(error.message));
+        const isRetryable =
+          !(
+            error instanceof Error &&
+            (error.message.includes('401') ||
+              error.message.includes('403') ||
+              error.message.includes('API key') ||
+              error.message.includes('invalid') ||
+              error.message.includes('bad request'))
+          ) ||
+          (error instanceof Error &&
+            /terminated|aborted|ECONNRESET|ETIMEDOUT|timeout/i.test(error.message));
         if (!isRetryable) {
-          log.warn(`[${source}] Non-retryable error (attempt ${attempt}/${maxAttempts}), giving up:`, error);
+          log.warn(
+            `[${source}] Non-retryable error (attempt ${attempt}/${maxAttempts}), giving up:`,
+            error,
+          );
           throw error;
         }
         log.warn(`[${source}] Call failed (attempt ${attempt}/${maxAttempts}), retrying...`, error);

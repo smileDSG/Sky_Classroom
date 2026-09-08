@@ -16,7 +16,9 @@ const DENSITY_META: { value: Density; label: string; desc: string; bars: number[
 export function DensityPicker({ selectedDensity, onSelect }: DensityPickerProps) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">装饰密度</span>
+      <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
+        装饰密度
+      </span>
       <div className="flex gap-2">
         {DENSITY_META.map(({ value, label, desc, bars }) => {
           const isSelected = selectedDensity === value;
@@ -44,9 +46,11 @@ export function DensityPicker({ selectedDensity, onSelect }: DensityPickerProps)
                   />
                 ))}
               </div>
-              <span className={`text-[10px] font-semibold ${
-                isSelected ? 'text-primary' : 'text-slate-500 dark:text-gray-500'
-              }`}>
+              <span
+                className={`text-[10px] font-semibold ${
+                  isSelected ? 'text-primary' : 'text-slate-500 dark:text-gray-500'
+                }`}
+              >
                 {label}
               </span>
               {isSelected && (

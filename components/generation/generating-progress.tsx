@@ -57,7 +57,8 @@ export function GeneratingProgress({
   firstPageReady,
   statusMessage,
   error,
-}: GeneratingProgressProps) {const [dots, setDots] = useState('');
+}: GeneratingProgressProps) {
+  const [dots, setDots] = useState('');
 
   // Animated dots for loading state
   useEffect(() => {
@@ -100,19 +101,13 @@ export function GeneratingProgress({
               completed={outlineReady}
               inProgress={!outlineReady && !error}
               hasError={!outlineReady && !!error}
-              label={
-                outlineReady ? '课程大纲已生成' : '生成课程大纲'
-              }
+              label={outlineReady ? '课程大纲已生成' : '生成课程大纲'}
             />
             <StatusItem
               completed={firstPageReady}
               inProgress={outlineReady && !firstPageReady && !error}
               hasError={outlineReady && !firstPageReady && !!error}
-              label={
-                firstPageReady
-                  ? '首页已就绪！正在打开课堂...'
-                  : '首页内容生成中...'
-              }
+              label={firstPageReady ? '首页已就绪！正在打开课堂...' : '首页内容生成中...'}
             />
           </div>
 

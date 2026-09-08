@@ -17,7 +17,7 @@ export function AmbientGlow({
   variant = 'default',
   className = '',
 }: AmbientGlowProps) {
-  const opacityMap = { low: 0.06, medium: 0.10, high: 0.18 };
+  const opacityMap = { low: 0.06, medium: 0.1, high: 0.18 };
   const opacity = opacityMap[intensity];
 
   const variantStyles = {

@@ -47,29 +47,15 @@ describe('virtual-list — 虚拟列表', () => {
   });
 
   it('空列表不崩溃', () => {
-    const { container } = render(
-      <VirtualList
-        items={[]}
-        renderItem={() => null}
-        height={200}
-      />,
-    );
+    const { container } = render(<VirtualList items={[]} renderItem={() => null} height={200} />);
 
     expect(container.firstChild).toBeDefined();
   });
 
   it('renderItem 收到正确的 item 和 index', () => {
-    const renderSpy = vi.fn((item: string, index: number) => (
-      <div key={index}>{item}</div>
-    ));
+    const renderSpy = vi.fn((item: string, index: number) => <div key={index}>{item}</div>);
 
-    render(
-      <VirtualList
-        items={['a']}
-        renderItem={renderSpy}
-        height={200}
-      />,
-    );
+    render(<VirtualList items={['a']} renderItem={renderSpy} height={200} />);
 
     expect(renderSpy).toHaveBeenCalledWith('a', 0);
   });

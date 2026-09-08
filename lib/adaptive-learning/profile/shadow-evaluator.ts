@@ -30,7 +30,9 @@ function auc(rows: Array<{ prediction: number; correct: boolean }>): number {
 }
 
 function brier(rows: Array<{ prediction: number; correct: boolean }>): number {
-  return rows.reduce((sum, row) => sum + (row.prediction - Number(row.correct)) ** 2, 0) / rows.length;
+  return (
+    rows.reduce((sum, row) => sum + (row.prediction - Number(row.correct)) ** 2, 0) / rows.length
+  );
 }
 
 /** Read-only comparison against an online Beta correctness baseline. */
@@ -43,7 +45,10 @@ export function evaluateAbilityShadow(responses: AbilityReplayResponse[]): Abili
   for (const response of ordered) {
     const key = `${response.userId}:${response.dimensionId}`;
     const state = betaByUser.get(key) ?? { alpha: 1, beta: 1 };
-    baselineRows.push({ prediction: state.alpha / (state.alpha + state.beta), correct: response.correct });
+    baselineRows.push({
+      prediction: state.alpha / (state.alpha + state.beta),
+      correct: response.correct,
+    });
     if (response.correct) state.alpha += 1;
     else state.beta += 1;
     betaByUser.set(key, state);

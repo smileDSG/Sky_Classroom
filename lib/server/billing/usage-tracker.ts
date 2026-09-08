@@ -31,7 +31,7 @@ async function ensureProvider(): Promise<StorageProvider> {
 }
 
 export async function createUsageTracker(storage?: StorageProvider) {
-  const s = storage ?? await ensureProvider();
+  const s = storage ?? (await ensureProvider());
 
   async function getEntry(userId: string, date: string): Promise<UsageEntry> {
     const id = `${userId}_${date}`;
@@ -51,7 +51,12 @@ export async function createUsageTracker(storage?: StorageProvider) {
 
   return {
     /** Increment a usage counter */
-    async increment(userId: string, planType: import('./plans').PlanType, metric: 'llmCalls' | 'generationCount' | 'storageUsed', count = 1): Promise<void> {
+    async increment(
+      userId: string,
+      planType: import('./plans').PlanType,
+      metric: 'llmCalls' | 'generationCount' | 'storageUsed',
+      count = 1,
+    ): Promise<void> {
       const date = today();
       const entry = await getEntry(userId, date);
       if (metric === 'llmCalls') entry.llmCalls += count;
@@ -66,7 +71,11 @@ export async function createUsageTracker(storage?: StorageProvider) {
     },
 
     /** Check if user is within their limits */
-    async checkUsageLimit(userId: string, planType: PlanType, metric: 'llmCalls' | 'generationCount'): Promise<{ withinLimit: boolean; current: number; limit: number }> {
+    async checkUsageLimit(
+      userId: string,
+      planType: PlanType,
+      metric: 'llmCalls' | 'generationCount',
+    ): Promise<{ withinLimit: boolean; current: number; limit: number }> {
       const limits = getPlanLimits(planType);
       const limit = metric === 'llmCalls' ? limits.llmCallsPerDay : limits.generationsPerDay;
       if (limit === 0) return { withinLimit: true, current: 0, limit: 0 }; // unlimited

@@ -31,9 +31,7 @@ describe('extractMemoryFromMessages', () => {
   });
 
   it('truncates long content', () => {
-    const messages = [
-      { agentName: '小萌', content: 'a'.repeat(300), role: 'agent' as const },
-    ];
+    const messages = [{ agentName: '小萌', content: 'a'.repeat(300), role: 'agent' as const }];
     const mem = extractMemoryFromMessages(messages);
     expect(mem.entries[0].content.length).toBe(200);
   });

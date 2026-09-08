@@ -45,7 +45,10 @@ export function extractMemoryFromMessages(
  * Merge new entries into existing memory, keeping the most recent ones
  * and capping total size.
  */
-export function mergeMemory(existing: StudyGroupMemory, incoming: StudyGroupMemory): StudyGroupMemory {
+export function mergeMemory(
+  existing: StudyGroupMemory,
+  incoming: StudyGroupMemory,
+): StudyGroupMemory {
   const merged = [...existing.entries, ...incoming.entries];
   // Deduplicate by content similarity (exact match for simplicity)
   const seen = new Set<string>();

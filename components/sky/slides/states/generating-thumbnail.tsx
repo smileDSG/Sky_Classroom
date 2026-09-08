@@ -130,7 +130,9 @@ function TypeWireframe({ type, color }: { type: string; color: string }) {
       return (
         <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-50">
           <div className="h-8 w-1/3 rounded-sm" style={{ background: c }} />
-          <div className="text-[10px]" style={{ color: stroke }}>vs</div>
+          <div className="text-[10px]" style={{ color: stroke }}>
+            vs
+          </div>
           <div className="h-8 w-1/3 rounded-sm" style={{ background: c }} />
         </div>
       );
@@ -166,7 +168,9 @@ function TypeWireframe({ type, color }: { type: string; color: string }) {
     case 'quiz':
       return (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 opacity-50">
-          <div className="text-[16px] font-bold" style={{ color: stroke }}>?</div>
+          <div className="text-[16px] font-bold" style={{ color: stroke }}>
+            ?
+          </div>
           <div className="h-1 w-10 rounded-full" style={{ background: c }} />
           <div className="h-1 w-8 rounded-full" style={{ background: stroke }} />
         </div>
@@ -346,7 +350,9 @@ export const GeneratingThumbnail = forwardRef<HTMLDivElement, GeneratingThumbnai
           ) : (
             <span
               className={`text-[10px] font-mono animate-pulse ${
-                isActive ? 'text-[var(--celestial-dawn)]/80' : 'text-[var(--celestial-starlight)]/25'
+                isActive
+                  ? 'text-[var(--celestial-dawn)]/80'
+                  : 'text-[var(--celestial-starlight)]/25'
               }`}
             >
               {isActive ? 'ACQUIRING…' : '等待生成…'}
@@ -358,7 +364,9 @@ export const GeneratingThumbnail = forwardRef<HTMLDivElement, GeneratingThumbnai
         <div className="relative z-10 flex items-center justify-between px-2.5 pb-2">
           <span
             className={`font-mono text-[9px] tabular-nums transition-colors duration-500 ${
-              isActive ? 'text-[var(--celestial-starlight)]/60' : 'text-[var(--celestial-starlight)]/35'
+              isActive
+                ? 'text-[var(--celestial-starlight)]/60'
+                : 'text-[var(--celestial-starlight)]/35'
             }`}
           >
             {watermark}
@@ -367,7 +375,7 @@ export const GeneratingThumbnail = forwardRef<HTMLDivElement, GeneratingThumbnai
         </div>
       </motion.div>
     );
-  }
+  },
 );
 
 GeneratingThumbnail.displayName = 'GeneratingThumbnail';

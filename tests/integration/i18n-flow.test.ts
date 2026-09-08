@@ -11,15 +11,7 @@ import { combinePrompts } from '@/lib/prompts/composability';
 
 // ─── Supported languages ───
 
-const SUPPORTED_LANGUAGES = [
-  'en',
-  'zh',
-  'ja',
-  'ko',
-  'fr',
-  'de',
-  'es',
-] as const;
+const SUPPORTED_LANGUAGES = ['en', 'zh', 'ja', 'ko', 'fr', 'de', 'es'] as const;
 
 type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number];
 
@@ -158,10 +150,7 @@ describe('P6-001 Test 15: 多语言支持', () => {
 
   describe('prompt multi-language', () => {
     test('combinePrompts works with different language variables', () => {
-      const result = combinePrompts(
-        ['Language: {{language}}'],
-        { language: 'zh' },
-      );
+      const result = combinePrompts(['Language: {{language}}'], { language: 'zh' });
       expect(result).toContain('Language: zh');
     });
 

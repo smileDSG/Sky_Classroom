@@ -1,11 +1,11 @@
-import fs from "node:fs";
-import path from "node:path";
-import { describe, expect, test } from "vitest";
+import fs from 'node:fs';
+import path from 'node:path';
+import { describe, expect, test } from 'vitest';
 
-describe("mobile PWA manifest", () => {
-  test("public manifest contains installable mobile basics", () => {
-    const manifestPath = path.join(process.cwd(), "public", "manifest.json");
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+describe('mobile PWA manifest', () => {
+  test('public manifest contains installable mobile basics', () => {
+    const manifestPath = path.join(process.cwd(), 'public', 'manifest.json');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
     expect(manifest.name).toBeTruthy();
     expect(manifest.short_name).toBeTruthy();

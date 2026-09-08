@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { detectFieldMapping, applyFieldMapping, mergeMappings } from '@/lib/question-bank/importers/field-mapper';
+import {
+  detectFieldMapping,
+  applyFieldMapping,
+  mergeMappings,
+} from '@/lib/question-bank/importers/field-mapper';
 
 describe('detectFieldMapping', () => {
   it('maps exact English column names', () => {

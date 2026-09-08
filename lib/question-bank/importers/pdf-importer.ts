@@ -164,7 +164,12 @@ export async function importFromPdf(
 
   // Step 4: Insert high-confidence questions
   const doInsert = effectiveDeps.insertBatch ?? defaultInsertBatch;
-  let highResult: ImportResult = { total: pipeline.highConfidence.length, inserted: 0, duplicates: 0, errors: [] };
+  let highResult: ImportResult = {
+    total: pipeline.highConfidence.length,
+    inserted: 0,
+    duplicates: 0,
+    errors: [],
+  };
   if (pipeline.highConfidence.length > 0) {
     try {
       highResult = await doInsert(pipeline.highConfidence);
@@ -175,7 +180,12 @@ export async function importFromPdf(
   }
 
   // Step 5: Insert low-confidence questions
-  let lowResult: ImportResult = { total: pipeline.lowConfidence.length, inserted: 0, duplicates: 0, errors: [] };
+  let lowResult: ImportResult = {
+    total: pipeline.lowConfidence.length,
+    inserted: 0,
+    duplicates: 0,
+    errors: [],
+  };
   if (pipeline.lowConfidence.length > 0) {
     try {
       lowResult = await doInsert(pipeline.lowConfidence);

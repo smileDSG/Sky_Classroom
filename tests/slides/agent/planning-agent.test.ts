@@ -36,8 +36,18 @@ function makeValidLayer1Skeleton() {
 function makeValidLayer2Section1() {
   return [
     { pageNum: 3, type: 'chapter', title: '第一章', contentOutline: { focus: '本章引入' } },
-    { pageNum: 4, type: 'concept', title: '核心概念', contentOutline: { focus: '勾股定理定义', keyConcepts: ['勾股定理', '直角边', '斜边'] } },
-    { pageNum: 5, type: 'case', title: '典型例题', contentOutline: { focus: '勾股定理计算', keyConcepts: ['计算'] } },
+    {
+      pageNum: 4,
+      type: 'concept',
+      title: '核心概念',
+      contentOutline: { focus: '勾股定理定义', keyConcepts: ['勾股定理', '直角边', '斜边'] },
+    },
+    {
+      pageNum: 5,
+      type: 'case',
+      title: '典型例题',
+      contentOutline: { focus: '勾股定理计算', keyConcepts: ['计算'] },
+    },
     { pageNum: 6, type: 'summary', title: '本章小结', contentOutline: { focus: '回顾' } },
   ];
 }
@@ -45,8 +55,18 @@ function makeValidLayer2Section1() {
 function makeValidLayer2Section2() {
   return [
     { pageNum: 7, type: 'chapter', title: '第二章', contentOutline: { focus: '本章引入' } },
-    { pageNum: 8, type: 'formula', title: '公式推导', contentOutline: { focus: '推导', keyConcepts: ['推导'] } },
-    { pageNum: 9, type: 'summary', title: '本章小结', contentOutline: { focus: '应用', keyConcepts: ['应用'] } },
+    {
+      pageNum: 8,
+      type: 'formula',
+      title: '公式推导',
+      contentOutline: { focus: '推导', keyConcepts: ['推导'] },
+    },
+    {
+      pageNum: 9,
+      type: 'summary',
+      title: '本章小结',
+      contentOutline: { focus: '应用', keyConcepts: ['应用'] },
+    },
   ];
 }
 
@@ -58,8 +78,10 @@ describe('PlanningAgent', () => {
     // Default mock: route by callLLM tag so concurrent Layer-2 calls always get correct data
     mockCallLLM.mockImplementation(async (_req, tag: string) => {
       if (tag === 'planning-layer1') return { text: JSON.stringify(makeValidLayer1Skeleton()) };
-      if (tag === 'planning-layer2-sec1') return { text: JSON.stringify(makeValidLayer2Section1()) };
-      if (tag === 'planning-layer2-sec2') return { text: JSON.stringify(makeValidLayer2Section2()) };
+      if (tag === 'planning-layer2-sec1')
+        return { text: JSON.stringify(makeValidLayer2Section1()) };
+      if (tag === 'planning-layer2-sec2')
+        return { text: JSON.stringify(makeValidLayer2Section2()) };
       return { text: '{}' };
     });
   });
@@ -133,7 +155,8 @@ describe('PlanningAgent', () => {
   it('fails when Layer 2 partial section fails', async () => {
     mockCallLLM.mockImplementation(async (_req, tag: string) => {
       if (tag === 'planning-layer1') return { text: JSON.stringify(makeValidLayer1Skeleton()) };
-      if (tag === 'planning-layer2-sec1') return { text: JSON.stringify(makeValidLayer2Section1()) };
+      if (tag === 'planning-layer2-sec1')
+        return { text: JSON.stringify(makeValidLayer2Section1()) };
       if (tag === 'planning-layer2-sec2') throw new Error('Layer2 timeout');
       return { text: '{}' };
     });
@@ -158,7 +181,12 @@ describe('PlanningAgent', () => {
     };
     const sectionPages = [
       { pageNum: 3, type: 'chapter', title: '第一章', contentOutline: { focus: '本章引入' } },
-      { pageNum: 4, type: 'concept', title: '核心概念', contentOutline: { focus: '勾股定理定义', keyConcepts: ['勾股定理'] } },
+      {
+        pageNum: 4,
+        type: 'concept',
+        title: '核心概念',
+        contentOutline: { focus: '勾股定理定义', keyConcepts: ['勾股定理'] },
+      },
       { pageNum: 5, type: 'case', title: '典型例题', contentOutline: { focus: '勾股定理计算' } },
       { pageNum: 6, type: 'summary', title: '本章小结', contentOutline: { focus: '回顾' } },
     ];

@@ -77,7 +77,13 @@ export function buildTypedMemoryContext(memory: TypedMemory): string {
   const progress = memory.entries.filter((e) => e.type === 'progress');
   const lines = ['[Agent Memory]'];
   if (prefs.length) lines.push(`Preferences: ${prefs.map((p) => p.content).join('; ')}`);
-  if (decisions.length) lines.push(`Decisions: ${decisions.slice(-3).map((d) => d.content).join('; ')}`);
+  if (decisions.length)
+    lines.push(
+      `Decisions: ${decisions
+        .slice(-3)
+        .map((d) => d.content)
+        .join('; ')}`,
+    );
   if (progress.length) lines.push(`Progress: ${progress.map((p) => p.content).join('; ')}`);
   return lines.join('\n');
 }

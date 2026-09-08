@@ -151,7 +151,13 @@ export function addImageToSlide(
  * Returns a Map of elementId -> base64 data URI.
  */
 export async function resolveImages(
-  elements: Array<{ id: string; src?: string; borderRadius?: number; width?: number; height?: number }>,
+  elements: Array<{
+    id: string;
+    src?: string;
+    borderRadius?: number;
+    width?: number;
+    height?: number;
+  }>,
 ): Promise<Map<string, string>> {
   const resolved = new Map<string, string>();
 
@@ -168,7 +174,9 @@ export async function resolveImages(
         resolved.set(el.id, resolvedSrc);
       }
     } catch (err) {
-      log.warn(`Failed to resolve image ${el.id}: ${err instanceof Error ? err.message : 'unknown'}`);
+      log.warn(
+        `Failed to resolve image ${el.id}: ${err instanceof Error ? err.message : 'unknown'}`,
+      );
     }
   }
 
@@ -187,14 +195,17 @@ function addPlaceholder(
   theme: ThemeToken,
 ): void {
   // Background shape
-  pptxSlide.addShape('rect' as never, {
-    x,
-    y,
-    w,
-    h,
-    fill: toPptxColor(theme.accentLight),
-    line: { color: toPptxHex(theme.shapeOutlineColor), width: 1 },
-  } as never);
+  pptxSlide.addShape(
+    'rect' as never,
+    {
+      x,
+      y,
+      w,
+      h,
+      fill: toPptxColor(theme.accentLight),
+      line: { color: toPptxHex(theme.shapeOutlineColor), width: 1 },
+    } as never,
+  );
 
   // Label text
   const fontSize = Math.min(14, h * 8);
@@ -254,7 +265,10 @@ interface ResolveOptions {
   targetHeight?: number;
 }
 
-async function resolveSingleImage(src: string, options: ResolveOptions = {}): Promise<string | null> {
+async function resolveSingleImage(
+  src: string,
+  options: ResolveOptions = {},
+): Promise<string | null> {
   // Already resolved
   if (src.startsWith('data:') || src.startsWith('blob:')) {
     return processImageIfNeeded(src, options);
@@ -286,7 +300,9 @@ async function resolveSingleImage(src: string, options: ResolveOptions = {}): Pr
       const base64 = await blobToBase64(blob);
       return processImageIfNeeded(base64, options);
     } catch (err) {
-      log.warn(`Fetch failed for image: ${src.slice(0, 60)} — ${err instanceof Error ? err.message : 'unknown'}`);
+      log.warn(
+        `Fetch failed for image: ${src.slice(0, 60)} — ${err instanceof Error ? err.message : 'unknown'}`,
+      );
       return null;
     }
   }
@@ -345,7 +361,9 @@ async function processImageIfNeeded(src: string, options: ResolveOptions): Promi
     const buffer = canvas.toBuffer('image/jpeg', 0.85);
     return `data:image/jpeg;base64,${buffer.toString('base64')}`;
   } catch (err) {
-    log.warn(`Image processing failed, using original: ${err instanceof Error ? err.message : 'unknown'}`);
+    log.warn(
+      `Image processing failed, using original: ${err instanceof Error ? err.message : 'unknown'}`,
+    );
     return src;
   }
 }

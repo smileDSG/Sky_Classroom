@@ -26,9 +26,7 @@ export async function POST(request: Request) {
     const dao = await createUserDAO();
 
     // Look up user by email or username
-    let user = emailOrUsername.includes('@')
-      ? await dao.getByEmail(emailOrUsername)
-      : null;
+    let user = emailOrUsername.includes('@') ? await dao.getByEmail(emailOrUsername) : null;
     if (!user) {
       user = await dao.getByUsername(emailOrUsername);
     }

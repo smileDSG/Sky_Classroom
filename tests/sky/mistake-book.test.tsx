@@ -50,9 +50,7 @@ describe('MistakeBook', () => {
     render(<MistakeBook />);
 
     expect(screen.getByText('还没有错题记录')).toBeDefined();
-    expect(
-      screen.getByText(/去搜题页练习一下吧/),
-    ).toBeDefined();
+    expect(screen.getByText(/去搜题页练习一下吧/)).toBeDefined();
   });
 
   // ── 2. 有错题时渲染列表 ──────────────────────────────────────
@@ -65,7 +63,7 @@ describe('MistakeBook', () => {
           cause: 'concept-unclear',
           problem: 'y = x^2 的导数',
           userAnswer: 'y = 2x',
-          correctAnswer: 'y\' = 2x',
+          correctAnswer: "y' = 2x",
           knowledgePoints: ['导数'],
         }),
       ],
@@ -80,7 +78,7 @@ describe('MistakeBook', () => {
     // 答案信息（每条唯一）
     expect(screen.getByText('我的答案：x = 2')).toBeDefined();
     expect(screen.getByText('正确答案：x = 3')).toBeDefined();
-    expect(screen.getByText("我的答案：y = 2x")).toBeDefined();
+    expect(screen.getByText('我的答案：y = 2x')).toBeDefined();
     expect(screen.getByText("正确答案：y' = 2x")).toBeDefined();
 
     // 错因 badge (也出现在 filter 栏中，所以至少 2 个)
@@ -107,14 +105,7 @@ describe('MistakeBook', () => {
     // "全部错因" 按钮
     expect(screen.getByText('全部错因')).toBeDefined();
     // 6 种错因 (filter 按钮 + 卡片 badge 均出现，用 getAllByText 容许多个)
-    const causeLabels = [
-      '概念不清',
-      '计算失误',
-      '审题错误',
-      '方法错误',
-      '粗心',
-      '格式错误',
-    ];
+    const causeLabels = ['概念不清', '计算失误', '审题错误', '方法错误', '粗心', '格式错误'];
     for (const label of causeLabels) {
       const elements = screen.getAllByText(label);
       expect(elements.length).toBeGreaterThanOrEqual(1);

@@ -1,1 +1,5 @@
-{"success":false,"errorCode":"INTERNAL_ERROR","error":"生成失败: 大纲生成失败: SyntaxError: Unterminated string in JSON at position 161 (line 10 column 10)"}
+{
+  "success": false,
+  "errorCode": "INTERNAL_ERROR",
+  "error": "生成失败: 大纲生成失败: SyntaxError: Unterminated string in JSON at position 161 (line 10 column 10)"
+}

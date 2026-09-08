@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Mail,
@@ -17,312 +17,108 @@ import {
   Brain,
   Globe,
   Shield,
-  ChevronRight,
   CloudSun,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
-// ── Observatory SVG Illustration ────────────────────────────────
-
-function ObservatoryIllustration() {
-  return (
-    <svg viewBox="0 0 400 320" className="w-full max-w-md h-auto" fill="none">
-      {/* Sky gradient background */}
-      <defs>
-        <linearGradient id="sky-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0c1445" />
-          <stop offset="40%" stopColor="#1a237e" />
-          <stop offset="70%" stopColor="#4a6cf7" />
-          <stop offset="100%" stopColor="#7ec8e3" />
-        </linearGradient>
-        <linearGradient id="dome-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#e8eaf6" />
-          <stop offset="100%" stopColor="#c5cae9" />
-        </linearGradient>
-        <linearGradient id="mountain-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1a237e" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#0d1b3e" />
-        </linearGradient>
-        <radialGradient id="sun-grad" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#fff176" />
-          <stop offset="50%" stopColor="#ffb300" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#ff8f00" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="star-glow" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#fff" stopOpacity="1" />
-          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      {/* Night sky */}
-      <rect width="400" height="320" fill="url(#sky-grad)" rx="16" />
-
-      {/* Stars */}
-      {[
-        { cx: 30, cy: 25, r: 1.5 },
-        { cx: 80, cy: 40, r: 1 },
-        { cx: 140, cy: 18, r: 2 },
-        { cx: 200, cy: 35, r: 1 },
-        { cx: 260, cy: 22, r: 1.5 },
-        { cx: 320, cy: 45, r: 1 },
-        { cx: 360, cy: 20, r: 2 },
-        { cx: 50, cy: 60, r: 1 },
-        { cx: 110, cy: 55, r: 1.5 },
-        { cx: 180, cy: 50, r: 1 },
-        { cx: 290, cy: 55, r: 1.5 },
-        { cx: 340, cy: 60, r: 1 },
-        { cx: 65, cy: 45, r: 0.8 },
-        { cx: 230, cy: 28, r: 0.8 },
-        { cx: 155, cy: 70, r: 1.2 },
-      ].map((star, i) => (
-        <motion.circle
-          key={i}
-          cx={star.cx}
-          cy={star.cy}
-          r={star.r}
-          fill="#fff"
-          initial={{ opacity: 0.3 }}
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{
-            duration: 2 + Math.random() * 2,
-            delay: Math.random() * 2,
-            repeat: Infinity,
-          }}
-        />
-      ))}
-
-      {/* Constellation lines */}
-      <motion.path
-        d="M30 25 L80 40 L140 18 L200 35"
-        stroke="rgba(255,255,255,0.15)"
-        strokeWidth="0.5"
-        strokeDasharray="4 3"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-      />
-      <motion.path
-        d="M260 22 L320 45 L360 20"
-        stroke="rgba(255,255,255,0.15)"
-        strokeWidth="0.5"
-        strokeDasharray="4 3"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
-      />
-
-      {/* Shooting star */}
-      <motion.g
-        initial={{ x: 0, y: 0, opacity: 0 }}
-        animate={{ x: -80, y: 80, opacity: [0, 1, 0] }}
-        transition={{ duration: 2, delay: 4, repeat: Infinity, repeatDelay: 8 }}
-      >
-        <line
-          x1="330"
-          y1="30"
-          x2="300"
-          y2="50"
-          stroke="#fff"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-        <circle cx="330" cy="30" r="2" fill="#fff" />
-      </motion.g>
-
-      {/* Sunrise glow at horizon */}
-      <ellipse cx="200" cy="280" rx="200" ry="80" fill="url(#sun-grad)" opacity="0.5" />
-
-      {/* Mountains */}
-      <path
-        d="M0 280 L60 220 L100 250 L140 210 L180 240 L220 200 L260 235 L300 215 L340 245 L400 225 L400 320 L0 320Z"
-        fill="url(#mountain-grad)"
-      />
-      <path
-        d="M0 290 L80 245 L130 265 L170 235 L210 258 L250 228 L290 250 L330 240 L370 262 L400 250 L400 320 L0 320Z"
-        fill="#0a1628"
-        opacity="0.5"
-      />
-
-      {/* Observatory dome */}
-      <g>
-        {/* Base */}
-        <rect
-          x="165"
-          y="240"
-          width="70"
-          height="50"
-          rx="4"
-          fill="#1a237e"
-          stroke="#3949ab"
-          strokeWidth="1"
-        />
-        {/* Dome */}
-        <path
-          d="M165 245 A35 35 0 0 1 235 245"
-          fill="url(#dome-grad)"
-          stroke="#9fa8da"
-          strokeWidth="1"
-        />
-        {/* Dome slit */}
-        <path d="M195 210 L195 245" stroke="#7986cb" strokeWidth="1.5" />
-        <path d="M205 210 L205 245" stroke="#7986cb" strokeWidth="1.5" />
-        {/* Telescope peeking out */}
-        <line
-          x1="210"
-          y1="222"
-          x2="240"
-          y2="200"
-          stroke="#5c6bc0"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <line
-          x1="240"
-          y1="200"
-          x2="255"
-          y2="190"
-          stroke="#3949ab"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        {/* Window glow */}
-        <rect x="175" y="255" width="12" height="12" rx="2" fill="#fff176" opacity="0.6" />
-        <rect x="215" y="255" width="12" height="12" rx="2" fill="#fff176" opacity="0.6" />
-      </g>
-
-      {/* Light beam from observatory to sky */}
-      <motion.path
-        d="M200 220 L160 80 L240 80Z"
-        fill="rgba(255,241,118,0.06)"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.1, 0] }}
-        transition={{ duration: 4, repeat: Infinity }}
-      />
-    </svg>
-  );
-}
-
-// ── Decorative Celestial Scene ─────────────────────────────────
+// ── Left Brand Panel (full-bleed observatory image) ─────────────
 
 function CelestialScene() {
   return (
-    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-      {/* Large ambient glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute top-0 -left-16 w-[500px] h-[500px] rounded-full opacity-25"
-          style={{
-            background:
-              'radial-gradient(circle, rgba(125,211,252,0.35) 0%, rgba(125,211,252,0) 70%)',
-          }}
-        />
-        <div
-          className="absolute bottom-0 -right-16 w-[400px] h-[400px] rounded-full opacity-25"
-          style={{
-            background:
-              'radial-gradient(circle, rgba(196,181,253,0.3) 0%, rgba(196,181,253,0) 70%)',
-          }}
-        />
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-10"
-          style={{
-            background: 'radial-gradient(circle, rgba(56,189,248,0.2) 0%, rgba(56,189,248,0) 70%)',
-          }}
-        />
-      </div>
+    <div className="relative w-full h-full overflow-hidden">
+      <img
+        src="/sky-observatory.png"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {/* Readability overlays */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center gap-6 px-8 md:px-12 w-full max-w-lg">
-        {/* Observatory illustration */}
+      <div className="relative z-10 flex flex-col items-center justify-center gap-8 px-8 md:px-12 w-full h-full min-h-[50vh] lg:min-h-dvh py-10">
+        {/* Brand */}
         <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full"
-        >
-          <ObservatoryIllustration />
-        </motion.div>
-
-        {/* Brand badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/70 dark:border-white/10 dark:bg-white/5 px-5 py-2.5 shadow-lg shadow-sky-200/30 backdrop-blur-md"
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col items-center gap-4 text-center"
         >
-          <img src="/logo-icon.svg" alt="" className="w-8 h-8" />
-          <span className="text-lg font-bold text-slate-800 dark:text-slate-100">智眸无界</span>
+          <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-xl shadow-black/30 ring-1 ring-white/25">
+            <img src="/logo-icon.svg" alt="智眸无界" className="w-full h-full object-cover" />
+          </div>
+          <div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white drop-shadow-lg">
+              智眸无界
+            </h1>
+            <p className="mt-1.5 text-lg md:text-xl font-semibold text-sky-200/90">天空课堂</p>
+          </div>
         </motion.div>
 
         {/* Tagline */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          className="text-sm text-slate-500 dark:text-slate-400 text-center leading-relaxed max-w-sm"
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="text-sm md:text-base text-white/85 text-center leading-relaxed max-w-sm"
         >
-          AI 驱动的互动课堂
-          <br />
-          上传 PDF，即刻生成沉浸式多智能体学习体验
+          AI 驱动的互动课堂——上传 PDF，即刻生成沉浸式多智能体学习体验
         </motion.p>
 
         {/* Feature highlights */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.65, duration: 0.5 }}
-          className="grid grid-cols-2 gap-2.5 w-full max-w-xs"
+          transition={{ delay: 0.45, duration: 0.5 }}
+          className="grid grid-cols-2 gap-3 w-full max-w-sm"
         >
           {[
             {
               icon: Brain,
               label: '多智能体教学',
-              color: 'from-sky-500 to-blue-500',
+              color: 'from-sky-400 to-blue-500',
               desc: 'AI 老师 + 同学互动',
             },
             {
               icon: Globe,
               label: '全科知识覆盖',
-              color: 'from-violet-500 to-purple-500',
+              color: 'from-violet-400 to-purple-500',
               desc: '数学/物理/编程等',
             },
             {
               icon: Sparkles,
               label: '智能生成课件',
-              color: 'from-emerald-500 to-teal-500',
+              color: 'from-emerald-400 to-teal-500',
               desc: 'PDF 一键转课堂',
             },
             {
               icon: Shield,
               label: '个性化学习',
-              color: 'from-amber-500 to-orange-500',
+              color: 'from-amber-400 to-orange-500',
               desc: '因材施教路径',
             },
           ].map((item) => (
             <div
               key={item.label}
-              className="group flex items-center gap-2.5 rounded-xl bg-white/60 dark:bg-white/[0.06] border border-white/80 dark:border-white/10 px-3 py-2.5 backdrop-blur-sm transition-all hover:bg-white/80 hover:shadow-md hover:shadow-sky-200/20 dark:hover:bg-white/[0.1] dark:hover:border-white/20"
+              className="group flex items-center gap-3 rounded-xl bg-white/10 border border-white/15 px-4 py-3 backdrop-blur-md transition-all hover:bg-white/20 hover:border-white/30"
             >
               <div
                 className={cn(
-                  'shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center shadow-sm',
+                  'shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shadow-md shadow-black/10',
                   item.color,
                 )}
               >
                 <item.icon className="w-4 h-4 text-white" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {item.label}
-                </div>
-                <div className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
-                  {item.desc}
-                </div>
+                <div className="text-sm font-semibold text-white">{item.label}</div>
+                <div className="text-xs text-white/60 leading-tight">{item.desc}</div>
               </div>
             </div>
           ))}
@@ -337,12 +133,21 @@ function CelestialScene() {
 function LoginForm({ onToggle }: { onToggle: () => void }) {
   const { login, isGuest } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/';
+  const reason = searchParams.get('reason');
   const [emailOrUsername, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [demoAccountEnabled, setDemoAccountEnabled] = useState(false);
+
+  useEffect(() => {
+    if (reason === 'login_required') {
+      toast.warning('请先登录后再访问');
+    }
+  }, [reason]);
 
   useEffect(() => {
     let active = true;
@@ -363,8 +168,8 @@ function LoginForm({ onToggle }: { onToggle: () => void }) {
   }, []);
 
   useEffect(() => {
-    if (!isGuest) router.push('/');
-  }, [isGuest, router]);
+    if (!isGuest) router.push(redirect);
+  }, [isGuest, router, redirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -372,7 +177,7 @@ function LoginForm({ onToggle }: { onToggle: () => void }) {
     setLoading(true);
     try {
       await login(emailOrUsername, password);
-      router.push('/');
+      router.push(redirect);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
@@ -520,6 +325,8 @@ function LoginForm({ onToggle }: { onToggle: () => void }) {
 function RegisterForm({ onToggle }: { onToggle: () => void }) {
   const { register, isGuest } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '';
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -538,8 +345,8 @@ function RegisterForm({ onToggle }: { onToggle: () => void }) {
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   useEffect(() => {
-    if (!isGuest) router.push('/');
-  }, [isGuest, router]);
+    if (!isGuest) router.push(redirect || '/sky/onboarding');
+  }, [isGuest, router, redirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -557,7 +364,7 @@ function RegisterForm({ onToggle }: { onToggle: () => void }) {
     setLoading(true);
     try {
       await register({ email: email || undefined, username, password });
-      router.push('/sky/onboarding');
+      router.push(redirect || '/sky/onboarding');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败，请稍后重试');
@@ -826,8 +633,8 @@ export function SkyLandingPage() {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-sky-50 dark:bg-slate-950">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center animate-pulse">
-            <img src="/logo-icon.svg" alt="" className="w-8 h-8 brightness-0 invert" />
+          <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg">
+            <img src="/logo-icon.svg" alt="" className="w-full h-full object-cover" />
           </div>
           <div className="w-6 h-6 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -938,7 +745,7 @@ export function SkyLandingPage() {
       {/* Main content */}
       <div className="relative z-10 min-h-dvh flex flex-col lg:flex-row">
         {/* Left side: Brand & Scene */}
-        <div className="flex-1 flex items-center justify-center p-8 lg:p-12 xl:p-16 min-h-[50vh] lg:min-h-dvh">
+        <div className="relative flex-1 min-h-[50vh] lg:min-h-dvh overflow-hidden">
           <CelestialScene />
         </div>
 

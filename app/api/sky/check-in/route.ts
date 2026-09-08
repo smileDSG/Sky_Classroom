@@ -108,7 +108,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function calculateStreak(storage: Awaited<ReturnType<typeof getServerStorage>>, userId: string): Promise<number> {
+async function calculateStreak(
+  storage: Awaited<ReturnType<typeof getServerStorage>>,
+  userId: string,
+): Promise<number> {
   let streak = 0;
   const todayStr = today();
   let checkDate = todayStr;
@@ -136,20 +139,22 @@ async function calculateStreak(storage: Awaited<ReturnType<typeof getServerStora
  * - courseProgress (0-30): scenes completed today (capped at 10)
  * - streakBonus (0-20): min(streak, 7) / 7 * 20
  */
-async function calculateMasteryScore(storage: Awaited<ReturnType<typeof getServerStorage>>, userId: string): Promise<number> {
+async function calculateMasteryScore(
+  storage: Awaited<ReturnType<typeof getServerStorage>>,
+  userId: string,
+): Promise<number> {
   const statsDAO = createUserStatsDAO(storage);
   const stats = await statsDAO.getOrCreate(userId);
 
   // Correct rate component (0-50)
-  const correctRate = stats.problemsAttempted > 0
-    ? (stats.problemsCorrect / stats.problemsAttempted) * 50
-    : 0;
+  const correctRate =
+    stats.problemsAttempted > 0 ? (stats.problemsCorrect / stats.problemsAttempted) * 50 : 0;
 
   // Course progress component (0-30), capped at 10 scenes
-  const courseProgress = Math.min(stats.scenesCompleted, 10) / 10 * 30;
+  const courseProgress = (Math.min(stats.scenesCompleted, 10) / 10) * 30;
 
   // Streak bonus component (0-20), capped at 7 days
-  const streakBonus = Math.min(stats.checkinStreak, 7) / 7 * 20;
+  const streakBonus = (Math.min(stats.checkinStreak, 7) / 7) * 20;
 
   return Math.round(correctRate + courseProgress + streakBonus);
 }

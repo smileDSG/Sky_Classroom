@@ -12,10 +12,7 @@ import { useEffect, type RefObject } from 'react';
  * Must be paired with `overscroll-behavior: contain` on the same element for
  * scrollbar-drag protection — the JS handler only covers wheel events.
  */
-export function useScrollIsolation(
-  ref: RefObject<HTMLElement | null>,
-  enabled: boolean,
-) {
+export function useScrollIsolation(ref: RefObject<HTMLElement | null>, enabled: boolean) {
   useEffect(() => {
     const el = ref.current;
     if (!el || !enabled) return;

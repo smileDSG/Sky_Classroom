@@ -11,7 +11,8 @@ export const AI_INTRO_TEMPLATES: CourseTemplate[] = [
     subject: 'ai',
     description: {
       'zh-CN': '了解人工智能的基本概念、发展历程和核心原理',
-      'en-US': 'Understand the basic concepts, history, and core principles of artificial intelligence',
+      'en-US':
+        'Understand the basic concepts, history, and core principles of artificial intelligence',
     },
     icon: '🤖',
     isBuiltIn: true,

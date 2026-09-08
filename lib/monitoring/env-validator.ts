@@ -24,9 +24,22 @@ export interface EnvValidationResult {
 // ==================== Known Providers ====================
 
 const LLM_PROVIDERS = [
-  'OPENAI', 'ANTHROPIC', 'GOOGLE', 'DEEPSEEK', 'QWEN', 'KIMI',
-  'MINIMAX', 'GLM', 'SILICONFLOW', 'DOUBAO', 'OPENROUTER', 'GROK',
-  'TENCENT', 'XIAOMI', 'OLLAMA', 'LEMONADE',
+  'OPENAI',
+  'ANTHROPIC',
+  'GOOGLE',
+  'DEEPSEEK',
+  'QWEN',
+  'KIMI',
+  'MINIMAX',
+  'GLM',
+  'SILICONFLOW',
+  'DOUBAO',
+  'OPENROUTER',
+  'GROK',
+  'TENCENT',
+  'XIAOMI',
+  'OLLAMA',
+  'LEMONADE',
 ] as const;
 
 // ==================== Implementation ====================
@@ -38,9 +51,7 @@ export function validateEnvironment(): EnvValidationResult {
   const defaultModel = process.env.DEFAULT_MODEL;
   if (defaultModel) {
     const [provider] = defaultModel.split(':');
-    const hasKey = LLM_PROVIDERS.some(
-      (p) => p.toLowerCase() === provider?.toLowerCase(),
-    );
+    const hasKey = LLM_PROVIDERS.some((p) => p.toLowerCase() === provider?.toLowerCase());
     checks.push({
       name: 'DEFAULT_MODEL',
       status: hasKey ? 'ok' : 'warning',

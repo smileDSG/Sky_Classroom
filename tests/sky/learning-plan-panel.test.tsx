@@ -81,9 +81,7 @@ afterEach(() => {
 
 describe('LearningPlanPanel', () => {
   it('shows the daily projection and its path-bound task', () => {
-    render(
-      <LearningPlanPanel initialData={makePlanResponse('today')} onPlanChanged={vi.fn()} />,
-    );
+    render(<LearningPlanPanel initialData={makePlanResponse('today')} onPlanChanged={vi.fn()} />);
 
     expect(screen.getByText('今日导数专项练习')).toBeInTheDocument();
     expect(screen.getByText('1 项')).toBeInTheDocument();
@@ -106,9 +104,7 @@ describe('LearningPlanPanel', () => {
       .mockImplementation(() => okJson(makePlanResponse('week', '本周复习任务')));
     vi.stubGlobal('fetch', fetchMock);
 
-    render(
-      <LearningPlanPanel initialData={makePlanResponse('today')} onPlanChanged={vi.fn()} />,
-    );
+    render(<LearningPlanPanel initialData={makePlanResponse('today')} onPlanChanged={vi.fn()} />);
 
     fireEvent.click(screen.getByRole('tab', { name: '本周' }));
 
@@ -169,10 +165,7 @@ describe('LearningPlanPanel', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     render(
-      <LearningPlanPanel
-        initialData={makePlanResponse('today')}
-        onPlanChanged={onPlanChanged}
-      />,
+      <LearningPlanPanel initialData={makePlanResponse('today')} onPlanChanged={onPlanChanged} />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: buttonName }));

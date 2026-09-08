@@ -12,7 +12,8 @@ interface PBLRendererProps {
   readonly sceneId: string;
 }
 
-export function PBLRenderer({ content, mode: _mode, sceneId }: PBLRendererProps) {const { projectConfig } = content;
+export function PBLRenderer({ content, mode: _mode, sceneId }: PBLRendererProps) {
+  const { projectConfig } = content;
   const selectedRole = projectConfig?.selectedRole ?? null;
 
   const updateConfig = useCallback(

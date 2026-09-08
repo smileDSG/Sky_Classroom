@@ -29,11 +29,7 @@ import {
 } from '@/lib/audio/voxcpm';
 
 /** Extract the English name from voice name format "ChineseName (English)" */
-function getVoiceDisplayName(
-  id: string,
-  name: string,
-  lang: string,
-): string {
+function getVoiceDisplayName(id: string, name: string, lang: string): string {
   if (id === VOXCPM_AUTO_VOICE_ID) {
     return '自动音色';
   }
@@ -45,7 +41,8 @@ function getVoiceDisplayName(
 }
 
 export function TtsConfigPopover() {
-  const locale = 'zh-CN';const [open, setOpen] = useState(false);
+  const locale = 'zh-CN';
+  const [open, setOpen] = useState(false);
   const { previewing, startPreview, stopPreview } = useTTSPreview();
 
   const ttsEnabled = useSettingsStore((s) => s.ttsEnabled);
@@ -111,8 +108,7 @@ export function TtsConfigPopover() {
         providerOptions,
       });
     } catch (error) {
-      const message =
-        error instanceof Error && error.message ? error.message : 'TTS 测试失败';
+      const message = error instanceof Error && error.message ? error.message : 'TTS 测试失败';
       toast.error(message);
     }
   }, [

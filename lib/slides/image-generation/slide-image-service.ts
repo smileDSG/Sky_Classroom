@@ -37,7 +37,8 @@ export async function generateSlideImages(
 
       const result = await generateImage(config, options);
 
-      const imageUrl = result.url ?? (result.base64 ? `data:image/png;base64,${result.base64}` : '');
+      const imageUrl =
+        result.url ?? (result.base64 ? `data:image/png;base64,${result.base64}` : '');
       if (!imageUrl) {
         log.warn(`Slide ${req.slideIndex}: image generation returned no URL or base64`);
         return null;
@@ -48,7 +49,9 @@ export async function generateSlideImages(
         imageUrl,
       } as SlideImageResult;
     } catch (err) {
-      log.warn(`Slide ${req.slideIndex}: image generation failed — ${err instanceof Error ? err.message : String(err)}`);
+      log.warn(
+        `Slide ${req.slideIndex}: image generation failed — ${err instanceof Error ? err.message : String(err)}`,
+      );
       return null;
     }
   });

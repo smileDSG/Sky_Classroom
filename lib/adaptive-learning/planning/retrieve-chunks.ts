@@ -57,7 +57,11 @@ async function* walkMarkdown(dir: string): AsyncGenerator<string> {
   }
 }
 
-function computeScore(text: string, projection: PlanningProfileProjection, goalTopic?: string): number {
+function computeScore(
+  text: string,
+  projection: PlanningProfileProjection,
+  goalTopic?: string,
+): number {
   const normalized = normalizeText(text);
   const tokens = new Set(normalized.split(' ').filter(Boolean));
   const { data } = projection;

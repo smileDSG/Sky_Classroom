@@ -16,7 +16,10 @@ import { runTeachingJob } from '@/lib/server/teaching-job-runner';
 import { resolveTeachingPersonalizationPolicy } from '@/lib/server/teaching-personalization';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
-import { planMistakeReview, buildTeachingTopicFromReview } from '@/lib/teaching/mistake-review-planner';
+import {
+  planMistakeReview,
+  buildTeachingTopicFromReview,
+} from '@/lib/teaching/mistake-review-planner';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:MistakeReview');
@@ -68,15 +71,20 @@ export async function POST(req: NextRequest) {
     // Start background generation
     after(() => runTeachingJob(jobId, teachingTopic, quota.userId, personalizationPolicy));
 
-    log.info(`Mistake review job ${jobId} created for user ${quota.userId}, topic: ${teachingTopic}`);
+    log.info(
+      `Mistake review job ${jobId} created for user ${quota.userId}, topic: ${teachingTopic}`,
+    );
 
-    return apiSuccess({
-      jobId,
-      topic: teachingTopic,
-      title: reviewPlan.title,
-      weakPoints: reviewPlan.weakPoints,
-      errorPatterns: reviewPlan.errorPatterns,
-    }, 202);
+    return apiSuccess(
+      {
+        jobId,
+        topic: teachingTopic,
+        title: reviewPlan.title,
+        weakPoints: reviewPlan.weakPoints,
+        errorPatterns: reviewPlan.errorPatterns,
+      },
+      202,
+    );
   } catch (err) {
     log.error('Mistake review creation failed:', err);
     return apiError(

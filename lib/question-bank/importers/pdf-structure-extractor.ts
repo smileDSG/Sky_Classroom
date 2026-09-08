@@ -105,7 +105,10 @@ ${segmentText}
 }
 
 function parseExtractResult(text: string): ExtractedQuestion | null {
-  const cleaned = text.trim().replace(/^```json\s*/i, '').replace(/```\s*$/i, '');
+  const cleaned = text
+    .trim()
+    .replace(/^```json\s*/i, '')
+    .replace(/```\s*$/i, '');
 
   try {
     const parsed = JSON.parse(cleaned);
@@ -183,7 +186,10 @@ function normalizeArray(v: unknown): string[] | undefined {
       const parsed = JSON.parse(v);
       if (Array.isArray(parsed)) return parsed.filter((x): x is string => typeof x === 'string');
     } catch {
-      return v.split(/[,，;；]/).map((s) => s.trim()).filter(Boolean);
+      return v
+        .split(/[,，;；]/)
+        .map((s) => s.trim())
+        .filter(Boolean);
     }
   }
   return undefined;

@@ -6,11 +6,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import {
-  API_ERROR_CODES,
-  type ApiErrorCode,
-  ERROR_CODE_MESSAGES,
-} from './api-error-codes';
+import { API_ERROR_CODES, type ApiErrorCode, ERROR_CODE_MESSAGES } from './api-error-codes';
 
 export { API_ERROR_CODES, ERROR_CODE_MESSAGES } from './api-error-codes';
 export type { ApiErrorCode } from './api-error-codes';

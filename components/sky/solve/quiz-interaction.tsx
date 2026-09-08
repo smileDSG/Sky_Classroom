@@ -114,18 +114,30 @@ export function QuizInteraction({
               className={cn(
                 'w-full text-left p-3 rounded-lg border transition-all',
                 'flex items-center gap-3',
-                !showAnswer && !isSelected && 'border-slate-200 dark:border-slate-700 hover:border-sky-300 dark:hover:border-sky-700 bg-white dark:bg-slate-800',
+                !showAnswer &&
+                  !isSelected &&
+                  'border-slate-200 dark:border-slate-700 hover:border-sky-300 dark:hover:border-sky-700 bg-white dark:bg-slate-800',
                 !showAnswer && isSelected && 'border-sky-500 bg-sky-50 dark:bg-sky-900/20',
-                showAnswer && isCorrectOption && 'border-green-500 bg-green-50 dark:bg-green-900/20',
-                showAnswer && isSelected && !isCorrectOption && 'border-red-500 bg-red-50 dark:bg-red-900/20',
-                showAnswer && !isSelected && !isCorrectOption && 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 opacity-60',
+                showAnswer &&
+                  isCorrectOption &&
+                  'border-green-500 bg-green-50 dark:bg-green-900/20',
+                showAnswer &&
+                  isSelected &&
+                  !isCorrectOption &&
+                  'border-red-500 bg-red-50 dark:bg-red-900/20',
+                showAnswer &&
+                  !isSelected &&
+                  !isCorrectOption &&
+                  'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 opacity-60',
               )}
             >
               {/* Option indicator */}
               <div
                 className={cn(
                   'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium',
-                  !showAnswer && !isSelected && 'border-slate-300 dark:border-slate-600 text-slate-500',
+                  !showAnswer &&
+                    !isSelected &&
+                    'border-slate-300 dark:border-slate-600 text-slate-500',
                   !showAnswer && isSelected && 'border-sky-500 text-sky-500',
                   showAnswer && isCorrectOption && 'border-green-500 text-green-500',
                   showAnswer && isSelected && !isCorrectOption && 'border-red-500 text-red-500',
@@ -159,10 +171,7 @@ export function QuizInteraction({
           >
             提交答案
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleShowAnswer}
-          >
+          <Button variant="outline" onClick={handleShowAnswer}>
             <HelpCircle className="w-4 h-4 mr-1" />
             查看答案
           </Button>
@@ -176,9 +185,12 @@ export function QuizInteraction({
           animate={{ opacity: 1, y: 0 }}
           className={cn(
             'p-4 rounded-lg border',
-            isCorrect === true && 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20',
-            isCorrect === false && 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20',
-            isCorrect === null && 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/20',
+            isCorrect === true &&
+              'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20',
+            isCorrect === false &&
+              'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20',
+            isCorrect === null &&
+              'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/20',
           )}
         >
           <div className="flex items-center gap-2 mb-2">

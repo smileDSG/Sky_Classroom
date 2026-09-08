@@ -36,7 +36,7 @@ export class MemoryStorageProvider implements StorageProvider {
 
   async get<T>(table: string, id: string): Promise<StorageEntry<T> | null> {
     const t = this.getTable(table);
-    return ((t.get(id) ?? null) as StorageEntry<T> | null);
+    return (t.get(id) ?? null) as StorageEntry<T> | null;
   }
 
   async getAll<T>(

@@ -311,7 +311,8 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
               <div className="mt-3 space-y-2">
                 {profileSummary.changes.slice(0, 4).map((change) => {
                   const improved =
-                    (change.masteryAfter ?? 0) >= (change.masteryBefore ?? change.masteryAfter ?? 0);
+                    (change.masteryAfter ?? 0) >=
+                    (change.masteryBefore ?? change.masteryAfter ?? 0);
                   return (
                     <div
                       key={change.knowledgePoint}
@@ -369,7 +370,8 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
             {profileSummary.failedCount > 0 && (
               <div className="mt-3 flex items-start gap-2 text-[10px] leading-relaxed text-amber-700 dark:text-amber-300">
                 <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                {profileSummary.failedCount} 道题的学习情况暂时没有更新；本地复习进度已保留，可稍后再复习同步。
+                {profileSummary.failedCount}{' '}
+                道题的学习情况暂时没有更新；本地复习进度已保留，可稍后再复习同步。
               </div>
             )}
           </div>
@@ -413,9 +415,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
           ← 返回
         </button>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            复习模式
-          </span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">复习模式</span>
           <span className="rounded-full bg-violet-100 dark:bg-violet-900/30 px-2.5 py-0.5 text-xs font-medium text-violet-600 dark:text-violet-400">
             {currentIndex + 1}/{items.length}
           </span>
@@ -549,18 +549,31 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
         <div className="flex items-center justify-center gap-4 text-[10px] text-slate-400 dark:text-slate-500">
           {phase === 'recall' && (
             <>
-              <span><kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">Space</kbd> 查看答案</span>
-              <span><kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">H</kbd> 提示</span>
+              <span>
+                <kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">Space</kbd>{' '}
+                查看答案
+              </span>
+              <span>
+                <kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">H</kbd> 提示
+              </span>
             </>
           )}
           {phase === 'reveal' && (
             <>
-              <span><kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">1</kbd> 掌握了</span>
-              <span><kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">2</kbd> 还是错</span>
-              <span><kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">3</kbd> 再想想</span>
+              <span>
+                <kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">1</kbd> 掌握了
+              </span>
+              <span>
+                <kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">2</kbd> 还是错
+              </span>
+              <span>
+                <kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">3</kbd> 再想想
+              </span>
             </>
           )}
-          <span><kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">Esc</kbd> 退出</span>
+          <span>
+            <kbd className="rounded bg-slate-100 dark:bg-slate-700 px-1 py-0.5">Esc</kbd> 退出
+          </span>
         </div>
       </div>
     </motion.div>

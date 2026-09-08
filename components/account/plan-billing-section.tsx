@@ -31,10 +31,26 @@ const PLAN_NAMES: Record<PlanType, string> = {
 };
 
 const PLAN_STYLES: Record<PlanType, { gradient: string; badge: string; ring: string }> = {
-  free: { gradient: 'from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900', badge: 'bg-slate-500', ring: 'ring-slate-200 dark:ring-slate-700' },
-  basic: { gradient: 'from-blue-50 to-cyan-50 dark:from-blue-950/40 dark:to-cyan-950/40', badge: 'bg-blue-500', ring: 'ring-blue-200 dark:ring-blue-800' },
-  pro: { gradient: 'from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40', badge: 'bg-violet-500', ring: 'ring-violet-200 dark:ring-violet-800' },
-  enterprise: { gradient: 'from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40', badge: 'bg-gradient-to-r from-amber-500 to-orange-500', ring: 'ring-amber-200 dark:ring-amber-800' },
+  free: {
+    gradient: 'from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900',
+    badge: 'bg-slate-500',
+    ring: 'ring-slate-200 dark:ring-slate-700',
+  },
+  basic: {
+    gradient: 'from-blue-50 to-cyan-50 dark:from-blue-950/40 dark:to-cyan-950/40',
+    badge: 'bg-blue-500',
+    ring: 'ring-blue-200 dark:ring-blue-800',
+  },
+  pro: {
+    gradient: 'from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40',
+    badge: 'bg-violet-500',
+    ring: 'ring-violet-200 dark:ring-violet-800',
+  },
+  enterprise: {
+    gradient: 'from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40',
+    badge: 'bg-gradient-to-r from-amber-500 to-orange-500',
+    ring: 'ring-amber-200 dark:ring-amber-800',
+  },
 };
 
 export function PlanBillingSection() {
@@ -78,15 +94,15 @@ export function PlanBillingSection() {
                 <Crown className="size-5" />
               </div>
               <div>
-                <CardTitle className="text-lg">{PLAN_NAMES[user.planType as PlanType] ?? '免费版'}</CardTitle>
+                <CardTitle className="text-lg">
+                  {PLAN_NAMES[user.planType as PlanType] ?? '免费版'}
+                </CardTitle>
                 <p className="text-sm text-muted-foreground">
                   {currentPlan.price === 0 ? '免费' : `¥${currentPlan.price}/月`}
                 </p>
               </div>
             </div>
-            <Badge className={cn('text-white', style.badge)}>
-              当前套餐
-            </Badge>
+            <Badge className={cn('text-white', style.badge)}>当前套餐</Badge>
           </div>
         </CardHeader>
         <CardContent className="pt-4">
@@ -101,9 +117,22 @@ export function PlanBillingSection() {
               ))}
             </ul>
             <div className="flex items-center gap-4 pt-2 text-sm text-muted-foreground">
-              <span>AI 调用：{currentPlan.llmCallsPerDay === 0 ? '不限量' : `${currentPlan.llmCallsPerDay}次/天`}</span>
-              <span>内容生成：{currentPlan.generationsPerDay === 0 ? '不限量' : `${currentPlan.generationsPerDay}次/天`}</span>
-              <span>存储空间：{currentPlan.storageLimit === 0 ? '不限量' : `${(currentPlan.storageLimit / 1073741824).toFixed(0)} GB`}</span>
+              <span>
+                AI 调用：
+                {currentPlan.llmCallsPerDay === 0 ? '不限量' : `${currentPlan.llmCallsPerDay}次/天`}
+              </span>
+              <span>
+                内容生成：
+                {currentPlan.generationsPerDay === 0
+                  ? '不限量'
+                  : `${currentPlan.generationsPerDay}次/天`}
+              </span>
+              <span>
+                存储空间：
+                {currentPlan.storageLimit === 0
+                  ? '不限量'
+                  : `${(currentPlan.storageLimit / 1073741824).toFixed(0)} GB`}
+              </span>
             </div>
           </div>
         </CardContent>
@@ -117,9 +146,7 @@ export function PlanBillingSection() {
               <Zap className="size-4 text-amber-500" />
               今日用量
             </CardTitle>
-            {resetTime && (
-              <span className="text-xs text-muted-foreground">{resetTime} 重置</span>
-            )}
+            {resetTime && <span className="text-xs text-muted-foreground">{resetTime} 重置</span>}
           </div>
         </CardHeader>
         <CardContent>
@@ -172,21 +199,30 @@ export function PlanBillingSection() {
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">{PLAN_NAMES[plan.type]}</span>
                     {isCurrent && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">当前</Badge>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        当前
+                      </Badge>
                     )}
                   </div>
                   <div className="text-lg font-bold">
                     {plan.price === 0 ? '免费' : `¥${plan.price}`}
-                    {plan.price > 0 && <span className="text-xs font-normal text-muted-foreground">/月</span>}
+                    {plan.price > 0 && (
+                      <span className="text-xs font-normal text-muted-foreground">/月</span>
+                    )}
                   </div>
                   <div className="space-y-1.5 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1.5">
                       <Zap className="size-3" />
-                      <span>AI：{plan.llmCallsPerDay === 0 ? '不限量' : `${plan.llmCallsPerDay}次/天`}</span>
+                      <span>
+                        AI：{plan.llmCallsPerDay === 0 ? '不限量' : `${plan.llmCallsPerDay}次/天`}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Zap className="size-3" />
-                      <span>生成：{plan.generationsPerDay === 0 ? '不限量' : `${plan.generationsPerDay}次/天`}</span>
+                      <span>
+                        生成：
+                        {plan.generationsPerDay === 0 ? '不限量' : `${plan.generationsPerDay}次/天`}
+                      </span>
                     </div>
                   </div>
                   {!isCurrent && (
@@ -238,7 +274,9 @@ function UsageRow({
         {isUnlimited ? (
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{current}</span>
-            <Badge variant="secondary" className="text-[10px]">不限量</Badge>
+            <Badge variant="secondary" className="text-[10px]">
+              不限量
+            </Badge>
           </div>
         ) : (
           <span className="text-sm text-muted-foreground">
@@ -256,9 +294,7 @@ function UsageRow({
             value={pct(current, limit)}
             className={`h-2 ${barColor(pct(current, limit))}`}
           />
-          <p className="text-xs text-muted-foreground">
-            剩余 {limit - current} 次
-          </p>
+          <p className="text-xs text-muted-foreground">剩余 {limit - current} 次</p>
         </>
       )}
     </div>

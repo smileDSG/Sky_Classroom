@@ -1,6 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { adapterResultSchema, photoSolverDocumentSchema, type AdapterResult, type PhotoSolverCase, type PhotoSolverDocument } from '../types';
+import {
+  adapterResultSchema,
+  photoSolverDocumentSchema,
+  type AdapterResult,
+  type PhotoSolverCase,
+  type PhotoSolverDocument,
+} from '../types';
 import type { PhotoSolverAdapter } from './types';
 
 async function loadDocuments(file: string): Promise<Map<string, PhotoSolverDocument>> {
@@ -15,7 +21,9 @@ async function loadDocuments(file: string): Promise<Map<string, PhotoSolverDocum
 }
 
 export class OfflineAdapter implements PhotoSolverAdapter {
-  constructor(private readonly documentPath = path.resolve('evals/photo-solver/dataset/documents.jsonl')) {}
+  constructor(
+    private readonly documentPath = path.resolve('evals/photo-solver/dataset/documents.jsonl'),
+  ) {}
 
   async run(testCase: PhotoSolverCase): Promise<AdapterResult> {
     const docs = await loadDocuments(this.documentPath);

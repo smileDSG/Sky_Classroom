@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { MoreHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import { MoreHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export interface MobileActionItem {
   id: string;
@@ -22,7 +22,7 @@ export function MobileActionMenu({ items, className }: MobileActionMenuProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn('relative', className)}>
       <Button
         variant="ghost"
         size="icon"
@@ -46,10 +46,10 @@ export function MobileActionMenu({ items, className }: MobileActionMenuProps) {
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors",
+                  'flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors',
                   item.destructive
-                    ? "text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/50"
-                    : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-900",
+                    ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/50'
+                    : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-900',
                 )}
               >
                 {item.icon && <span className="size-4">{item.icon}</span>}

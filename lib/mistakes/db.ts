@@ -37,9 +37,7 @@ function getIDB(): Promise<IDBDatabase> {
 
     request.onerror = (event) => {
       reject(
-        new Error(
-          `Failed to open IndexedDB: ${(event.target as IDBOpenDBRequest).error?.message}`,
-        ),
+        new Error(`Failed to open IndexedDB: ${(event.target as IDBOpenDBRequest).error?.message}`),
       );
     };
   });
@@ -86,10 +84,7 @@ export async function getAllMistakes(): Promise<MistakeRecord[]> {
   return Array.from(memStore.values());
 }
 
-export async function updateMistake(
-  id: string,
-  changes: Partial<MistakeRecord>,
-): Promise<void> {
+export async function updateMistake(id: string, changes: Partial<MistakeRecord>): Promise<void> {
   if (isBrowser()) {
     const db = await getIDB();
     const store = txn(db, 'readwrite');

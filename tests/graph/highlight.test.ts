@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  getHighlightedNodes,
-  getNodeSummary,
-  getGraphRecommendation,
-} from '@/lib/graph/highlight';
+import { getHighlightedNodes, getNodeSummary, getGraphRecommendation } from '@/lib/graph/highlight';
 import type { GraphNode } from '@/lib/graph/types';
 
 function makeNode(overrides: Partial<GraphNode> = {}): GraphNode {
@@ -61,20 +57,14 @@ describe('getGraphRecommendation', () => {
   });
 
   it('no weak points → positive summary', () => {
-    const nodes = [
-      makeNode({ id: 'a', mastery: 90 }),
-      makeNode({ id: 'b', mastery: 85 }),
-    ];
+    const nodes = [makeNode({ id: 'a', mastery: 90 }), makeNode({ id: 'b', mastery: 85 })];
     const rec = getGraphRecommendation(nodes);
     expect(rec.weakPointCount).toBe(0);
     expect(rec.summary).toContain('继续保持');
   });
 
   it('few weak points → targeted summary', () => {
-    const nodes = [
-      makeNode({ id: 'a', mastery: 90 }),
-      makeNode({ id: 'b', mastery: 30 }),
-    ];
+    const nodes = [makeNode({ id: 'a', mastery: 90 }), makeNode({ id: 'b', mastery: 30 })];
     const rec = getGraphRecommendation(nodes);
     expect(rec.weakPointCount).toBe(1);
     expect(rec.items).toHaveLength(1);

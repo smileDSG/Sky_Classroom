@@ -50,9 +50,7 @@ export function splitHighlightedText(
 ): Array<{ text: string; highlight?: KnowledgePointHighlight }> {
   if (highlights.length === 0) return [{ text }];
 
-  const escaped = highlights.map((h) =>
-    h.point.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-  );
+  const escaped = highlights.map((h) => h.point.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   const regex = new RegExp(`(${escaped.join('|')})`, 'g');
   const parts = text.split(regex);
 

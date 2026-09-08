@@ -15,7 +15,10 @@ function todayDate(): string {
 }
 
 function tagline(subtitle: string): string {
-  const cleaned = subtitle.toUpperCase().replace(/[^A-Za-z\s]/g, '').slice(0, 30);
+  const cleaned = subtitle
+    .toUpperCase()
+    .replace(/[^A-Za-z\s]/g, '')
+    .slice(0, 30);
   return cleaned || 'TEACHING COURSEWARE';
 }
 
@@ -23,7 +26,7 @@ export function HeroCenteredCover({ dna, title, subtitle }: Props) {
   const { colors, fonts, decoration } = dna;
   const density = decoration.density;
   const cx = 6.665; // center x
-  const cy = 3.2;   // center y
+  const cy = 3.2; // center y
 
   // Decorative circles scattered around center
   const decorations = [] as React.ReactNode[];

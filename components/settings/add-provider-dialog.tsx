@@ -23,7 +23,8 @@ interface AddProviderDialogProps {
   onAdd: (provider: NewProviderData) => void;
 }
 
-export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDialogProps) {// Internal state
+export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDialogProps) {
+  // Internal state
   const [name, setName] = useState('');
   const [type, setType] = useState<'openai' | 'anthropic' | 'google'>('openai');
   const [baseUrl, setBaseUrl] = useState('');

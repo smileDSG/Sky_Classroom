@@ -78,12 +78,8 @@ describe('createXlsxImporter', () => {
 
   it('supports multiple sheets', async () => {
     mockSheetData({
-      数学: [
-        { content: '1+1=?', answer: '2' },
-      ],
-      物理: [
-        { content: 'F=ma', answer: 'a=F/m' },
-      ],
+      数学: [{ content: '1+1=?', answer: '2' }],
+      物理: [{ content: 'F=ma', answer: 'a=F/m' }],
     });
 
     const result = await importer.parse(Buffer.from('fake'));
@@ -94,12 +90,8 @@ describe('createXlsxImporter', () => {
 
   it('uses non-default sheet names as subject default', async () => {
     mockSheetData({
-      Sheet1: [
-        { subject: '数学', content: '1+1=?', answer: '2' },
-      ],
-      化学: [
-        { content: 'H2O=?', answer: '水' },
-      ],
+      Sheet1: [{ subject: '数学', content: '1+1=?', answer: '2' }],
+      化学: [{ content: 'H2O=?', answer: '水' }],
     });
 
     const result = await importer.parse(Buffer.from('fake'));
@@ -111,9 +103,7 @@ describe('createXlsxImporter', () => {
 
   it('skips empty sheets silently', async () => {
     mockSheetData({
-      Sheet1: [
-        { subject: '数学', content: '1+1=?', answer: '2' },
-      ],
+      Sheet1: [{ subject: '数学', content: '1+1=?', answer: '2' }],
       EmptySheet: [],
     });
 

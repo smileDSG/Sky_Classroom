@@ -61,7 +61,7 @@ function findFiles(dir, exts, results = []) {
 const allFiles = findFiles(ROOT, ['.ts', '.tsx']);
 const targetFiles = allFiles.filter((f) => {
   const content = fs.readFileSync(f, 'utf-8');
-  return content.includes("useI18n") || content.includes("from '@/lib/i18n'");
+  return content.includes('useI18n') || content.includes("from '@/lib/i18n'");
 });
 
 console.log(`[scan] 找到 ${targetFiles.length} 个需要处理的文件`);
@@ -137,11 +137,11 @@ function removeImports(content) {
   // 删除 useI18n import 行
   content = content.replace(
     /^.*import\s*\{[^}]*\buseI18n\b[^}]*\}\s*from\s*['"][^'"]*use-i18n['"];?\s*\n?/gm,
-    ''
+    '',
   );
   content = content.replace(
     /^.*import\s*\{[^}]*\buseI18n\b[^}]*\}\s*from\s*['"][^'"]*\/i18n['"];?\s*\n?/gm,
-    ''
+    '',
   );
   // 也处理 import { useI18n, resolveLocale } 等组合导入
   content = content.replace(
@@ -150,7 +150,7 @@ function removeImports(content) {
       const cleaned = rest.replace(/^,\s*/, '').replace(/,\s*$/, '');
       if (!cleaned.trim()) return ''; // 整行删除
       return `${pre}${cleaned}${post}`;
-    }
+    },
   );
   return content;
 }
@@ -159,13 +159,10 @@ function removeHookUsage(content) {
   // 删除 const { t } = useI18n(); 行
   content = content.replace(
     /^\s*const\s*\{\s*t\s*(?:,\s*[^}]+)?\}\s*=\s*useI18n\(\);?\s*\n?/gm,
-    ''
+    '',
   );
   // 也处理 const { locale, setLocale, t } = useI18n();
-  content = content.replace(
-    /^\s*const\s*\{\s*[^}]*\bt\b[^}]*\}\s*=\s*useI18n\(\);?\s*\n?/gm,
-    ''
-  );
+  content = content.replace(/^\s*const\s*\{\s*[^}]*\bt\b[^}]*\}\s*=\s*useI18n\(\);?\s*\n?/gm, '');
   return content;
 }
 

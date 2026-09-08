@@ -67,7 +67,12 @@ function makeUserEntry(personalization: Record<string, unknown> = {}): Record<st
 
 describe('GET /api/user/personalization (deprecated)', () => {
   it('returns 404 when no learner profile or legacy personalization exists', async () => {
-    await storage.set('users', { id: boundary.userId, data: makeUserEntry(), createdAt: Date.now(), updatedAt: Date.now() });
+    await storage.set('users', {
+      id: boundary.userId,
+      data: makeUserEntry(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
 
     const res = await GET();
     expect(res.status).toBe(404);
@@ -123,7 +128,11 @@ describe('GET /api/user/personalization (deprecated)', () => {
       interactionTone: 'strict',
       assistantName: '新小智',
       preferenceNotes: '',
-      privacy: { conversationMemory: 'off', optionalBehaviorSignals: false, privateKnowledgeRetrieval: true },
+      privacy: {
+        conversationMemory: 'off',
+        optionalBehaviorSignals: false,
+        privateKnowledgeRetrieval: true,
+      },
       version: 1,
       schemaVersion: '1.0.0',
       updatedAt: '2026-07-29T00:00:00.000Z',
@@ -153,7 +162,11 @@ describe('PATCH /api/user/personalization (deprecated)', () => {
             interactionTone: 'friendly',
             assistantName: '小云',
             preferenceNotes: '',
-            privacy: { conversationMemory: 'session', optionalBehaviorSignals: false, privateKnowledgeRetrieval: false },
+            privacy: {
+              conversationMemory: 'session',
+              optionalBehaviorSignals: false,
+              privateKnowledgeRetrieval: false,
+            },
           },
         }),
       }),

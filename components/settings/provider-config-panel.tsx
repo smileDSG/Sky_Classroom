@@ -64,7 +64,8 @@ export function ProviderConfigPanel({
   onAddModel,
   onResetToDefault,
   isBuiltIn,
-}: ProviderConfigPanelProps) {// Local state for this provider
+}: ProviderConfigPanelProps) {
+  // Local state for this provider
   const [apiKey, setApiKey] = useState(initialApiKey);
   const [baseUrl, setBaseUrl] = useState(initialBaseUrl);
   const [requiresApiKey, setRequiresApiKey] = useState(initialRequiresApiKey);
@@ -414,7 +415,11 @@ export function ProviderConfigPanel({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{'重置为默认配置'}</AlertDialogTitle>
-            <AlertDialogDescription>{'此操作将清除所有自定义模型，恢复到内置的默认模型列表。API 密钥和 Base URL 将被保留。'}</AlertDialogDescription>
+            <AlertDialogDescription>
+              {
+                '此操作将清除所有自定义模型，恢复到内置的默认模型列表。API 密钥和 Base URL 将被保留。'
+              }
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{'取消'}</AlertDialogCancel>

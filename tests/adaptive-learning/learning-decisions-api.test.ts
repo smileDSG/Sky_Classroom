@@ -68,7 +68,9 @@ describe('/api/learning-decisions', () => {
       sessionId: 'quiz:session-1',
       selectedPlan: { action: 'quiz', topic: '函数' },
     });
-    await expect(createInterventionDecisionDAO(storage).listByUser('user-decision')).resolves.toHaveLength(1);
+    await expect(
+      createInterventionDecisionDAO(storage).listByUser('user-decision'),
+    ).resolves.toHaveLength(1);
   });
 
   it('skips decision persistence when optional behavior signals are disabled', async () => {
@@ -83,8 +85,14 @@ describe('/api/learning-decisions', () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({ success: true, recorded: false, decision: null });
-    await expect(createInterventionDecisionDAO(storage).listByUser('user-decision')).resolves.toHaveLength(0);
+    await expect(response.json()).resolves.toMatchObject({
+      success: true,
+      recorded: false,
+      decision: null,
+    });
+    await expect(
+      createInterventionDecisionDAO(storage).listByUser('user-decision'),
+    ).resolves.toHaveLength(0);
   });
 
   it('rejects malformed payloads', async () => {

@@ -47,20 +47,27 @@ function getMotifForLayout(layoutType: LayoutType): string {
 }
 
 function updateComponents(dna: DesignDNA, motif: string): DesignDNA['components'] {
-  const safeMotif = ALLOWED_MOTIFS.includes(motif as typeof ALLOWED_MOTIFS[number])
-    ? motif : 'geometric-lines';
+  const safeMotif = ALLOWED_MOTIFS.includes(motif as (typeof ALLOWED_MOTIFS)[number])
+    ? motif
+    : 'geometric-lines';
 
   return {
-    cardStyle: safeMotif === 'chinese-seal' ? 'accent-left-bar' :
-               safeMotif === 'ink-wash' ? 'shadow-only' :
-               'accent-left-bar',
+    cardStyle:
+      safeMotif === 'chinese-seal'
+        ? 'accent-left-bar'
+        : safeMotif === 'ink-wash'
+          ? 'shadow-only'
+          : 'accent-left-bar',
     bulletStyle: safeMotif === 'chinese-seal' || safeMotif === 'ink-wash' ? 'chinese-brush' : 'dot',
     pageNumberStyle: safeMotif === 'chinese-seal' ? 'circle-number' : 'number-slash-total',
   };
 }
 
 export function useCoverDraft(): CoverDraftState & CoverDraftActions {
-  const [suggestedCover, setSuggestedCover] = useState<{ pngUrl: string; designDNA: DesignDNA } | null>(null);
+  const [suggestedCover, setSuggestedCover] = useState<{
+    pngUrl: string;
+    designDNA: DesignDNA;
+  } | null>(null);
   const [draftDNA, setDraftDNA] = useState<DesignDNA | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
 

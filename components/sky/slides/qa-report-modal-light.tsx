@@ -127,11 +127,17 @@ export function QaReportModalLight({ report, onClose, onNavigate }: QaReportModa
             <div>
               <span
                 className="text-[40px] font-light leading-none tracking-tight block"
-                style={{ color: T.ink, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+                style={{
+                  color: T.ink,
+                  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                }}
               >
                 <CountUp value={report.totalScore} />
               </span>
-              <span className="text-[9px] font-medium tracking-wider mt-1 block" style={{ color: T.inkMuted }}>
+              <span
+                className="text-[9px] font-medium tracking-wider mt-1 block"
+                style={{ color: T.inkMuted }}
+              >
                 总分
               </span>
             </div>
@@ -141,7 +147,11 @@ export function QaReportModalLight({ report, onClose, onNavigate }: QaReportModa
             <div className="flex flex-col gap-1.5">
               <span
                 className="inline-flex self-start border px-1.5 py-[1px] text-[9px] font-semibold tracking-wide"
-                style={{ color: tone.color, borderColor: tone.color + '50', backgroundColor: tone.bg }}
+                style={{
+                  color: tone.color,
+                  borderColor: tone.color + '50',
+                  backgroundColor: tone.bg,
+                }}
               >
                 {tone.label}
               </span>
@@ -180,20 +190,29 @@ export function QaReportModalLight({ report, onClose, onNavigate }: QaReportModa
                       }}
                       className="group flex w-full items-start gap-2.5 px-4 py-2.5 text-left"
                       style={{
-                        borderBottom: idx < report.issues.length - 1 ? `1px solid ${T.lineLight}` : 'none',
+                        borderBottom:
+                          idx < report.issues.length - 1 ? `1px solid ${T.lineLight}` : 'none',
                         backgroundColor: T.surface,
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fafafa')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = T.surface)}
                     >
                       <div className="flex flex-col items-center pt-0.5 flex-shrink-0 w-4">
-                        <span className="text-[9px] font-semibold tabular-nums leading-none" style={{ color: T.ink }}>
+                        <span
+                          className="text-[9px] font-semibold tabular-nums leading-none"
+                          style={{ color: T.ink }}
+                        >
                           {issue.pageNum}
                         </span>
-                        <span className="text-[7px]" style={{ color: T.inkMuted }}>页</span>
+                        <span className="text-[7px]" style={{ color: T.inkMuted }}>
+                          页
+                        </span>
                       </div>
 
-                      <div className="mt-0.5 h-4 w-[1.5px] flex-shrink-0" style={{ backgroundColor: st.color }} />
+                      <div
+                        className="mt-0.5 h-4 w-[1.5px] flex-shrink-0"
+                        style={{ backgroundColor: st.color }}
+                      />
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
@@ -204,13 +223,20 @@ export function QaReportModalLight({ report, onClose, onNavigate }: QaReportModa
                             {issue.type}
                           </span>
                         </div>
-                        <p className="mt-0.5 text-[10px] leading-[1.5]" style={{ color: T.inkLight }}>
+                        <p
+                          className="mt-0.5 text-[10px] leading-[1.5]"
+                          style={{ color: T.inkLight }}
+                        >
                           {issue.detail}
                         </p>
                       </div>
 
                       <div className="pt-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ArrowRight className="h-3 w-3" strokeWidth={1.5} style={{ color: T.inkMuted }} />
+                        <ArrowRight
+                          className="h-3 w-3"
+                          strokeWidth={1.5}
+                          style={{ color: T.inkMuted }}
+                        />
                       </div>
                     </button>
                   );
@@ -221,20 +247,41 @@ export function QaReportModalLight({ report, onClose, onNavigate }: QaReportModa
 
           {report.issues.length === 0 && (
             <div className="px-4 py-5 text-center">
-              <div className="mx-auto mb-2 flex h-6 w-6 items-center justify-center" style={{ border: `1px solid ${T.line}` }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={tone.color} strokeWidth="1.5">
+              <div
+                className="mx-auto mb-2 flex h-6 w-6 items-center justify-center"
+                style={{ border: `1px solid ${T.line}` }}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={tone.color}
+                  strokeWidth="1.5"
+                >
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
               </div>
-              <p className="text-[11px] font-medium" style={{ color: T.ink }}>全部通过</p>
-              <p className="mt-0.5 text-[9px]" style={{ color: T.inkMuted }}>课件质量达到发布标准</p>
+              <p className="text-[11px] font-medium" style={{ color: T.ink }}>
+                全部通过
+              </p>
+              <p className="mt-0.5 text-[9px]" style={{ color: T.inkMuted }}>
+                课件质量达到发布标准
+              </p>
             </div>
           )}
 
           {/* Footer */}
-          <div className="flex items-center justify-between px-4 py-2" style={{ borderTop: `1px solid ${T.lineLight}`, backgroundColor: '#fafafa' }}>
-            <span className="text-[8px] tracking-wide" style={{ color: T.inkMuted }}>AI 检测</span>
-            <span className="text-[8px] tracking-wide" style={{ color: T.inkMuted }}>点击跳转</span>
+          <div
+            className="flex items-center justify-between px-4 py-2"
+            style={{ borderTop: `1px solid ${T.lineLight}`, backgroundColor: '#fafafa' }}
+          >
+            <span className="text-[8px] tracking-wide" style={{ color: T.inkMuted }}>
+              AI 检测
+            </span>
+            <span className="text-[8px] tracking-wide" style={{ color: T.inkMuted }}>
+              点击跳转
+            </span>
           </div>
         </div>
       </div>

@@ -79,7 +79,7 @@ const AVATARS_CONFIG = [
 ];
 
 // SVG 模板生成函数
-function generateTeacherSVG(config: typeof AVATARS_CONFIG[0]): string {
+function generateTeacherSVG(config: (typeof AVATARS_CONFIG)[0]): string {
   const { colors, features } = config;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" fill="none">
   <defs>
@@ -123,14 +123,18 @@ function generateTeacherSVG(config: typeof AVATARS_CONFIG[0]): string {
   <path d="M96 85c0-24 20-38 44-38s44 14 44 38c0 6-2 12-5 16-2-12-10-18-22-18s-20 6-22 18c-3-4-5-10-5-16z" fill="#4a3728"/>
   <path d="M96 85c5-8 25-12 44-12s39 4 44 12v10c-5-5-25-10-44-10s-39 5-44 10z" fill="#5d4a35"/>
 
-  ${features.glasses ? `
+  ${
+    features.glasses
+      ? `
   <!-- 眼镜 -->
   <g stroke="#374151" stroke-width="2.5" fill="none">
     <circle cx="122" cy="95" r="12"/>
     <circle cx="158" cy="95" r="12"/>
     <line x1="134" y1="95" x2="146" y2="95"/>
   </g>
-  ` : ''}
+  `
+      : ''
+  }
 
   <!-- 眼睛 -->
   <circle cx="122" cy="95" r="4" fill="#1f2937"/>
@@ -143,22 +147,28 @@ function generateTeacherSVG(config: typeof AVATARS_CONFIG[0]): string {
   <!-- 温和微笑 -->
   <path d="M130 120q10 6 20 0" stroke="#d97706" stroke-width="2.5" fill="none" stroke-linecap="round"/>
 
-  ${features.cloud ? `
+  ${
+    features.cloud
+      ? `
   <!-- 云朵徽章 -->
   <g transform="translate(200, 55)">
     <circle r="22" fill="white" filter="url(#shadow)"/>
     <path d="M-8 0c0-5 4-8 8-8 4 0 7 3 8 6 3 0 6 3 6 6s-3 6-6 6h-16c-3 0-6-3-6-6s3-6 6-6z" fill="${colors.primary}"/>
   </g>
-  ` : ''}
+  `
+      : ''
+  }
 </svg>`;
 }
 
-function generateStudentSVG(config: typeof AVATARS_CONFIG[0]): string {
+function generateStudentSVG(config: (typeof AVATARS_CONFIG)[0]): string {
   const { colors, features } = config;
-  const hasQuestion = features.question ? `
+  const hasQuestion = features.question
+    ? `
     <!-- 问号 -->
     <text x="215" y="65" font-family="Arial, sans-serif" font-size="42" fill="${colors.primary}" font-weight="bold">?</text>
-  ` : '';
+  `
+    : '';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" fill="none">
   <defs>
@@ -187,7 +197,9 @@ function generateStudentSVG(config: typeof AVATARS_CONFIG[0]): string {
   <!-- 头发 -->
   <path d="M98 88c0-22 19-35 42-35s42 13 42 35c0 8-3 15-8 20-3-12-12-18-24-18s-21 6-24 18c-5-5-8-12-8-20z" fill="#1f2937"/>
 
-  ${features.bigEyes ? `
+  ${
+    features.bigEyes
+      ? `
   <!-- 大眼睛 -->
   <circle cx="124" cy="98" r="10" fill="white"/>
   <circle cx="124" cy="98" r="5" fill="#1f2937"/>
@@ -195,11 +207,13 @@ function generateStudentSVG(config: typeof AVATARS_CONFIG[0]): string {
   <circle cx="156" cy="98" r="5" fill="#1f2937"/>
   <circle cx="126" cy="96" r="2" fill="white"/>
   <circle cx="158" cy="96" r="2" fill="white"/>
-  ` : `
+  `
+      : `
   <!-- 眼睛 -->
   <circle cx="124" cy="98" r="4" fill="#1f2937"/>
   <circle cx="156" cy="98" r="4" fill="#1f2937"/>
-  `}
+  `
+  }
 
   <!-- 眉毛 - 好奇上扬 -->
   <path d="M115 85q9-8 18-3" stroke="#1f2937" stroke-width="2.5" fill="none" stroke-linecap="round"/>
@@ -212,7 +226,7 @@ function generateStudentSVG(config: typeof AVATARS_CONFIG[0]): string {
 </svg>`;
 }
 
-function generateHelperSVG(config: typeof AVATARS_CONFIG[0]): string {
+function generateHelperSVG(config: (typeof AVATARS_CONFIG)[0]): string {
   const { colors } = config;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" fill="none">
   <defs>
@@ -259,7 +273,7 @@ function generateHelperSVG(config: typeof AVATARS_CONFIG[0]): string {
 </svg>`;
 }
 
-function generateUserSVG(config: typeof AVATARS_CONFIG[0]): string {
+function generateUserSVG(config: (typeof AVATARS_CONFIG)[0]): string {
   const { colors } = config;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" fill="none">
   <defs>
@@ -296,7 +310,7 @@ function generateUserSVG(config: typeof AVATARS_CONFIG[0]): string {
 }
 
 // 主生成函数
-function generateAvatarSVG(config: typeof AVATARS_CONFIG[0]): string {
+function generateAvatarSVG(config: (typeof AVATARS_CONFIG)[0]): string {
   switch (config.role) {
     case 'teacher':
       return generateTeacherSVG(config);
@@ -336,7 +350,9 @@ function main() {
     }
   }
 
-  console.log(`\n✨ 完成！生成 ${successCount} 个头像${failCount > 0 ? `，失败 ${failCount} 个` : ''}`);
+  console.log(
+    `\n✨ 完成！生成 ${successCount} 个头像${failCount > 0 ? `，失败 ${failCount} 个` : ''}`,
+  );
   console.log(`📁 输出目录: ${avatarsDir}\n`);
 
   // 打印使用说明
@@ -351,7 +367,9 @@ function main() {
   console.log(`  - 默认用户:   /avatars/user-new.svg`);
   console.log(`  - 学霸小明:   /avatars/student-1.svg`);
   console.log(`  - 活泼小红:   /avatars/student-2.svg`);
-  console.log('\n提示: 更新 lib/constants/agent-defaults.ts 中的 AGENT_DEFAULT_AVATARS 以使用新头像');
+  console.log(
+    '\n提示: 更新 lib/constants/agent-defaults.ts 中的 AGENT_DEFAULT_AVATARS 以使用新头像',
+  );
 }
 
 main();

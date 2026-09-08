@@ -57,12 +57,7 @@ export function TemplateRenderer({ page, manifestTheme, scale = 1 }: Props) {
       }}
     >
       {page.elements?.map((el, idx) => (
-        <TemplateElement
-          key={el.elementId ?? idx}
-          element={el}
-          resolver={resolver}
-          scale={scale}
-        />
+        <TemplateElement key={el.elementId ?? idx} element={el} resolver={resolver} scale={scale} />
       ))}
     </div>
   );

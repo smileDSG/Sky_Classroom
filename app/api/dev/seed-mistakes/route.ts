@@ -80,7 +80,8 @@ const SAMPLE_MISTAKES: SeedMistake[] = [
   },
   {
     id: 'seed-line-001',
-    problemText: '已知直线 l₁: 3x + 4y - 5 = 0 与直线 l₂: 6x + 8y + c = 0 平行，且两直线之间的距离为 2，求 c 的值。',
+    problemText:
+      '已知直线 l₁: 3x + 4y - 5 = 0 与直线 l₂: 6x + 8y + c = 0 平行，且两直线之间的距离为 2，求 c 的值。',
     userAnswer: 'c = 15 或 c = -25',
     correctAnswer: 'c = 15 或 c = -25',
     errorType: 'reading',
@@ -107,7 +108,8 @@ const SAMPLE_MISTAKES: SeedMistake[] = [
   },
   {
     id: 'seed-vec-001',
-    problemText: '在空间直角坐标系中，已知点 A(1, 2, 3) 和点 B(4, 5, 6)，求向量 AB 的模和方向余弦。',
+    problemText:
+      '在空间直角坐标系中，已知点 A(1, 2, 3) 和点 B(4, 5, 6)，求向量 AB 的模和方向余弦。',
     userAnswer: '|AB| = 3√3, cosα=1/√3, cosβ=1/√3, cosγ=1/√3',
     correctAnswer: '|AB| = 3√3, cosα=1/√3, cosβ=1/√3, cosγ=1/√3',
     errorType: 'calculation',

@@ -14,7 +14,8 @@ import type { LanguageModel } from 'ai';
 import type { DesignDNA } from './design-dna';
 import {
   validateDesignDNA,
-  COLOR_PALETTES, FONT_PAIRS,
+  COLOR_PALETTES,
+  FONT_PAIRS,
   ALLOWED_MOTIFS,
   MOTIF_LAYOUT_POOL,
 } from './design-dna';
@@ -202,9 +203,11 @@ export function assembleDesignDNA(
   const fonts = FONT_PAIRS[skeleton.fontId] ?? FONT_PAIRS['arial-black-arial'];
 
   const cardStyle: DesignDNA['components']['cardStyle'] =
-    motif === 'chinese-seal' ? 'accent-left-bar' :
-    motif === 'ink-wash' ? 'shadow-only' :
-    'accent-left-bar';
+    motif === 'chinese-seal'
+      ? 'accent-left-bar'
+      : motif === 'ink-wash'
+        ? 'shadow-only'
+        : 'accent-left-bar';
 
   const bulletStyle: DesignDNA['components']['bulletStyle'] =
     motif === 'chinese-seal' || motif === 'ink-wash' ? 'chinese-brush' : 'dot';
@@ -217,7 +220,11 @@ export function assembleDesignDNA(
     recommended: false,
     colors: { ...palette },
     fonts: { ...fonts },
-    decoration: { motif: motif as DesignDNA['decoration']['motif'], density: skeleton.density as DesignDNA['decoration']['density'], cornerWeight: 'top-right' },
+    decoration: {
+      motif: motif as DesignDNA['decoration']['motif'],
+      density: skeleton.density as DesignDNA['decoration']['density'],
+      cornerWeight: 'top-right',
+    },
     components: { cardStyle, bulletStyle, pageNumberStyle },
     layoutType,
     mood: skeleton.mood,
@@ -227,8 +234,8 @@ export function assembleDesignDNA(
 
 // ── Per-slot generation with salvage + retry ───────────────────────────
 
-const CALL_LLM_RETRIES = 1;   // Internal LLM retries (format issues → salvage handles)
-const SLOT_MAX_RETRIES = 2;   // Outer retries for truly broken output
+const CALL_LLM_RETRIES = 1; // Internal LLM retries (format issues → salvage handles)
+const SLOT_MAX_RETRIES = 2; // Outer retries for truly broken output
 
 interface SlotResult {
   cover?: CoverItem;
@@ -314,7 +321,9 @@ async function generateOneCover(
           `TOPIC: ${topic}\nATTEMPT: ${attempt + 1}\nSALVAGED: ${repaired !== result.text.trim() ? 'yes' : 'no'}\n\n--- RAW ---\n${result.text}\n--- END ---`,
           'utf-8',
         );
-      } catch { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
 
       const dna = assembleDesignDNA(parsed.data, paletteId, motif, layoutType);
       const validation = validateDesignDNA(dna);
@@ -333,7 +342,9 @@ async function generateOneCover(
     }
   }
 
-  return { error: `Cover ${slotIndex + 1}: failed after ${SLOT_MAX_RETRIES} attempts — ${lastError || 'unknown'}` };
+  return {
+    error: `Cover ${slotIndex + 1}: failed after ${SLOT_MAX_RETRIES} attempts — ${lastError || 'unknown'}`,
+  };
 }
 
 // ── Public API ─────────────────────────────────────────────────────────
@@ -375,17 +386,17 @@ const SUBJECT_KEYWORDS: Array<{ category: SubjectCategory; keywords: RegExp[] }>
 /** Ordered from most relevant to least for each category */
 const CATEGORY_MOTIFS: Record<SubjectCategory, string[]> = {
   humanities: ['ink-wash', 'chinese-seal', 'organic-circles', 'geometric-lines', 'neon-grid'],
-  stem:       ['geometric-lines', 'neon-grid', 'organic-circles', 'ink-wash', 'chinese-seal'],
-  science:    ['organic-circles', 'neon-grid', 'geometric-lines', 'ink-wash', 'chinese-seal'],
-  general:    ['geometric-lines', 'ink-wash', 'neon-grid', 'organic-circles', 'chinese-seal'],
+  stem: ['geometric-lines', 'neon-grid', 'organic-circles', 'ink-wash', 'chinese-seal'],
+  science: ['organic-circles', 'neon-grid', 'geometric-lines', 'ink-wash', 'chinese-seal'],
+  general: ['geometric-lines', 'ink-wash', 'neon-grid', 'organic-circles', 'chinese-seal'],
 };
 
 /** How many slots each motif tier gets (out of 12). Different per category. */
 const TIER_QUOTAS: Record<SubjectCategory, number[]> = {
   humanities: [5, 4, 3, 0, 0],
-  stem:       [5, 4, 3, 0, 0],
-  science:    [5, 4, 3, 0, 0],
-  general:    [3, 3, 2, 2, 2], // balanced spread — unknown topic gets all 5 motifs
+  stem: [5, 4, 3, 0, 0],
+  science: [5, 4, 3, 0, 0],
+  general: [3, 3, 2, 2, 2], // balanced spread — unknown topic gets all 5 motifs
 };
 
 function inferCategory(topic: string): SubjectCategory {
@@ -430,7 +441,9 @@ export async function generateCovers(
   languageModel: LanguageModel,
 ): Promise<CoverGenerationResult> {
   const startTime = Date.now();
-  log.info(`Generating 12 covers for "${topic}" [concurrent×6, salvage+${SLOT_MAX_RETRIES}retries]`);
+  log.info(
+    `Generating 12 covers for "${topic}" [concurrent×6, salvage+${SLOT_MAX_RETRIES}retries]`,
+  );
 
   // ── Pre-assign paletteIds ──
   const paletteIds = Object.keys(COLOR_PALETTES);
@@ -463,8 +476,19 @@ export async function generateCovers(
   }
 
   // ── Build tasks ──
-  const tasks = Array.from({ length: 12 }, (_, i) =>
-    () => generateOneCover(i, topic, difficulty, assignedPalettes[i], assignedMotifs[i], assignedLayouts[i], i === 0, languageModel),
+  const tasks = Array.from(
+    { length: 12 },
+    (_, i) => () =>
+      generateOneCover(
+        i,
+        topic,
+        difficulty,
+        assignedPalettes[i],
+        assignedMotifs[i],
+        assignedLayouts[i],
+        i === 0,
+        languageModel,
+      ),
   );
 
   // ── Execute ──

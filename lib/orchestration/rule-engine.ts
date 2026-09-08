@@ -41,7 +41,12 @@ const ruleAllSpoken: RuleFn = (ctx): RoutingDecision | null => {
   const activeAgents = ctx.agents.filter((a) => a.enabled !== false);
   const allSpoken = activeAgents.every((a) => ctx.respondedAgents.has(a.id));
   if (allSpoken && activeAgents.length > 0) {
-    return { nextAgentId: null, shouldEnd: true, reason: 'All agents have spoken', usedFastPath: true };
+    return {
+      nextAgentId: null,
+      shouldEnd: true,
+      reason: 'All agents have spoken',
+      usedFastPath: true,
+    };
   }
   return null;
 };
@@ -59,9 +64,7 @@ const ruleWhiteboardCrowded: RuleFn = (ctx): RoutingDecision | null => {
   const ratio = ctx.whiteboardElementCount / ctx.maxWhiteboardElements;
   if (ratio > 0.8) {
     const organizer = ctx.agents.find(
-      (a) =>
-        a.role === 'assistant' &&
-        !ctx.respondedAgents.has(a.id),
+      (a) => a.role === 'assistant' && !ctx.respondedAgents.has(a.id),
     );
     if (organizer) {
       return {
@@ -91,9 +94,7 @@ const ruleDiscussionOrder: RuleFn = (ctx): RoutingDecision | null => {
 
   // After initiator, teacher should guide
   if (ctx.respondedAgents.has(ctx.discussionInitiator!)) {
-    const teacher = ctx.agents.find(
-      (a) => a.role === 'teacher' && !ctx.respondedAgents.has(a.id),
-    );
+    const teacher = ctx.agents.find((a) => a.role === 'teacher' && !ctx.respondedAgents.has(a.id));
     if (teacher) {
       return {
         nextAgentId: teacher.id,
@@ -112,13 +113,21 @@ const ruleTeacherFirst: RuleFn = (ctx): RoutingDecision | null => {
   if (ctx.lastSpeakerRole === 'teacher') return null; // Teacher just spoke
   if (!ctx.userMessage) return null;
 
-  const questionKeywords = ['是什么', '为什么', '如何', '定义', '概念', 'what', 'why', 'how', 'define'];
+  const questionKeywords = [
+    '是什么',
+    '为什么',
+    '如何',
+    '定义',
+    '概念',
+    'what',
+    'why',
+    'how',
+    'define',
+  ];
   const hasQuestion = questionKeywords.some((kw) => ctx.userMessage!.toLowerCase().includes(kw));
 
   if (hasQuestion) {
-    const teacher = ctx.agents.find(
-      (a) => a.role === 'teacher' && !ctx.respondedAgents.has(a.id),
-    );
+    const teacher = ctx.agents.find((a) => a.role === 'teacher' && !ctx.respondedAgents.has(a.id));
     if (teacher) {
       return {
         nextAgentId: teacher.id,
@@ -133,9 +142,7 @@ const ruleTeacherFirst: RuleFn = (ctx): RoutingDecision | null => {
 
 /** Rule 6: Round-robin fallback for balanced participation. */
 const ruleRoundRobin: RuleFn = (ctx): RoutingDecision | null => {
-  const available = ctx.agents.filter(
-    (a) => a.enabled !== false && !ctx.respondedAgents.has(a.id),
-  );
+  const available = ctx.agents.filter((a) => a.enabled !== false && !ctx.respondedAgents.has(a.id));
   if (available.length === 0) return null;
 
   // Prefer lower-priority (higher number) agents first for balance

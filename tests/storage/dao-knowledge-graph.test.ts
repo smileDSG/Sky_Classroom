@@ -72,7 +72,21 @@ describe('KnowledgeGraphDAO', () => {
       });
       await dao.save({
         graphId: 'g1',
-        graph: { nodes: [{ id: 'a', name: 'A', category: 'math', questionCount: 1, mistakeCount: 0, avgMastery: 6 }], edges: [], weakPoints: [], overallMastery: 6 },
+        graph: {
+          nodes: [
+            {
+              id: 'a',
+              name: 'A',
+              category: 'math',
+              questionCount: 1,
+              mistakeCount: 0,
+              avgMastery: 6,
+            },
+          ],
+          edges: [],
+          weakPoints: [],
+          overallMastery: 6,
+        },
         rebuiltAt: 2000,
       });
       const loaded = await dao.load('g1');
@@ -127,9 +141,7 @@ describe('KnowledgeGraphDAO', () => {
     });
 
     test('builds edges from co-occurring knowledge points', () => {
-      const questions = [
-        makeQuestion('q1', ['algebra', 'equation']),
-      ];
+      const questions = [makeQuestion('q1', ['algebra', 'equation'])];
       const graph = dao.buildGraph(questions, []);
       // Should have algebra <-> equation edge
       expect(graph.edges.length).toBeGreaterThanOrEqual(1);
@@ -174,10 +186,7 @@ describe('KnowledgeGraphDAO', () => {
     });
 
     test('computes overallMastery', () => {
-      const questions = [
-        makeQuestion('q1', ['algebra']),
-        makeQuestion('q2', ['geometry']),
-      ];
+      const questions = [makeQuestion('q1', ['algebra']), makeQuestion('q2', ['geometry'])];
       const graph = dao.buildGraph(questions, []);
       // Both nodes have avgMastery = 6 → overall = 6
       expect(graph.overallMastery).toBe(6);
@@ -233,8 +242,16 @@ describe('KnowledgeGraphDAO', () => {
 
   describe('listGraphIds', () => {
     test('returns all graph IDs', async () => {
-      await dao.save({ graphId: 'g1', graph: { nodes: [], edges: [], weakPoints: [], overallMastery: 0 }, rebuiltAt: Date.now() });
-      await dao.save({ graphId: 'g2', graph: { nodes: [], edges: [], weakPoints: [], overallMastery: 0 }, rebuiltAt: Date.now() });
+      await dao.save({
+        graphId: 'g1',
+        graph: { nodes: [], edges: [], weakPoints: [], overallMastery: 0 },
+        rebuiltAt: Date.now(),
+      });
+      await dao.save({
+        graphId: 'g2',
+        graph: { nodes: [], edges: [], weakPoints: [], overallMastery: 0 },
+        rebuiltAt: Date.now(),
+      });
       const ids = await dao.listGraphIds();
       expect(ids.sort()).toEqual(['g1', 'g2']);
     });

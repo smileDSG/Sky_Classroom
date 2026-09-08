@@ -132,7 +132,9 @@ export function buildStateContext(storeState: StatelessChatRequest['storeState']
       // Slide scene: only show element count (do NOT list details — model may recite them)
       if (currentScene.content.type === 'slide') {
         const elements = currentScene.content.canvas.elements;
-        lines.push(`Slide has ${elements.length} elements (not listed to avoid influencing your response)`);
+        lines.push(
+          `Slide has ${elements.length} elements (not listed to avoid influencing your response)`,
+        );
       }
 
       // Quiz scene: include question summary
@@ -166,7 +168,9 @@ export function buildStateContext(storeState: StatelessChatRequest['storeState']
   if (stage?.whiteboard && stage.whiteboard.length > 0) {
     const lastWb = stage.whiteboard[stage.whiteboard.length - 1];
     const wbElements = lastWb.elements || [];
-    lines.push(`Whiteboard has ${wbElements.length} elements (not listed to avoid influencing your response)`);
+    lines.push(
+      `Whiteboard has ${wbElements.length} elements (not listed to avoid influencing your response)`,
+    );
     const conflictsText = buildWhiteboardConflicts(wbElements);
     if (conflictsText) lines.push(conflictsText);
   }

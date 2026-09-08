@@ -16,10 +16,7 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:StudyGroup');
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ jobId: string }> },
-) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {
   try {
     const quota = await requireQuota('generationCount');
     if ('error' in quota) return quota.error;

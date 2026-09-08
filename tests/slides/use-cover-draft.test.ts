@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCoverDraft } from '@/lib/slides/hooks/use-cover-draft';
-import { getDefaultDesignDNA, COLOR_PALETTES, FONT_PAIRS, PALETTE_STYLE_INFO } from '@/lib/slides/agent/design-dna';
+import {
+  getDefaultDesignDNA,
+  COLOR_PALETTES,
+  FONT_PAIRS,
+  PALETTE_STYLE_INFO,
+} from '@/lib/slides/agent/design-dna';
 
 describe('useCoverDraft', () => {
   const defaultDNA = getDefaultDesignDNA();
@@ -28,7 +33,10 @@ describe('useCoverDraft', () => {
     act(() => {
       result.current.applySuggestion('http://test.png', defaultDNA);
     });
-    expect(result.current.suggestedCover).toEqual({ pngUrl: 'http://test.png', designDNA: defaultDNA });
+    expect(result.current.suggestedCover).toEqual({
+      pngUrl: 'http://test.png',
+      designDNA: defaultDNA,
+    });
     expect(result.current.draftDNA).toEqual(defaultDNA);
     expect(result.current.isSuggesting).toBe(false);
   });

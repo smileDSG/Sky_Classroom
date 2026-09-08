@@ -134,7 +134,12 @@ export async function getReflectionTriggerStatus(
     ? events.filter((event) => event.occurredAt > latestReflection.windowEnd).length
     : events.length;
   if (!latestReflection) {
-    return { shouldRun: events.length > 0, reason: 'no-reflection', pendingEventCount, latestReflection };
+    return {
+      shouldRun: events.length > 0,
+      reason: 'no-reflection',
+      pendingEventCount,
+      latestReflection,
+    };
   }
   if (pendingEventCount >= REFLECTION_EVENT_THRESHOLD) {
     return { shouldRun: true, reason: 'event-threshold', pendingEventCount, latestReflection };

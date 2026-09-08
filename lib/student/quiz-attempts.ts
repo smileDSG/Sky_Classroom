@@ -78,9 +78,7 @@ export function createQuizAttemptDAO(storage: StorageProvider) {
         if (options?.userId && entry.data.userId !== options.userId) return false;
         return entry.data.createdAt >= cutoff;
       });
-      return entries
-        .map((entry) => entry.data)
-        .sort((a, b) => b.createdAt - a.createdAt);
+      return entries.map((entry) => entry.data).sort((a, b) => b.createdAt - a.createdAt);
     },
   };
 }

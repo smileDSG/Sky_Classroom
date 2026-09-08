@@ -1,6 +1,15 @@
 'use client';
 
-import { CheckCircle2, Loader2, FileText, Search, Clapperboard, ImageIcon, Volume2, Save } from 'lucide-react';
+import {
+  CheckCircle2,
+  Loader2,
+  FileText,
+  Search,
+  Clapperboard,
+  ImageIcon,
+  Volume2,
+  Save,
+} from 'lucide-react';
 
 const STEPS = [
   { key: 'researching', icon: Search, label: '搜索资料' },
@@ -75,11 +84,7 @@ export function MobileGenerationSteps({
             <div
               key={key}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
-                active
-                  ? 'bg-sky-500/10 text-sky-100'
-                  : done
-                    ? 'text-slate-300'
-                    : 'text-slate-600'
+                active ? 'bg-sky-500/10 text-sky-100' : done ? 'text-slate-300' : 'text-slate-600'
               }`}
             >
               <div

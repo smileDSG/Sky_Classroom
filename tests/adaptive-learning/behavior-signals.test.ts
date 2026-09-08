@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  learningEventSchema,
-  type KnowledgeState,
-} from '@/lib/adaptive-learning/contracts';
+import { learningEventSchema, type KnowledgeState } from '@/lib/adaptive-learning/contracts';
 import { applyEventToState } from '@/lib/adaptive-learning/profile/knowledge-state-engine';
 
 function state(): KnowledgeState {

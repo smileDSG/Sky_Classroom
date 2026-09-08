@@ -33,7 +33,7 @@ const CONTENT_TYPE_TO_PAGE: Record<string, TemplatePageName> = {
 
 export function selectTemplatePage(
   content: StructuredContent,
-  availablePages: Record<string, TemplatePage>
+  availablePages: Record<string, TemplatePage>,
 ): { pageName: TemplatePageName; page: TemplatePage } {
   const type = content.type as string;
   const pageName = CONTENT_TYPE_TO_PAGE[type] ?? 'text';

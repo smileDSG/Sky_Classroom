@@ -10,18 +10,13 @@ export interface AvatarSpeechPlayerProps {
   totalSlides: number;
 }
 
-export function AvatarSpeechPlayer({
-  avatar,
-  speech,
-  activeSlideIndex,
-}: AvatarSpeechPlayerProps) {
+export function AvatarSpeechPlayer({ avatar, speech, activeSlideIndex }: AvatarSpeechPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSegmentIdx, setCurrentSegmentIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const slideSegments =
-    speech?.segments.filter((s) => s.slideIndex === activeSlideIndex) || [];
+  const slideSegments = speech?.segments.filter((s) => s.slideIndex === activeSlideIndex) || [];
 
   const currentSegment = slideSegments[currentSegmentIdx] || null;
   const hasSpeech = slideSegments.length > 0;
@@ -80,18 +75,12 @@ export function AvatarSpeechPlayer({
     <div className="absolute bottom-24 right-6 z-20 flex items-end gap-3">
       {/* Speech bubble */}
       {hasSpeech && (
-        <div
-          className="flex max-w-[300px] flex-col gap-2 rounded-lg rounded-br-md border px-4 py-3 shadow-lg bg-white dark:bg-gray-900 border-slate-200 dark:border-gray-700"
-        >
+        <div className="flex max-w-[300px] flex-col gap-2 rounded-lg rounded-br-md border px-4 py-3 shadow-lg bg-white dark:bg-gray-900 border-slate-200 dark:border-gray-700">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-primary">
-                {avatar.name}
-              </span>
-              {isPlaying && (
-                <span className="flex h-2 w-2 rounded-full bg-green-500" />
-              )}
+              <span className="text-xs font-medium text-primary">{avatar.name}</span>
+              {isPlaying && <span className="flex h-2 w-2 rounded-full bg-green-500" />}
             </div>
             <span className="text-xs text-slate-400 dark:text-gray-500">
               {currentSegmentIdx + 1} / {slideSegments.length}
@@ -117,10 +106,7 @@ export function AvatarSpeechPlayer({
           {/* Progress bar */}
           {isPlaying && (
             <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-gray-800">
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{ width: `${progress}%` }}
-              />
+              <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
             </div>
           )}
 

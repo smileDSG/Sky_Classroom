@@ -91,10 +91,17 @@ describe('i18n: composability integration', () => {
   test('language-specific fragment takes priority over default', () => {
     const composer = makeComposer('zh');
     composer.register({
-      id: 'test-fragment', category: 'core', content: 'English text.', priority: 10,
+      id: 'test-fragment',
+      category: 'core',
+      content: 'English text.',
+      priority: 10,
     });
     composer.register({
-      id: 'test-fragment', category: 'core', content: '中文文本。', priority: 10, language: 'zh',
+      id: 'test-fragment',
+      category: 'core',
+      content: '中文文本。',
+      priority: 10,
+      language: 'zh',
     });
 
     const r = composer.compose({ fragments: ['test-fragment'], variables: {}, language: 'zh' });
@@ -105,7 +112,10 @@ describe('i18n: composability integration', () => {
   test('falls back to default when language variant missing', () => {
     const composer = makeComposer('ja');
     composer.register({
-      id: 'ja-fallback', category: 'core', content: 'Default English.', priority: 10,
+      id: 'ja-fallback',
+      category: 'core',
+      content: 'Default English.',
+      priority: 10,
     });
 
     const r = composer.compose({ fragments: ['ja-fallback'], variables: {}, language: 'ja' });
@@ -115,24 +125,35 @@ describe('i18n: composability integration', () => {
   test('multiple languages coexist in registry', () => {
     const composer = makeComposer('multi');
     composer.register({
-      id: 'ml', category: 'core', content: 'English.', priority: 10,
+      id: 'ml',
+      category: 'core',
+      content: 'English.',
+      priority: 10,
     });
     composer.register({
-      id: 'ml', category: 'core', content: '中文。', priority: 10, language: 'zh',
+      id: 'ml',
+      category: 'core',
+      content: '中文。',
+      priority: 10,
+      language: 'zh',
     });
     composer.register({
-      id: 'ml', category: 'core', content: '日本語。', priority: 10, language: 'ja',
+      id: 'ml',
+      category: 'core',
+      content: '日本語。',
+      priority: 10,
+      language: 'ja',
     });
 
-    expect(
-      composer.compose({ fragments: ['ml'], variables: {}, language: 'en' }).system,
-    ).toContain('English');
-    expect(
-      composer.compose({ fragments: ['ml'], variables: {}, language: 'zh' }).system,
-    ).toContain('中文');
-    expect(
-      composer.compose({ fragments: ['ml'], variables: {}, language: 'ja' }).system,
-    ).toContain('日本語');
+    expect(composer.compose({ fragments: ['ml'], variables: {}, language: 'en' }).system).toContain(
+      'English',
+    );
+    expect(composer.compose({ fragments: ['ml'], variables: {}, language: 'zh' }).system).toContain(
+      '中文',
+    );
+    expect(composer.compose({ fragments: ['ml'], variables: {}, language: 'ja' }).system).toContain(
+      '日本語',
+    );
   });
 });
 

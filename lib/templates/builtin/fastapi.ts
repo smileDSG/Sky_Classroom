@@ -31,7 +31,8 @@ export const FASTAPI_TEMPLATES: CourseTemplate[] = [
     subject: 'programming',
     description: {
       'zh-CN': '深入 FastAPI 中间件、认证、数据库集成与部署',
-      'en-US': 'Deep dive into FastAPI middleware, authentication, database integration, and deployment',
+      'en-US':
+        'Deep dive into FastAPI middleware, authentication, database integration, and deployment',
     },
     icon: '⚡',
     isBuiltIn: true,

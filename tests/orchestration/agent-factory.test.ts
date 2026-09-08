@@ -80,7 +80,9 @@ describe('Phase 1: Templates', () => {
 
 describe('AgentFactory: createFromTemplate', () => {
   let factory: AgentFactory;
-  beforeEach(() => { factory = makeFactory(); });
+  beforeEach(() => {
+    factory = makeFactory();
+  });
 
   test('creates teacher agent from template', () => {
     const agent = factory.createFromTemplate('teacher', { id: 'test-teacher' });
@@ -134,7 +136,9 @@ describe('AgentFactory: createFromTemplate', () => {
 
 describe('AgentFactory: createFromLLM', () => {
   let factory: AgentFactory;
-  beforeEach(() => { factory = makeFactory(); });
+  beforeEach(() => {
+    factory = makeFactory();
+  });
 
   test('creates agent from LLM params with correct defaults', () => {
     const agent = factory.createFromLLM({
@@ -174,12 +178,19 @@ describe('AgentFactory: createFromLLM', () => {
 
   test('assigns correct priority by role when not specified', () => {
     expect(factory.createFromLLM({ name: 't', role: 'teacher', persona: '...' }).priority).toBe(10);
-    expect(factory.createFromLLM({ name: 'a', role: 'assistant', persona: '...' }).priority).toBe(7);
+    expect(factory.createFromLLM({ name: 'a', role: 'assistant', persona: '...' }).priority).toBe(
+      7,
+    );
     expect(factory.createFromLLM({ name: 's', role: 'student', persona: '...' }).priority).toBe(5);
   });
 
   test('preserves explicitly specified priority', () => {
-    const agent = factory.createFromLLM({ name: 'x', role: 'student', persona: '...', priority: 8 });
+    const agent = factory.createFromLLM({
+      name: 'x',
+      role: 'student',
+      persona: '...',
+      priority: 8,
+    });
     expect(agent.priority).toBe(8);
   });
 
@@ -198,7 +209,9 @@ describe('AgentFactory: createFromLLM', () => {
 
 describe('AgentFactory: createCustom', () => {
   let factory: AgentFactory;
-  beforeEach(() => { factory = makeFactory(); });
+  beforeEach(() => {
+    factory = makeFactory();
+  });
 
   test('creates custom agent with specified fields', () => {
     const agent = factory.createCustom({
@@ -247,7 +260,9 @@ describe('AgentFactory: createCustom', () => {
 
 describe('AgentFactory: template registry', () => {
   let factory: AgentFactory;
-  beforeEach(() => { factory = makeFactory(); });
+  beforeEach(() => {
+    factory = makeFactory();
+  });
 
   test('listTemplates returns all 6 by default', () => {
     expect(factory.listTemplates()).toHaveLength(6);
@@ -283,7 +298,13 @@ describe('AgentFactory: template registry', () => {
 
   test('removeTemplate removes a template', () => {
     factory.registerTemplate('temp', {
-      name: 'Temp', role: 'student', persona: '...', avatar: '', color: '#000', allowedActions: [], priority: 1,
+      name: 'Temp',
+      role: 'student',
+      persona: '...',
+      avatar: '',
+      color: '#000',
+      allowedActions: [],
+      priority: 1,
     });
     expect(factory.getTemplate('temp')).toBeDefined();
     factory.removeTemplate('temp');
@@ -298,7 +319,14 @@ describe('AgentFactory: store integration', () => {
     const factory = makeFactory();
     const defaults = factory.createDefaults();
 
-    for (const id of ['default-1', 'default-2', 'default-3', 'default-4', 'default-5', 'default-6']) {
+    for (const id of [
+      'default-1',
+      'default-2',
+      'default-3',
+      'default-4',
+      'default-5',
+      'default-6',
+    ]) {
       const agent = defaults[id];
       expect(agent).toBeDefined();
       expect(agent.id).toBe(id);
@@ -315,10 +343,10 @@ describe('AgentFactory: store integration', () => {
     }
 
     // Verify role distribution
-    const roles = Object.values(defaults).map(a => a.role);
-    expect(roles.filter(r => r === 'teacher')).toHaveLength(1);
-    expect(roles.filter(r => r === 'assistant')).toHaveLength(1);
-    expect(roles.filter(r => r === 'student')).toHaveLength(4);
+    const roles = Object.values(defaults).map((a) => a.role);
+    expect(roles.filter((r) => r === 'teacher')).toHaveLength(1);
+    expect(roles.filter((r) => r === 'assistant')).toHaveLength(1);
+    expect(roles.filter((r) => r === 'student')).toHaveLength(4);
   });
 
   test('factory defaults match old DEFAULT_AGENTS structure', () => {

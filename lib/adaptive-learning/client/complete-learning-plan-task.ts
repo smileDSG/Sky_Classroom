@@ -29,15 +29,12 @@ export async function completeLearningPlanTaskFromEvidence(
   }
 
   try {
-    const response = await fetch(
-      `/api/sky/learning-plan/tasks/${encodeURIComponent(task.id)}`,
-      {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'completed' }),
-      },
-    );
+    const response = await fetch(`/api/sky/learning-plan/tasks/${encodeURIComponent(task.id)}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'completed' }),
+    });
     const payload = (await response.json().catch(() => null)) as { success?: boolean } | null;
     return response.ok && payload?.success === true;
   } catch {

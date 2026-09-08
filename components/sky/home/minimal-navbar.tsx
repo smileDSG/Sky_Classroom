@@ -4,11 +4,7 @@ import { motion } from 'motion/react';
 import { HeaderControls } from './header-controls';
 
 // 精简导航栏组件
-export function MinimalNavbar({
-  userSection,
-}: {
-  userSection: React.ReactNode;
-}) {
+export function MinimalNavbar({ userSection }: { userSection: React.ReactNode }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       {/* 背景模糊层 */}

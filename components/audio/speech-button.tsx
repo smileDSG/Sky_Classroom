@@ -19,7 +19,8 @@ export function SpeechButton({
   className,
   disabled,
   size = 'sm',
-}: SpeechButtonProps) {// Ref to always call the latest onTranscription, avoiding stale closures
+}: SpeechButtonProps) {
+  // Ref to always call the latest onTranscription, avoiding stale closures
   const onTranscriptionRef = useRef(onTranscription);
   useEffect(() => {
     onTranscriptionRef.current = onTranscription;
@@ -126,11 +127,7 @@ export function SpeechButton({
         </button>
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs">
-        {isProcessing
-          ? '处理中...'
-          : isRecording
-            ? '停止录音'
-            : '语音输入'}
+        {isProcessing ? '处理中...' : isRecording ? '停止录音' : '语音输入'}
       </TooltipContent>
     </Tooltip>
   );

@@ -58,17 +58,44 @@ ${QUESTION_TYPE_RULE}`,
 };
 
 function formatProblemSpec(problemSpec: ProblemSpec, hasImage: boolean): string {
-  const lines = ['【结构化题目条件】', `学段：${problemSpec.stage}`, `学科：${problemSpec.subject}`, `题型：${problemSpec.questionType}`, `题干：${problemSpec.stem}`];
-  if (problemSpec.options.length > 0) lines.push(`选项：${problemSpec.options.map(option => `${option.key}: ${option.content}`).join('；')}`);
-  if (problemSpec.givens.length > 0) lines.push(`已知条件：${problemSpec.givens.map(given => { const label = given.symbol ? `${given.name ?? given.symbol}(${given.symbol})` : (given.name ?? '未命名条件'); return `${label}=${given.value ?? '未知'}${given.unit ? ` ${given.unit}` : ''}`; }).join('；')}`);
+  const lines = [
+    '【结构化题目条件】',
+    `学段：${problemSpec.stage}`,
+    `学科：${problemSpec.subject}`,
+    `题型：${problemSpec.questionType}`,
+    `题干：${problemSpec.stem}`,
+  ];
+  if (problemSpec.options.length > 0)
+    lines.push(
+      `选项：${problemSpec.options.map((option) => `${option.key}: ${option.content}`).join('；')}`,
+    );
+  if (problemSpec.givens.length > 0)
+    lines.push(
+      `已知条件：${problemSpec.givens
+        .map((given) => {
+          const label = given.symbol
+            ? `${given.name ?? given.symbol}(${given.symbol})`
+            : (given.name ?? '未命名条件');
+          return `${label}=${given.value ?? '未知'}${given.unit ? ` ${given.unit}` : ''}`;
+        })
+        .join('；')}`,
+    );
   if (problemSpec.asks.length > 0) lines.push(`求解目标：${problemSpec.asks.join('；')}`);
   if (problemSpec.formulas.length > 0) lines.push(`识别公式：${problemSpec.formulas.join('；')}`);
   if (problemSpec.materials.length > 0) lines.push(`材料：${problemSpec.materials.join('；')}`);
-  if (problemSpec.subQuestions.length > 0) lines.push(`子问题：${problemSpec.subQuestions.join('；')}`);
-  if (problemSpec.diagram) lines.push(`图示：${problemSpec.diagram.type}；${problemSpec.diagram.description}；标注=${problemSpec.diagram.labels.join(', ')}；关系=${problemSpec.diagram.relations.join('；')}`);
-  if (problemSpec.ambiguities.length > 0) lines.push(`识别歧义：${problemSpec.ambiguities.map(item => `${item.field}：${item.candidates.join('/')}（${item.reason}）`).join('；')}`);
+  if (problemSpec.subQuestions.length > 0)
+    lines.push(`子问题：${problemSpec.subQuestions.join('；')}`);
+  if (problemSpec.diagram)
+    lines.push(
+      `图示：${problemSpec.diagram.type}；${problemSpec.diagram.description}；标注=${problemSpec.diagram.labels.join(', ')}；关系=${problemSpec.diagram.relations.join('；')}`,
+    );
+  if (problemSpec.ambiguities.length > 0)
+    lines.push(
+      `识别歧义：${problemSpec.ambiguities.map((item) => `${item.field}：${item.candidates.join('/')}（${item.reason}）`).join('；')}`,
+    );
   lines.push(`识别置信度：${problemSpec.confidence}`);
-  if (hasImage) lines.push('若结构化识别结果与图片冲突，以原始题图优先；需明确指出不确定信息，禁止擅自补全。');
+  if (hasImage)
+    lines.push('若结构化识别结果与图片冲突，以原始题图优先；需明确指出不确定信息，禁止擅自补全。');
   lines.push('【结构化题目条件结束】');
   return lines.join('\n');
 }
@@ -89,9 +116,7 @@ export function buildSolverPrompt(
   const basePrompt = AGENT_SYSTEM_PROMPTS[agentType];
 
   // Add personalization context
-  const personalizationPrompt = personalization
-    ? buildPersonalizationPrompt(personalization)
-    : '';
+  const personalizationPrompt = personalization ? buildPersonalizationPrompt(personalization) : '';
 
   const contextParts: string[] = [];
 
@@ -107,9 +132,7 @@ export function buildSolverPrompt(
     contextParts.push(formatProblemSpec(problemSpec, Boolean(problemImage)));
   }
 
-  const contextBlock = contextParts.length > 0
-    ? `\n\n附加信息：\n${contextParts.join('\n')}`
-    : '';
+  const contextBlock = contextParts.length > 0 ? `\n\n附加信息：\n${contextParts.join('\n')}` : '';
 
   const fullPrompt = `${basePrompt}${personalizationPrompt}${contextBlock}`;
 
@@ -124,10 +147,7 @@ export function buildSolverPrompt(
  * Build a lightweight prompt for generating knowledge points only.
  * Used when question bank or solve cache hits but has no knowledge points.
  */
-export function buildKnowledgePointsPrompt(
-  problemText: string,
-  answer: string,
-): string {
+export function buildKnowledgePointsPrompt(problemText: string, answer: string): string {
   return `你是知识点总结专家。根据以下题目和答案，生成 2-4 个相关的知识点。
 
 每个知识点的 description 必须包含三部分：

@@ -192,7 +192,19 @@ describe('P6-001 Test 9: 增量生成', () => {
     test('cache stores generated content by scene ID', () => {
       const cache = new SimpleCache();
       const content: GeneratedSlideContent = {
-        elements: [{ id: 'el1', type: 'text', left: 0, top: 0, width: 100, height: 50, content: 'test', defaultFontName: '', defaultColor: '#000' }],
+        elements: [
+          {
+            id: 'el1',
+            type: 'text',
+            left: 0,
+            top: 0,
+            width: 100,
+            height: 50,
+            content: 'test',
+            defaultFontName: '',
+            defaultColor: '#000',
+          },
+        ],
         background: { type: 'solid', color: '#fff' },
         remark: '',
       };
@@ -205,7 +217,19 @@ describe('P6-001 Test 9: 增量生成', () => {
     test('cache invalidation removes stale content', () => {
       const cache = new SimpleCache();
       const content: GeneratedSlideContent = {
-        elements: [{ id: 'el1', type: 'text', left: 0, top: 0, width: 100, height: 50, content: 'test', defaultFontName: '', defaultColor: '#000' }],
+        elements: [
+          {
+            id: 'el1',
+            type: 'text',
+            left: 0,
+            top: 0,
+            width: 100,
+            height: 50,
+            content: 'test',
+            defaultFontName: '',
+            defaultColor: '#000',
+          },
+        ],
         background: undefined,
         remark: '',
       };

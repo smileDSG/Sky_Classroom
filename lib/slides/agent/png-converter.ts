@@ -78,19 +78,20 @@ const MAX_RETRIES = 2;
 // ── LO discovery (lightweight, no execution) ──────────────────────────
 
 async function findLibreOffice(): Promise<string | null> {
-  const candidates = [
-    ...SOFFICE_CANDIDATES,
-    ...(await getWindowsRegistryCandidates()),
-  ];
+  const candidates = [...SOFFICE_CANDIDATES, ...(await getWindowsRegistryCandidates())];
 
   for (const candidate of candidates) {
     try {
       await fs.access(candidate);
       log.info(`LibreOffice resolved: ${candidate}`);
       return candidate;
-    } catch { /* not found */ }
+    } catch {
+      /* not found */
+    }
   }
-  log.warn(`LibreOffice not found. Candidates checked: ${candidates.length}. Set LO_SOFFICE_PATH env var to override.`);
+  log.warn(
+    `LibreOffice not found. Candidates checked: ${candidates.length}. Set LO_SOFFICE_PATH env var to override.`,
+  );
   return null;
 }
 
@@ -160,7 +161,9 @@ export async function convertPptxToPng(
     if (result.success) return result;
 
     if (attempt < MAX_RETRIES) {
-      log.warn(`LO conversion attempt ${attempt}/${MAX_RETRIES} failed: ${result.error}. Retrying in ${RETRY_DELAY_MS}ms...`);
+      log.warn(
+        `LO conversion attempt ${attempt}/${MAX_RETRIES} failed: ${result.error}. Retrying in ${RETRY_DELAY_MS}ms...`,
+      );
       await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
     } else {
       log.error(`LO conversion failed after ${MAX_RETRIES} attempts: ${result.error}`);
@@ -191,21 +194,31 @@ async function convertOnce(
     // to prevent profile corruption and file-lock conflicts.
     const userInstallationUrl = 'file:///' + userProfileDir.replace(/\\/g, '/');
 
-    const proc = spawn(loPath, [
-      '--headless',
-      '-env:UserInstallation=' + userInstallationUrl,
-      '--convert-to', 'png',
-      '--outdir', workDir,
-      pptxPath,
-    ], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    const proc = spawn(
+      loPath,
+      [
+        '--headless',
+        '-env:UserInstallation=' + userInstallationUrl,
+        '--convert-to',
+        'png',
+        '--outdir',
+        workDir,
+        pptxPath,
+      ],
+      {
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
 
     let stdout = '';
     let stderr = '';
 
-    proc.stdout.on('data', (data: Buffer) => { stdout += data.toString(); });
-    proc.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+    proc.stdout.on('data', (data: Buffer) => {
+      stdout += data.toString();
+    });
+    proc.stderr.on('data', (data: Buffer) => {
+      stderr += data.toString();
+    });
 
     // Manual timeout: Node.js spawn() does NOT support the timeout option
     const timeoutId = setTimeout(() => {
@@ -214,8 +227,15 @@ async function convertOnce(
     }, CONVERT_TIMEOUT_MS);
 
     const exitCode = await new Promise<number | null>((resolve) => {
-      proc.on('close', (code) => { clearTimeout(timeoutId); resolve(code); });
-      proc.on('error', (err) => { clearTimeout(timeoutId); log.error('LibreOffice spawn error:', err); resolve(null); });
+      proc.on('close', (code) => {
+        clearTimeout(timeoutId);
+        resolve(code);
+      });
+      proc.on('error', (err) => {
+        clearTimeout(timeoutId);
+        log.error('LibreOffice spawn error:', err);
+        resolve(null);
+      });
     });
 
     if (exitCode !== 0) {
@@ -250,14 +270,16 @@ export async function convertMultiplePptx(
   pptxPaths: string[],
   outputDir: string,
 ): Promise<PngConvertResult[]> {
-  const results = await Promise.all(
-    pptxPaths.map((p) => convertPptxToPng(p, outputDir)),
-  );
+  const results = await Promise.all(pptxPaths.map((p) => convertPptxToPng(p, outputDir)));
   return results;
 }
 
 async function cleanupDirs(dirs: string[]): Promise<void> {
   for (const dir of dirs) {
-    try { await fs.rm(dir, { recursive: true }); } catch { /* ignore */ }
+    try {
+      await fs.rm(dir, { recursive: true });
+    } catch {
+      /* ignore */
+    }
   }
 }

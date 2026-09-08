@@ -1,8 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import {
-  generateFourPartOutput,
-  generateGradedFourPartOutput,
-} from '@/lib/solve/four-part-output';
+import { generateFourPartOutput, generateGradedFourPartOutput } from '@/lib/solve/four-part-output';
 import type { GradeResult } from '@/lib/solve/types';
 
 describe('generateFourPartOutput', () => {
@@ -13,9 +10,7 @@ describe('generateFourPartOutput', () => {
         { label: '移项', content: '2x = 6', keyPoints: ['等式两边同时除以2'] },
         { label: '计算', content: 'x = 3', keyPoints: [] },
       ],
-      knowledgePoints: [
-        { name: '一元一次方程', description: '基础代数', difficulty: 'easy' },
-      ],
+      knowledgePoints: [{ name: '一元一次方程', description: '基础代数', difficulty: 'easy' }],
       similarQuestions: [
         { problem: '3x + 1 = 7', difficulty: 0.4, knowledgePoint: '一元一次方程' },
       ],

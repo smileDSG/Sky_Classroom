@@ -10,23 +10,32 @@ import type { SolverAgentType } from '../types';
 
 // ── Subject & grade taxonomy ────────────────────────────────────────
 
-export type SubjectId = 'math' | 'physics' | 'chemistry' | 'chinese' | 'english' | 'biology' | 'history' | 'geography' | 'politics';
+export type SubjectId =
+  | 'math'
+  | 'physics'
+  | 'chemistry'
+  | 'chinese'
+  | 'english'
+  | 'biology'
+  | 'history'
+  | 'geography'
+  | 'politics';
 
 export type GradeLevel = 'junior' | 'senior' | 'college';
 
 export interface SubjectConfig {
   id: SubjectId;
-  label: string;           // Chinese display name
-  labelEn: string;         // English display name
-  searchKeywords: string[];// Bing search query templates
+  label: string; // Chinese display name
+  labelEn: string; // English display name
+  searchKeywords: string[]; // Bing search query templates
   gradeLevels: GradeLevel[];
-  priority: number;        // 1 = highest
+  priority: number; // 1 = highest
 }
 
 export interface GradeConfig {
   id: GradeLevel;
   label: string;
-  searchSuffix: string;    // e.g. "高中" "初中" "大学"
+  searchSuffix: string; // e.g. "高中" "初中" "大学"
 }
 
 // ── Search ──────────────────────────────────────────────────────────
@@ -51,7 +60,7 @@ export interface FetchedPage {
   url: string;
   domain: string;
   title: string;
-  textContent: string;     // extracted text (no HTML tags)
+  textContent: string; // extracted text (no HTML tags)
   fetchedAt: number;
   robotsAllowed: boolean;
 }
@@ -115,14 +124,17 @@ export interface EnrichJobStats {
   totalStored: number;
   totalFailed: number;
   /** Per-subject breakdown */
-  bySubject: Record<string, {
-    searched: number;
-    fetched: number;
-    extracted: number;
-    solved: number;
-    stored: number;
-    failed: number;
-  }>;
+  bySubject: Record<
+    string,
+    {
+      searched: number;
+      fetched: number;
+      extracted: number;
+      solved: number;
+      stored: number;
+      failed: number;
+    }
+  >;
 }
 
 // ── Global status ───────────────────────────────────────────────────

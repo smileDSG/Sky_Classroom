@@ -53,7 +53,9 @@ export class IndexedDBStorageProvider implements StorageProvider {
 
       request.onsuccess = (event) => {
         this.db = (event.target as IDBOpenDBRequest).result;
-        this.db.onclose = () => { this.db = null; };
+        this.db.onclose = () => {
+          this.db = null;
+        };
         resolve(this.db);
       };
 
@@ -78,7 +80,9 @@ export class IndexedDBStorageProvider implements StorageProvider {
         };
         req.onsuccess = (e) => {
           this.db = (e.target as IDBOpenDBRequest).result;
-          this.db.onclose = () => { this.db = null; };
+          this.db.onclose = () => {
+            this.db = null;
+          };
           resolve(this.db);
         };
         req.onerror = () => reject(req.error);

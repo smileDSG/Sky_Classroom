@@ -34,10 +34,7 @@ export interface HomeworkAssignment {
 }
 
 /** Extract weak knowledge points from job feedback and quiz results. */
-function extractWeakPoints(
-  feedbacks: SectionFeedback[],
-  quizResults: QuizResult[],
-): string[] {
+function extractWeakPoints(feedbacks: SectionFeedback[], quizResults: QuizResult[]): string[] {
   const weakSet = new Set<string>();
 
   for (const fb of feedbacks) {
@@ -168,7 +165,9 @@ export async function generateHomework(
 
   // Strategy 1: Search question bank
   let questions = await searchBankQuestions(weakPoints, resolvedSubject, 2);
-  log.info(`Found ${questions.length} questions from question bank for weak points: ${weakPoints.join('、')}`);
+  log.info(
+    `Found ${questions.length} questions from question bank for weak points: ${weakPoints.join('、')}`,
+  );
 
   // Strategy 2: If not enough, use AI generation
   const targetCount = Math.min(weakPoints.length * 2 + 1, 8);

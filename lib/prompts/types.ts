@@ -9,21 +9,21 @@
 
 /** Category of a prompt fragment — determines the composability layer */
 export type PromptFragmentCategory =
-  | 'core'        // Base framework (agent-base, director-base, output-format)
-  | 'role'        // Teaching role definition (teacher, assistant)
-  | 'persona'     // Student persona (curious, analytical, creative, note-taker)
-  | 'generator'   // Content generator (outline, slide-content, quiz, etc.)
-  | 'snippet'     // Reusable inline snippet
-  | 'user';       // User-defined override (highest priority)
+  | 'core' // Base framework (agent-base, director-base, output-format)
+  | 'role' // Teaching role definition (teacher, assistant)
+  | 'persona' // Student persona (curious, analytical, creative, note-taker)
+  | 'generator' // Content generator (outline, slide-content, quiz, etc.)
+  | 'snippet' // Reusable inline snippet
+  | 'user'; // User-defined override (highest priority)
 
 /** A single composable prompt fragment */
 export interface PromptFragment {
   id: string;
   category: PromptFragmentCategory;
   content: string;
-  priority: number;            // Higher = overrides lower when overlapping
-  language?: string;           // ISO language code (en, zh, ja, ru)
-  version?: string;            // Semantic version string
+  priority: number; // Higher = overrides lower when overlapping
+  language?: string; // ISO language code (en, zh, ja, ru)
+  version?: string; // Semantic version string
   metadata?: Record<string, unknown>;
 }
 
@@ -75,7 +75,7 @@ export interface IPromptComposer {
 
 export interface PromptVersionMeta {
   author?: string;
-  createdAt: string;   // ISO-8601
+  createdAt: string; // ISO-8601
   description?: string;
   evaluation?: {
     score: number;
@@ -87,7 +87,7 @@ export interface PromptVersionMeta {
 export interface PromptVersion {
   id: string;
   promptId: string;
-  version: string;     // semver
+  version: string; // semver
   content: string;
   metadata: PromptVersionMeta;
 }
@@ -95,10 +95,10 @@ export interface PromptVersion {
 export interface ABTestConfig {
   id: string;
   promptId: string;
-  variantA: string;    // version ID (control)
-  variantB: string;    // version ID (experiment)
+  variantA: string; // version ID (control)
+  variantB: string; // version ID (experiment)
   trafficSplit: number; // 0–1, proportion routed to variant B
-  startAt: string;     // ISO-8601
+  startAt: string; // ISO-8601
   enabled: boolean;
 }
 

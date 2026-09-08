@@ -49,9 +49,7 @@ export function SlidePreviewGallery({
           <span className="flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary px-2 text-xs font-bold text-white">
             {activeIndex + 1}
           </span>
-          <span className="text-sm text-gray-400">
-            / {total} 页
-          </span>
+          <span className="text-sm text-gray-400">/ {total} 页</span>
         </div>
 
         <div className="flex items-center gap-1">
@@ -125,9 +123,7 @@ export function SlidePreviewGallery({
                 setScale(1);
               }}
               className={`relative flex-shrink-0 overflow-hidden rounded-md transition-all duration-150 ${
-                i === activeIndex
-                  ? 'ring-2 ring-primary shadow-md'
-                  : 'opacity-50 hover:opacity-100'
+                i === activeIndex ? 'ring-2 ring-primary shadow-md' : 'opacity-50 hover:opacity-100'
               }`}
             >
               <img

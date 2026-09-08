@@ -50,7 +50,10 @@ const FACT_PATTERNS: Array<{ pattern: RegExp; category: string }> = [
   { pattern: /我(?:在|正|准备)(?:学|复习|备考|准备)/i, category: '学习状态' },
   { pattern: /我(?:的|有)(?:考试|测验|作业|考试)/i, category: '学习状态' },
   { pattern: /下次(?:考试|测验|作业)/i, category: '学习状态' },
-  { pattern: /我(?:的)?(?:数学|语文|英语|物理|化学|生物|历史|地理|政治)(?:成绩|分数|水平)/i, category: '学科水平' },
+  {
+    pattern: /我(?:的)?(?:数学|语文|英语|物理|化学|生物|历史|地理|政治)(?:成绩|分数|水平)/i,
+    category: '学科水平',
+  },
 ];
 
 /** Patterns that indicate a decision */
@@ -167,11 +170,12 @@ export function extractMemoriesFromConversation(
 /** Extract the sentence containing the match */
 function extractSentence(text: string, matchIndex: number): string {
   // Find sentence boundaries (Chinese/English punctuation)
-  const sentenceStart = text.slice(0, matchIndex).lastIndexOf('。') + 1
-    || text.slice(0, matchIndex).lastIndexOf('！') + 1
-    || text.slice(0, matchIndex).lastIndexOf('？') + 1
-    || text.slice(0, matchIndex).lastIndexOf('\n') + 1
-    || 0;
+  const sentenceStart =
+    text.slice(0, matchIndex).lastIndexOf('。') + 1 ||
+    text.slice(0, matchIndex).lastIndexOf('！') + 1 ||
+    text.slice(0, matchIndex).lastIndexOf('？') + 1 ||
+    text.slice(0, matchIndex).lastIndexOf('\n') + 1 ||
+    0;
 
   const remaining = text.slice(matchIndex);
   const sentenceEndMatch = remaining.match(/[。！？\n]/);
@@ -201,18 +205,43 @@ function deduplicateMemories(memories: ExtractedMemory[]): ExtractedMemory[] {
 // ── Topic-based extraction ────────────────────────────────────────
 
 /** Detect the main subject/topic of a conversation */
-export function detectConversationTopic(
-  messages: ConversationMessage[],
-): string {
+export function detectConversationTopic(messages: ConversationMessage[]): string {
   const subjectKeywords: Record<string, string[]> = {
-    '数学': ['函数', '方程', '几何', '概率', '微积分', '导数', '积分', '矩阵', '向量', '三角', '代数', '数学', '计算', '证明'],
-    '物理': ['力学', '电磁', '光学', '热学', '量子', '牛顿', '电路', '物理', '速度', '加速度', '能量'],
-    '化学': ['化学', '反应', '分子', '原子', '元素', '有机', '无机', '酸碱', '氧化'],
-    '英语': ['英语', '语法', '单词', '阅读', '写作', '听力', '口语', '翻译', 'English'],
-    '语文': ['语文', '作文', '阅读理解', '古文', '诗词', '文言文', '修辞'],
-    '生物': ['生物', '细胞', '基因', 'DNA', '进化', '生态', '遗传'],
-    '历史': ['历史', '朝代', '战争', '革命', '文明', '古代'],
-    '地理': ['地理', '气候', '地形', '经纬', '板块', '洋流'],
+    数学: [
+      '函数',
+      '方程',
+      '几何',
+      '概率',
+      '微积分',
+      '导数',
+      '积分',
+      '矩阵',
+      '向量',
+      '三角',
+      '代数',
+      '数学',
+      '计算',
+      '证明',
+    ],
+    物理: [
+      '力学',
+      '电磁',
+      '光学',
+      '热学',
+      '量子',
+      '牛顿',
+      '电路',
+      '物理',
+      '速度',
+      '加速度',
+      '能量',
+    ],
+    化学: ['化学', '反应', '分子', '原子', '元素', '有机', '无机', '酸碱', '氧化'],
+    英语: ['英语', '语法', '单词', '阅读', '写作', '听力', '口语', '翻译', 'English'],
+    语文: ['语文', '作文', '阅读理解', '古文', '诗词', '文言文', '修辞'],
+    生物: ['生物', '细胞', '基因', 'DNA', '进化', '生态', '遗传'],
+    历史: ['历史', '朝代', '战争', '革命', '文明', '古代'],
+    地理: ['地理', '气候', '地形', '经纬', '板块', '洋流'],
   };
 
   const allText = messages.map((m) => m.content).join(' ');
@@ -220,10 +249,7 @@ export function detectConversationTopic(
   let bestScore = 0;
 
   for (const [subject, keywords] of Object.entries(subjectKeywords)) {
-    const score = keywords.reduce(
-      (sum, kw) => sum + (allText.includes(kw) ? 1 : 0),
-      0,
-    );
+    const score = keywords.reduce((sum, kw) => sum + (allText.includes(kw) ? 1 : 0), 0);
     if (score > bestScore) {
       bestScore = score;
       bestSubject = subject;
@@ -234,9 +260,7 @@ export function detectConversationTopic(
 }
 
 /** Generate a brief summary of the conversation (heuristic) */
-export function generateConversationSummary(
-  messages: ConversationMessage[],
-): string {
+export function generateConversationSummary(messages: ConversationMessage[]): string {
   const userMsgs = messages.filter((m) => m.role === 'user');
   const assistantMsgs = messages.filter((m) => m.role === 'assistant');
 

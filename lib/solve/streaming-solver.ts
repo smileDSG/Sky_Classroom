@@ -31,16 +31,19 @@ const LATEX_LETTER = /[a-zA-Z]/;
 function fixLatexJsonEscapes(json: string): string {
   let changed = false;
   const fixed = json.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (_match, content) => {
-    const fixedContent = content.replace(/\\([a-zA-Z])/g, (_m: string, ch: string, offset: number, str: string) => {
-      const nextChar = str[offset + 2];
-      const isLatexCommand = nextChar != null && LATEX_LETTER.test(nextChar);
+    const fixedContent = content.replace(
+      /\\([a-zA-Z])/g,
+      (_m: string, ch: string, offset: number, str: string) => {
+        const nextChar = str[offset + 2];
+        const isLatexCommand = nextChar != null && LATEX_LETTER.test(nextChar);
 
-      if (VALID_JSON_ESCAPE.has(ch) && !isLatexCommand) {
-        return _m; // real JSON escape: \n, \t — keep as-is
-      }
-      changed = true;
-      return `\\\\${ch}`; // LaTeX command — double-escape for JSON
-    });
+        if (VALID_JSON_ESCAPE.has(ch) && !isLatexCommand) {
+          return _m; // real JSON escape: \n, \t — keep as-is
+        }
+        changed = true;
+        return `\\\\${ch}`; // LaTeX command — double-escape for JSON
+      },
+    );
     return `"${fixedContent}"`;
   });
   return changed ? fixed : json;
@@ -113,7 +116,11 @@ function cleanAnswer(raw: string): string {
   s = s.replace(EXPLANATION_PREFIXES, '').trim();
   // If the string contains both explanation and a LaTeX expression, extract the last expression
   const latexMatches = s.match(/\$[^$]+\$/g);
-  if (latexMatches && latexMatches.length > 0 && s.length > latexMatches[latexMatches.length - 1].length + 10) {
+  if (
+    latexMatches &&
+    latexMatches.length > 0 &&
+    s.length > latexMatches[latexMatches.length - 1].length + 10
+  ) {
     return latexMatches[latexMatches.length - 1];
   }
   return s;
@@ -171,13 +178,13 @@ export type StreamEvent =
 // ── Streaming JSON parser state machine ──────────────────────────────
 
 type ParseState =
-  | 'init'          // looking for "steps" key
-  | 'in_steps'      // found "steps", looking for first {
-  | 'in_step'       // inside a step object, tracking braces
-  | 'after_steps'   // steps array closed, looking for "answer"
-  | 'in_answer'     // inside answer string
-  | 'in_knowledge'  // looking for knowledge array
-  | 'in_similar';   // looking for similar array
+  | 'init' // looking for "steps" key
+  | 'in_steps' // found "steps", looking for first {
+  | 'in_step' // inside a step object, tracking braces
+  | 'after_steps' // steps array closed, looking for "answer"
+  | 'in_answer' // inside answer string
+  | 'in_knowledge' // looking for knowledge array
+  | 'in_similar'; // looking for similar array
 
 /**
  * Lightweight streaming JSON step parser.
@@ -243,7 +250,8 @@ class StepStreamParser {
       if (match) {
         try {
           const parsed = JSON.parse(`[${match[1]}]`);
-          if (Array.isArray(parsed) && parsed.every((item) => typeof item === 'string')) this.options = parsed;
+          if (Array.isArray(parsed) && parsed.every((item) => typeof item === 'string'))
+            this.options = parsed;
         } catch {
           // wait for complete metadata in a later chunk
         }
@@ -252,7 +260,14 @@ class StepStreamParser {
   }
 
   /** Get all collected results at end of stream */
-  finalize(): { answer: string; steps: StepEvent[]; knowledge: KnowledgeEvent['points']; similar: SimilarEvent['questions']; questionType?: 'choice' | 'fill' | 'solve' | 'judge'; options?: string[] } {
+  finalize(): {
+    answer: string;
+    steps: StepEvent[];
+    knowledge: KnowledgeEvent['points'];
+    similar: SimilarEvent['questions'];
+    questionType?: 'choice' | 'fill' | 'solve' | 'judge';
+    options?: string[];
+  } {
     // Try to extract remaining data from buffer
     this.extractFallback();
     return {
@@ -427,7 +442,9 @@ class StepStreamParser {
         type: 'step',
         label: String(obj.label),
         content: cleanLatexContent(String(obj.content)),
-        keyPoints: Array.isArray(obj.keyPoints) ? (obj.keyPoints as string[]).map(cleanLatexContent) : [],
+        keyPoints: Array.isArray(obj.keyPoints)
+          ? (obj.keyPoints as string[]).map(cleanLatexContent)
+          : [],
       };
     }
     return null;
@@ -456,7 +473,13 @@ class StepStreamParser {
 
   /** Last-resort: try to parse the entire buffer as JSON to extract data */
   private extractFallback(): void {
-    if (this.steps.length > 0 && this.answer && this.knowledge.length > 0 && this.similar.length > 0) return;
+    if (
+      this.steps.length > 0 &&
+      this.answer &&
+      this.knowledge.length > 0 &&
+      this.similar.length > 0
+    )
+      return;
 
     try {
       // Try to find a valid JSON object in the buffer
@@ -521,7 +544,16 @@ export async function* streamSolve(
   const modelConfig = resolveSolverModel(agentType);
   const modelWithInfo = getModel(modelConfig);
 
-  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined, undefined, undefined, undefined, undefined, problemSpec);
+  const systemPrompt = buildSolverPrompt(
+    agentType,
+    problemText,
+    problemImage ?? undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    problemSpec,
+  );
 
   yield { type: 'phase', phase: 'solving' };
 
@@ -597,7 +629,16 @@ async function* fallbackSolve(
   const modelConfig = resolveSolverModel(agentType);
   const modelWithInfo = getModelFn(modelConfig);
 
-  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined, undefined, undefined, undefined, undefined, problemSpec);
+  const systemPrompt = buildSolverPrompt(
+    agentType,
+    problemText,
+    problemImage ?? undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    problemSpec,
+  );
 
   const result = await callLLM(
     {

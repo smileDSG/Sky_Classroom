@@ -97,9 +97,7 @@ export interface ScrapeOptions {
  * Flow: build search queries → fetch search pages → extract result links
  * → fetch question pages → LLM extract questions → return
  */
-export async function scrapeQuestions(
-  opts: ScrapeOptions,
-): Promise<ExtractedQuestion[]> {
+export async function scrapeQuestions(opts: ScrapeOptions): Promise<ExtractedQuestion[]> {
   const { subject, gradeLevel, maxQuestions = 50 } = opts;
 
   const queries = buildSearchQuery(subject, gradeLevel);
@@ -160,6 +158,8 @@ export async function scrapeQuestions(
     }
   }
 
-  log.info(`[Scraper] Total scraped: ${allQuestions.length} questions for ${subject}/${gradeLevel}`);
+  log.info(
+    `[Scraper] Total scraped: ${allQuestions.length} questions for ${subject}/${gradeLevel}`,
+  );
   return allQuestions.slice(0, maxQuestions);
 }

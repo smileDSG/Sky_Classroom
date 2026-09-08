@@ -163,9 +163,7 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
                 <Label className="text-sm">
                   {'Base URL'}
                   {isCloud && (
-                    <span className="text-muted-foreground ml-1 font-normal">
-                      ({'可选'})
-                    </span>
+                    <span className="text-muted-foreground ml-1 font-normal">({'可选'})</span>
                   )}
                 </Label>
                 <div className="flex gap-2">
@@ -210,9 +208,7 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
               <div className="space-y-2">
                 <Label className="text-sm">
                   {'API Key'}
-                  <span className="text-muted-foreground ml-1 font-normal">
-                    ({'可选'})
-                  </span>
+                  <span className="text-muted-foreground ml-1 font-normal">({'可选'})</span>
                 </Label>
                 <div className="relative">
                   <Input
@@ -222,11 +218,7 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
                     autoCapitalize="none"
                     autoCorrect="off"
                     spellCheck={false}
-                    placeholder={
-                      isServerConfigured
-                        ? '可选，留空则使用服务端配置'
-                        : '输入 API Key'
-                    }
+                    placeholder={isServerConfigured ? '可选，留空则使用服务端配置' : '输入 API Key'}
                     value={providerConfig?.apiKey || ''}
                     onChange={(e) =>
                       setPDFProviderConfig(selectedProviderId, { apiKey: e.target.value })

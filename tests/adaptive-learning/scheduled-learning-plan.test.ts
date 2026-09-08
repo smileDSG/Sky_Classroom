@@ -135,9 +135,7 @@ describe('scheduled learning plan', () => {
     expect(plan.tasks.every((task) => task.pathNodeId)).toBe(true);
     expect(plan.tasks.some((task) => task.pathNodeId === 'path-node-2')).toBe(true);
     expect(
-      plan.tasks.every(
-        (task) => new Date(`${task.scheduledDate}T00:00:00.000Z`).getUTCDay() !== 0,
-      ),
+      plan.tasks.every((task) => new Date(`${task.scheduledDate}T00:00:00.000Z`).getUTCDay() !== 0),
     ).toBe(true);
 
     const minutesByDate = new Map<string, number>();

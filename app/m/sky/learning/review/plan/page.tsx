@@ -214,7 +214,11 @@ export default function MobileReviewPlanPage() {
         <section aria-label="复习概览" className="grid grid-cols-3 gap-2">
           <MetricCard label="今日待复习" value={loading ? '-' : summary.dueCount} tone="cyan" />
           <MetricCard label="逾期" value={loading ? '-' : plan.overdue} tone="amber" />
-          <MetricCard label="掌握进度" value={loading ? '-' : `${summary.percentComplete}%`} tone="emerald" />
+          <MetricCard
+            label="掌握进度"
+            value={loading ? '-' : `${summary.percentComplete}%`}
+            tone="emerald"
+          />
         </section>
 
         {notice && (
@@ -428,7 +432,15 @@ function MetricCard({
   );
 }
 
-function AnswerBlock({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+function AnswerBlock({
+  label,
+  value,
+  strong = false,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+}) {
   return (
     <div className="min-h-[58px] rounded-[15px] border border-white/10 bg-white/[0.045] p-2.5">
       <div className="text-[12px] font-bold text-slate-500">{label}</div>

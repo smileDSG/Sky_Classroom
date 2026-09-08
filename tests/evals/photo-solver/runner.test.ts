@@ -62,11 +62,10 @@ describe('photo solver runner', () => {
     const allCases = await loadPhotoSolverCases(file);
     const objective = allCases.find((item) => item.questionType !== 'subjective')!;
     const subjective = allCases.find((item) => item.questionType === 'subjective')!;
-    const report = await runPhotoSolverEvaluation(
-      [objective, subjective],
-      new OfflineAdapter(),
-      { runMode: 'offline', generatedAt: 'fixed' },
-    );
+    const report = await runPhotoSolverEvaluation([objective, subjective], new OfflineAdapter(), {
+      runMode: 'offline',
+      generatedAt: 'fixed',
+    });
 
     expect(report.aggregate.metrics['answer.answerMatch']).toBe(1);
     expect(report.aggregate.humanReviewCases).toBe(1);

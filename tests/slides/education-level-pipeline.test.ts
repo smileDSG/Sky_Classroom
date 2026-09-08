@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { buildLayer1SystemPrompt, buildLayer1UserPrompt } from '@/lib/slides/agent/planning-agent';
-import { buildSystemPrompt as buildSectionSystemPrompt, buildUserPrompt as buildSectionUserPrompt } from '@/lib/slides/agent/section-agent';
-import { buildSystemPrompt as buildDesignSystemPrompt, buildUserPrompt as buildDesignUserPrompt } from '@/lib/slides/agent/page-design-agent';
+import {
+  buildSystemPrompt as buildSectionSystemPrompt,
+  buildUserPrompt as buildSectionUserPrompt,
+} from '@/lib/slides/agent/section-agent';
+import {
+  buildSystemPrompt as buildDesignSystemPrompt,
+  buildUserPrompt as buildDesignUserPrompt,
+} from '@/lib/slides/agent/page-design-agent';
 import { buildContentQAUserPrompt } from '@/lib/slides/agent/qa-agent';
 import type { DesignDNA } from '@/lib/slides/agent/design-dna';
 
@@ -95,7 +101,14 @@ describe('educationLevel prompt injection', () => {
   });
 
   it('page design user prompt includes educationLevel', () => {
-    const prompt = buildDesignUserPrompt(1, 'concept', { title: '测试' }, 10, mockDesignDNA, '研究生');
+    const prompt = buildDesignUserPrompt(
+      1,
+      'concept',
+      { title: '测试' },
+      10,
+      mockDesignDNA,
+      '研究生',
+    );
     expect(prompt).toContain('目标受众: 研究生');
   });
 

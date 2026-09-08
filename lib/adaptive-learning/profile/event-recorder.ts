@@ -259,12 +259,14 @@ export interface ShadowDecisionComparisonInput {
 }
 
 /** Record a read-only old-vs-new decision comparison once per profile version. */
-export async function recordShadowDecision(options: RecordLearningEventOptions & {
-  userId: string;
-  source: string;
-  comparison: ShadowDecisionComparisonInput;
-  existingEvents?: LearningEvent[];
-}): Promise<LearningEvent | null> {
+export async function recordShadowDecision(
+  options: RecordLearningEventOptions & {
+    userId: string;
+    source: string;
+    comparison: ShadowDecisionComparisonInput;
+    existingEvents?: LearningEvent[];
+  },
+): Promise<LearningEvent | null> {
   const comparison = options.comparison;
   const correlationId = [
     'shadow-decision',

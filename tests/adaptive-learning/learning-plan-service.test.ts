@@ -110,9 +110,7 @@ describe('generateLearningPlan', () => {
           {
             week: 1,
             goal: '导数概念',
-            dailyTasks: [
-              { day: 'mon', topic: '极限引入', materials: ['导数基础'], minutes: 45 },
-            ],
+            dailyTasks: [{ day: 'mon', topic: '极限引入', materials: ['导数基础'], minutes: 45 }],
           },
         ],
         materials: [{ title: '导数基础', source: 'data/crawled/math/derivative.md' }],

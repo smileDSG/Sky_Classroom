@@ -83,13 +83,16 @@ function FeaturedTopics() {
               className="group relative cursor-pointer"
             >
               {/* Card */}
-              <div className={`relative rounded-2xl bg-gradient-to-br ${topic.color} p-4 h-full ${topic.shadow} shadow-lg overflow-hidden`}>
+              <div
+                className={`relative rounded-2xl bg-gradient-to-br ${topic.color} p-4 h-full ${topic.shadow} shadow-lg overflow-hidden`}
+              >
                 {/* Decorative circles */}
                 <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-white/10 group-hover:scale-125 transition-transform duration-500" />
                 <div className="absolute -top-6 -left-6 w-16 h-16 rounded-full bg-white/5 group-hover:scale-110 transition-transform duration-700" />
 
                 {/* Subtle pattern overlay */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                <div
+                  className="absolute inset-0 opacity-[0.03] pointer-events-none"
                   style={{
                     backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
                     backgroundSize: '16px 16px',
@@ -97,7 +100,9 @@ function FeaturedTopics() {
                 />
 
                 {/* Tag */}
-                <span className={`absolute top-2 right-2 ${topic.tagColor} text-white text-[10px] font-bold px-2 py-0.5 rounded-full`}>
+                <span
+                  className={`absolute top-2 right-2 ${topic.tagColor} text-white text-[10px] font-bold px-2 py-0.5 rounded-full`}
+                >
                   {topic.tag}
                 </span>
 
@@ -141,7 +146,9 @@ function DailyQuote() {
       className="relative rounded-2xl bg-white/60 dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-4 overflow-hidden"
     >
       {/* Decorative quote mark */}
-      <div className="absolute -top-2 -left-1 text-6xl text-sky-500/10 font-serif leading-none select-none">"</div>
+      <div className="absolute -top-2 -left-1 text-6xl text-sky-500/10 font-serif leading-none select-none">
+        "
+      </div>
 
       <div className="relative">
         <div className="flex items-center gap-2 mb-2">

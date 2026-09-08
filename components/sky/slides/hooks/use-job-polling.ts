@@ -36,20 +36,14 @@ export function useJobPolling() {
         // Skip network work while the tab is hidden/backgrounded.
         if (!isDocumentVisible()) return;
         try {
-          const statusRes = await fetch(
-            `/api/sky/slides/generate/status?jobId=${jobId}`,
-          );
+          const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${jobId}`);
           const statusData = await statusRes.json();
           if (statusData.success) {
             pollErrors = 0;
             const job = statusData.data || statusData.job;
             if (!job) return;
 
-            callbacks.onStageUpdate?.(
-              job.stage,
-              job.progress || 0,
-              job.message || '',
-            );
+            callbacks.onStageUpdate?.(job.stage, job.progress || 0, job.message || '');
 
             if (job.stage === 'done') {
               stopPolling();
@@ -72,9 +66,7 @@ export function useJobPolling() {
           pollErrors++;
           if (pollErrors >= MAX_POLL_ERRORS) {
             stopPolling();
-            callbacks.onError?.(
-              '状态查询失败，请检查网络或刷新页面后重试',
-            );
+            callbacks.onError?.('状态查询失败，请检查网络或刷新页面后重试');
           }
         }
       };

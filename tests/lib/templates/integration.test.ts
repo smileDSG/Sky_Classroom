@@ -1,11 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { loadTemplate } from '@/lib/templates/template-parser';
 import { selectTemplatePage } from '@/lib/templates/content-mapper';
-import { replacePlaceholders, extractPlaceholderValues } from '@/lib/templates/placeholder-replacer';
+import {
+  replacePlaceholders,
+  extractPlaceholderValues,
+} from '@/lib/templates/placeholder-replacer';
 import { VariableResolver } from '@/lib/templates/variable-resolver';
 
 describe('Template-driven rendering integration', () => {
-  const templateDir = 'C:\\\\Users\\\\11486\\\\Desktop\\\\Kimi_Agent_星穹课堂课件模板\\\\tech_dark_blue';
+  const templateDir =
+    'C:\\\\Users\\\\11486\\\\Desktop\\\\Kimi_Agent_星穹课堂课件模板\\\\tech_dark_blue';
 
   it('should load a template manifest and pages', () => {
     const { manifest, pages } = loadTemplate(templateDir);

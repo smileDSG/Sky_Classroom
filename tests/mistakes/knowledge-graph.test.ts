@@ -16,11 +16,7 @@ import {
   recommendLearningPath,
   getMasterySummary,
 } from '@/lib/knowledge-graph';
-import type {
-  MistakeRecord,
-  KnowledgeGraph,
-  LearningPath,
-} from '@/lib/mistakes/types';
+import type { MistakeRecord, KnowledgeGraph, LearningPath } from '@/lib/mistakes/types';
 import type { MistakeCause } from '@/lib/solve/types';
 
 // ── 测试辅助 ──────────────────────────────────────────────────────────
@@ -161,13 +157,10 @@ describe('buildKnowledgeGraph', () => {
   it('mastery < 50 的节点应出现在 weakPoints 中', () => {
     // 6 个错题，全部未复习 → mastery = 100 - 6*10 = 40 → 弱点
     const template = makeTestMistakes()[0];
-    const repeatedMistakes: MistakeRecord[] = Array.from(
-      { length: 6 },
-      (_, i) => ({
-        ...template,
-        id: `weak-${i}`,
-      }),
-    );
+    const repeatedMistakes: MistakeRecord[] = Array.from({ length: 6 }, (_, i) => ({
+      ...template,
+      id: `weak-${i}`,
+    }));
 
     const graph = buildKnowledgeGraph(repeatedMistakes);
     expect(graph.nodes).toHaveLength(1);
@@ -184,13 +177,10 @@ describe('buildKnowledgeGraph', () => {
   // ── 6. mastery 计算（底线 0）───────────────────────────────────
   it('10 个错题 → mastery = 0（100 - 10*10 = 0，不低于 0）', () => {
     const template = makeTestMistakes()[0];
-    const repeatedMistakes: MistakeRecord[] = Array.from(
-      { length: 10 },
-      (_, i) => ({
-        ...template,
-        id: `mastery-floor-${i}`,
-      }),
-    );
+    const repeatedMistakes: MistakeRecord[] = Array.from({ length: 10 }, (_, i) => ({
+      ...template,
+      id: `mastery-floor-${i}`,
+    }));
 
     const graph = buildKnowledgeGraph(repeatedMistakes);
     expect(graph.nodes[0].mastery).toBe(0);
@@ -198,13 +188,10 @@ describe('buildKnowledgeGraph', () => {
 
   it('超过 10 个错题时 mastery 仍为 0（不会降至负数）', () => {
     const template = makeTestMistakes()[0];
-    const repeatedMistakes: MistakeRecord[] = Array.from(
-      { length: 15 },
-      (_, i) => ({
-        ...template,
-        id: `mastery-neg-${i}`,
-      }),
-    );
+    const repeatedMistakes: MistakeRecord[] = Array.from({ length: 15 }, (_, i) => ({
+      ...template,
+      id: `mastery-neg-${i}`,
+    }));
 
     const graph = buildKnowledgeGraph(repeatedMistakes);
     expect(graph.nodes[0].mastery).toBe(0);
@@ -263,8 +250,8 @@ describe('getMasterySummary', () => {
 
     expect(summary.totalCount).toBe(2);
     expect(summary.overallMastery).toBe(80); // (90 + 70) / 2
-    expect(summary.masteredCount).toBe(1);   // 代数 >= 80
-    expect(summary.weakCount).toBe(0);        // 统计=70, not < 50
+    expect(summary.masteredCount).toBe(1); // 代数 >= 80
+    expect(summary.weakCount).toBe(0); // 统计=70, not < 50
   });
 
   it('所有节点均 mastered 时 masteredCount 等于 totalCount', () => {

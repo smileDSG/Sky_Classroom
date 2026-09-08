@@ -14,7 +14,8 @@ import { toast } from 'sonner';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 import { processAvatarUpload, isCustomAvatar } from '@/lib/utils/avatar-upload';
 
-export function ProfileForm() {const avatar = useUserProfileStore((s) => s.avatar);
+export function ProfileForm() {
+  const avatar = useUserProfileStore((s) => s.avatar);
   const nickname = useUserProfileStore((s) => s.nickname);
   const bio = useUserProfileStore((s) => s.bio);
   const setAvatar = useUserProfileStore((s) => s.setAvatar);
@@ -99,7 +100,10 @@ export function ProfileForm() {const avatar = useUserProfileStore((s) => s.avat
               </div>
             ) : (
               <button
-                onClick={() => { setNameDraft(nickname); setEditingName(true); }}
+                onClick={() => {
+                  setNameDraft(nickname);
+                  setEditingName(true);
+                }}
                 className="group/name text-lg font-semibold text-foreground hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
               >
                 {displayName}

@@ -54,17 +54,9 @@ export {
 // New Modular API
 // ═══════════════════════════════════════════════════════════════
 
-export {
-  PromptComposer,
-  getPromptComposer,
-  resetPromptComposer,
-} from './composability';
+export { PromptComposer, getPromptComposer, resetPromptComposer } from './composability';
 
-export {
-  VersionManager,
-  getVersionManager,
-  resetVersionManager,
-} from './version-manager';
+export { VersionManager, getVersionManager, resetVersionManager } from './version-manager';
 
 // ═══════════════════════════════════════════════════════════════
 // Prompt ID Constants (legacy — will be replaced by fragment IDs)

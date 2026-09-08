@@ -118,7 +118,8 @@ export async function seedMistakes(): Promise<{ added: number }> {
   const REAL_MISTAKES: MistakeRecord[] = [
     {
       id: `real-1-${now}`,
-      problem: '已知二次函数 y = ax² + bx + c 的图象经过点 (1, 0)、(-1, 4) 和 (2, 3)，求 a、b、c 的值。',
+      problem:
+        '已知二次函数 y = ax² + bx + c 的图象经过点 (1, 0)、(-1, 4) 和 (2, 3)，求 a、b、c 的值。',
       userAnswer: 'a=1, b=0, c=-1',
       correctAnswer: 'a=1, b=-2, c=1',
       cause: 'concept-unclear',
@@ -196,7 +197,8 @@ export async function seedMistakes(): Promise<{ added: number }> {
     },
     {
       id: `real-7-${now}`,
-      problem: '已知直线 l1: 3x + 4y - 5 = 0 与直线 l2: 6x + 8y + c = 0 平行，且两直线之间的距离为 2，求 c 的值。',
+      problem:
+        '已知直线 l1: 3x + 4y - 5 = 0 与直线 l2: 6x + 8y + c = 0 平行，且两直线之间的距离为 2，求 c 的值。',
       userAnswer: 'c = 5',
       correctAnswer: 'c = 15 或 c = -25',
       cause: 'misreading',

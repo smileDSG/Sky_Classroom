@@ -43,8 +43,7 @@ describe('presets — 设置预设', () => {
   // DEFAULT_PRESET — 默认预设
   // ================================================================
   it('默认预设：恢复到出厂值', async () => {
-    const { DEFAULT_PRESET, applyPreset, useSettingsStore } =
-      await getPresets();
+    const { DEFAULT_PRESET, applyPreset, useSettingsStore } = await getPresets();
 
     // 先打乱设置
     useSettingsStore.getState().setTTSMuted(true);
@@ -65,8 +64,7 @@ describe('presets — 设置预设', () => {
   // DEMO_PRESET — 演示模式
   // ================================================================
   it('演示预设：关 TTS/ASR，开侧边栏', async () => {
-    const { DEMO_PRESET, applyPreset, useSettingsStore } =
-      await getPresets();
+    const { DEMO_PRESET, applyPreset, useSettingsStore } = await getPresets();
 
     applyPreset(DEMO_PRESET);
 
@@ -84,8 +82,7 @@ describe('presets — 设置预设', () => {
   // COLLAB_PRESET — 协作模式
   // ================================================================
   it('协作预设：开聊天区、TTS 开启、自动代理', async () => {
-    const { COLLAB_PRESET, applyPreset, useSettingsStore } =
-      await getPresets();
+    const { COLLAB_PRESET, applyPreset, useSettingsStore } = await getPresets();
 
     applyPreset(COLLAB_PRESET);
 
@@ -103,8 +100,7 @@ describe('presets — 设置预设', () => {
   // 预设之间切换
   // ================================================================
   it('预设 A → 预设 B → 完全替换', async () => {
-    const { DEMO_PRESET, COLLAB_PRESET, applyPreset, useSettingsStore } =
-      await getPresets();
+    const { DEMO_PRESET, COLLAB_PRESET, applyPreset, useSettingsStore } = await getPresets();
 
     // 先应用演示
     applyPreset(DEMO_PRESET);

@@ -1,6 +1,9 @@
 import { loadTemplate } from '@/lib/templates/template-parser';
 import { selectTemplatePage } from '@/lib/templates/content-mapper';
-import { replacePlaceholders, extractPlaceholderValues } from '@/lib/templates/placeholder-replacer';
+import {
+  replacePlaceholders,
+  extractPlaceholderValues,
+} from '@/lib/templates/placeholder-replacer';
 import type { StructuredContent } from './classroom-content-agent';
 import type { SceneOutline } from '@/lib/types/generation';
 import type { TemplateSlideData } from '@/lib/templates/pptd-types';
@@ -8,7 +11,8 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('TemplateLayout');
 
-const TEMPLATE_DIR = process.env.TEMPLATE_DIR ?? 'C:\\\\Users\\\\11486\\\\Desktop\\\\Kimi_Agent_星穹课堂课件模板';
+const TEMPLATE_DIR =
+  process.env.TEMPLATE_DIR ?? 'C:\\\\Users\\\\11486\\\\Desktop\\\\Kimi_Agent_星穹课堂课件模板';
 
 interface TemplateMatcher {
   name: string;
@@ -26,19 +30,118 @@ const TEMPLATE_MATCHERS: TemplateMatcher[] = [
   },
   {
     name: 'warm_humanities',
-    keywords: ['历史', '文化', '人文', '艺术', '社会', '哲学', '心理', '考古', '博物馆', '朝代', '战争', '革命', '政治', '经济', '地理', '旅游', '电影', '文学', '音乐', '绘画', '戏剧', '舞蹈', '雕塑', '建筑', '宗教', '民俗', '语言', '传媒', '新闻'],
+    keywords: [
+      '历史',
+      '文化',
+      '人文',
+      '艺术',
+      '社会',
+      '哲学',
+      '心理',
+      '考古',
+      '博物馆',
+      '朝代',
+      '战争',
+      '革命',
+      '政治',
+      '经济',
+      '地理',
+      '旅游',
+      '电影',
+      '文学',
+      '音乐',
+      '绘画',
+      '戏剧',
+      '舞蹈',
+      '雕塑',
+      '建筑',
+      '宗教',
+      '民俗',
+      '语言',
+      '传媒',
+      '新闻',
+    ],
   },
   {
     name: 'chinese_classic',
-    keywords: ['古诗', '诗词', '古文', '文言文', '书法', '国学', '儒家', '道家', '论语', '孔子', '四书五经', '道德经', '老子', '庄子', '唐诗', '宋词', '元曲', '茶道', '古琴', '京剧', '国画'],
+    keywords: [
+      '古诗',
+      '诗词',
+      '古文',
+      '文言文',
+      '书法',
+      '国学',
+      '儒家',
+      '道家',
+      '论语',
+      '孔子',
+      '四书五经',
+      '道德经',
+      '老子',
+      '庄子',
+      '唐诗',
+      '宋词',
+      '元曲',
+      '茶道',
+      '古琴',
+      '京剧',
+      '国画',
+    ],
   },
   {
     name: 'business_blue_gray',
-    keywords: ['商业', '经济', '管理', '金融', '市场', '营销', '企业', '创业', '投资', '贸易', '供应链', '人力资源', '财务', '会计'],
+    keywords: [
+      '商业',
+      '经济',
+      '管理',
+      '金融',
+      '市场',
+      '营销',
+      '企业',
+      '创业',
+      '投资',
+      '贸易',
+      '供应链',
+      '人力资源',
+      '财务',
+      '会计',
+    ],
   },
   {
     name: 'tech_dark_blue',
-    keywords: ['科技', '技术', '编程', '计算机', '软件', '硬件', '人工智能', 'AI', '数据', '网络', '电子', '工程', '物理', '化学', '数学', '天文', '科学', '量子', '芯片', '算法', '信息', '机器', '代码', '开发', '互联网', '通信', '能源', '机械', '土木', '材料', '制造'],
+    keywords: [
+      '科技',
+      '技术',
+      '编程',
+      '计算机',
+      '软件',
+      '硬件',
+      '人工智能',
+      'AI',
+      '数据',
+      '网络',
+      '电子',
+      '工程',
+      '物理',
+      '化学',
+      '数学',
+      '天文',
+      '科学',
+      '量子',
+      '芯片',
+      '算法',
+      '信息',
+      '机器',
+      '代码',
+      '开发',
+      '互联网',
+      '通信',
+      '能源',
+      '机械',
+      '土木',
+      '材料',
+      '制造',
+    ],
   },
 ];
 
@@ -46,7 +149,10 @@ export function getAvailableTemplates(): string[] {
   return TEMPLATE_MATCHERS.map((m) => m.name);
 }
 
-function scoreTemplateAgainstText(matcher: TemplateMatcher, text: string): { score: number; matched: string[] } {
+function scoreTemplateAgainstText(
+  matcher: TemplateMatcher,
+  text: string,
+): { score: number; matched: string[] } {
   let score = 0;
   const matched: string[] = [];
   for (const kw of matcher.keywords) {
@@ -86,10 +192,15 @@ export function selectTemplateForCourse(outlines: SceneOutline[]): string {
 
   const scoreSummary = Object.entries(totalScores)
     .sort((a, b) => b[1].score - a[1].score)
-    .map(([name, { score, matched }]) => `${name}=${score}[${matched.slice(0, 5).join(',')}${matched.length > 5 ? '...' : ''}]`)
+    .map(
+      ([name, { score, matched }]) =>
+        `${name}=${score}[${matched.slice(0, 5).join(',')}${matched.length > 5 ? '...' : ''}]`,
+    )
     .join(' | ');
 
-  log.info(`[TemplateSelect] Course template → ${bestMatch} (score=${bestScore}). All scores: ${scoreSummary}`);
+  log.info(
+    `[TemplateSelect] Course template → ${bestMatch} (score=${bestScore}). All scores: ${scoreSummary}`,
+  );
 
   return bestMatch;
 }
@@ -98,10 +209,7 @@ export function selectTemplateForCourse(outlines: SceneOutline[]): string {
  * Select a template name based on the outline title.
  * Fallback for single-slide / incremental generation without a course context.
  */
-export function selectTemplateForOutline(
-  outlineTitle: string,
-  _themePaletteName?: string,
-): string {
+export function selectTemplateForOutline(outlineTitle: string, _themePaletteName?: string): string {
   const text = outlineTitle.toLowerCase();
 
   let bestMatch = 'tech_dark_blue';
@@ -122,7 +230,9 @@ export function selectTemplateForOutline(
     .map(([name, { score, matched }]) => `${name}=${score}[${matched.join(',')}]`)
     .join(' | ');
 
-  log.info(`[TemplateSelect] title="${outlineTitle}" → ${bestMatch} (score=${bestScore}). Details: ${scoreSummary}`);
+  log.info(
+    `[TemplateSelect] title="${outlineTitle}" → ${bestMatch} (score=${bestScore}). Details: ${scoreSummary}`,
+  );
 
   return bestMatch;
 }
@@ -136,10 +246,14 @@ export async function layoutContentWithTemplate(
   templateName: string = 'tech_dark_blue',
 ): Promise<TemplateSlideData> {
   const templateDir = `${TEMPLATE_DIR}\\${templateName}`;
-  log.info(`[TemplateLayout] Loading template dir: ${templateDir} for content.type=${content.type}`);
+  log.info(
+    `[TemplateLayout] Loading template dir: ${templateDir} for content.type=${content.type}`,
+  );
 
   const { manifest, pages } = loadTemplate(templateDir);
-  log.info(`[TemplateLayout] Loaded manifest="${manifest.title}" with ${Object.keys(pages).length} pages`);
+  log.info(
+    `[TemplateLayout] Loaded manifest="${manifest.title}" with ${Object.keys(pages).length} pages`,
+  );
 
   const { pageName, page } = selectTemplatePage(content, pages);
   log.info(`[TemplateLayout] Selected page: ${pageName} for content.type=${content.type}`);
@@ -149,7 +263,9 @@ export async function layoutContentWithTemplate(
   log.info(`[TemplateLayout] Extracted placeholders: [${valueKeys.join(', ')}]`);
 
   const resolvedPage = replacePlaceholders(page, values);
-  log.info(`[TemplateLayout] Resolved ${resolvedPage.elements.length} elements for ${templateName}/${pageName}`);
+  log.info(
+    `[TemplateLayout] Resolved ${resolvedPage.elements.length} elements for ${templateName}/${pageName}`,
+  );
 
   return {
     templateName,

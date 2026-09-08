@@ -4,8 +4,20 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowLeft, User, Mail, Shield, Camera, Loader2, Check, X,
-  Eye, EyeOff, Lock, Calendar, CheckCircle2, AlertCircle,
+  ArrowLeft,
+  User,
+  Mail,
+  Shield,
+  Camera,
+  Loader2,
+  Check,
+  X,
+  Eye,
+  EyeOff,
+  Lock,
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -172,8 +184,19 @@ function ProfileTab() {
             </button>
           </div>
           <div>
-            <input ref={fileRef} type="file" accept="image/*" className="sr-only" onChange={handleAvatarUpload} />
-            <Button variant="outline" size="sm" className="rounded-lg" onClick={() => fileRef.current?.click()}>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={handleAvatarUpload}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-lg"
+              onClick={() => fileRef.current?.click()}
+            >
               <Camera className="size-4 mr-1.5" />
               Upload Photo
             </Button>
@@ -194,10 +217,14 @@ function ProfileTab() {
                 {AVATAR_OPTIONS.map((url) => (
                   <button
                     key={url}
-                    onClick={() => { setAvatar(url); setShowAvatarPicker(false); }}
+                    onClick={() => {
+                      setAvatar(url);
+                      setShowAvatarPicker(false);
+                    }}
                     className={cn(
                       'size-10 rounded-full overflow-hidden transition-all cursor-pointer hover:scale-110',
-                      avatar === url && 'ring-2 ring-sky-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-800',
+                      avatar === url &&
+                        'ring-2 ring-sky-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-800',
                     )}
                   >
                     <img src={url} alt="" className="size-full" />
@@ -235,7 +262,11 @@ function ProfileTab() {
         </div>
         <div className="flex justify-end">
           <Button onClick={handleSave} disabled={saving} className="rounded-lg">
-            {saving ? <Loader2 className="size-4 mr-1.5 animate-spin" /> : <Check className="size-4 mr-1.5" />}
+            {saving ? (
+              <Loader2 className="size-4 mr-1.5 animate-spin" />
+            ) : (
+              <Check className="size-4 mr-1.5" />
+            )}
             Save Changes
           </Button>
         </div>
@@ -263,7 +294,11 @@ function AccountTab() {
           icon={user?.emailVerified ? CheckCircle2 : AlertCircle}
           label="Email Status"
           value={user?.emailVerified ? 'Verified' : 'Not verified'}
-          valueClassName={user?.emailVerified ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}
+          valueClassName={
+            user?.emailVerified
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-amber-600 dark:text-amber-400'
+          }
         />
         <InfoRow icon={Shield} label="Role" value={user?.role || 'user'} />
         <InfoRow
@@ -276,8 +311,16 @@ function AccountTab() {
   );
 }
 
-function InfoRow({ icon: Icon, label, value, valueClassName }: {
-  icon: typeof User; label: string; value: string; valueClassName?: string;
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+  valueClassName,
+}: {
+  icon: typeof User;
+  label: string;
+  value: string;
+  valueClassName?: string;
 }) {
   return (
     <div className="flex items-center gap-4 px-6 py-4">
@@ -358,7 +401,9 @@ function SecurityTab() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/40 backdrop-blur-sm p-6">
-        <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-4">Change Password</h3>
+        <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-4">
+          Change Password
+        </h3>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -430,7 +475,11 @@ function SecurityTab() {
                     key={i}
                     className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
                       i <= strength
-                        ? strength === 1 ? 'bg-red-500' : strength === 2 ? 'bg-yellow-500' : 'bg-green-500'
+                        ? strength === 1
+                          ? 'bg-red-500'
+                          : strength === 2
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
                         : 'bg-slate-200 dark:bg-slate-700'
                     }`}
                   />
@@ -454,14 +503,20 @@ function SecurityTab() {
                   passwordsMatch && 'border-green-400 dark:border-green-500',
                 )}
               />
-              {passwordsMatch && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-green-500" />}
+              {passwordsMatch && (
+                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-green-500" />
+              )}
             </div>
             {passwordsMismatch && <p className="text-xs text-red-500">Passwords do not match</p>}
           </div>
 
           <div className="flex justify-end pt-2">
             <Button type="submit" disabled={loading || passwordsMismatch} className="rounded-lg">
-              {loading ? <Loader2 className="size-4 mr-1.5 animate-spin" /> : <Shield className="size-4 mr-1.5" />}
+              {loading ? (
+                <Loader2 className="size-4 mr-1.5 animate-spin" />
+              ) : (
+                <Shield className="size-4 mr-1.5" />
+              )}
               Update Password
             </Button>
           </div>

@@ -36,10 +36,7 @@ export interface AvatarSpeechOptions {
 
 // ── Re-exports (backward compat) ─────────────────────────────────────
 
-export {
-  buildSlideScript,
-  buildFullScript,
-} from './speech-script';
+export { buildSlideScript, buildFullScript } from './speech-script';
 export type { SpeechSegment, SlideScript } from './speech-script';
 
 // ── Text extraction helpers (kept for backward compat, deprecated) ───

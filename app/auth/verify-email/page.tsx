@@ -81,20 +81,22 @@ function VerifyEmailContent() {
         transition={{ type: 'spring', duration: 0.5 }}
         className="flex flex-col items-center text-center"
       >
-        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-          displayStatus === 'success' ? 'bg-green-100 dark:bg-green-900/30' :
-          displayStatus === 'error' ? 'bg-red-100 dark:bg-red-900/30' :
-          'bg-sky-100 dark:bg-sky-900/30'
-        }`}>
+        <div
+          className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+            displayStatus === 'success'
+              ? 'bg-green-100 dark:bg-green-900/30'
+              : displayStatus === 'error'
+                ? 'bg-red-100 dark:bg-red-900/30'
+                : 'bg-sky-100 dark:bg-sky-900/30'
+          }`}
+        >
           {icons[displayStatus]}
         </div>
 
         <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
           {titles[displayStatus]}
         </h1>
-        <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-          {displayMessage}
-        </p>
+        <p className="text-sm text-muted-foreground mb-6 max-w-xs">{displayMessage}</p>
 
         {displayStatus === 'success' && (
           <p className="text-xs text-muted-foreground mb-4">

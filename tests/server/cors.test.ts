@@ -66,9 +66,7 @@ describe('buildCorsHeaders', () => {
 
   test('includes Access-Control-Allow-Methods joined by comma', () => {
     const headers = buildCorsHeaders(DEFAULT_CORS_CONFIG);
-    expect(headers['Access-Control-Allow-Methods']).toBe(
-      'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-    );
+    expect(headers['Access-Control-Allow-Methods']).toBe('GET, POST, PUT, PATCH, DELETE, OPTIONS');
   });
 
   test('includes Access-Control-Allow-Headers joined by comma', () => {
@@ -219,13 +217,20 @@ describe('DEFAULT_CORS_CONFIG', () => {
 
   test('includes all HTTP methods', () => {
     expect(DEFAULT_CORS_CONFIG.methods).toEqual([
-      'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS',
+      'GET',
+      'POST',
+      'PUT',
+      'PATCH',
+      'DELETE',
+      'OPTIONS',
     ]);
   });
 
   test('has standard allowed headers', () => {
     expect(DEFAULT_CORS_CONFIG.allowedHeaders).toEqual([
-      'Content-Type', 'Authorization', 'X-Requested-With',
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
     ]);
   });
 

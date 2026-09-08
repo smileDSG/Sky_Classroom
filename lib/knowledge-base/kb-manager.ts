@@ -8,7 +8,14 @@
 import 'server-only';
 import { createLogger } from '@/lib/logger';
 import { chunkDocument } from '@/lib/agents/rag/document-chunker';
-import type { KBType, KBChunk, KBWriteOptions, KBSearchOptions, KBSearchResult, KBStats } from './types';
+import type {
+  KBType,
+  KBChunk,
+  KBWriteOptions,
+  KBSearchOptions,
+  KBSearchResult,
+  KBStats,
+} from './types';
 
 let _dao: any = null;
 async function getDao() {
@@ -55,7 +62,9 @@ async function loadType(kbType: KBType): Promise<void> {
       indexChunks(kbType, chunks);
     }
     _loadedTypes.add(kbType);
-    log.info(`[KB:Manager] KB[${kbType}] loaded in ${Date.now() - t0}ms: ${(_index.get(kbType) || []).length} chunks`);
+    log.info(
+      `[KB:Manager] KB[${kbType}] loaded in ${Date.now() - t0}ms: ${(_index.get(kbType) || []).length} chunks`,
+    );
   } catch (err) {
     log.error(`[KB:Manager] Failed to load KB[${kbType}] after ${Date.now() - t0}ms:`, err);
     _loadedTypes.add(kbType); // don't retry endlessly
@@ -90,7 +99,9 @@ function computeTF(tokens: string[]): Map<string, number> {
 }
 
 function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): number {
-  let dot = 0, normA = 0, normB = 0;
+  let dot = 0,
+    normA = 0,
+    normB = 0;
   for (const [term, wA] of a) {
     const wB = b.get(term) || 0;
     dot += wA * wB;
@@ -138,15 +149,18 @@ function indexChunks(kbType: KBType, chunks: KBChunk[]): void {
 
 function addToIndex(kbType: KBType, chunks: KBChunk[]): void {
   const existing = _index.get(kbType) || [];
-  const allChunks = [...existing.map((c) => ({
-    ...c,
-    tokens: tokenize(c.content),
-    tf: computeTF(tokenize(c.content)),
-  })), ...chunks.map((c) => ({
-    ...c,
-    tokens: tokenize(c.content),
-    tf: computeTF(tokenize(c.content)),
-  }))];
+  const allChunks = [
+    ...existing.map((c) => ({
+      ...c,
+      tokens: tokenize(c.content),
+      tf: computeTF(tokenize(c.content)),
+    })),
+    ...chunks.map((c) => ({
+      ...c,
+      tokens: tokenize(c.content),
+      tf: computeTF(tokenize(c.content)),
+    })),
+  ];
 
   // Rebuild IDF
   const docCount = allChunks.length;
@@ -248,7 +262,9 @@ export async function search(opts: KBSearchOptions): Promise<KBSearchResult[]> {
     dao.incrementUsage(r.chunk.id).catch(() => {});
   }
 
-  log.info(`[KB:Manager] Search[${kbType}] found ${top.length}/${results.length} results in ${Date.now() - t0}ms (chunks=${chunks.length})`);
+  log.info(
+    `[KB:Manager] Search[${kbType}] found ${top.length}/${results.length} results in ${Date.now() - t0}ms (chunks=${chunks.length})`,
+  );
   return top;
 }
 
@@ -276,7 +292,10 @@ export async function removeDocument(docId: string): Promise<void> {
   await dao.deleteDocument(docId);
   // Remove from in-memory index
   for (const [kbType, chunks] of _index) {
-    _index.set(kbType, chunks.filter((c) => c.docId !== docId));
+    _index.set(
+      kbType,
+      chunks.filter((c) => c.docId !== docId),
+    );
   }
 }
 

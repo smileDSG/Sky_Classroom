@@ -67,15 +67,20 @@ export async function POST(req: NextRequest) {
     }
     if (!availableAvatars || availableAvatars.length === 0) {
       return apiError(
-        'MISSING_REQUIRED_FIELD', 400, 'availableAvatars is required and must not be empty',
+        'MISSING_REQUIRED_FIELD',
+        400,
+        'availableAvatars is required and must not be empty',
       );
     }
 
     const quota = await requireQuota('llmCalls');
     if ('error' in quota) return quota.error;
 
-    const { model: languageModel, modelString: _modelString, thinkingConfig } =
-      await resolveModelFromRequest(req, body);
+    const {
+      model: languageModel,
+      modelString: _modelString,
+      thinkingConfig,
+    } = await resolveModelFromRequest(req, body);
     modelString = _modelString;
 
     // ── Build course info for combination rules ──
@@ -99,11 +104,17 @@ export async function POST(req: NextRequest) {
         ? avatarDescriptions.map((a) => ({ path: a.path, description: a.desc }))
         : availableAvatars;
     const voiceList = availableVoices?.length
-      ? availableVoices.map((v) => ({ id: `${v.providerId}::${v.voiceId}`, name: v.voiceName, language: v.voiceLanguage || 'unknown' }))
+      ? availableVoices.map((v) => ({
+          id: `${v.providerId}::${v.voiceId}`,
+          name: v.voiceName,
+          language: v.voiceLanguage || 'unknown',
+        }))
       : [];
 
     const sceneSummary = sceneOutlines?.length
-      ? sceneOutlines.map((s, i) => `${i + 1}. ${s.title}${s.description ? ` — ${s.description}` : ''}`).join('\n')
+      ? sceneOutlines
+          .map((s, i) => `${i + 1}. ${s.title}${s.description ? ` — ${s.description}` : ''}`)
+          .join('\n')
       : '';
 
     // ── Build prompt from template ──
@@ -144,8 +155,13 @@ export async function POST(req: NextRequest) {
     const rawText = stripCodeFences(rawResult);
     let parsed: {
       agents: Array<{
-        name: string; role: string; persona: string;
-        avatar: string; color: string; priority: number; voice?: string;
+        name: string;
+        role: string;
+        persona: string;
+        avatar: string;
+        color: string;
+        priority: number;
+        voice?: string;
       }>;
     };
 
@@ -157,12 +173,20 @@ export async function POST(req: NextRequest) {
     }
 
     if (!parsed.agents || !Array.isArray(parsed.agents) || parsed.agents.length < 2) {
-      return apiError('GENERATION_FAILED', 500, `Expected at least 2 agents but got ${parsed.agents?.length ?? 0}`);
+      return apiError(
+        'GENERATION_FAILED',
+        500,
+        `Expected at least 2 agents but got ${parsed.agents?.length ?? 0}`,
+      );
     }
 
     const teacherCount = parsed.agents.filter((a) => a.role === 'teacher').length;
     if (teacherCount !== 1) {
-      return apiError('GENERATION_FAILED', 500, `Expected exactly 1 teacher but got ${teacherCount}`);
+      return apiError(
+        'GENERATION_FAILED',
+        500,
+        `Expected exactly 1 teacher but got ${teacherCount}`,
+      );
     }
 
     // ── Create agents via factory ──
@@ -181,7 +205,8 @@ export async function POST(req: NextRequest) {
           persona: agent.persona,
           avatar: agent.avatar || availableAvatars[index % availableAvatars.length],
           color: agent.color || AGENT_COLOR_PALETTE[index % AGENT_COLOR_PALETTE.length],
-          priority: agent.priority ?? (agent.role === 'teacher' ? 10 : agent.role === 'assistant' ? 7 : 5),
+          priority:
+            agent.priority ?? (agent.role === 'teacher' ? 10 : agent.role === 'assistant' ? 7 : 5),
           voiceConfig,
         },
         availableAvatars[index % availableAvatars.length],
@@ -194,7 +219,8 @@ export async function POST(req: NextRequest) {
     return apiSuccess({ agents });
   } catch (error) {
     log.error(
-      `Agent profiles generation failed [stage="${stageName ?? 'unknown'}", model=${modelString ?? 'unknown'}]:`, error,
+      `Agent profiles generation failed [stage="${stageName ?? 'unknown'}", model=${modelString ?? 'unknown'}]:`,
+      error,
     );
     return apiError('INTERNAL_ERROR', 500, error instanceof Error ? error.message : String(error));
   }
