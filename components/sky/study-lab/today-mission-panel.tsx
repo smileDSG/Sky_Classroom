@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, CalendarClock, RefreshCw, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-strip';
 import type { StudyLabViewModel } from '@/lib/sky/study-lab-data';
 import { PanelShell } from './panel-shell';
 
@@ -106,6 +107,8 @@ export function TodayMissionPanel({
         </Button>
       }
     >
+      <MistakeReviewStrip className="mb-4 shadow-none" />
+
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-200/20 dark:bg-emerald-300/10">
         <div className="flex items-center justify-between gap-3">
           <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-200/20 dark:bg-white/[0.08] dark:text-emerald-50">

@@ -1,71 +1,7 @@
 'use client';
 
-import { motion } from 'motion/react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-
-// ── Decorative elements ──────────────────────────────────────────
-
-function FloatingCloud({
-  delay = 0,
-  duration = 25,
-  y = 0,
-  scale = 1,
-  opacity = 0.4,
-}: {
-  delay?: number;
-  duration?: number;
-  y?: number;
-  scale?: number;
-  opacity?: number;
-}) {
-  return (
-    <motion.div
-      className="absolute pointer-events-none"
-      initial={{ x: '-100%', y: `${y}%` }}
-      animate={{ x: 'calc(100vw + 100%)' }}
-      transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
-      style={{ scale, opacity }}
-    >
-      <svg
-        viewBox="0 0 200 100"
-        className="w-24 h-12 md:w-36 md:h-18 text-white/40 dark:text-white/15"
-        fill="currentColor"
-      >
-        <ellipse cx="50" cy="60" rx="35" ry="25" />
-        <ellipse cx="90" cy="45" rx="45" ry="35" />
-        <ellipse cx="140" cy="55" rx="40" ry="28" />
-      </svg>
-    </motion.div>
-  );
-}
-
-function TwinklingStar({
-  x,
-  y,
-  delay = 0,
-  size = 2,
-}: {
-  x: string;
-  y: string;
-  delay?: number;
-  size?: number;
-}) {
-  return (
-    <motion.div
-      className="absolute rounded-full bg-white dark:bg-sky-200 pointer-events-none"
-      style={{
-        left: x,
-        top: y,
-        width: size,
-        height: size,
-        boxShadow: '0 0 6px 2px rgba(255,255,255,0.4)',
-      }}
-      animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8] }}
-      transition={{ duration: 3, delay, repeat: Infinity, ease: 'easeInOut' }}
-    />
-  );
-}
 
 // ── Auth Layout ──────────────────────────────────────────────────
 
@@ -108,33 +44,12 @@ export function AuthLayout({
         }}
       />
 
-      {/* ── Floating clouds (light mode) ── */}
-      <div className="absolute inset-0 dark:hidden pointer-events-none">
-        <FloatingCloud delay={0} duration={35} y={10} scale={0.7} opacity={0.35} />
-        <FloatingCloud delay={8} duration={45} y={30} scale={1} opacity={0.3} />
-        <FloatingCloud delay={18} duration={40} y={60} scale={0.5} opacity={0.25} />
-      </div>
-
-      {/* ── Twinkling stars (dark mode) ── */}
-      <div className="absolute inset-0 hidden dark:block pointer-events-none">
-        <TwinklingStar x="10%" y="15%" delay={0} size={2} />
-        <TwinklingStar x="30%" y="8%" delay={0.5} size={3} />
-        <TwinklingStar x="50%" y="22%" delay={1} size={2} />
-        <TwinklingStar x="75%" y="12%" delay={1.5} size={2.5} />
-        <TwinklingStar x="90%" y="20%" delay={2} size={2} />
-        <TwinklingStar x="15%" y="35%" delay={3} size={1.5} />
-        <TwinklingStar x="85%" y="30%" delay={0.8} size={2} />
-      </div>
-
       {/* ── Bottom gradient fade ── */}
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/60 dark:from-slate-950/60 to-transparent pointer-events-none" />
 
       {/* ── Main card ── */}
-      <motion.div
+      <div
         data-testid="auth-layout-viewport"
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
           'relative z-10 flex min-h-dvh w-full flex-col overflow-y-auto',
           maxWidth,
@@ -153,12 +68,7 @@ export function AuthLayout({
         )}
       >
         {/* Logo header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
-          className="mb-7 flex flex-col items-center"
-        >
+        <div className="mb-7 flex flex-col items-center">
           <Link
             href="/"
             className="group flex min-h-14 items-center gap-3 rounded-2xl border border-white/80 bg-white/70 px-3.5 py-2 shadow-lg shadow-sky-200/45 backdrop-blur-md transition-transform active:scale-[0.99] dark:border-slate-700/70 dark:bg-slate-900/72 dark:shadow-slate-950/40"
@@ -172,17 +82,11 @@ export function AuthLayout({
               天空课堂
             </span>
           </Link>
-        </motion.div>
+        </div>
 
         {/* Content */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25, duration: 0.4 }}
-        >
-          {children}
-        </motion.div>
-      </motion.div>
+        <div>{children}</div>
+      </div>
     </div>
   );
 }

@@ -32,9 +32,27 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { createLogger } from '@/lib/logger';
+import { useSettingsStore } from '@/lib/store/settings';
 import type { ChatStatus, FileUIPart } from 'ai';
 
 const log = createLogger('PromptInput');
+
+// Web Speech API expects BCP-47 tags; map bare ISO 639-1 codes to a regional default.
+function normalizeBrowserASRLanguage(lang?: string): string {
+  if (!lang || lang === 'auto') return 'zh-CN';
+  switch (lang) {
+    case 'zh':
+      return 'zh-CN';
+    case 'en':
+      return 'en-US';
+    case 'ja':
+      return 'ja-JP';
+    case 'ko':
+      return 'ko-KR';
+    default:
+      return lang;
+  }
+}
 import {
   CornerDownLeftIcon,
   ImageIcon,
@@ -1010,7 +1028,7 @@ type SpeechRecognitionResult = {
 };
 
 type SpeechRecognitionAlternative = {
-  script: string;
+  transcript: string;
   confidence: number;
 };
 
@@ -1052,7 +1070,10 @@ export const PromptInputSpeechButton = ({
 
       speechRecognition.continuous = true;
       speechRecognition.interimResults = true;
-      speechRecognition.lang = 'en-US';
+
+      // Follow the user's configured ASR language (defaults to zh-CN for Chinese)
+      const asrLanguage = normalizeBrowserASRLanguage(useSettingsStore.getState().asrLanguage);
+      speechRecognition.lang = asrLanguage || 'zh-CN';
 
       speechRecognition.onstart = () => {
         setIsListening(true);
@@ -1068,7 +1089,7 @@ export const PromptInputSpeechButton = ({
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           if (result.isFinal) {
-            finalScript += result[0]?.script ?? '';
+            finalScript += result[0]?.transcript ?? '';
           }
         }
 

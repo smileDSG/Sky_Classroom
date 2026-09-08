@@ -297,6 +297,50 @@ function statusText(status: StageStatus): string {
   return '等待';
 }
 
+interface ResourceJobState {
+  jobId: string;
+  status: 'initializing' | 'running' | 'succeeded' | 'failed';
+  step: string;
+  progress: number;
+  message: string;
+  result?: GenerationResult | null;
+  error?: string;
+  done: boolean;
+}
+
+function deriveStages(job: Pick<ResourceJobState, 'step' | 'progress' | 'done'>): StageItem[] {
+  if (job.done || job.progress >= 100) {
+    return INITIAL_STAGES.map((stage) => ({ ...stage, status: 'completed' as const }));
+  }
+  const currentIndex = INITIAL_STAGES.findIndex((stage) => stage.key === job.step);
+  if (currentIndex >= 0) {
+    return INITIAL_STAGES.map((stage, index) => ({
+      ...stage,
+      status: index < currentIndex ? 'completed' : index === currentIndex ? 'running' : 'pending',
+    }));
+  }
+  return INITIAL_STAGES.map((stage) => ({
+    ...stage,
+    status: stage.progress <= job.progress ? 'completed' : 'pending',
+  }));
+}
+
+async function fetchResourceJob(jobId: string): Promise<ResourceJobState> {
+  const response = await fetch(`/api/sky/resource-generation/jobs/${encodeURIComponent(jobId)}`, {
+    cache: 'no-store',
+    credentials: 'include',
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | (ResourceJobState & {
+        success?: boolean;
+      })
+    | null;
+  if (!response.ok || !payload?.success) {
+    throw new Error(payload?.error || '读取生成任务失败');
+  }
+  return payload as ResourceJobState;
+}
+
 async function fetchJson<T>(href: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set('Content-Type', 'application/json');
@@ -452,6 +496,7 @@ export function CourseStudioPage() {
   const queryTopic = searchParams.get('topic');
   const queryGoal = searchParams.get('goal');
   const queryTypes = searchParams.get('types');
+  const resourceJobId = searchParams.get('resourceJobId');
   const [major, setMajor] = useState('');
   const [goal, setGoal] = useState('');
   const [weakPoints, setWeakPoints] = useState('');
@@ -479,6 +524,7 @@ export function CourseStudioPage() {
   const [nextAction, setNextAction] = useState<'idle' | 'classroom' | 'plan'>('idle');
   const [nextActionError, setNextActionError] = useState<string | null>(null);
   const [quickMode, setQuickMode] = useState(false);
+  const [runningMessage, setRunningMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (queryTopic) setCourseFocus(queryTopic);
@@ -490,6 +536,61 @@ export function CourseStudioPage() {
       if (requestedTypes.length > 0) setSelectedTypes(requestedTypes);
     }
   }, [queryGoal, queryTopic, queryTypes]);
+
+  // If the page was reached via ?resourceJobId=..., poll the background job
+  // and render the result once it completes. The task keeps running server-side
+  // even if this tab is closed; reopening the URL surfaces it again.
+  useEffect(() => {
+    if (!resourceJobId) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    setLoading(true);
+    setError(null);
+
+    const poll = async () => {
+      let job: ResourceJobState;
+      try {
+        job = await fetchResourceJob(resourceJobId);
+      } catch {
+        // transient error; keep polling
+        return;
+      }
+      if (cancelled) return;
+
+      if (job.done || job.status === 'succeeded') {
+        if (job.status === 'succeeded' && job.result) {
+          const generation = job.result as GenerationResult;
+          setResult(generation);
+          setProfile(generation.studentProfile);
+          setSafety(generation.safety);
+          setHits(generation.courseHits);
+          setStages(INITIAL_STAGES.map((stage) => ({ ...stage, status: 'completed' })));
+          setRunningMessage(null);
+        } else if (job.status === 'failed') {
+          setError(job.error || '生成失败，请稍后再试');
+          setRunningMessage(null);
+        }
+        setLoading(false);
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+        return;
+      }
+
+      setStages(deriveStages(job));
+      setRunningMessage(job.message || null);
+    };
+
+    void poll();
+    timer = setInterval(poll, 2000);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+    };
+  }, [resourceJobId]);
 
   const applyPersonalizationDraft = useCallback(
     (context: PersonalizationContext, mode: 'fill-empty' | 'replace' = 'replace') => {
@@ -575,10 +676,6 @@ export function CourseStudioPage() {
   }, [contextLoading, personalization]);
   const systemProfileReady = hasSystemProfile(personalization);
 
-  const updateStage = useCallback((key: string, status: StageStatus) => {
-    setStages((items) => items.map((item) => (item.key === key ? { ...item, status } : item)));
-  }, []);
-
   const toggleType = (type: string) => {
     setSelectedTypes((current) => {
       if (current.includes(type)) {
@@ -624,67 +721,34 @@ export function CourseStudioPage() {
 
     setLoading(true);
     setError(null);
-    setResult(null);
-    setProfile(null);
-    setSafety(null);
-    setHits([]);
-    setActiveType('all');
-    setStages(INITIAL_STAGES);
 
     try {
-      updateStage('safety', 'running');
-      const safetyResult = await fetchJson<SafetyResult>('/api/sky/content-safety/check', {
+      const response = await fetch('/api/sky/resource-generation/jobs', {
         method: 'POST',
-        body: JSON.stringify({ input }),
-      });
-      setSafety(safetyResult);
-      updateStage('safety', 'completed');
-
-      if (!safetyResult.passed && safetyResult.action === 'reject') {
-        throw new Error(safetyResult.message);
-      }
-
-      updateStage('profile', 'running');
-      const profilePayload = await fetchJson<{ profile: StudentProfile }>(
-        '/api/sky/student/profile/conversation',
-        {
-          method: 'POST',
-          body: JSON.stringify({ input, userId: COURSE_STUDIO_USER_ID }),
-        },
-      );
-      setProfile(profilePayload.profile);
-      updateStage('profile', 'completed');
-
-      updateStage('search', 'running');
-      const query =
-        splitList(weakPoints).join(' ') ||
-        profilePayload.profile.dimensions.knowledgeBase.weakPoints.join(' ') ||
-        courseFocus ||
-        '人工智能导论';
-      const searchPayload = await fetchJson<{ results: CourseHit[] }>(
-        `/api/sky/course-knowledge/search?q=${encodeURIComponent(query)}&limit=6`,
-      );
-      setHits(searchPayload.results);
-      updateStage('search', 'completed');
-
-      updateStage('generate', 'running');
-      const generation = await fetchJson<GenerationResult>('/api/sky/resource-generation/jobs', {
-        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ input, userId: COURSE_STUDIO_USER_ID }),
       });
-      setResult(generation);
-      setProfile(generation.studentProfile);
-      setSafety(generation.safety);
-      setHits(generation.courseHits);
-      updateStage('generate', 'completed');
-      updateStage('review', 'completed');
-      updateStage('path', 'completed');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '生成失败，请稍后再试');
-      setStages((items) =>
-        items.map((stage) => (stage.status === 'running' ? { ...stage, status: 'failed' } : stage)),
+      const payload = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        jobId?: string;
+        error?: string;
+      } | null;
+      if (!response.ok || !payload?.success || !payload.jobId) {
+        throw new Error(payload?.error || '生成任务提交失败');
+      }
+
+      // Hand off to the background job; this page will re-poll ?resourceJobId.
+      setResult(null);
+      setProfile(null);
+      setSafety(null);
+      setHits([]);
+      setStages(INITIAL_STAGES);
+      router.push(
+        `/sky/cloud-mind/course-studio?resourceJobId=${encodeURIComponent(payload.jobId)}`,
       );
-    } finally {
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '生成任务提交失败，请稍后再试');
       setLoading(false);
     }
   };
@@ -978,6 +1042,11 @@ export function CourseStudioPage() {
               </Badge>
             </div>
             <Progress value={progress} className="mt-3 h-2" />
+            {loading && runningMessage && (
+              <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                {runningMessage}
+              </p>
+            )}
             {flowPanelOpen && <StageCards stages={stages} />}
           </section>
         )}

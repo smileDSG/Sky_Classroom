@@ -19,7 +19,6 @@ import {
   Shield,
   CloudSun,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Button } from '@/components/ui/button';
@@ -44,12 +43,7 @@ function CelestialScene() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center gap-8 px-8 md:px-12 w-full h-full min-h-[50vh] lg:min-h-dvh py-10">
         {/* Brand */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="flex flex-col items-center gap-4 text-center"
-        >
+        <div className="flex flex-col items-center gap-4 text-center">
           <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-xl shadow-black/30 ring-1 ring-white/25">
             <img src="/logo-icon.svg" alt="智眸无界" className="w-full h-full object-cover" />
           </div>
@@ -59,25 +53,15 @@ function CelestialScene() {
             </h1>
             <p className="mt-1.5 text-lg md:text-xl font-semibold text-sky-200/90">天空课堂</p>
           </div>
-        </motion.div>
+        </div>
 
         {/* Tagline */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="text-sm md:text-base text-white/85 text-center leading-relaxed max-w-sm"
-        >
+        <p className="text-sm md:text-base text-white/85 text-center leading-relaxed max-w-sm">
           AI 驱动的互动课堂——上传 PDF，即刻生成沉浸式多智能体学习体验
-        </motion.p>
+        </p>
 
         {/* Feature highlights */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45, duration: 0.5 }}
-          className="grid grid-cols-2 gap-3 w-full max-w-sm"
-        >
+        <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
           {[
             {
               icon: Brain,
@@ -122,7 +106,7 @@ function CelestialScene() {
               </div>
             </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </div>
   );
@@ -189,27 +173,18 @@ function LoginForm({ onToggle }: { onToggle: () => void }) {
   return (
     <div className="w-full">
       <div className="text-center mb-6">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-300/30 mx-auto mb-3"
-        >
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-300/30 mx-auto mb-3">
           <CloudSun className="w-6 h-6 text-white" />
-        </motion.div>
+        </div>
         <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">欢迎回来</h2>
         <p className="text-sm text-muted-foreground mt-1">登录继续你的学习之旅</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/40 rounded-lg p-3"
-          >
+          <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/40 rounded-lg p-3">
             {error}
-          </motion.div>
+          </div>
         )}
 
         <div className="space-y-1.5">
@@ -283,12 +258,7 @@ function LoginForm({ onToggle }: { onToggle: () => void }) {
 
       {/* Demo account hint */}
       {demoAccountEnabled && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-4 rounded-xl border border-sky-200/60 bg-sky-50/80 p-3 dark:border-sky-800/30 dark:bg-sky-950/30"
-        >
+        <div className="mt-4 rounded-xl border border-sky-200/60 bg-sky-50/80 p-3 dark:border-sky-800/30 dark:bg-sky-950/30">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="font-medium text-slate-600 dark:text-slate-300">体验账号</span>
             <div className="flex min-w-0 items-center gap-2 text-sky-600 dark:text-sky-400">
@@ -303,7 +273,7 @@ function LoginForm({ onToggle }: { onToggle: () => void }) {
               </span>
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
 
       <p className="text-sm text-center text-muted-foreground mt-6">
@@ -376,27 +346,18 @@ function RegisterForm({ onToggle }: { onToggle: () => void }) {
   return (
     <div className="w-full">
       <div className="text-center mb-6">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-300/30 mx-auto mb-3"
-        >
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-300/30 mx-auto mb-3">
           <GraduationCap className="w-6 h-6 text-white" />
-        </motion.div>
+        </div>
         <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">创建账号</h2>
         <p className="text-sm text-muted-foreground mt-1">加入天空课堂，开启智能学习之旅</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/40 rounded-lg p-3"
-          >
+          <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/40 rounded-lg p-3">
             {error}
-          </motion.div>
+          </div>
         )}
 
         <div className="space-y-1.5">
@@ -597,21 +558,11 @@ function AuthPanel() {
 
       {/* Form */}
       <div className="relative overflow-hidden rounded-2xl border border-white/60 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 shadow-xl shadow-sky-200/20 dark:shadow-slate-950/40">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={mode}
-            initial={{ opacity: 0, x: mode === 'login' ? -20 : 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: mode === 'login' ? 20 : -20 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-          >
-            {mode === 'login' ? (
-              <LoginForm onToggle={handleToggle} />
-            ) : (
-              <RegisterForm onToggle={handleToggle} />
-            )}
-          </motion.div>
-        </AnimatePresence>
+        {mode === 'login' ? (
+          <LoginForm onToggle={handleToggle} />
+        ) : (
+          <RegisterForm onToggle={handleToggle} />
+        )}
       </div>
     </div>
   );
@@ -685,63 +636,6 @@ export function SkyLandingPage() {
         }}
       />
 
-      {/* Floating particles (light mode - clouds) */}
-      <div className="absolute inset-0 dark:hidden pointer-events-none overflow-hidden">
-        {[
-          { delay: 0, dur: 35, y: 12, scale: 0.6, opacity: 0.25 },
-          { delay: 10, dur: 45, y: 35, scale: 0.8, opacity: 0.2 },
-          { delay: 20, dur: 40, y: 65, scale: 0.5, opacity: 0.15 },
-          { delay: 5, dur: 50, y: 80, scale: 0.7, opacity: 0.18 },
-        ].map((c, i) => (
-          <motion.div
-            key={i}
-            className="absolute"
-            initial={{ x: '-100%', y: `${c.y}%` }}
-            animate={{ x: 'calc(100vw + 100%)' }}
-            transition={{ duration: c.dur, delay: c.delay, repeat: Infinity, ease: 'linear' }}
-            style={{ scale: c.scale, opacity: c.opacity }}
-          >
-            <svg
-              viewBox="0 0 200 100"
-              className="w-20 h-10 md:w-28 md:h-14 text-white/50 dark:text-white/10"
-              fill="currentColor"
-            >
-              <ellipse cx="50" cy="60" rx="35" ry="25" />
-              <ellipse cx="90" cy="45" rx="45" ry="35" />
-              <ellipse cx="140" cy="55" rx="40" ry="28" />
-            </svg>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Twinkling stars (dark mode) */}
-      <div className="absolute inset-0 hidden dark:block pointer-events-none">
-        {[
-          { x: '8%', y: '12%', delay: 0, size: 2 },
-          { x: '25%', y: '6%', delay: 0.5, size: 2.5 },
-          { x: '45%', y: '18%', delay: 1, size: 1.5 },
-          { x: '70%', y: '10%', delay: 1.5, size: 2 },
-          { x: '88%', y: '16%', delay: 2, size: 2 },
-          { x: '12%', y: '30%', delay: 3, size: 1.5 },
-          { x: '80%', y: '28%', delay: 0.8, size: 2 },
-          { x: '55%', y: '8%', delay: 2.5, size: 1.5 },
-        ].map((s, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full bg-white pointer-events-none"
-            style={{
-              left: s.x,
-              top: s.y,
-              width: s.size,
-              height: s.size,
-              boxShadow: '0 0 6px 2px rgba(255,255,255,0.3)',
-            }}
-            animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8] }}
-            transition={{ duration: 3, delay: s.delay, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        ))}
-      </div>
-
       {/* Main content */}
       <div className="relative z-10 min-h-dvh flex flex-col lg:flex-row">
         {/* Left side: Brand & Scene */}
@@ -756,14 +650,9 @@ export function SkyLandingPage() {
 
         {/* Right side: Auth Panel */}
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12 xl:p-16 pb-12 lg:pb-0">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="w-full max-w-[460px]"
-          >
+          <div className="w-full max-w-[460px]">
             <AuthPanel />
-          </motion.div>
+          </div>
         </div>
       </div>
 

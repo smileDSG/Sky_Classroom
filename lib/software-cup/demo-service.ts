@@ -134,10 +134,17 @@ export interface SoftwareCupGenerationResult {
   p2Enhancements: P2Enhancements;
 }
 
+export interface SoftwareCupProgress {
+  step: 'safety' | 'profile' | 'search' | 'generate' | 'review' | 'path';
+  progress: number;
+  message: string;
+}
+
 export interface RunSoftwareCupGenerationOptions {
   userId?: string;
   profileSignals?: ProfileSignal[];
   enableLlm?: boolean;
+  onProgress?: (progress: SoftwareCupProgress) => void | Promise<void>;
 }
 
 interface LlmResourcePatch {
@@ -1115,6 +1122,11 @@ export async function runSoftwareCupGeneration(
   options: RunSoftwareCupGenerationOptions = {},
 ): Promise<SoftwareCupGenerationResult> {
   const text = input.trim() || (await getDefaultSoftwareCupInput());
+  const emit = (progress: SoftwareCupProgress) => {
+    void Promise.resolve(options.onProgress?.(progress)).catch(() => {});
+  };
+  emit({ step: 'safety', progress: 8, message: '正在进行安全检查与风控校验' });
+
   const [baseProfile, demo, profileSignals] = await Promise.all([
     buildSoftwareCupProfile(text),
     readJson<{
@@ -1129,10 +1141,13 @@ export async function runSoftwareCupGeneration(
   ]);
   const conversationProfile = buildConversationProfileFromSignals(profileSignals);
   const profile = mergeConversationProfile(baseProfile, conversationProfile);
+  emit({ step: 'profile', progress: 20, message: '已了解你的学习情况' });
 
   const query = unique([...profile.dimensions.knowledgeBase.weakPoints, '人工智能导论']).join(' ');
   const courseHits = await searchAiIntroCourse(query, 6);
+  emit({ step: 'search', progress: 38, message: `已检索到 ${courseHits.length} 条课程资料` });
   const safety = checkSoftwareCupContentSafety(text);
+  emit({ step: 'generate', progress: 42, message: '正在为你生成学习资料' });
   const fallbackResources = await hydrateResourceArtifacts(
     personalizeResources(demo.resources, profile, courseHits),
     profile,
@@ -1153,6 +1168,7 @@ export async function runSoftwareCupGeneration(
         reason: 'LLM generation disabled for this call.',
       };
   const resources = llmGeneration.resources;
+  emit({ step: 'generate', progress: 74, message: '正在整理并润色学习资料' });
   const qualityReview = reviewGeneratedResources({ resources, profile });
   const reviewedResources = qualityReview.resources;
   const review = await verifySoftwareCupAcademicContent({
@@ -1162,6 +1178,7 @@ export async function runSoftwareCupGeneration(
       .join('\n'),
   });
   const learningPath = buildPersonalizedLearningPath(profile, reviewedResources);
+  emit({ step: 'review', progress: 88, message: '内容检查与来源核对完成' });
   const reviewConfidenceValues = [
     demo.reviewResult.confidence,
     review.confidence,
@@ -1173,6 +1190,8 @@ export async function runSoftwareCupGeneration(
       reviewConfidenceValues.reduce((sum, value) => sum + value, 0) / reviewConfidenceValues.length
     ).toFixed(2),
   );
+
+  emit({ step: 'path', progress: 96, message: '正在安排后续学习顺序' });
 
   return {
     demoId: demo.demoId,
