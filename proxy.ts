@@ -34,7 +34,7 @@ const STATIC_PREFIXES = [
   '/logo-icon.svg',
   '/logo-horizontal.png',
   '/logo-app-icon.png',
-  '/sky-observatory.png',
+  '/sky-observatory.jpg',
   '/temp/',
 ];
 
@@ -106,6 +106,6 @@ function redirectToLogin(request: NextRequest, pathname: string): NextResponse {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png|logo-app-icon\\.png|sky-observatory\\.png).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png|logo-app-icon\\.png|sky-observatory\\.jpg).*)',
   ],
 };

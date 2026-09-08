@@ -26,21 +26,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
-// ── Left Brand Panel (full-bleed observatory image) ─────────────
+// ── Left Brand Panel ─────────────────────────────────────────────
 
 function CelestialScene() {
   return (
-    <div className="relative w-full h-full overflow-hidden">
-      <img
-        src="/sky-observatory.png"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-      {/* Readability overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10" />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
-
-      {/* Content */}
+    <div className="relative w-full h-full">
       <div className="relative z-10 flex flex-col items-center justify-center gap-8 px-8 md:px-12 w-full h-full min-h-[50vh] lg:min-h-dvh py-10">
         {/* Brand */}
         <div className="flex flex-col items-center gap-4 text-center">
@@ -598,54 +588,21 @@ export function SkyLandingPage() {
   }
 
   return (
-    <div className="relative min-h-dvh w-full overflow-hidden bg-sky-50 dark:bg-slate-950">
-      {/* Background gradient */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-sky-100 via-sky-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
-        {/* Light mode ambient */}
-        <div
-          className="absolute inset-0 opacity-60 dark:opacity-0 transition-opacity duration-700"
-          style={{
-            background: `
-              radial-gradient(ellipse 100% 60% at 0% 50%, rgba(186,230,253,0.3) 0%, transparent 60%),
-              radial-gradient(ellipse 80% 50% at 100% 50%, rgba(221,214,254,0.2) 0%, transparent 50%)
-            `,
-          }}
-        />
-        {/* Dark mode ambient */}
-        <div
-          className="absolute inset-0 opacity-0 dark:opacity-40 transition-opacity duration-700"
-          style={{
-            background: `
-              radial-gradient(ellipse 80% 50% at 0% 50%, rgba(56,189,248,0.08) 0%, transparent 60%),
-              radial-gradient(ellipse 60% 40% at 100% 50%, rgba(167,139,250,0.06) 0%, transparent 50%)
-            `,
-          }}
-        />
-      </div>
-
-      {/* Decorative grid pattern */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.04]"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(148,163,184,0.3) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(148,163,184,0.3) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px',
-        }}
+    <div className="relative min-h-dvh w-full overflow-hidden">
+      {/* Full-bleed background image */}
+      <img
+        src="/sky-observatory.jpg"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover scale-[1.12]"
       />
+      {/* Soft vignette for readability */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-black/25 via-transparent to-black/30" />
 
       {/* Main content */}
       <div className="relative z-10 min-h-dvh flex flex-col lg:flex-row">
         {/* Left side: Brand & Scene */}
-        <div className="relative flex-1 min-h-[50vh] lg:min-h-dvh overflow-hidden">
+        <div className="relative flex-1 min-h-[50vh] lg:min-h-dvh">
           <CelestialScene />
-        </div>
-
-        {/* Divider */}
-        <div className="hidden lg:flex items-center relative">
-          <div className="h-3/4 w-px bg-gradient-to-b from-transparent via-sky-200/60 dark:via-slate-600/40 to-transparent" />
         </div>
 
         {/* Right side: Auth Panel */}
@@ -655,9 +612,6 @@ export function SkyLandingPage() {
           </div>
         </div>
       </div>
-
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/40 dark:from-slate-950/40 to-transparent pointer-events-none" />
     </div>
   );
 }

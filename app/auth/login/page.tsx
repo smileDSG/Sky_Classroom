@@ -1,7 +1,5 @@
-'use client';
-
-import LoginPage from '@/components/auth/login-page-content';
+import { SkyLandingPage } from '@/components/sky/auth/sky-landing-page';
 
 export const dynamic = 'force-dynamic';
 
-export default LoginPage;
+export default SkyLandingPage;
