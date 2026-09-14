@@ -36,3 +36,6 @@ __pycache__/
 *.pyc
 cookies.txt
 *.pptx
+# 已从索引移除的嵌套仓库残留（2026-09-14 清理）
+software-cup-A3/
+.empty-mirror-src/
