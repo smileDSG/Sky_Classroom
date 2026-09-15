@@ -76,10 +76,6 @@ const ClassroomGrid = dynamic(
     loading: () => <div className="min-h-48 w-full animate-pulse rounded-2xl bg-white/40" />,
   },
 );
-const IntroSequence = dynamic(
-  () => import('@/components/sky/home/intro-sequence').then((m) => ({ default: m.IntroSequence })),
-  { ssr: false },
-);
 const FloatingParticles = dynamic(() =>
   import('@/components/sky/home/floating-particles').then((m) => ({
     default: m.FloatingParticles,
@@ -159,13 +155,6 @@ function HomeApp() {
   const [webSearch, setWebSearch] = useState(false);
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [introDone, setIntroDone] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (sessionStorage.getItem('introDone') === 'true') {
-      setIntroDone(true);
-    }
-  }, []);
 
   // ── Classroom background generation state (multi-job) ──
   interface JobCardState {
@@ -682,17 +671,6 @@ function HomeApp() {
 
   const canGenerate = !!requirement.trim();
 
-  if (!introDone) {
-    return (
-      <IntroSequence
-        onComplete={() => {
-          sessionStorage.setItem('introDone', 'true');
-          setIntroDone(true);
-        }}
-      />
-    );
-  }
-
   return (
     <div suppressHydrationWarning className="min-h-screen w-full relative overflow-x-hidden">
       {/* 动态天空背景 */}
@@ -1008,19 +986,6 @@ function HomeApp() {
           <p className="text-[11px] text-slate-300 dark:text-slate-600">
             &copy; 2026 Sky Classroom. All rights reserved.
           </p>
-          <button
-            onClick={() => {
-              try {
-                localStorage.removeItem('skyIntroDone');
-                window.location.reload();
-              } catch {
-                /* ignore */
-              }
-            }}
-            className="text-[10px] text-slate-400/50 hover:text-slate-500 dark:hover:text-slate-400 transition-colors mt-1"
-          >
-            重置开场动画
-          </button>
         </motion.div>
       </footer>
     </div>
