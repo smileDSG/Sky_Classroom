@@ -109,7 +109,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
     >
       <div className="relative flex h-16 shrink-0 items-center justify-between gap-2 border-b border-slate-200/70 px-4 dark:border-cyan-100/10">
         <Link
-          href="/sky"
+          href="/"
           aria-label="返回天空课堂首页"
           className={cn('flex min-w-0 items-center gap-2.5', collapsed && 'justify-center')}
         >
@@ -254,7 +254,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
 
       <div className="shrink-0 space-y-1 border-t border-slate-200/70 p-3 dark:border-cyan-100/10">
         <Link
-          href="/sky"
+          href="/"
           title={collapsed ? '天空课堂' : undefined}
           className={cn(
             'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white',
