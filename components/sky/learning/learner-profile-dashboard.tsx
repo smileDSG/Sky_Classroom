@@ -30,6 +30,7 @@ import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { Button } from '@/components/ui/button';
 import { ProfileTour } from '@/components/sky/learning/profile-tour';
+import { PROFILE_TOUR_SEEN_KEY } from '@/lib/sky/profile-tour';
 import type { LearningStatsResponse, LearningPath } from '@/lib/teaching/learning-path-types';
 import type { CloudMindDashboardData } from '@/lib/cloud-mind/types';
 import type { LearnerPreferences } from '@/lib/adaptive-learning/contracts';
@@ -1279,9 +1280,25 @@ export function LearnerProfileDashboard() {
             <Calendar className="h-3.5 w-3.5 text-violet-500" />
             <span>数据每 15 秒自动刷新 · 实时展示学习情况</span>
           </div>
-          <Link href="/account" className="text-violet-400 hover:text-violet-300">
-            编辑学习偏好 →
-          </Link>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.removeItem(PROFILE_TOUR_SEEN_KEY);
+                  window.location.reload();
+                } catch {
+                  /* ignore */
+                }
+              }}
+              className="text-violet-400/60 transition-colors hover:text-violet-300"
+            >
+              重新播放引导
+            </button>
+            <Link href="/account" className="text-violet-400 hover:text-violet-300">
+              编辑学习偏好 →
+            </Link>
+          </div>
         </footer>
       </div>
     </div>

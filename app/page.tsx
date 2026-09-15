@@ -41,6 +41,7 @@ import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { HeroInput } from '@/components/sky/home/hero-input';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
 import { HomeTour } from '@/components/sky/home/home-tour';
+import { HOME_TOUR_SEEN_KEY } from '@/lib/sky/home-tour';
 import type { SettingsSection } from '@/lib/types/settings';
 
 // 折页下方 / 非首屏区块 — 按需加载，加快首屏解析
@@ -995,6 +996,20 @@ function HomeApp() {
             &copy; 2026 Sky Classroom. All rights reserved.
           </p>
         </motion.div>
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              localStorage.removeItem(HOME_TOUR_SEEN_KEY);
+              window.location.reload();
+            } catch {
+              /* ignore */
+            }
+          }}
+          className="mt-6 text-[10px] text-slate-400/50 transition-colors hover:text-slate-500 dark:hover:text-slate-400"
+        >
+          重新播放引导
+        </button>
       </footer>
     </div>
   );
