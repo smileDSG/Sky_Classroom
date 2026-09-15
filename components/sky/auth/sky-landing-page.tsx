@@ -566,7 +566,7 @@ export function SkyLandingPage() {
 
   useEffect(() => {
     if (!isLoading && user && !user.role.includes('guest')) {
-      router.push('/sky');
+      router.replace('/sky');
     }
   }, [user, isLoading, router]);
 

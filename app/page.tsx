@@ -148,6 +148,10 @@ export default function HomePage() {
     }
   }, [isLoading, user, router]);
 
+  if (!isLoading && user && user.role !== 'guest') {
+    return null;
+  }
+
   // Show landing page for unauthenticated users
   if (!isLoading && (!user || user.role === 'guest')) {
     return <SkyLandingPage />;
