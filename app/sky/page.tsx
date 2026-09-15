@@ -17,6 +17,7 @@ import {
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-strip';
 import { LearningProfilePrompt } from '@/components/sky/dashboard/learning-profile-prompt';
+import { WelcomeCard } from '@/components/sky/dashboard/welcome-card';
 import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
 import {
   LearningPlanPanel,
@@ -400,6 +401,8 @@ export default function SkyDashboardPage() {
     <SkyAppShell section="learning">
       <div className="mx-auto max-w-6xl space-y-6 pb-8">
         <SkySectionNav section="learning" />
+
+        <WelcomeCard />
 
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 dark:border-white/10 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
