@@ -16,6 +16,7 @@ import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-strip';
 import { LearningProfilePrompt } from '@/components/sky/dashboard/learning-profile-prompt';
 import { OnboardingTour } from '@/components/sky/dashboard/onboarding-tour';
+import { TOUR_SEEN_KEY } from '@/lib/sky/tour';
 import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
 import {
   LearningPlanPanel,
@@ -359,6 +360,23 @@ export default function SkyDashboardPage() {
           <DashboardEmptyState />
         )}
       </div>
+
+      <footer className="pb-10 text-center">
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              localStorage.removeItem(TOUR_SEEN_KEY);
+              window.location.reload();
+            } catch {
+              /* ignore */
+            }
+          }}
+          className="text-[10px] text-slate-400/50 transition-colors hover:text-slate-500 dark:hover:text-slate-400"
+        >
+          重新播放引导
+        </button>
+      </footer>
     </SkyAppShell>
   );
 }
