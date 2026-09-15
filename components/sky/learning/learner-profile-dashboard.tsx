@@ -29,6 +29,7 @@ import { useAnimatedNumber } from '@/lib/hooks/use-animated-number';
 import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { Button } from '@/components/ui/button';
+import { ProfileTour } from '@/components/sky/learning/profile-tour';
 import type { LearningStatsResponse, LearningPath } from '@/lib/teaching/learning-path-types';
 import type { CloudMindDashboardData } from '@/lib/cloud-mind/types';
 import type { LearnerPreferences } from '@/lib/adaptive-learning/contracts';
@@ -955,6 +956,8 @@ export function LearnerProfileDashboard() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
 
       <div className="relative">
+        <ProfileTour />
+
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
@@ -1048,7 +1051,7 @@ export function LearnerProfileDashboard() {
         </motion.header>
 
         {/* KPI Cards */}
-        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+        <div data-tour-step="kpi-cards" className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           <StatCard
             label="知识掌握情况"
             value={stats?.masteryPercent ?? 0}
@@ -1112,6 +1115,7 @@ export function LearnerProfileDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="lg:col-span-1"
+            data-tour-step="mastery-overview"
           >
             <TechFrame glowColor="#8B5CF6" scan className="h-full p-5">
               <SectionTitle
@@ -1201,6 +1205,7 @@ export function LearnerProfileDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.45 }}
             className="lg:col-span-1"
+            data-tour-step="weak-points"
           >
             <TechFrame glowColor="#F43F5E" className="h-full p-5">
               <div className="mb-4 flex items-center justify-between">
@@ -1236,6 +1241,7 @@ export function LearnerProfileDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="lg:col-span-1"
+            data-tour-step="learning-path"
           >
             <TechFrame glowColor="#10B981" className="h-full p-5">
               <PathTimeline path={state.data?.learningPath.path ?? null} />

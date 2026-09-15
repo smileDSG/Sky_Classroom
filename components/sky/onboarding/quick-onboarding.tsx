@@ -33,7 +33,7 @@ export function QuickOnboarding() {
       const response = await fetch('/api/user/learning-onboarding/skip', { method: 'POST' });
       if (!response.ok) throw new Error('skip failed');
       await refresh();
-      router.push('/sky');
+      router.push('/');
     } catch {
       setError('进入失败，请稍后重试');
     } finally {

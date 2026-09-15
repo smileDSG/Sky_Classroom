@@ -40,6 +40,7 @@ import { MinimalNavbar } from '@/components/sky/home/minimal-navbar';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { HeroInput } from '@/components/sky/home/hero-input';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
+import { HomeTour } from '@/components/sky/home/home-tour';
 import type { SettingsSection } from '@/lib/types/settings';
 
 // 折页下方 / 非首屏区块 — 按需加载，加快首屏解析
@@ -676,6 +677,9 @@ function HomeApp() {
       {/* 动态天空背景 */}
       <SkyBackground />
 
+      {/* 首次进入的分步高亮引导 */}
+      <HomeTour />
+
       {/* 文件输入（用于导入） */}
       <input
         ref={fileInputRef}
@@ -789,7 +793,7 @@ function HomeApp() {
           </div>
 
           {/* 输入区域 */}
-          <div className="w-full">
+          <div className="w-full" data-tour-step="hero-input">
             <HeroInput
               value={requirement}
               onChange={handleRequirementChange}
@@ -908,7 +912,9 @@ function HomeApp() {
           <LearningPlanPreview />
 
           {/* 三大工作区入口 */}
-          <SkyWorkspacePortals />
+          <div data-tour-step="workspace-portals">
+            <SkyWorkspacePortals />
+          </div>
 
           {/* 精选推荐 + 趣味内容 */}
           <FeaturedSection />
@@ -927,36 +933,38 @@ function HomeApp() {
             )}
           </AnimatePresence>
 
-          {/* 导入按钮（无课堂时） */}
-          {classrooms.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="text-center"
-            >
-              <button
-                onClick={triggerFileSelect}
-                disabled={importing}
-                className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          <div data-tour-step="classroom-grid">
+            {/* 导入按钮（无课堂时） */}
+            {classrooms.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-center"
               >
-                <span>导入已有课堂</span>
-              </button>
-            </motion.div>
-          )}
+                <button
+                  onClick={triggerFileSelect}
+                  disabled={importing}
+                  className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  <span>导入已有课堂</span>
+                </button>
+              </motion.div>
+            )}
 
-          {/* 最近讲解 */}
-          {classrooms.length > 0 && (
-            <section>
-              <ClassroomGrid
-                classrooms={classrooms}
-                thumbnails={thumbnails}
-                formatDate={formatDate}
-                onDelete={handleDelete}
-                onRename={handleRename}
-              />
-            </section>
-          )}
+            {/* 最近讲解 */}
+            {classrooms.length > 0 && (
+              <section>
+                <ClassroomGrid
+                  classrooms={classrooms}
+                  thumbnails={thumbnails}
+                  formatDate={formatDate}
+                  onDelete={handleDelete}
+                  onRename={handleRename}
+                />
+              </section>
+            )}
+          </div>
         </div>
       </main>
 

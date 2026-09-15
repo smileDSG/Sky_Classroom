@@ -317,6 +317,7 @@ export default function SkyDashboardPage() {
 
         <Link
           href="/classroom/new"
+          data-tour-step="generate-classroom"
           className="group flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-colors hover:border-sky-300 dark:border-white/10 dark:bg-slate-900/70 dark:hover:border-sky-200/30"
         >
           <div className="flex items-center gap-3">
@@ -364,7 +365,9 @@ export default function SkyDashboardPage() {
 
         <TodayFocusPanel recommendation={personalization?.recommendation ?? null} />
 
-        <MistakeReviewStrip />
+        <div data-tour-step="mistakes">
+          <MistakeReviewStrip />
+        </div>
 
         <section id="learning-plan" data-tour-step="learning-plan" className="scroll-mt-5">
           <LearningPlanPanel
