@@ -275,6 +275,17 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
           <Settings className="h-4 w-4 shrink-0" />
           {!collapsed && <span>设置</span>}
         </Link>
+        <Link
+          href="/classroom/new"
+          title={collapsed ? '生成互动课堂' : undefined}
+          className={cn(
+            'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white',
+            collapsed && 'justify-center px-0',
+          )}
+        >
+          <Presentation className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>生成互动课堂</span>}
+        </Link>
       </div>
     </aside>
   );

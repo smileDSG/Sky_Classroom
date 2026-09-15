@@ -8,6 +8,7 @@ import {
   BarChart3,
   BookOpenCheck,
   Camera,
+  Presentation,
   Route,
   ShieldCheck,
   Star,
@@ -403,6 +404,26 @@ export default function SkyDashboardPage() {
         <SkySectionNav section="learning" />
 
         <WelcomeCard />
+
+        <Link
+          href="/classroom/new"
+          className="group flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-colors hover:border-sky-300 dark:border-white/10 dark:bg-slate-900/70 dark:hover:border-sky-200/30"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white">
+              <Presentation className="h-5 w-5" />
+            </span>
+            <div>
+              <span className="block text-sm font-semibold text-slate-950 dark:text-white">
+                生成互动课堂
+              </span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                输入一个知识点，AI 老师 + 同学即刻开讲
+              </span>
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" />
+        </Link>
 
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 dark:border-white/10 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
