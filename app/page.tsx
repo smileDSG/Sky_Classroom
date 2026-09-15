@@ -141,6 +141,13 @@ export default function HomePage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
 
+  // 统一入口：已登录用户一律进入 /sky 仪表盘
+  useEffect(() => {
+    if (!isLoading && user && user.role !== 'guest') {
+      router.replace('/sky');
+    }
+  }, [isLoading, user, router]);
+
   // Show landing page for unauthenticated users
   if (!isLoading && (!user || user.role === 'guest')) {
     return <SkyLandingPage />;
