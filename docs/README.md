@@ -62,7 +62,7 @@ docs/
 | 对话式学习画像怎么设计和落地 | `conversational-student-profile-design.md` |
 | 云端智囊工具个性化教学方案 | `cloud-mind-personalized-tools-plan.md` |
 | 云端智囊个性化工具实施记录 | `cloud-mind-personalized-tools-implementation.md` |
-| 移动端实施方案 | `../MOBILE_APP_PLAN.md` |
+| 移动端实施方案 | `archive/MOBILE_APP_PLAN.md` |
 
 ## 文档命名规范
 
