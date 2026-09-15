@@ -2,13 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 import {
   ArrowRight,
-  BarChart3,
   BookOpenCheck,
   Camera,
-  Presentation,
   Route,
   ShieldCheck,
   Star,
@@ -29,13 +26,6 @@ import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-import { fetchLearningStats } from '@/lib/client/learning-stats';
-
-interface LearningStats {
-  todayStudyMinutes: number;
-  streakDays: number;
-  masteryPercent: number;
-}
 
 type RouteTopic = {
   name: string;
@@ -83,62 +73,6 @@ function TodayFocusPanel({
           开始行动
           <ArrowRight className="h-4 w-4" />
         </Link>
-      </div>
-    </section>
-  );
-}
-
-function LearningSnapshot({
-  stats,
-  mistakeCount,
-  weakPointText,
-}: {
-  stats: LearningStats;
-  mistakeCount: number;
-  weakPointText: string;
-}) {
-  return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-slate-950 dark:text-white">学习快照</h2>
-          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-            今天只看影响下一步的三项数据
-          </p>
-        </div>
-        <BarChart3 className="h-5 w-5 text-slate-400 dark:text-slate-500" />
-      </div>
-
-      <dl className="mt-4 grid grid-cols-3 gap-2">
-        <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/[0.05]">
-          <dt className="text-[11px] text-slate-500 dark:text-slate-400">掌握情况</dt>
-          <dd className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">
-            {stats.masteryPercent}%
-          </dd>
-        </div>
-        <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/[0.05]">
-          <dt className="text-[11px] text-slate-500 dark:text-slate-400">错题待处理</dt>
-          <dd className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">
-            {mistakeCount}
-          </dd>
-        </div>
-        <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/[0.05]">
-          <dt className="text-[11px] text-slate-500 dark:text-slate-400">连续学习</dt>
-          <dd className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">
-            {stats.streakDays}天
-          </dd>
-        </div>
-      </dl>
-
-      <div className="mt-4 rounded-xl border border-slate-200 px-3 py-3 text-xs leading-5 text-slate-600 dark:border-white/10 dark:text-slate-300">
-        {weakPointText
-          ? `当前优先补强：${weakPointText}`
-          : '完成更多练习后，系统会标出优先补强的知识点。'}
-        {stats.streakDays > 0 && (
-          <span className="block mt-1 text-amber-700 dark:text-amber-100">
-            已连续学习 {stats.streakDays} 天，保持这个节奏。
-          </span>
-        )}
       </div>
     </section>
   );
@@ -302,11 +236,6 @@ function DashboardEmptyState() {
 export default function SkyDashboardPage() {
   const { user } = useAuth();
   const mistakes = useSkyClassroomStore((state) => state.mistakes);
-  const [stats, setStats] = useState<LearningStats>({
-    todayStudyMinutes: 0,
-    streakDays: 0,
-    masteryPercent: 0,
-  });
   const [personalization, setPersonalization] = useState<PersonalizationContext | null>(null);
   const [learningPlanData, setLearningPlanData] = useState<LearningPlanPanelData | null>(null);
   const [learningPlanError, setLearningPlanError] = useState<string | null>(null);
@@ -315,21 +244,6 @@ export default function SkyDashboardPage() {
   useEffect(() => {
     syncMistakesFromQuizzes();
   }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    const fetchStats = () => {
-      if (!isDocumentVisible()) return;
-      fetchLearningStats()
-        .then((data) => {
-          setStats(data);
-        })
-        .catch(() => {});
-    };
-    fetchStats();
-    const interval = window.setInterval(fetchStats, 60_000);
-    return () => window.clearInterval(interval);
-  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -387,15 +301,6 @@ export default function SkyDashboardPage() {
     }));
   }, [mistakes, personalization]);
 
-  const weakPointText =
-    personalization?.weakPoints
-      .slice(0, 2)
-      .map((point) => point.knowledgePoint)
-      .join('、') ||
-    routeTopics
-      .slice(0, 2)
-      .map((topic) => topic.name)
-      .join('、');
   const hasData = mistakes.length > 0;
 
   return (
@@ -404,26 +309,6 @@ export default function SkyDashboardPage() {
         <SkySectionNav section="learning" />
 
         <WelcomeCard />
-
-        <Link
-          href="/classroom/new"
-          className="group flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-colors hover:border-sky-300 dark:border-white/10 dark:bg-slate-900/70 dark:hover:border-sky-200/30"
-        >
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white">
-              <Presentation className="h-5 w-5" />
-            </span>
-            <div>
-              <span className="block text-sm font-semibold text-slate-950 dark:text-white">
-                生成互动课堂
-              </span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
-                输入一个知识点，AI 老师 + 同学即刻开讲
-              </span>
-            </div>
-          </div>
-          <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" />
-        </Link>
 
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 dark:border-white/10 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
@@ -455,24 +340,14 @@ export default function SkyDashboardPage() {
 
         <MistakeReviewStrip />
 
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <section id="learning-plan" className="scroll-mt-5">
-            <LearningPlanPanel
-              initialData={learningPlanData}
-              error={learningPlanError ?? undefined}
-              onPlanChanged={() => loadLearningPlan()}
-              compact
-            />
-          </section>
-
-          <aside className="lg:sticky lg:top-24">
-            <LearningSnapshot
-              stats={stats}
-              mistakeCount={mistakes.length}
-              weakPointText={weakPointText}
-            />
-          </aside>
-        </div>
+        <section id="learning-plan" className="scroll-mt-5">
+          <LearningPlanPanel
+            initialData={learningPlanData}
+            error={learningPlanError ?? undefined}
+            onPlanChanged={() => loadLearningPlan()}
+            compact
+          />
+        </section>
 
         {hasData ? (
           <ContinueLearningLinks topics={routeTopics} mistakeCount={mistakes.length} />
