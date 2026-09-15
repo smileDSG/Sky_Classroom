@@ -15,7 +15,7 @@ import {
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-strip';
 import { LearningProfilePrompt } from '@/components/sky/dashboard/learning-profile-prompt';
-import { WelcomeCard } from '@/components/sky/dashboard/welcome-card';
+import { OnboardingTour } from '@/components/sky/dashboard/onboarding-tour';
 import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
 import {
   LearningPlanPanel,
@@ -52,7 +52,10 @@ function TodayFocusPanel({
   };
 
   return (
-    <section className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 dark:border-sky-200/20 dark:bg-sky-300/[0.08] sm:p-6">
+    <section
+      data-tour-step="today-focus"
+      className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 dark:border-sky-200/20 dark:bg-sky-300/[0.08] sm:p-6"
+    >
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-semibold text-sky-700 dark:text-sky-100">
@@ -308,7 +311,7 @@ export default function SkyDashboardPage() {
       <div className="mx-auto max-w-6xl space-y-6 pb-8">
         <SkySectionNav section="learning" />
 
-        <WelcomeCard />
+        <OnboardingTour />
 
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 dark:border-white/10 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
@@ -327,6 +330,7 @@ export default function SkyDashboardPage() {
           </div>
           <Link
             href="/sky/learning/profile-dashboard"
+            data-tour-step="profile-link"
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 transition-colors hover:border-sky-200 hover:text-sky-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:border-sky-200/30 dark:hover:text-sky-100"
           >
             查看完整学习记录
@@ -340,7 +344,7 @@ export default function SkyDashboardPage() {
 
         <MistakeReviewStrip />
 
-        <section id="learning-plan" className="scroll-mt-5">
+        <section id="learning-plan" data-tour-step="learning-plan" className="scroll-mt-5">
           <LearningPlanPanel
             initialData={learningPlanData}
             error={learningPlanError ?? undefined}
