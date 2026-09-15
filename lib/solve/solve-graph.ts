@@ -21,6 +21,7 @@ import { SolveGraphAnnotation, type SolveGraphState } from './solve-graph-state'
 import { solveWithAgentNode } from './solver-agent';
 import type { FourPartOutput, ProblemSpec } from './types';
 import { classifyProblem } from './solver-constants';
+import { isDeterministic, isVerifiedReview } from './solve-verify';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SolveGraph');
@@ -118,6 +119,78 @@ async function routeToAgentNode(
   const route = classifyProblem(state.problemText, state.problemSpec);
   log.info(`[SolveGraph] routeToAgent: ${route}`);
   return { agentRoute: route };
+}
+
+/**
+ * verifyAnswer node (答案自校验).
+ *
+ * 只对可判定题(选择/填空/判断 —— 答案定值)做轻量独立复核：
+ * - 用独立模型(verify-agent)复核 → 一致标 verified；
+ * - 不一致且有 suggestedAnswer → 用独立修正(correct-agent)出新答案 → corrected；
+ * - 无法修正 → pending-confirmation(答案待确认)。
+ * 开放解答(可判定题型之外的)跳过 → skipped，避免给流式主路径带来额外 LLM 延迟。
+ * 缓存/题库命中不走此节点（answer 来自已沉淀数据），保持零开销。
+ */
+async function verifyAnswerNode(
+  state: SolveGraphState,
+  _config: LangGraphRunnableConfig,
+): Promise<Partial<SolveGraphState>> {
+  if (state.fromQuestionBank || state.fromSolveCache) {
+    return { answerReview: 'skipped', verified: false };
+  }
+  if (state.answerReview) return {};
+
+  const deterministic = isDeterministic(state.questionType);
+  if (!state.parsedAnswer) {
+    log.info(
+      `[SolveGraph] verifyAnswer: skip (questionType=${state.questionType}, hasAnswer=${!!state.parsedAnswer})`,
+    );
+    return { answerReview: 'skipped', verified: false };
+  }
+  if (!deterministic) {
+    log.info('[SolveGraph] verifyAnswer: open-ended -> conclusion-level independent check');
+  }
+
+  try {
+    const { verifyAnswer } = await import('./agents/verify-agent');
+    const { correctAnswer } = await import('./agents/correct-agent');
+    const verifyResult = await verifyAnswer(
+      state.problemText,
+      state.parsedAnswer,
+      state.problemSpec,
+    );
+
+    if (verifyResult.isCorrect) {
+      log.info('[SolveGraph] verifyAnswer: verified (independent pass)');
+      return { answerReview: 'verified', verified: true };
+    }
+
+    if (verifyResult.suggestedAnswer) {
+      const corrected = await correctAnswer(
+        state.problemText,
+        state.parsedAnswer,
+        verifyResult.suggestedAnswer,
+        verifyResult.reasoning,
+      );
+      if (corrected) {
+        log.info('[SolveGraph] verifyAnswer: corrected by independent agent');
+        return {
+          answerReview: 'corrected',
+          verified: true,
+          parsedAnswer: corrected.answer,
+          parsedSteps: corrected.steps.length > 0 ? corrected.steps : state.parsedSteps,
+        };
+      }
+    }
+
+    log.info('[SolveGraph] verifyAnswer: pending-confirmation');
+    return { answerReview: 'pending-confirmation', verified: false };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    log.warn(`[SolveGraph] verifyAnswer failed, marking pending-confirmation: ${message}`);
+    // 校验异常绝不静默接受答案
+    return { answerReview: 'pending-confirmation', verified: false };
+  }
 }
 
 /**
@@ -228,6 +301,8 @@ async function generateOutputNode(
     similarQuestions: state.parsedSimilarQuestions ?? [],
     questionType: state.questionType ?? undefined,
     options: state.options ?? undefined,
+    answerReview: state.answerReview ?? 'skipped',
+    verified: state.answerReview ? isVerifiedReview(state.answerReview) : false,
   };
 
   let fourPartOutput: FourPartOutput;
@@ -264,10 +339,11 @@ export function afterCheckBank(state: SolveGraphState): 'routeToAgent' | 'genera
 }
 
 /**
- * After solveWithAgent: if error, skip grading and go to generateOutput.
+ * After solveWithAgent: if error, skip verification and go to generateOutput;
+ * otherwise run the answer self-verification node.
  */
-export function afterSolve(state: SolveGraphState): 'gradeAnswer' | 'generateOutput' {
-  return state.error ? 'generateOutput' : 'gradeAnswer';
+export function afterSolve(state: SolveGraphState): 'verifyAnswer' | 'generateOutput' {
+  return state.error ? 'generateOutput' : 'verifyAnswer';
 }
 
 // ── Graph factory ──
@@ -281,6 +357,7 @@ export function createSolveGraph() {
     .addNode('checkQuestionBank', checkQuestionBankNode)
     .addNode('routeToAgent', routeToAgentNode)
     .addNode('solveWithAgent', solveWithAgentNode)
+    .addNode('verifyAnswer', verifyAnswerNode)
     .addNode('gradeAnswer', gradeAnswerNode)
     .addNode('generateOutput', generateOutputNode)
     .addEdge(START, 'checkSolveCache')
@@ -294,9 +371,10 @@ export function createSolveGraph() {
     })
     .addEdge('routeToAgent', 'solveWithAgent')
     .addConditionalEdges('solveWithAgent', afterSolve, {
-      gradeAnswer: 'gradeAnswer',
+      verifyAnswer: 'verifyAnswer',
       generateOutput: 'generateOutput',
     })
+    .addEdge('verifyAnswer', 'gradeAnswer')
     .addEdge('gradeAnswer', 'generateOutput')
     .addEdge('generateOutput', END);
 
@@ -332,6 +410,8 @@ export function buildSolveInitialState(
     gradeResult: null,
     votingResults: [],
     fourPartOutput: null,
+    answerReview: null,
+    verified: false,
     fromQuestionBank: false,
     fromSolveCache: false,
     error: null,

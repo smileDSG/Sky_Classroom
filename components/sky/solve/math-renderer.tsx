@@ -2,6 +2,7 @@
 
 import { Fragment, useMemo } from 'react';
 import katex from 'katex';
+import 'katex/dist/katex.min.css';
 import type { KnowledgePointHighlight } from '@/lib/teaching/personalized-highlighter';
 import {
   HIGHLIGHT_STYLES,
@@ -450,6 +451,9 @@ const BARE_LATEX_PATTERNS: Array<{
     ),
     wrapper: (m: string, cmd: string) => {
       if (cmd === 'left' || cmd === 'right') return m;
+      // 整词就是一个完整已知命令（如 \bigtriangleup）时不再拆分：
+      // 从长到短找前缀会命中短命令（如 \big），把长命令拆坏、后缀泄漏成文字。
+      if (KNOWN_LATEX_COMMANDS.has(cmd)) return `$${m}$`;
       let knownLen = 0;
       for (let len = Math.min(cmd.length, 12); len >= 2; len--) {
         if (KNOWN_LATEX_COMMANDS.has(cmd.slice(0, len))) {
@@ -807,7 +811,7 @@ function normalizeEnvironments(text: string): string {
   return result;
 }
 
-function fixCommonLatexErrors(text: string): string {
+export function fixCommonLatexErrors(text: string): string {
   let result = text;
   result = normalizeEnvironments(result);
   // Fix \sqrt followed by letters: \sqrt14x → \sqrt{14x}
@@ -830,6 +834,9 @@ function fixCommonLatexErrors(text: string): string {
     /\\(cdot|times|div|pm|mp|star|circ|bullet)([a-zA-Z])/g,
     (_m, cmd: string, ch: string) => `\\${cmd} ${ch}`,
   );
+  // Fix LLM 把命令名误加空格拆开（\big triangleup → \bigtriangleup）。
+  // 这类命令在 KNOWN_LATEX_COMMANDS 中是整体，拆开后会被当作「独立命令 + 普通文字」泄漏。
+  result = result.replace(/\\big\s+triangle(?:up|down)/g, (m) => m.replace(/\s+/g, ''));
   return result;
 }
 
