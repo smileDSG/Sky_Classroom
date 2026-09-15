@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -910,7 +911,7 @@ export function SolvePage() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <div className="mb-6 flex items-center justify-between">
+      <div data-tour-step="page-header" className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
             搜题批改
@@ -943,7 +944,7 @@ export function SolvePage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
+      <div data-tour-step="page-primary" className="grid gap-6 lg:grid-cols-[400px_1fr]">
         {/* ── LEFT COLUMN ── */}
         <div className="space-y-6">
           <Card className="overflow-hidden border-sky-200/50 dark:border-sky-800/40 shadow-md shadow-sky-100/50 dark:shadow-sky-900/20">
@@ -1237,6 +1238,8 @@ export function SolvePage() {
           )}
         </div>
       </div>
+
+      <PageTour id="resources-solve" />
     </div>
   );
 }

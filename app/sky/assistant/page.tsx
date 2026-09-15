@@ -12,6 +12,7 @@ import { AssistantSettings } from '@/components/sky/assistant/assistant-settings
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { Feather, Wind, Cloud, MessageCircle, Sparkles, History, Settings } from 'lucide-react';
+import { PageTour } from '@/components/sky/tour/page-tour';
 
 const SIDEBAR_ITEMS = [
   { key: 'chat', label: '对话', icon: MessageCircle, desc: '与小镜交流' },
@@ -131,7 +132,7 @@ function AssistantContent() {
           className="w-64 shrink-0 flex flex-col gap-4"
         >
           {/* Hero Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 p-5">
+          <div data-tour-step="page-header" className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 p-5">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/10 rounded-full blur-xl translate-y-1/2 -translate-x-1/4" />
 
@@ -228,6 +229,7 @@ function AssistantContent() {
 
         {/* 主内容区 */}
         <motion.div
+          data-tour-step="page-primary"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -258,6 +260,8 @@ function AssistantContent() {
           )}
         </motion.div>
       </div>
+
+      <PageTour id="resources-assistant" />
     </SkyAppShell>
   );
 }

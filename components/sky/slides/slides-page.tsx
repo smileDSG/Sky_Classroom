@@ -17,6 +17,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { Button } from '@/components/ui/button';
 import { AvatarSpeechPlayer } from './avatar-speech-player';
 import { CoverGallery, type CoverItem } from './cover-gallery';
@@ -844,6 +845,7 @@ function SlidesPageContent({
     >
       {/* Top bar */}
       <header
+        data-tour-step="page-header"
         className="slides-workspace-header relative z-10 flex h-14 flex-shrink-0 items-center border-b border-[var(--celestial-haze)]/20 px-5"
         style={{ background: 'var(--celestial-surface)' }}
       >
@@ -910,7 +912,7 @@ function SlidesPageContent({
 
       {/* Main content */}
       <div className="relative z-10 flex flex-1 overflow-hidden">
-        <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <main data-tour-step="page-primary" className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="relative min-h-0 flex-1 flex flex-col">
             <AnimatePresence mode="wait">
               {showSmartCover && draftDNA ? (
@@ -1152,6 +1154,8 @@ function SlidesPageContent({
           </div>
         </div>
       )}
+
+      <PageTour id="resources-slides" />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import type {
   CloudMindDashboardData,
   LearningRecommendation,
@@ -431,6 +432,7 @@ export default function CloudMindPage() {
         <SkySectionNav section="resources" />
 
         <motion.section
+          data-tour-step="page-header"
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
@@ -635,6 +637,7 @@ export default function CloudMindPage() {
         </div>
 
         <motion.section
+          data-tour-step="page-primary"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -734,6 +737,8 @@ export default function CloudMindPage() {
           ))}
         </motion.section>
       </div>
+
+      <PageTour id="resources-overview" />
     </SkyAppShell>
   );
 }
