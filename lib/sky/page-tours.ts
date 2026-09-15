@@ -117,34 +117,6 @@ export const PAGE_TOURS: Record<string, PageTourConfig> = {
       step('page-primary', '开始备课', '进入授课设计或课件设计，逐步完成课程准备。'),
     ],
   },
-  'teaching-design': {
-    seenKey: 'tour:teaching-design',
-    steps: [
-      step('page-header', '授课设计', '设计课程结构、教案和授课流程。'),
-      step('page-primary', '设计课程', '规划课程大纲和环节，形成完整的授课方案。'),
-    ],
-  },
-  'teaching-resources': {
-    seenKey: 'tour:teaching-resources',
-    steps: [
-      step('page-header', '教学资源', '整理和复用你的教学材料与课程资源。'),
-      step('page-primary', '整理资源', '上传、分类或复用已有的教学材料。'),
-    ],
-  },
-  'teaching-slides': {
-    seenKey: 'tour:teaching-slides',
-    steps: [
-      step('page-header', '课件设计', '设计和生成教学课件。'),
-      step('page-primary', '生成课件', '设置课件主题后，一键生成并调整内容。'),
-    ],
-  },
-  'teaching-history': {
-    seenKey: 'tour:teaching-history',
-    steps: [
-      step('page-header', '授课记录', '查看历史授课记录与课堂沉淀。'),
-      step('page-primary', '回顾课堂', '回看之前的课堂内容，复盘并复用。'),
-    ],
-  },
   'teaching-ai': {
     seenKey: 'tour:teaching-ai',
     steps: [

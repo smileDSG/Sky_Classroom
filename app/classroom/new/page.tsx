@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { HeroInput } from '@/components/sky/home/hero-input';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { useSettingsStore } from '@/lib/store/settings';
 import { resolveChatModelSelection } from '@/lib/utils/model-config';
 import type { ProviderId } from '@/lib/ai/providers';
@@ -72,7 +73,7 @@ export default function NewClassroomPage() {
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-        <header>
+        <header data-tour-step="page-header">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
             生成互动课堂
           </h1>
@@ -80,26 +81,29 @@ export default function NewClassroomPage() {
             输入知识点，AI 老师 + 同学即刻开讲
           </p>
         </header>
-        <HeroInput
-          value={requirement}
-          onChange={setRequirement}
-          onSubmit={handleGenerate}
-          onTemplateClick={() => {}} // 模板/设置面板暂不接，入口页保持最小
-          pdfFile={pdfFile}
-          onPdfChange={setPdfFile}
-          interactiveMode={interactiveMode}
-          onInteractiveModeChange={setInteractiveMode}
-          webSearch={webSearch}
-          onWebSearchChange={setWebSearch}
-          canSubmit={!!requirement.trim() && !submitting}
-          onSettingsOpen={() => {}} // 同上：设置面板保留在完整生成中枢内
-          selectedTeacherId={teacherId}
-          selectedStudentIds={studentIds}
-          onTeacherChange={setTeacherId}
-          onStudentsChange={setStudentIds}
-        />
+        <div data-tour-step="page-primary">
+          <HeroInput
+            value={requirement}
+            onChange={setRequirement}
+            onSubmit={handleGenerate}
+            onTemplateClick={() => {}} // 模板/设置面板暂不接，入口页保持最小
+            pdfFile={pdfFile}
+            onPdfChange={setPdfFile}
+            interactiveMode={interactiveMode}
+            onInteractiveModeChange={setInteractiveMode}
+            webSearch={webSearch}
+            onWebSearchChange={setWebSearch}
+            canSubmit={!!requirement.trim() && !submitting}
+            onSettingsOpen={() => {}} // 同上：设置面板保留在完整生成中枢内
+            selectedTeacherId={teacherId}
+            selectedStudentIds={studentIds}
+            onTeacherChange={setTeacherId}
+            onStudentsChange={setStudentIds}
+          />
+        </div>
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
+      <PageTour id="classroom-new" />
     </SkyAppShell>
   );
 }
