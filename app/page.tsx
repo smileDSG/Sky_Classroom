@@ -40,6 +40,7 @@ import { MinimalNavbar } from '@/components/sky/home/minimal-navbar';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { HeroInput } from '@/components/sky/home/hero-input';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
+import { HomeLive2DPet } from '@/components/sky/home/home-live2d-pet';
 import type { SettingsSection } from '@/lib/types/settings';
 
 // 折页下方 / 非首屏区块 — 按需加载，加快首屏解析
@@ -702,6 +703,9 @@ export default function HomePage() {
 
       {/* 悬浮答疑按钮 */}
       <DraggableQaButton />
+
+      {/* 陪伴宠物 —— Live2D(亮色白猫 / 暗色黑猫), 停靠在窗口右下角 */}
+      <HomeLive2DPet />
 
       {/* 导航栏 */}
       <MinimalNavbar
