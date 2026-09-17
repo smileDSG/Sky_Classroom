@@ -5,6 +5,7 @@
  * Falls back to in-memory storage when IndexedDB / localStorage are unavailable.
  */
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
@@ -23,6 +24,23 @@ import {
 } from '@/lib/adaptive-learning/knowledge/knowledge-point-registry';
 
 const log = createLogger('API:SkyMistakes');
+
+const MistakeCreateSchema = z.object({
+  problemText: z.string().max(20000).optional().default(''),
+  problemImage: z.string().max(2000).optional(),
+  userAnswer: z.string().max(2000).optional().default(''),
+  correctAnswer: z.string().max(2000).optional().default(''),
+  errorType: z
+    .enum(['calculation', 'concept', 'reasoning', 'reading', 'careless'])
+    .optional()
+    .default('concept'),
+  errorExplanation: z.string().max(20000).optional(),
+  knowledgePoints: z.array(z.string().max(200)).max(20).optional().default([]),
+  sourceSessionId: z.string().max(200).optional(),
+  source: z
+    .enum(['review', 'classroom-quiz', 'solve', 'manual', 'classroom-diagnostic'])
+    .optional(),
+});
 
 /** Shared DAO singleton (lazy-init) */
 let _daoPromise: ReturnType<typeof initDAO> | null = null;
@@ -70,9 +88,11 @@ export async function GET(req: NextRequest) {
     const result = await dao.list(auth.user.id, {
       errorType: errorType ?? undefined,
       reviewed: reviewed !== null ? reviewed === 'true' : undefined,
-      masteryBelow: masteryBelow ? Number(masteryBelow) : undefined,
-      page: page ? Number(page) : 1,
-      pageSize: pageSize ? Number(pageSize) : 20,
+      masteryBelow: Number.isFinite(Number(masteryBelow)) ? Number(masteryBelow) : undefined,
+      page: Number.isFinite(Number(page)) ? Math.max(1, Math.trunc(Number(page))) : 1,
+      pageSize: Number.isFinite(Number(pageSize))
+        ? Math.min(100, Math.max(1, Math.trunc(Number(pageSize))))
+        : 20,
     });
 
     return apiSuccess({ items: result.items, total: result.total });
@@ -92,19 +112,35 @@ export async function POST(req: NextRequest) {
     const dao = await getDAO();
     const body = await req.json();
 
+    const parsed = MistakeCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '无效的错题数据');
+    }
+    const {
+      problemText,
+      problemImage,
+      userAnswer,
+      correctAnswer,
+      errorType,
+      errorExplanation,
+      knowledgePoints,
+      sourceSessionId,
+      source,
+    } = parsed.data;
+
     const id = `mistake-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     await dao.add(auth.user.id, {
       id,
-      problemText: body.problemText ?? '',
-      problemImage: body.problemImage,
-      userAnswer: body.userAnswer ?? '',
-      correctAnswer: body.correctAnswer ?? '',
-      errorType: body.errorType ?? 'concept',
-      errorExplanation: body.errorExplanation,
-      knowledgePoints: body.knowledgePoints ?? [],
-      sourceSessionId: body.sourceSessionId,
-      source: body.source,
+      problemText,
+      problemImage,
+      userAnswer,
+      correctAnswer,
+      errorType,
+      errorExplanation,
+      knowledgePoints,
+      sourceSessionId,
+      source,
     });
 
     log.info('Mistake created:', id);

@@ -271,6 +271,8 @@ interface JobState {
   knowledgePoints: { name: string; description: string; difficulty: string }[];
   similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
   fromQuestionBank: boolean;
+  answerReview?: 'verified' | 'corrected' | 'pending-confirmation' | 'skipped';
+  verified?: boolean;
   solvingTime: number;
 }
 
@@ -297,6 +299,8 @@ async function pollSolveJob(
         knowledgePoints: job.result.knowledgePoints,
         similarQuestions: job.result.similarQuestions,
         fromQuestionBank: job.result.fromQuestionBank,
+        answerReview: job.result.answerReview,
+        verified: job.result.verified,
         solvingTime: job.result.solvingTime,
       });
     }
@@ -598,6 +602,8 @@ export function SolvePage() {
         knowledgePoints: { name: string; description: string; difficulty: string }[];
         similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
         fromQuestionBank: boolean;
+        answerReview?: 'verified' | 'corrected' | 'pending-confirmation' | 'skipped';
+        verified?: boolean;
       }> = {};
 
       await pollSolveJob(
@@ -647,6 +653,8 @@ export function SolvePage() {
           difficulty: q.difficulty,
           knowledgePoint: q.knowledgePoint,
         })),
+        answerReview: latestPartial.answerReview,
+        verified: latestPartial.verified,
       };
 
       const solveResult: SolveResult = {

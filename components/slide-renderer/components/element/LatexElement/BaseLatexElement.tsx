@@ -2,6 +2,7 @@
 
 import { useRef, useState, useLayoutEffect } from 'react';
 import type { PPTLatexElement } from '@/lib/types/slides';
+import 'katex/dist/katex.min.css';
 
 export interface BaseLatexElementProps {
   elementInfo: PPTLatexElement;

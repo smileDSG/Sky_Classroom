@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { invalidateProfileCache } from '@/lib/student/profile-builder';
 import { createLogger } from '@/lib/logger';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('StudentFeedbackAPI');
+
+const FeedbackSchema = z.object({
+  sectionId: z.string().max(200).optional(),
+  knowledgePoints: z.array(z.string().max(200)).max(50).optional(),
+  feedback: z.enum(['mastered', 'needs_review']),
+});
 
 /**
  * POST /api/student/feedback
@@ -31,7 +39,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { sectionId, knowledgePoints, feedback } = body;
+    const parsed = FeedbackSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: `Invalid request: ${parsed.error.issues[0].message}` },
+        { status: 400 },
+      );
+    }
+
+    const { sectionId, feedback } = parsed.data;
 
     if (!feedback || !['mastered', 'needs_review'].includes(feedback)) {
       return NextResponse.json(
@@ -55,7 +71,7 @@ export async function POST(request: NextRequest) {
       message: `Feedback recorded: ${feedback}`,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Failed to record feedback:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -8,6 +8,7 @@ import {
   listResourceGenerationJobsHybrid,
 } from '@/lib/server/resource-generation-job-store';
 import { runResourceGenerationJob } from '@/lib/server/resource-generation-runner';
+import { isCourseResourceType } from '@/lib/software-cup/demo-service';
 import { rateLimiters, rateLimitResponse, getClientIp } from '@/lib/api/middleware/rate-limiter';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
@@ -27,10 +28,20 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as {
     input?: string;
     studentInput?: string;
+    resourceTypes?: unknown;
+    types?: unknown;
   };
   const input =
     [body.input, body.studentInput].find((value): value is string => typeof value === 'string') ??
     '';
+
+  const requestedTypes = Array.isArray(body.resourceTypes)
+    ? body.resourceTypes
+    : Array.isArray(body.types)
+      ? body.types
+      : [];
+  const resourceTypes = requestedTypes.map(String).filter(isCourseResourceType);
+  const selectedResourceTypes = resourceTypes.length > 0 ? resourceTypes : undefined;
   if (!input.trim()) {
     return Response.json(
       { success: false, error: '缺少学习背景或学习目标，无法生成学习资料' },
@@ -45,10 +56,14 @@ export async function POST(req: NextRequest) {
   }
 
   const jobId = `res_${nanoid(12)}`;
-  await createResourceGenerationJobHybrid(jobId, input, user?.id);
+  await createResourceGenerationJobHybrid(jobId, input, user?.id, selectedResourceTypes);
 
-  // Start generation immediately in the background.
-  runResourceGenerationJob(jobId, { enableLlm: Boolean(user) }).catch(() => {});
+  // Start generation immediately in the background. 一律走 LLM 生成「真货」，
+  // 不再对匿名或未登录用户静默返回 demo 假料。
+  runResourceGenerationJob(jobId, {
+    enableLlm: true,
+    resourceTypes: selectedResourceTypes,
+  }).catch(() => {});
 
   if (quota && !('error' in quota)) {
     await recordUsage(quota.userId, quota.planType, 'llmCalls');

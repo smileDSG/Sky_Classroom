@@ -93,8 +93,8 @@ export function buildLayer1SystemPrompt(
       designDNA.decoration.density === 'sparse'
         ? '每章节3-5页，精炼简洁。'
         : designDNA.decoration.density === 'rich'
-          ? '每章节6-10页，详细展开。'
-          : '每章节5-7页，内容均衡。';
+          ? '每章节8-14页，详细展开，宁多勿少。'
+          : '每章节6-10页，内容均衡。';
 
     const moodHint = /活泼|轻快|生动|趣味/i.test(designDNA.mood)
       ? '多用 quiz、case 等互动页型。'

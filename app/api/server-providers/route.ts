@@ -8,12 +8,16 @@ import {
   getServerWebSearchProviders,
 } from '@/lib/server/provider-config';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { requireAuth } from '@/lib/server/auth/helpers';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ServerProviders');
 
 export async function GET() {
   try {
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+
     return apiSuccess({
       providers: getServerProviders(),
       tts: getServerTTSProviders(),

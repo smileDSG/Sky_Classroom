@@ -28,6 +28,7 @@ import { findSimilarByKnowledgePoints, hashProblemText } from './question-bank';
 import { createLogger } from '@/lib/logger';
 import { postProcessMathContent } from './math-postprocessor';
 import type { ProblemSpec } from './types';
+import { decideVerification, resolveReviewStatus, type AnswerReviewStatus } from './solve-verify';
 
 const log = createLogger('SolveChain');
 
@@ -36,9 +37,6 @@ const log = createLogger('SolveChain');
 const TOTAL_CHAIN_TIMEOUT = 120_000;
 const MAX_STEP_TIMEOUT = 30_000;
 const MIN_STEP_TIMEOUT = 5_000;
-
-/** Confidence threshold above which we skip the verify step. */
-const HIGH_CONFIDENCE_THRESHOLD = 0.7;
 
 /** Dynamic step timeout: use remaining chain budget, capped between min and max. */
 function getStepTimeout(elapsed: number): number {
@@ -73,6 +71,12 @@ export interface SolveChainResult {
   /** Correction from C-003 (only set when verify failed) */
   correction: CorrectResult | null;
 
+  /**
+   * 答案自校验结论：verified / corrected / pending-confirmation / skipped。
+   * 用于前端展示"答案待确认"等标注，绝不静默呈现可能错误的答案。
+   */
+  answerReview: AnswerReviewStatus;
+
   /** Knowledge points */
   knowledgePoints: { name: string; description: string; difficulty: string }[];
 
@@ -93,6 +97,8 @@ export interface SolveChainResult {
     stepsCompleted: number;
     hasCorrection: boolean;
     totalSteps: number;
+    /** Whether the final answer is independently verified (review != skipped && review passed). */
+    answerVerified: boolean;
   };
 }
 
@@ -217,6 +223,11 @@ export async function runSolveChain(
     let correction: SolveChainResult['correction'] = null;
     let knowledgePoints: SolveChainResult['knowledgePoints'] = [];
     let similarQuestions: SolveChainResult['similarQuestions'] = [];
+    // 自校验跟踪变量：是否成功运行校验、校验是否通过、是否已由修正 agent 出新答案
+    let verifyRan = false;
+    let verifyPassed = false;
+    let correctedSucceeded = false;
+    let verifySkipped = false;
 
     // ── Step 1 & 2: Analyze + Solve in parallel ───────────────────
     // Start solve immediately with universal model (fastest).
@@ -343,39 +354,45 @@ export async function runSolveChain(
       answer = postProcessMathContent(answer);
     }
 
-    // ── Step 3: Verify ─────────────────────────────────────────────
+    // ── Step 3: Self-verification ──────────────────────────────────
     log.info('[SolveChain] Step 3: Verify');
     if (chainAbort.signal.aborted) {
       throw new Error('Chain aborted');
     }
-    // Skip verify conditions:
-    // 1. High confidence from analysis (≥0.7)
-    // 2. Pure numeric answer (detected by regex)
-    // 3. Short problem (<50 chars) — likely simple
+    // 自校验策略（见 solve-verify.ts）：
+    // 可判定题(选择/填空/判断) —— 答案定值，无条件强制独立复核，绝不因
+    // "纯数字答案 / 短题 / 分析高置信"而跳过（纯数字正是填空易错点）。
+    // 开放解答题 —— 仅在高置信时跳过。
     const highConfidence = analysis?.confidence ?? 0;
-    const isPureNumericAnswer = answer && /^[\d.,\s\-+*/()]+$/.test(answer.replace(/\s/g, ''));
-    const isShortProblem = problemText.length < 50;
-    const skipVerify =
-      highConfidence >= HIGH_CONFIDENCE_THRESHOLD || isPureNumericAnswer || isShortProblem;
-    if (skipVerify) {
-      const reason =
-        highConfidence >= HIGH_CONFIDENCE_THRESHOLD
-          ? '分析置信度较高'
-          : isPureNumericAnswer
-            ? '纯数字答案'
-            : '短题目（<50字符）';
-      log.info(`[SolveChain] Step 3: Verify skipped (${reason})`);
+    const chainQuestionType =
+      analysis?.questionType ??
+      (typeof problemSpec?.questionType === 'string' ? problemSpec.questionType : null);
+
+    const verifyDecision = decideVerification({
+      questionType: chainQuestionType,
+      hasAnswer: !!answer,
+      analysisConfidence: highConfidence,
+    });
+
+    if (!answer) {
+      // 无答案：无内容可复核，保持原行为（verification 为 null），仅提示
+      verifySkipped = true;
+      warnings.push('无答案，跳过校验');
+    } else if (!verifyDecision.shouldVerify) {
+      verifySkipped = true;
+      log.info(`[SolveChain] Step 3: Verify skipped (${verifyDecision.reason})`);
       verification = {
         isCorrect: true,
         confidence: highConfidence || 0.8,
-        reasoning: `校验已跳过：${reason}`,
+        reasoning: `校验已跳过：${verifyDecision.reason}`,
       };
-    } else if (answer) {
+    } else {
       const verifyResult = await withTimeout(
         verifyAnswer(problemText, answer, problemSpec),
         getStepTimeout(Date.now() - startTime),
         'verify',
       );
+      verifyRan = true;
       if (verifyResult.ok) {
         verification = {
           isCorrect: verifyResult.value.isCorrect,
@@ -383,11 +400,16 @@ export async function runSolveChain(
           suggestedAnswer: verifyResult.value.suggestedAnswer,
           reasoning: verifyResult.value.reasoning,
         };
+        verifyPassed = verifyResult.value.isCorrect;
       } else {
         warnings.push('校验步骤超时或失败');
+        // 校验失败绝不静默接受答案 —— 标记为"待确认"兜底
+        verification = {
+          isCorrect: false,
+          confidence: 0,
+          reasoning: '独立校验超时或失败，答案待确认',
+        };
       }
-    } else {
-      warnings.push('无答案，跳过校验');
     }
 
     // ── Step 4: Correct (if verify failed) ─────────────────────────
@@ -404,6 +426,7 @@ export async function runSolveChain(
       if (correctResult.ok && correctResult.value) {
         correction = correctResult.value;
         answer = correctResult.value.answer;
+        correctedSucceeded = true;
         // Update steps with corrected version
         steps =
           correctResult.value.steps.length > 0
@@ -413,6 +436,16 @@ export async function runSolveChain(
         warnings.push('修正步骤超时或失败，保留原答案');
       }
     }
+
+    // 归约出最终答案复核状态（用于"答案待确认"标注与 verified 是否可标）
+    const answerReview: AnswerReviewStatus = resolveReviewStatus({
+      skipped: verifySkipped,
+      verifyPassed,
+      corrected: correctedSucceeded,
+    });
+    log.info(
+      `[SolveChain] Answer review: ${answerReview} (ran=${verifyRan}, passed=${verifyPassed}, corrected=${correctedSucceeded}, skipped=${verifySkipped})`,
+    );
 
     // ── Step 5+6: Knowledge points + Similar questions (parallel) ──
     log.info('[SolveChain] Step 5+6: Knowledge + Similar (parallel)');
@@ -473,6 +506,7 @@ export async function runSolveChain(
       answer,
       verification,
       correction,
+      answerReview,
       knowledgePoints,
       similarQuestions,
       warnings,
@@ -481,6 +515,7 @@ export async function runSolveChain(
         stepsCompleted,
         hasCorrection: correction !== null,
         totalSteps: 6,
+        answerVerified: answerReview === 'verified' || answerReview === 'corrected',
       },
     };
   } finally {

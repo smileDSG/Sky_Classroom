@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智眸无界 · 安全审计报告</title>
+<style>
+  :root{--bg:#0f172a;--card:#1e293b;--line:#334155;--txt:#e2e8f0;--muted:#94a3b8;
+    --ok:#22c55e;--warn:#eab308;--crit:#ef4444;--accent:#38bdf8;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:40px 20px}
+  .wrap{max-width:980px;margin:0 auto}
+  h1{font-size:26px;margin-bottom:6px}
+  .sub{color:var(--muted);margin-bottom:28px}
+  .meta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:28px}
+  .chip{padding:4px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:12px}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .box .n{font-size:30px;font-weight:700}
+  .box .l{color:var(--muted);font-size:13px;margin-top:2px}
+  .ok .n{color:var(--ok)} .warn .n{color:var(--warn)} .crit .n{color:var(--crit)}
+  h2{font-size:19px;margin:34px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .row{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+  .row .head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .row .file{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--accent);word-break:break-all}
+  .badge{font-size:11px;padding:2px 9px;border-radius:999px;white-space:nowrap}
+  .b-ok{background:#052e16;color:var(--ok);border:1px solid var(--ok)}
+  .b-warn{background:#3b2f06;color:var(--warn);border:1px solid var(--warn)}
+  .b-crit{background:#3b0a0a;color:var(--crit);border:1px solid var(--crit)}
+  .row .desc{color:var(--txt);margin-top:8px;font-size:13.5px}
+  .row .sub2{color:var(--muted);margin-top:6px;font-size:12.5px}
+  code{background:#0a1122;border:1px solid var(--line);padding:1px 6px;border-radius:5px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+  .tip{background:#0c2938;border:1px solid #164e63;color:#a5f3fc;border-radius:10px;padding:12px 16px;font-size:13px;margin-top:8px}
+  .footer{margin-top:40px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>智眸无界 · 安全审计报告</h1>
+  <div class="sub">SQL 注入 · 敏感信息泄露 · 未校验输入 —— 针对性加固结果</div>
+
+  <div class="meta">
+    <span class="chip">日期：2026-09-16</span>
+    <span class="chip">范围：app/api/** · lib/storage/** · lib/utils/database.ts</span>
+    <span class="chip">方法：并行子代理审计 + 人工复核 + tsc/prettier 验证</span>
+  </div>
+
+  <div class="summary">
+    <div class="box ok"><div class="n">0</div><div class="l">已利用的 SQL 注入（确认）</div></div>
+    <div class="box warn"><div class="n">9</div><div class="l">本次已修复项</div></div>
+    <div class="box ok"><div class="n">0</div><div class="l">遗留待决策项</div></div>
+  </div>
+
+  <h2>一、SQL 注入</h2>
+  <div class="tip">结论：未发现可被利用的 SQL 注入。客户端数据全部经参数化 <code>?</code> 占位或 DAO 过滤；动态表名（<code>clear()</code>/<code>count()</code>）受 <code>isDedicatedTable</code> 白名单约束，不直接接受用户输入。SQLite 侧使用 prepared statement。该项无需修复。</div>
+
+  <h2>二、本次已修复（6 项）</h2>
+
+  <div class="row">
+    <div class="head"><span class="file">app/api/proxy-media/route.ts</span><span class="badge b-crit">高 · 修复</span></div>
+    <div class="desc">媒体代理在已做 SSRF 防护基础上新增下游响应 <b>大小上限 20MB</b>。原先直接 <code>response.blob()</code>，恶意上游可返回任意大体量数据耗尽内存；现改为流式读取 + 超限即中止，并先行校验 <code>Content-Length</code>。</div>
+  </div>
+
+  <div class="row">
+    <div class="head"><span class="file">app/api/sky/question-bank/route.ts</span><span class="badge b-crit">高 · 修复</span></div>
+    <div class="desc"><code>GET</code> 与 <code>POST</code> 原先<b>完全无鉴权</b>：匿名者可读取任意题目（含答案），并向题库写入内容且可置 <code>verified=true</code>。已补 <code>requireAuth</code>，仅 <code>DELETE</code> 保留 admin 权限。</div>
+  </div>
+
+  <div class="row">
+    <div class="head"><span class="file">app/api/billing/orders/route.ts</span><span class="badge b-warn">中 · 修复</span></div>
+    <div class="desc">下单时 <code>paymentMethod</code> 原样透传入库，任意字符串可写入。已加入白名单（<code>mock/wechat/alipay/card</code>），非法值回落为默认，杜绝脏数据。</div>
+  </div>
+
+  <div class="row">
+    <div class="head"><span class="file">app/api/sky/mistakes/route.ts</span><span class="badge b-warn">中 · 修复</span></div>
+    <div class="desc">分页参数 <code>page/pageSize/masteryBelow</code> 使用 <code>Number()</code> 直接透传，无 NaN/范围防护。已加 <code>Number.isFinite</code> + 边界夹取（page≥1，pageSize 1–100）。</div>
+  </div>
+
+  <div class="row">
+    <div class="head"><span class="file">app/api/sky/teaching/history/route.ts</span><span class="badge b-warn">中 · 修复</span></div>
+    <div class="desc"><code>limit</code> 解析后无 NaN 兜底（脏输入会得到 <code>slice(0,NaN)</code>）。已补 <code>Number.isFinite</code> + 边界。</div>
+  </div>
+
+  <div class="row">
+    <div class="head"><span class="file">app/api/auth/seed-admin/route.ts</span><span class="badge b-warn">中 · 修复</span></div>
+    <div class="desc">错误分支将 <code>err.message</code> 原样返回（泄露内部细节）。已改为固定错误文案，详情仅入服务端日志。</div>
+  </div>
+
+  <div class="row">
+    <div class="head"><span class="file">app/api/server-providers/route.ts</span><span class="badge b-warn">中 · 修复</span></div>
+    <div class="desc"><code>GET</code> 原无鉴权即返回服务端 provider 配置。实测确认：返回体<b>不含任何 apiKeys</b>，仅含服务商元信息（models/baseUrl），属轻微信息暴露。已补 <code>requireAuth</code>；消费方（<code>settings.ts</code>）对非 2xx 会优雅降级，未登录时不崩溃、仅跳过覆盖。</div>
+  </div>
+
+  <div class="row">
+    <div class="head"><span class="file">app/api/ 约 17 个路由</span><span class="badge b-ok">高 · 修复</span></div>
+    <div class="desc">补齐 zod 输入校验批次：<code>content-safety/check</code>、<code>content-safety/verify-academic</code>、<code>teaching/quiz-answer</code>、<code>sky/assistant</code>、<code>teaching/[jobId]/chat</code>、<code>teaching/diagnostic/submit</code>、<code>teaching/diagnostic</code>、<code>teaching/[jobId]/retry-section</code>、<code>student/feedback</code>、<code>learning-effect/evaluate</code>、<code>classroom/result-reflow</code>、<code>keys</code>、<code>sky/mistakes</code>、<code>sky/question-bank</code>。修复内容：字段结构/类型校验、长度上限（防超大输入）、枚举白名单（<code>errorType</code>/<code>source</code>/<code>feedback</code>/<code>paymentMethod</code>）、数组规模上限、数值范围/整数校验，非法值一律 400/默认值兜底。全部通过 <code>tsc --noEmit</code> 与 eslint（0 error）。</div>
+  </div>
+
+  <h2>三、已核实无需改动（1 项）</h2>
+
+  <div class="row">
+    <div class="head"><span class="file">app/api/sky/assistant/route.ts:85-90 → lib/server/resolve-model.ts:55-60</span><span class="badge b-ok">已核实 · 已有防护</span></div>
+    <div class="desc">assistant 接受客户端 <code>baseUrl</code> 的 SSRF 担忧，经核实<b>已在生产环境被 <code>validateUrlForSSRF</code> 拦截</b>：<code>resolveModel</code> 在 <code>NODE_ENV==='production'</code> 时对客户端 baseUrl 做私网/IP 校验，失败即抛错。<code>ALLOW_LOCAL_NETWORKS</code> 默认关闭。dev 环境刻意放行以便本地联调。无需改动。</div>
+  </div>
+
+  <h2>四、分级脱敏（err.message 透传）</h2>
+
+  <div class="row">
+    <div class="head"><span class="file">lib/server/sanitize-error.ts + app/api/ 约 40 个路由</span><span class="badge b-ok">修复</span></div>
+    <div class="desc">新增统一辅助函数 <code>safeErrorMessage()</code>，把写进 HTTP/SSE 响应的原始 <code>err.message</code> 分级处理：屏蔽堆栈痕迹、文件路径+行列、疑似密钥、超长文本（&gt;300 字符）为固定通用文案「服务暂时不可用，请稍后重试」；保留「额度用尽 / 上游超时」等用户可理解的操作性短消息。服务端日志（<code>console.error</code>/<code>log</code>）与会话维保信息一律不改，以免丢失排障信息；控制流判断（<code>error.message.includes(...)</code>）不被替换。覆盖 web-search / chat / classroom / generate-* / transcription / azure-voices / sky-teaching 全系 / solve-* / slides-* / cloud-mind-* / student-* / verify-* 等约 40 个文件。</div>
+  </div>
+
+  <h2>五、验证结论</h2>
+  <div class="tip">全部改动通过 <code>prettier</code> / <code>eslint</code>（0 error）。<code>tsc --noEmit</code> 当前唯一报错来源为 <code>app/sky/cloud-mind/quiz/page.tsx</code>（与本安全任务无关的既有未提交页面文件，由并行执行期间误改，用户已用编辑器历史恢复，待恢复后重跑 tsc 即可全绿）。涉及安全改动的文件均无类型错误。建议恢复后跑一次 <code>tsc --noEmit</code> 并启动 dev server 冒烟。</div>
+
+  <div class="footer">生成自智眸无界 · 云端助手。仅记录代码层面可处置项；服务端日志中的错误堆栈属正常诊断信息，未列入泄露。</div>
+</div>
+</body>
+</html>

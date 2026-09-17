@@ -134,7 +134,8 @@
  * - Always include provider name in error messages
  */
 
-import { extractText, getDocumentProxy, extractImages } from 'unpdf';
+import { getDocumentProxy, extractText } from 'unpdf';
+import { extractPdfInWorker } from '@/lib/server/workers/pdf-extract';
 // import sharp from 'sharp'; // Temporarily disabled for UI build test
 import type { PDFParserConfig } from './types';
 import type { ParsedPdfContent } from '@/lib/types/pdf';
@@ -195,77 +196,30 @@ export async function parsePDF(
  * Parse PDF using unpdf (existing implementation)
  */
 async function parseWithUnpdf(pdfBuffer: Buffer): Promise<ParsedPdfContent> {
-  const uint8Array = new Uint8Array(pdfBuffer);
-  const pdf = await getDocumentProxy(uint8Array);
-  const numPages = pdf.numPages;
-
-  // Extract text using the document proxy
-  const { text: pdfText } = await extractText(pdf, {
-    mergePages: true,
-  });
-
-  // Extract images using the same document proxy
-  const images: string[] = [];
-  const pdfImagesMeta: Array<{
-    id: string;
-    src: string;
-    pageNumber: number;
-    width: number;
-    height: number;
-  }> = [];
-  let imageCounter = 0;
-
-  for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-    try {
-      const pageImages = await extractImages(pdf, pageNum);
-      for (let i = 0; i < pageImages.length; i++) {
-        const imgData = pageImages[i];
-        try {
-          // Use sharp to convert raw image data to PNG base64
-          // Temporarily disabled - sharp not installed
-          // const pngBuffer = await sharp(Buffer.from(imgData.data), {
-          //   raw: {
-          //     width: imgData.width,
-          //     height: imgData.height,
-          //     channels: imgData.channels,
-          //   },
-          // })
-          //   .png()
-          //   .toBuffer();
-
-          // Skip image processing for now
-          log.warn(`Image ${i + 1} from page ${pageNum} skipped - sharp not available`);
-          continue;
-
-          // Convert to base64
-          // const base64 = `data:image/png;base64,${pngBuffer.toString('base64')}`;
-          // imageCounter++;
-          // const imgId = `img_${imageCounter}`;
-          // images.push(base64);
-          // pdfImagesMeta.push({
-          //   id: imgId,
-          //   src: base64,
-          //   pageNumber: pageNum,
-          //   width: imgData.width,
-          //   height: imgData.height,
-          // });
-        } catch (sharpError) {
-          log.error(`Failed to convert image ${i + 1} from page ${pageNum}:`, sharpError);
-        }
-      }
-    } catch (pageError) {
-      log.error(`Failed to extract images from page ${pageNum}:`, pageError);
-    }
+  // Run the heavy pdf.js parse off the main event loop in a worker thread.
+  // Fall back to inline parsing if the worker path is unavailable, so the
+  // function still works if the bundler can't emit a worker module.
+  let text: string;
+  let numPages: number;
+  try {
+    const result = await extractPdfInWorker(pdfBuffer);
+    text = result.text;
+    numPages = result.pageCount;
+  } catch (workerErr) {
+    log.warn(`PDF worker unavailable, falling back to inline parse: ${String(workerErr)}`);
+    const uint8Array = new Uint8Array(pdfBuffer);
+    const pdf = await getDocumentProxy(uint8Array);
+    numPages = pdf.numPages;
+    const extracted = await extractText(pdf, { mergePages: true });
+    text = extracted.text;
   }
 
   return {
-    text: pdfText,
-    images,
+    text,
+    images: [],
     metadata: {
       pageCount: numPages,
       parser: 'unpdf',
-      imageMapping: Object.fromEntries(pdfImagesMeta.map((m) => [m.id, m.src])),
-      pdfImages: pdfImagesMeta,
     },
   };
 }

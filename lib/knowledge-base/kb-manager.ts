@@ -315,7 +315,9 @@ export async function clearType(kbType: KBType): Promise<void> {
 export async function stats(): Promise<KBStats> {
   const dao = await getDao();
   // Load all types for stats
-  await Promise.all((['solve', 'slides', 'cards', 'classroom'] as KBType[]).map(ensureLoaded));
+  await Promise.all(
+    (['solve', 'slides', 'cards', 'classroom', 'course'] as KBType[]).map(ensureLoaded),
+  );
   return dao.getStats();
 }
 

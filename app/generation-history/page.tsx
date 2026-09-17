@@ -460,7 +460,7 @@ export default function GenerationHistoryPage() {
             {resourceJobs.length > 0 && (
               <div>
                 <h2 className="mb-3 text-sm font-semibold text-slate-500 dark:text-slate-400">
-                  课程资源工坊
+                  学习包工坊
                 </h2>
                 <div className="space-y-3">
                   {resourceJobs.map((job) => (

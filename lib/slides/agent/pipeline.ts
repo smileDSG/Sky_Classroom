@@ -14,6 +14,7 @@ import { designPage } from './page-design-agent';
 import { instructionExecutor, type PageInstructions } from './instruction-executor';
 import { generatePreviewFromPptx } from '../pptx-preview';
 import { runQA, type QAReport } from './qa-agent';
+import { acquireGenerationSlot } from '@/lib/server/generation-gate';
 import { createLogger } from '@/lib/logger';
 import type { LanguageModel } from 'ai';
 import type { DesignDNA } from './design-dna';
@@ -272,6 +273,12 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
   createAudit(jobId, topic, difficulty);
   startStep(jobId, 'planning');
   if (personalization) updateJob(jobId, { personalization });
+
+  // Global multi-user concurrency gate: queue instead of hard-rejecting when
+  // too many heavy pipelines are already running (see generation-gate.ts).
+  const releaseGenerationSlot = await acquireGenerationSlot(() => {
+    updateJob(jobId, { message: '排队等待生成...', progress: 0 });
+  });
 
   try {
     if (process.env.SKY_SLIDES_LEGACY_PIPELINE !== 'true') {
@@ -909,6 +916,8 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
     log.error(`[Pipeline:${jobId}] failed: ${msg}`);
     logToFile('ERROR', 'Pipeline', `[${jobId}] failed: ${msg}`);
     updateJob(jobId, { stage: 'done', progress: 0, error: msg });
+  } finally {
+    releaseGenerationSlot();
   }
 }
 
@@ -1114,12 +1123,12 @@ function selectOpenMaicExportTheme(designDNA: DesignDNA): PptxThemeId {
   if (motif === 'neon-grid') return 'tech-dark';
   if (motif === 'organic-circles') return 'nature-fresh';
   if (motif === 'ink-wash' || motif === 'chinese-seal') return 'academic';
-  if (motif === 'geometric-lines') return 'sky-blue';
+  if (motif === 'geometric-lines') return 'academic-navy';
 
   const styleText = `${designDNA.styleName} ${designDNA.mood}`.toLowerCase();
   if (/dark|tech|minimal|charcoal/.test(styleText)) return 'tech-dark';
   if (/pink|cream|berry|soft/.test(styleText)) return 'macaron-pink';
-  return 'sky-blue';
+  return 'academic-navy';
 }
 
 function buildOpenMaicStyleDirective(

@@ -17,6 +17,7 @@ import type { AgentInfo } from '@/lib/generation/generation-pipeline';
 import type { SceneOutline, PdfImage, ImageMapping } from '@/lib/types/generation';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
@@ -184,6 +185,6 @@ export async function POST(req: NextRequest) {
       `Scene content generation failed [scene="${outlineTitle ?? 'unknown'}", model=${resolvedModelString ?? 'unknown'}]:`,
       error,
     );
-    return apiError('INTERNAL_ERROR', 500, error instanceof Error ? error.message : String(error));
+    return apiError('INTERNAL_ERROR', 500, safeErrorMessage(error));
   }
 }

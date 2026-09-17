@@ -14,11 +14,31 @@ import {
   search,
 } from '@/lib/question-bank/dao';
 import type { QuestionBankFilter, QuestionBankInsert } from '@/lib/question-bank/types';
-import { requireAdmin } from '@/lib/server/auth/helpers';
+import { z } from 'zod';
+import { requireAuth, requireAdmin } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:SkyQuestionBank');
 const DIFFICULTIES = new Set(['easy', 'medium', 'hard']);
 const QUESTION_TYPES = new Set(['choice', 'fill', 'solve', 'judge']);
+
+const QuestionBankCreateSchema = z.object({
+  content: z.string().min(1).max(20000),
+  problemText: z.string().max(20000).optional(),
+  answer: z.string().min(1).max(20000),
+  subject: z.string().max(100).optional(),
+  grade: z.string().max(100).optional(),
+  difficulty: z.string().max(20).optional(),
+  questionType: z.string().max(50).optional(),
+  explanation: z.string().max(20000).optional(),
+  solution: z.string().max(20000).optional(),
+  knowledgePoints: z.array(z.string().max(200)).max(20).optional(),
+  image: z.string().max(2000).optional(),
+  problemImage: z.string().max(2000).optional(),
+  options: z.array(z.unknown()).max(20).optional(),
+  source: z.string().max(100).optional(),
+  tags: z.array(z.string().max(100)).max(20).optional(),
+  verified: z.boolean().optional(),
+});
 
 type KnowledgePointInput = string | { name?: unknown };
 
@@ -52,6 +72,9 @@ function normalizeOptions(value: unknown): string[] | undefined {
 }
 
 export async function GET(req: Request) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const url = new URL(req.url);
     const query = url.searchParams.get('query') || '';
@@ -157,8 +180,16 @@ export async function DELETE(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
-    const body = (await req.json()) as Record<string, unknown>;
+    const rawBody = (await req.json()) as unknown;
+    const parsed = QuestionBankCreateSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '无效的题目数据');
+    }
+    const body = parsed.data;
     const content = String(body.content ?? body.problemText ?? '').trim();
     const answer = String(body.answer ?? '').trim();
 

@@ -1,0 +1,38 @@
+name: Deploy to AutoDL
+
+# 触发时机：
+# 1) push 到 main
+# 2) 手动触发（Actions 页点 "Run workflow"）
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 同一时间只允许一个部署进行，避免连续提交导致并发抢锁
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # 生产环境保护：可在此加 required reviewers / 环境 secret
+    environment: production
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.AUTODL_HOST }}
+          username: ${{ secrets.AUTODL_USER }}
+          key: ${{ secrets.AUTODL_SSH_KEY }}
+          port: ${{ secrets.AUTODL_PORT }}
+          # 服务器拉取 origin/main 并重建容器
+          script: |
+            set -e
+            cd "${{ vars.DEPLOY_PATH }}"
+            echo "==> 拉取 GitHub 最新代码"
+            git config pull.rebase false
+            git fetch origin main
+            git reset --hard origin/main
+            echo "==> 重新构建并启动容器 (端口:6006)"
+            docker compose -f docker-compose.yml -f docker-compose.autodl.yml up --build -d

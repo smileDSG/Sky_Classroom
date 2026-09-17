@@ -6,7 +6,7 @@
  */
 
 import { createLogger } from '@/lib/logger';
-import { callLLM } from '@/lib/ai/llm';
+import { callLLM, streamLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { resolveApiKey, resolveBaseUrl } from '@/lib/server/provider-config';
 import { retrieveRelevantContext } from '@/lib/agents/rag/retriever';
@@ -20,7 +20,7 @@ import {
 
 const log = createLogger('MemoryCardsAgent');
 
-export const MEMORY_CARDS_AGENT_PROMPT_VERSION = 'v2-profile-driven';
+export const MEMORY_CARDS_AGENT_PROMPT_VERSION = 'v3-student-facing';
 
 // ── 输出结构 ───────────────────────────────────────────────────────
 
@@ -68,7 +68,13 @@ const MEMORY_CARDS_AGENT_SYSTEM_PROMPT = `你是一位专业的记忆术专家�
 - 背面：清晰的解释，包含关键信息但不冗长
 - 每张卡片聚焦一个知识点
 - 使用中文为主，专有名词保留英文
-- 数学公式使用 LaTeX 格式（$...$）
+- **公式规范（高优先级）**：整条数学式子必须被一对美元符号包裹，例如 「(-1)^2 - 1 = 0 \neq 4」应写为「$(-1)^2 - 1 = 0 \neq 4$」。不得把 \neq、\frac 等命令裸写在外面。指数一律用 ^，下标用 _，不要使用 Unicode 上标/下标（如用 x^2 而非 x²）
+
+## 内容可读性（面向学生）
+- 卡片是给**学生复习时读懂**的，不是给 AI 看的诊断报告
+- 答案（back）用第二人称向学生解释「应当记住什么、如何判断」，避免根因分析、错误模式这类内部口吻
+- 纠错类卡片：正面清楚写出要避免的错误，背面用一句能看懂的话说明正确做法
+- 步骤或结论要够具体，能脱离原输入独立读懂，不要让用户不知道卡片在干什么
 
 ## 助记技巧类型
 - 口诀/顺口溜
@@ -189,9 +195,9 @@ export async function generateMemoryCards(
 
   let userPrompt: string;
   if (topic) {
-    userPrompt = `请根据以下关于"${topic}"的内容，制作${cardCount ? `约${cardCount}张` : ''}记忆卡片：\n\n${contentText}${profileContext}${ragContext}`;
+    userPrompt = `请根据以下关于"${topic}"的内容，制作${cardCount ? `恰好${cardCount}张（不要多也不要少）` : ''}记忆卡片：\n\n${contentText}${profileContext}${ragContext}`;
   } else {
-    userPrompt = `请根据以下内容，制作${cardCount ? `约${cardCount}张` : ''}记忆卡片：\n\n${contentText}${profileContext}${ragContext}`;
+    userPrompt = `请根据以下内容，制作${cardCount ? `恰好${cardCount}张（不要多也不要少）` : ''}记忆卡片：\n\n${contentText}${profileContext}${ragContext}`;
   }
 
   log.info(
@@ -213,20 +219,270 @@ export async function generateMemoryCards(
   const text = result.text || '';
   log.info(`Memory cards generation complete, response length: ${text.length}`);
 
-  // 解析 JSON 响应
+  const parsed = parseMemoryCardsDeck(text);
+  if (!parsed) {
+    log.error('Failed to parse memory cards response');
+    throw new Error('Failed to parse AI response');
+  }
+
+  const limited = limitDeckCards(parsed, cardCount);
+  setCloudMindCache(cacheKey, limited);
+  return limited;
+}
+
+/**
+ * 无论 AI 生成多少张，都严格裁剪到用户期望的卡片数量。
+ * 避免"选了 6 张却展示 21 张"的不一致体验。
+ */
+export function limitDeckCards(deck: MemoryCardDeck, cardCount?: number): MemoryCardDeck {
+  if (!cardCount || cardCount <= 0 || deck.cards.length <= cardCount) return deck;
+  return { ...deck, cards: deck.cards.slice(0, cardCount) };
+}
+
+// ── 流式生成 ─────────────────────────────────────────────────────────
+
+export type MemoryCardsStreamEvent =
+  | { type: 'cards'; cards: MemoryCardDeck['cards'] }
+  | { type: 'done'; deck: MemoryCardDeck; partial?: boolean }
+  | { type: 'error'; message: string };
+
+export function parseMemoryCardsDeck(text: string): MemoryCardDeck | null {
+  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, text];
+  const jsonStr = (jsonMatch[1] || text).trim();
   try {
-    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, text];
-    const jsonStr = jsonMatch[1] || text;
-    const parsed = JSON.parse(jsonStr.trim()) as MemoryCardDeck;
-
-    if (!parsed.topic || !parsed.cards || !Array.isArray(parsed.cards)) {
-      throw new Error('Invalid response structure');
-    }
-
-    setCloudMindCache(cacheKey, parsed);
+    const parsed = JSON.parse(jsonStr) as MemoryCardDeck;
+    if (!parsed.topic || !parsed.cards || !Array.isArray(parsed.cards)) return null;
     return parsed;
-  } catch (parseError) {
-    log.error('Failed to parse memory cards response:', parseError);
-    throw new Error(`Failed to parse AI response: ${(parseError as Error).message}`);
+  } catch {
+    return null;
+  }
+}
+
+function findBalancedObjectEnd(text: string, start: number): number {
+  let depth = 0;
+  let inString = false;
+  for (let i = start; i < text.length; i += 1) {
+    const ch = text[i];
+    if (inString) {
+      if (ch === '\\') {
+        i += 1;
+        continue;
+      }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === '{') depth += 1;
+    else if (ch === '}') {
+      depth -= 1;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * 从增量文本中提取"已完成"的卡片对象（用于流式渲染）。
+ * 只扫描 `"cards": [` 数组开头的完整对象，未闭合/半截对象留在缓冲区等待下一块。
+ */
+export function extractCompleteCardsFromBuffer(buffer: string): MemoryCardDeck['cards'] {
+  const markerMatch = /"cards"\s*:/.exec(buffer);
+  if (!markerMatch) return [];
+  const arrayStart = buffer.indexOf('[', markerMatch.index);
+  if (arrayStart === -1) return [];
+
+  const cards: MemoryCardDeck['cards'] = [];
+  let pos = arrayStart + 1;
+  for (;;) {
+    while (pos < buffer.length && /[\s,]/.test(buffer[pos])) pos += 1;
+    if (pos >= buffer.length || buffer[pos] !== '{') break;
+    const end = findBalancedObjectEnd(buffer, pos);
+    if (end === -1) break;
+    try {
+      const card = JSON.parse(buffer.slice(pos, end + 1)) as MemoryCardDeck['cards'][number];
+      if (
+        card &&
+        typeof card === 'object' &&
+        typeof card.front === 'string' &&
+        typeof card.back === 'string'
+      ) {
+        cards.push(card);
+        pos = end + 1;
+        continue;
+      }
+    } catch {
+      /* 半截/畸形对象——停止扫描，等待后续分块 */
+    }
+    break;
+  }
+  return cards;
+}
+
+function buildPartialMemoryDeck(cards: MemoryCardDeck['cards'], topic?: string): MemoryCardDeck {
+  return {
+    topic: topic || '记忆卡片',
+    description: '',
+    cards,
+    studyTips: '',
+    reviewIntervals: [],
+  };
+}
+
+export interface StreamMemoryCardsInput {
+  contentText: string;
+  topic?: string;
+  cardCount?: number;
+  profileOrProjection?: StudentProfile | string;
+  abortSignal?: AbortSignal;
+}
+
+/**
+ * 流式生成记忆卡片：边生成边产出已完成卡片，最后产出完整卡组。
+ * 中断/解析失败时已产出的卡片不丢（partial deck），失败可重试而非整副失败。
+ */
+export async function* streamMemoryCardsDeck(
+  input: StreamMemoryCardsInput,
+): AsyncGenerator<MemoryCardsStreamEvent> {
+  const { contentText, topic, cardCount, profileOrProjection, abortSignal } = input;
+
+  const apiKey = resolveApiKey('deepseek');
+  const baseUrl = resolveBaseUrl('deepseek') || 'https://api.deepseek.com/v1';
+
+  if (!apiKey) {
+    yield {
+      type: 'error',
+      message: 'DeepSeek API key is not configured. Set DEEPSEEK_API_KEY in .env.local.',
+    };
+    return;
+  }
+
+  const { model } = getModel({
+    providerId: 'deepseek',
+    modelId: 'deepseek-chat',
+    apiKey,
+    baseUrl,
+  });
+
+  // — RAG: 从知识库检索相关补充内容
+  let ragContext = '';
+  try {
+    const query = topic || contentText.slice(0, 200);
+    const { search } = await import('@/lib/knowledge-base/kb-manager');
+    const kbResults = await search({
+      kbType: 'cards',
+      query,
+      topK: 3,
+      threshold: 0.05,
+      verifiedOnly: true,
+    });
+
+    if (kbResults.length > 0) {
+      const contextParts = kbResults.map((r) => `【${r.chunk.docTitle}】\n${r.chunk.content}`);
+      ragContext = `\n\n【参考卡片（来自已有卡片库）】\n${contextParts.join('\n---\n')}`;
+      log.info(`Cards KB retrieved ${kbResults.length} chunks`);
+    } else {
+      const ragResult = await retrieveRelevantContext(query, {
+        topK: 3,
+        rerank: true,
+        maxContextChars: 2000,
+      });
+      if (ragResult.contextText) {
+        ragContext = `\n\n【补充参考资料（来自知识库）】\n${ragResult.contextText}`;
+        log.info(`RAG retrieved ${ragResult.chunks.length} chunks for memory cards`);
+      }
+    }
+  } catch (ragErr) {
+    log.warn('RAG retrieval failed for memory cards:', ragErr);
+  }
+
+  const profileContext =
+    typeof profileOrProjection === 'string'
+      ? `\n\n${profileOrProjection}`
+      : profileOrProjection
+        ? `\n\n${buildProfileContextPrompt(profileOrProjection, { maxWeakPoints: 5, maxErrorPatterns: 3 })}`
+        : '';
+
+  const cacheKey = buildCloudMindCacheKey('memory-cards', {
+    version: MEMORY_CARDS_AGENT_PROMPT_VERSION,
+    contentText,
+    topic,
+    cardCount,
+    profileContext,
+    ragContext,
+  });
+  const cached = getCloudMindCache<MemoryCardDeck>(cacheKey);
+  if (cached) {
+    log.info(`Memory cards stream cache hit, topic: ${topic || 'auto-detect'}`);
+    yield { type: 'done', deck: limitDeckCards(cached, cardCount) };
+    return;
+  }
+
+  const userPrompt = topic
+    ? `请根据以下关于"${topic}"的内容，制作${cardCount ? `恰好${cardCount}张（不要多也不要少）` : ''}记忆卡片：\n\n${contentText}${profileContext}${ragContext}`
+    : `请根据以下内容，制作${cardCount ? `恰好${cardCount}张（不要多也不要少）` : ''}记忆卡片：\n\n${contentText}${profileContext}${ragContext}`;
+
+  log.info(
+    `Streaming memory cards, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}, profile injected: ${Boolean(profileOrProjection)}`,
+  );
+
+  const result = streamLLM(
+    {
+      model,
+      system: MEMORY_CARDS_AGENT_SYSTEM_PROMPT,
+      prompt: userPrompt,
+      temperature: 0.7,
+      maxOutputTokens: cardCount ? Math.min(8192, Math.max(2048, cardCount * 520)) : 4096,
+      ...(abortSignal ? { abortSignal } : {}),
+    },
+    'cloud-mind-memory-cards-stream',
+  );
+
+  let buffer = '';
+  let emittedCount = 0;
+  const limit = cardCount && cardCount > 0 ? cardCount : undefined;
+  try {
+    for await (const delta of result.textStream) {
+      buffer += delta;
+      const extracted = extractCompleteCardsFromBuffer(buffer);
+      const bounded = limit ? extracted.slice(0, limit) : extracted;
+      if (bounded.length > emittedCount) {
+        const newCards = bounded.slice(emittedCount);
+        emittedCount = bounded.length;
+        yield { type: 'cards', cards: newCards };
+        if (limit && emittedCount >= limit) break;
+      }
+    }
+  } catch (err) {
+    log.warn('Memory cards stream interrupted:', err);
+    const partialCards = extractCompleteCardsFromBuffer(buffer).slice(0, limit ?? Infinity);
+
+    if (partialCards.length > 0) {
+      yield { type: 'done', deck: buildPartialMemoryDeck(partialCards, topic), partial: true };
+    } else {
+      yield {
+        type: 'error',
+        message: err instanceof Error ? err.message : '生成中断，请重试',
+      };
+    }
+    return;
+  }
+
+  const deck = parseMemoryCardsDeck(buffer);
+  if (deck) {
+    const limited = limitDeckCards(deck, cardCount);
+    setCloudMindCache(cacheKey, limited);
+    yield { type: 'done', deck: limited };
+    return;
+  }
+
+  const partialCards = extractCompleteCardsFromBuffer(buffer).slice(0, limit ?? Infinity);
+  if (partialCards.length > 0) {
+    log.warn('Memory cards full parse failed, falling back to partial deck');
+    yield { type: 'done', deck: buildPartialMemoryDeck(partialCards, topic), partial: true };
+  } else {
+    yield { type: 'error', message: 'Failed to parse AI response' };
   }
 }

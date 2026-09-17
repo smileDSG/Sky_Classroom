@@ -3,6 +3,7 @@ import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { createLogger } from '@/lib/logger';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('StudentProfileAPI');
 
@@ -53,7 +54,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Failed to get student profile:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

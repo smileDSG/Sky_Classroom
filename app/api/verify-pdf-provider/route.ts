@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { resolvePDFApiKey, resolvePDFBaseUrl } from '@/lib/server/provider-config';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { MINERU_CLOUD_DEFAULT_BASE } from '@/lib/pdf/constants';
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
       } else if (error.message.includes('timeout') || error.name === 'TimeoutError') {
         errorMessage = 'Connection timed out';
       } else {
-        errorMessage = error.message;
+        errorMessage = safeErrorMessage(error);
       }
     }
 

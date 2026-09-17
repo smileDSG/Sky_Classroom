@@ -1,5 +1,6 @@
 import { type NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { listClassroomGenerationJobsHybrid } from '@/lib/server/classroom-job-store-hybrid';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { createLogger } from '@/lib/logger';
@@ -71,7 +72,7 @@ export async function GET(req: NextRequest) {
       'INTERNAL_ERROR',
       500,
       'Failed to list classroom generation jobs',
-      error instanceof Error ? error.message : String(error),
+      safeErrorMessage(error),
     );
   }
 }

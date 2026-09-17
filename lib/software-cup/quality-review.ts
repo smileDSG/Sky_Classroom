@@ -47,7 +47,6 @@ function reviewResource(
     resource.contentPreview,
     resource.content,
     resource.personalizationReason,
-    ...(resource.slides ?? []),
   ]
     .filter(Boolean)
     .join(' ');

@@ -153,8 +153,8 @@ export async function exportPptx(options: PptxExportOptions): Promise<PptxExport
   } = options;
 
   const theme = options.designDNA
-    ? buildThemeFromDesignDNA(options.designDNA, options.theme || 'sky-blue')
-    : getTheme(options.theme || 'sky-blue');
+    ? buildThemeFromDesignDNA(options.designDNA, options.theme || 'academic-navy')
+    : getTheme(options.theme || 'academic-navy');
   const useAiLayout = layoutMode === 'ai';
   const startTime = Date.now();
   const totalSlides = slides.length;

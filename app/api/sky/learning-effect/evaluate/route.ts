@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 
 import { getServerStorage } from '@/lib/server/server-storage';
 import { buildSoftwareCupProfile } from '@/lib/software-cup/demo-service';
@@ -7,7 +8,6 @@ import {
   evaluatePracticeResults,
   learningEffectToProfileSignals,
   type PracticeResult,
-  type ResourceUsageResult,
 } from '@/lib/software-cup/learning-effect';
 import { createProfileSignalDAO } from '@/lib/student/profile-signals';
 import { requireAuth } from '@/lib/server/auth/helpers';
@@ -67,23 +67,51 @@ function buildNextActions(accuracy: number): string[] {
   return ['进入代码案例', '推送项目任务', '安排错题复盘'];
 }
 
+const EvaluateSchema = z.object({
+  input: z.string().max(200).optional(),
+  results: z
+    .array(
+      z.object({
+        questionId: z.string().max(200),
+        knowledgePoint: z.string().max(200),
+        correct: z.boolean(),
+        errorTag: z.string().max(200).optional(),
+      }),
+    )
+    .min(1)
+    .max(200)
+    .optional(),
+  resourceUsage: z
+    .array(
+      z.object({
+        resourceId: z.string().max(200),
+        resourceType: z.string().max(100),
+        action: z.enum(['view', 'favorite', 'skip', 'complete']),
+        completionRate: z.number().min(0).max(100).optional(),
+        durationSeconds: z.number().int().min(0).optional(),
+      }),
+    )
+    .max(500)
+    .optional(),
+});
+
 export async function POST(req: NextRequest) {
   const auth = await requireAuth();
   if ('error' in auth) return auth.error;
 
-  const body = (await req.json().catch(() => ({}))) as {
-    input?: string;
-    results?: PracticeResult[];
-    resourceUsage?: ResourceUsageResult[];
-  };
-  const results = body.results ?? DEFAULT_RESULTS;
+  const parsed = EvaluateSchema.safeParse(await req.json().catch(() => ({})));
+  if (!parsed.success) {
+    return Response.json({ success: false, error: 'Invalid request' }, { status: 400 });
+  }
+
+  const results = parsed.data.results ?? DEFAULT_RESULTS;
   const [profile, summary] = await Promise.all([
-    buildSoftwareCupProfile(body.input || ''),
+    buildSoftwareCupProfile(parsed.data.input || ''),
     Promise.resolve(evaluatePracticeResults(results)),
   ]);
   const report = buildLearningEffectReport({
     results,
-    resourceUsage: body.resourceUsage ?? [],
+    resourceUsage: parsed.data.resourceUsage ?? [],
   });
 
   const masteryByKnowledge = buildMasteryByKnowledge(results);

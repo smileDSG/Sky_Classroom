@@ -5,6 +5,7 @@
  * for personalised responses.
  */
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { streamLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
@@ -40,6 +41,25 @@ const log = createLogger('API:SkyAssistant');
 
 export const maxDuration = 30;
 
+const AssistantSchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.string().max(50),
+        content: z.string().max(20000),
+      }),
+    )
+    .min(1)
+    .max(50, 'messages exceeds 50 turns'),
+  subject: z.string().max(100).optional(),
+  difficulty: z.string().max(50).optional(),
+  style: z.string().max(50).optional(),
+  model: z.string().max(200).optional(),
+  apiKey: z.string().max(2000).optional(),
+  baseUrl: z.string().max(500).optional(),
+  providerType: z.string().max(50).optional(),
+});
+
 let _daoPromise: ReturnType<typeof initDAO> | null = null;
 
 async function initDAO() {
@@ -55,16 +75,18 @@ async function getDAO() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages, subject, difficulty, style } = body as {
-      messages: { role: string; content: string }[];
-      subject?: string;
-      difficulty?: string;
-      style?: string;
-    };
-
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'messages is required');
+    const parsed = AssistantSchema.safeParse(body);
+    if (!parsed.success) {
+      return apiError(
+        API_ERROR_CODES.INVALID_REQUEST,
+        400,
+        'messages is required',
+        parsed.error.issues[0].message,
+      );
     }
+
+    const { messages, subject, difficulty, style, model, apiKey, baseUrl, providerType } =
+      parsed.data;
 
     const auth = await requireAuth();
     if ('error' in auth) return auth.error;
@@ -82,11 +104,15 @@ export async function POST(req: NextRequest) {
     const latestUserMessage =
       [...aiMessages].reverse().find((m) => m.role === 'user')?.content ?? '';
 
-    const { model, modelInfo, thinkingConfig } = await resolveModel({
-      modelString: body.model || 'openrouter:deepseek-v4-pro',
-      apiKey: body.apiKey || process.env.OPENROUTER_API_KEY || '',
-      baseUrl: body.baseUrl || process.env.OPENROUTER_BASE_URL || '',
-      providerType: body.providerType,
+    const {
+      model: resolvedModel,
+      modelInfo,
+      thinkingConfig,
+    } = await resolveModel({
+      modelString: model || 'openrouter:deepseek-v4-pro',
+      apiKey: apiKey || process.env.OPENROUTER_API_KEY || '',
+      baseUrl: baseUrl || process.env.OPENROUTER_BASE_URL || '',
+      providerType,
     });
 
     // Load student context for personalised responses
@@ -190,7 +216,7 @@ export async function POST(req: NextRequest) {
 
     const result = streamLLM(
       {
-        model,
+        model: resolvedModel,
         system: systemPrompt,
         messages: aiMessages,
         maxOutputTokens: modelInfo?.outputWindow,

@@ -53,7 +53,8 @@ function toLegacyTheme(token: ThemeToken): PptxTheme {
 
 /** Legacy registry for backward compatibility */
 export const PPTX_THEMES: Record<PptxThemeId, PptxTheme> = {
-  'sky-blue': toLegacyTheme(getThemeById('sky-blue')),
+  'academic-navy': toLegacyTheme(getThemeById('academic-navy')),
+  'sky-blue': toLegacyTheme(getThemeById('sky-blue')), // 历史别名
   minimal: toLegacyTheme(getThemeById('minimal')),
   academic: toLegacyTheme(getThemeById('academic')),
   'tech-dark': toLegacyTheme(getThemeById('tech-dark')),
@@ -64,7 +65,7 @@ export const PPTX_THEMES: Record<PptxThemeId, PptxTheme> = {
 
 /** Get legacy theme by ID (backward compatible) */
 export function getPptxTheme(id: PptxThemeId): PptxTheme {
-  return PPTX_THEMES[id] || PPTX_THEMES['sky-blue'];
+  return PPTX_THEMES[id] || PPTX_THEMES['academic-navy'];
 }
 
 /** Get full ThemeToken (recommended for new code) */
@@ -84,6 +85,12 @@ export function buildThemeFromDesignDNA(dna: DesignDNA, baseId: PptxThemeId): Th
   const c = dna.colors;
   const f = dna.fonts;
   const hex = (v: string) => `#${v.toUpperCase()}`;
+
+  // 统一中文字体为思源黑体 Noto Sans SC，并固定学术级字号层级。
+  // 避免个别 legacy 风格把微软雅黑/小字号带到导出课件，导致字体与字号忽乱。
+  const cnFont = 'Noto Sans SC';
+  const bodyFontSize = Math.min(30, Math.max(14, f.bodySize + 2));
+  const captionFontSize = Math.min(20, Math.max(11, f.captionSize + 2));
 
   return {
     ...base,
@@ -106,13 +113,13 @@ export function buildThemeFromDesignDNA(dna: DesignDNA, baseId: PptxThemeId): Th
     bodyMutedColor: hex(c.textMuted),
     pageNumColor: hex(c.textMuted),
     dividerColor: hex(c.accentLight),
-    fontFamily: f.body,
-    headingFont: f.heading,
-    coverTitleSize: Math.min(56, Math.max(36, f.headingSize)),
-    coverSubSize: Math.min(24, Math.max(14, Math.round(f.pageTitleSize * 0.7))),
-    titleFontSize: Math.min(36, Math.max(22, f.pageTitleSize)),
-    bodyFontSize: Math.min(18, Math.max(12, f.bodySize + 2)),
-    captionFontSize: Math.min(14, Math.max(9, f.captionSize + 2)),
+    fontFamily: cnFont,
+    headingFont: cnFont,
+    coverTitleSize: Math.min(56, Math.max(36, base.coverTitleSize)),
+    coverSubSize: Math.min(24, Math.max(14, base.coverSubSize)),
+    titleFontSize: Math.min(36, Math.max(24, base.titleFontSize)),
+    bodyFontSize,
+    captionFontSize,
     shapeOutlineColor: hex(c.accentLight),
   };
 }

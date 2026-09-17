@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { getServerStorage } from '@/lib/server/server-storage';
@@ -14,8 +15,14 @@ import { extractPrerequisites } from '@/lib/teaching/diagnostic-generator';
 import { search } from '@/lib/question-bank/dao';
 import { generateQuiz } from '@/lib/agents/cloud-mind/quiz-agent';
 import type { DiagnosticQuestion } from '@/lib/teaching/diagnostic-generator';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('TeachingDiagnosticAPI');
+
+const DiagnosticSchema = z.object({
+  topic: z.string().min(1).max(500),
+  subject: z.string().max(100).optional(),
+});
 
 const SESSION_TABLE = 'diagnostic_sessions';
 const SESSION_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -141,7 +148,12 @@ async function generateDiagnosticQuestions(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { topic, subject: requestedSubject } = body;
+    const parsed = DiagnosticSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Missing topic' }, { status: 400 });
+    }
+
+    const { topic, subject: requestedSubject } = parsed.data;
 
     if (!topic || typeof topic !== 'string') {
       return NextResponse.json({ error: 'Missing topic' }, { status: 400 });
@@ -207,7 +219,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Diagnostic generation failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

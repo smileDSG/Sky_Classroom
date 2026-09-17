@@ -122,9 +122,24 @@ async function generateChunksContent(
 
     const parsed = parseJsonResponse<Record<string, unknown>>(result.text || '');
     if (!parsed || !Array.isArray(parsed.chunks)) {
-      // LLM 返回了内容但无法解析为 JSON chunks —— 用原文兜底展示，避免直接降级为"生成失败"
       const rawText = (result.text || '').trim();
       if (rawText) {
+        // If the LLM returned a JSON-looking wrapper that failed to parse, do
+        // not leak the raw JSON to the learner — mark the chunk failed so the
+        // UI shows "生成失败" and a retry action instead.
+        const looksJson = /^[{[]/.test(rawText);
+        if (looksJson) {
+          log.warn(`[ContentGen] Unparseable JSON chunks for ${section.id}, marking chunk failed`);
+          return [
+            {
+              sectionId: section.id,
+              type: 'text',
+              content: '',
+              order: 1,
+              failed: true,
+            },
+          ];
+        }
         log.warn(
           `[ContentGen] Unparseable chunks for ${section.id}, using raw LLM text as fallback`,
         );

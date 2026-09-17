@@ -2365,3 +2365,58 @@ html:not(.dark) [data-dashboard-theme] [class*='from-white/\\[0'] {
 html:not(.dark) [data-dashboard-theme]::-webkit-scrollbar-thumb {
   background: #cbd5e1;
 }
+
+/* ── React Bits 风格动效（复刻核心手法）────────────────────────── */
+
+/* ShinyText：流光扫过文字 */
+.shiny-text {
+  background: linear-gradient(
+    110deg,
+    rgb(100 116 139 / 55%) 40%,
+    rgb(255 255 255 / 98%) 50%,
+    rgb(100 116 139 / 55%) 60%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shiny-sweep 3s linear infinite;
+}
+
+.dark .shiny-text {
+  background: linear-gradient(
+    110deg,
+    rgb(148 163 184 / 50%) 40%,
+    rgb(255 255 255 / 95%) 50%,
+    rgb(148 163 184 / 50%) 60%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@keyframes shiny-sweep {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+/* StarBorder：旋转星光描边 */
+.star-border-beam {
+  position: absolute;
+  inset: -200%;
+  animation: star-spin 3s linear infinite;
+}
+
+@keyframes star-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shiny-text,
+  .star-border-beam {
+    animation: none;
+  }
+}

@@ -33,33 +33,33 @@ describe('buildThemeFromDesignDNA', () => {
     expect(theme.pageNumColor).toBe('#94A3B8');
     expect(theme.dividerColor).toBe('#E8F0E0');
     expect(theme.shapeOutlineColor).toBe('#E8F0E0');
-    expect(theme.fontFamily).toBe('SimHei');
-    expect(theme.headingFont).toBe('SimHei');
+    expect(theme.fontFamily).toBe('Noto Sans SC');
+    expect(theme.headingFont).toBe('Noto Sans SC');
   });
 
-  it('derives font sizes from DesignDNA typography scale', () => {
+  it('forces 思源黑体 and base-theme title sizes regardless of DNA font pair', () => {
     const dna = dnaWithPalette('midnight-executive', 'georgia-calibri');
     const theme = buildThemeFromDesignDNA(dna, 'minimal');
 
-    expect(theme.coverTitleSize).toBe(52); // fonts.headingSize
-    expect(theme.titleFontSize).toBe(34); // fonts.pageTitleSize
+    expect(theme.coverTitleSize).toBe(42); // base minimal coverTitleSize
+    expect(theme.titleFontSize).toBe(30); // base minimal titleFontSize
     expect(theme.bodyFontSize).toBe(15); // bodySize 13 + 2
-    expect(theme.coverSubSize).toBe(Math.round(34 * 0.7));
+    expect(theme.coverSubSize).toBe(20); // base minimal coverSubSize
   });
 
   it('clamps font sizes to sane PPTX ranges', () => {
     const dna = dnaWithPalette('midnight-executive', 'impact-arial'); // headingSize 56
     const theme = buildThemeFromDesignDNA(dna, 'tech-dark');
-    expect(theme.coverTitleSize).toBe(56);
+    expect(theme.coverTitleSize).toBe(40); // base tech-dark coverTitleSize
     expect(theme.bodyFontSize).toBe(16); // bodySize 14 + 2
     expect(theme.captionFontSize).toBe(12); // captionSize 10 + 2
   });
 
   it('keeps base theme layout metrics and decorations', () => {
     const dna = getDefaultDesignDNA();
-    const theme = buildThemeFromDesignDNA(dna, 'sky-blue');
+    const theme = buildThemeFromDesignDNA(dna, 'academic-navy');
 
-    expect(theme.id).toBe('sky-blue');
+    expect(theme.id).toBe('academic-navy');
     expect(theme.pageMargin).toBe(60);
     expect(theme.useWideContent).toBe(false);
     expect(theme.coverDecorations.length).toBeGreaterThan(0);
@@ -68,7 +68,7 @@ describe('buildThemeFromDesignDNA', () => {
 
   it('recolors the cover gradient with the template palette', () => {
     const dna = dnaWithPalette('coral-energy', 'calibri-light');
-    const theme = buildThemeFromDesignDNA(dna, 'sky-blue');
+    const theme = buildThemeFromDesignDNA(dna, 'academic-navy');
 
     expect(theme.coverBgGradient).toBeDefined();
     expect(theme.coverBgGradient!.from).toBe('#F96167');
@@ -77,7 +77,7 @@ describe('buildThemeFromDesignDNA', () => {
 
   it('works for every base theme id', () => {
     const ids = [
-      'sky-blue',
+      'academic-navy',
       'minimal',
       'academic',
       'tech-dark',
@@ -86,7 +86,7 @@ describe('buildThemeFromDesignDNA', () => {
     ] as const;
     for (const id of ids) {
       const theme = buildThemeFromDesignDNA(getDefaultDesignDNA(), id);
-      expect(theme.coverBg).toBe('#1E2761');
+      expect(theme.coverBg).toBe('#1B2A4A');
       expect(theme.id).toBe(id);
     }
   });

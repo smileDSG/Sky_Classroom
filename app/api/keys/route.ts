@@ -7,10 +7,19 @@
 
 import { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
+import { z } from 'zod';
 import { apiSuccess, apiError } from '@/lib/server/api-response';
 import { listKeys, createKey } from '@/lib/storage/dao/api-key-pool';
 import { refreshCache } from '@/lib/api-key-pool/pool';
 import { requireAdmin } from '@/lib/server/auth/helpers';
+
+const CreateKeySchema = z.object({
+  provider: z.string().regex(/^[a-zA-Z0-9:_-]{1,64}$/, 'invalid provider'),
+  apiKey: z.string().min(1).max(2000),
+  baseUrl: z.string().max(500).optional(),
+  label: z.string().max(200).optional(),
+  priority: z.number().min(0).max(100).optional(),
+});
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin();
@@ -27,14 +36,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { provider, apiKey, baseUrl, label, priority } = body;
-
-    if (!provider || typeof provider !== 'string') {
+    const parsed = CreateKeySchema.safeParse(body);
+    if (!parsed.success) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: provider');
     }
-    if (!apiKey || typeof apiKey !== 'string') {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: apiKey');
-    }
+
+    const { provider, apiKey, baseUrl, label, priority } = parsed.data;
 
     const entry = await createKey({
       id: randomUUID(),

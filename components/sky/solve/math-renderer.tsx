@@ -909,10 +909,12 @@ function isWellFormedMath(text: string): boolean {
   // Remove $...$
   remaining = remaining.replace(/\$[^$\n]+?\$/g, '');
 
-  // Check if any bare \command remains outside math delimiters
-  // Match \command sequences that are likely LaTeX (2+ letter commands)
-  const bareCommandPattern = /\\[a-zA-Z]{2,}/;
-  return !bareCommandPattern.test(remaining);
+  // 快速路径仅适用于「数学已全部用 $ 包裹」的输出。剩余文本若出现裸数学
+  // 特征（\ 命令、裸上/下标、Unicode 数学符号），必须走 wrapBareLatex，
+  // 否则 x^2、1+√2 等会原样显示为纯文本。
+  const bareMathPattern =
+    /\\[a-zA-Z]{2,}|[a-zA-Z0-9](?:\^|_)|[⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉ⁿ√×÷±≤≥≠≈≡∞π∑∏∫]/;
+  return !bareMathPattern.test(remaining);
 }
 
 // ── Main preprocessing ──────────────────────────────────────────────────
@@ -1059,7 +1061,72 @@ function mergeAdjacentMathBlocks(text: string): string {
 type Segment =
   | { type: 'text'; value: string }
   | { type: 'inline-math'; value: string }
-  | { type: 'block-math'; value: string };
+  | { type: 'block-math'; value: string }
+  | { type: 'table'; headers: string[]; rows: string[][] };
+
+type ContentPart =
+  | { kind: 'text'; value: string }
+  | { kind: 'table'; headers: string[]; rows: string[][] };
+
+function isTableRow(line: string): boolean {
+  const t = line.trim();
+  return t.startsWith('|') && t.endsWith('|');
+}
+
+function isSeparatorRow(line: string): boolean {
+  const t = line.trim();
+  if (!t.startsWith('|')) return false;
+  const inner = t.replace(/^[|]/, '').replace(/[|]\s*$/, '');
+  const cells = inner.split('|');
+  return cells.length > 0 && cells.every((c) => /^:?\s*-+\s*:?$/.test(c.trim()));
+}
+
+function splitRow(line: string): string[] {
+  return line
+    .trim()
+    .replace(/^[|]/, '')
+    .replace(/[|]\s*$/, '')
+    .split('|')
+    .map((c) => c.trim());
+}
+
+// Split raw content into interleaved normal text and markdown tables. Tables
+// must be extracted BEFORE stripMarkdown, which otherwise eats the "---"
+// separator row and leaves empty rows between the header and data.
+function splitMarkdownTables(content: string): ContentPart[] {
+  const lines = content.split('\n');
+  const parts: ContentPart[] = [];
+  let buf: string[] = [];
+
+  const flush = () => {
+    if (buf.length > 0) {
+      parts.push({ kind: 'text', value: buf.join('\n') });
+      buf = [];
+    }
+  };
+
+  for (let i = 0; i < lines.length; ) {
+    const header = lines[i];
+    const separator = lines[i + 1];
+    if (isTableRow(header) && separator !== undefined && isSeparatorRow(separator)) {
+      flush();
+      const headers = splitRow(header);
+      const rows: string[][] = [];
+      let j = i + 2;
+      while (j < lines.length && isTableRow(lines[j])) {
+        rows.push(splitRow(lines[j]));
+        j++;
+      }
+      parts.push({ kind: 'table', headers, rows });
+      i = j;
+    } else {
+      buf.push(lines[i]);
+      i++;
+    }
+  }
+  flush();
+  return parts;
+}
 
 /**
  * Parse preprocessed text into inline/block math + text segments.
@@ -1240,12 +1307,20 @@ function renderKatex(math: string, displayMode = false): string {
 export function MathRenderer({ content, className, highlights, displayMode }: MathRendererProps) {
   const segments = useMemo(() => {
     if (!content) return [];
-    // Step 1: Always strip markdown formatting (LLM often outputs **bold**, --- separators, etc.)
-    const cleaned = stripMarkdown(content);
-    // Step 2: Fast path: if content is already well-formed (only $...$ delimited math,
-    // no bare \command outside), skip the full wrapBareLatex processing.
-    const preprocessed = isWellFormedMath(cleaned) ? cleaned : wrapBareLatex(cleaned);
-    return parseMixedContent(preprocessed);
+    const segs: Segment[] = [];
+    for (const part of splitMarkdownTables(content)) {
+      if (part.kind === 'table') {
+        segs.push({ type: 'table', headers: part.headers, rows: part.rows });
+        continue;
+      }
+      // Strip markdown formatting (LLM often outputs **bold**, --- separators, etc.)
+      const cleaned = stripMarkdown(part.value);
+      // Fast path: if content is already well-formed (only $...$ delimited math,
+      // no bare \command outside), skip the full wrapBareLatex processing.
+      const preprocessed = isWellFormedMath(cleaned) ? cleaned : wrapBareLatex(cleaned);
+      segs.push(...parseMixedContent(preprocessed));
+    }
+    return segs;
   }, [content]);
 
   if (!content) return null;
@@ -1283,6 +1358,40 @@ export function MathRenderer({ content, className, highlights, displayMode }: Ma
                 );
               })}
             </Fragment>
+          );
+        }
+        if (seg.type === 'table') {
+          return (
+            <div key={i} className="my-3 overflow-x-auto rounded-lg">
+              <table className="w-full min-w-full border-collapse text-[13px] leading-relaxed">
+                <thead>
+                  <tr>
+                    {seg.headers.map((h, hi) => (
+                      <th
+                        key={hi}
+                        className="border border-[var(--teaching-border)] bg-slate-100/70 px-3 py-2 text-left font-semibold text-slate-800 dark:bg-slate-800/60 dark:text-slate-100"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {seg.rows.map((row, ri) => (
+                    <tr key={ri} className="even:bg-slate-50/30 dark:even:bg-slate-800/20">
+                      {row.map((cell, ci) => (
+                        <td
+                          key={ci}
+                          className="border border-[var(--teaching-border)] px-3 py-2 text-slate-700 dark:text-slate-200"
+                        >
+                          {cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           );
         }
         if (seg.type === 'block-math' || (seg.type === 'inline-math' && displayMode)) {

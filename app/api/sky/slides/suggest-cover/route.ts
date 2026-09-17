@@ -17,6 +17,7 @@ import { renderCoverPptx } from '@/lib/slides/agent/cover-renderer';
 import { convertPptxToPng } from '@/lib/slides/agent/png-converter';
 import { createLogger } from '@/lib/logger';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('API:SuggestCover');
 
@@ -29,7 +30,12 @@ export async function POST(req: NextRequest) {
     } catch (parseErr) {
       const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
       log.error(`[API:SuggestCover] request body parse failed: ${msg}`);
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '请求格式错误', msg);
+      return apiError(
+        API_ERROR_CODES.INVALID_REQUEST,
+        400,
+        '请求格式错误',
+        safeErrorMessage(parseErr),
+      );
     }
     const { topic, difficulty } = body as { topic?: string; difficulty?: string };
 
@@ -55,7 +61,12 @@ export async function POST(req: NextRequest) {
     } catch (styleErr) {
       const msg = styleErr instanceof Error ? styleErr.message : String(styleErr);
       log.error(`[API:SuggestCover] style recommendation threw: ${msg}`);
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '风格推荐异常', msg);
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        '风格推荐异常',
+        safeErrorMessage(styleErr),
+      );
     }
     log.info(
       `[API:SuggestCover] style recommendation took ${Date.now() - styleStart}ms, success=${styleResult.success}`,
@@ -131,6 +142,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.error(`[API:SuggestCover] unhandled error: ${msg}`);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '推荐失败', msg);
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '推荐失败', safeErrorMessage(err));
   }
 }

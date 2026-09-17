@@ -2,20 +2,23 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, Map, Presentation, Route, Sparkles } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clipboard, Map, Route, Sparkles } from 'lucide-react';
 import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
 import { MobileSkyShell } from '@/components/mobile/mobile-sky-shell';
 import { cn } from '@/lib/utils';
 
 const resourceTypes = [
   { id: 'markdown_lecture', label: '讲义', icon: BookOpen },
-  { id: 'ppt_outline', label: 'PPT', icon: Presentation },
   { id: 'mind_map', label: '导图', icon: Map },
+  { id: 'self_check', label: '自查清单', icon: Clipboard },
+  { id: 'learning_path', label: '学习路径', icon: Route },
 ];
 
 export default function MobileCourseStudioPage() {
   const [goal, setGoal] = useState('两周内补上机器学习基础和过拟合');
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(['markdown_lecture', 'ppt_outline']);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(
+    resourceTypes.map((item) => item.id),
+  );
 
   const advancedHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -49,7 +52,7 @@ export default function MobileCourseStudioPage() {
             <div>
               <h1 className="text-[24px] font-extrabold leading-none text-white">课程工作室</h1>
               <p className="mt-1 text-[12px] font-semibold text-slate-400">
-                先收集目标，再生成讲义、课件、导图和学习路径。
+                先收集目标，再生成讲义、导图、自查清单和学习路径。
               </p>
             </div>
           </div>

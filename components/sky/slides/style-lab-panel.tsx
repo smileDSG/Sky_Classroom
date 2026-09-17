@@ -24,7 +24,7 @@ function findPaletteId(colors: DesignDNA['colors']): string {
       palette.accent.toUpperCase() === colors.accent.toUpperCase();
     if (match) return id;
   }
-  return 'midnight-executive';
+  return 'modern-academic';
 }
 
 function findFontId(fonts: DesignDNA['fonts']): string {

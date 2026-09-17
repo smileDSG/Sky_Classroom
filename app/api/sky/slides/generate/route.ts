@@ -10,7 +10,8 @@ import { nanoid } from 'nanoid';
 
 export const maxDuration = 300;
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { createJob, runPipeline, updateJob, getActiveJobCount } from '@/lib/slides/agent/pipeline';
+import { createJob, runPipeline, updateJob } from '@/lib/slides/agent/pipeline';
+import { isGenerationQueueFull } from '@/lib/server/generation-gate';
 import { validateDesignDNA } from '@/lib/slides/agent/design-dna';
 import { createLogger } from '@/lib/logger';
 import { verifyAccessToken } from '@/lib/server/auth/jwt';
@@ -43,15 +44,11 @@ export async function POST(req: NextRequest) {
       return rateLimitResponse(rateLimitResult);
     }
 
-    // ── Concurrency cap ──
-    const activeJobs = getActiveJobCount();
-    const MAX_CONCURRENT_JOBS = 5;
-    if (activeJobs >= MAX_CONCURRENT_JOBS) {
-      return apiError(
-        API_ERROR_CODES.RATE_LIMITED,
-        429,
-        `Server busy: ${activeJobs} jobs running, please try again later`,
-      );
+    // ── Concurrency gate ──
+    // Excess generations are queued FIFO inside runPipeline (see
+    // generation-gate.ts); we only reject when the wait-list is already full.
+    if (isGenerationQueueFull()) {
+      return apiError(API_ERROR_CODES.RATE_LIMITED, 429, '服务器繁忙，请稍后再试');
     }
 
     const body = await req.json();

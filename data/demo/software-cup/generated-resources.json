@@ -21,7 +21,7 @@
     {
       "agent": "ResourceDesignAgent",
       "status": "completed",
-      "output": "选择讲义、PPT 大纲、题库、思维导图、代码案例、视频脚本六类资源。"
+      "output": "选择讲义、思维导图、自查清单、学习路径四份学习包文档。"
     },
     {
       "agent": "QualityReviewAgent",
@@ -31,7 +31,7 @@
     {
       "agent": "LearningPathAgent",
       "status": "completed",
-      "output": "生成 14 天学习路径，先补机器学习评估，再进入 RAG 与智能体。"
+      "output": "按“学→查→练→复盘”生成学习闭环，练与复盘跳转既有功能完成。"
     }
   ],
   "resources": [
@@ -48,29 +48,6 @@
       "trust": { "confidence": 0.9, "status": "verified" }
     },
     {
-      "id": "res-ppt-outline",
-      "type": "ppt_outline",
-      "title": "机器学习基础与 RAG 智能体复习课",
-      "slides": [
-        "学习目标与画像摘要",
-        "机器学习流程总览",
-        "训练集、验证集、测试集",
-        "过拟合现象与诊断",
-        "评价指标选择",
-        "大模型为什么会幻觉",
-        "RAG 流程图",
-        "多智能体资源生成流程",
-        "两周学习路径",
-        "练习与项目任务"
-      ],
-      "sourceCitations": [
-        "syllabus.md",
-        "chapters/04-machine-learning-basics.md",
-        "chapters/10-large-models-and-agents.md"
-      ],
-      "trust": { "confidence": 0.87, "status": "verified" }
-    },
-    {
       "id": "res-mindmap",
       "type": "mind_map",
       "title": "过拟合、评价指标与 RAG 知识导图",
@@ -80,67 +57,54 @@
       "trust": { "confidence": 0.86, "status": "verified" }
     },
     {
-      "id": "res-quiz",
-      "type": "quiz_bank",
-      "title": "机器学习评估与 RAG 诊断题",
-      "questionIds": ["ai-04-002", "ai-04-003", "ai-04-004", "ai-10-002", "ai-10-003", "ai-11-001"],
-      "sourceCitations": ["question-bank.json"],
-      "trust": { "confidence": 0.91, "status": "verified" }
-    },
-    {
-      "id": "res-code-case-rag",
-      "type": "code_case",
-      "title": "RAG 课程问答助手最小案例",
-      "caseFile": "cases/rag-course-assistant.md",
-      "personalizationReason": "学生希望把概念和代码联系起来，且对 RAG 薄弱。",
+      "id": "res-self-check",
+      "type": "self_check",
+      "title": "薄弱点自查清单",
+      "personalizationReason": "围绕过拟合、模型评估、RAG 三个薄弱点，让学生先自我判断所处状态再决定练什么。",
       "sourceCitations": [
-        "cases/rag-course-assistant.md",
+        "chapters/04-machine-learning-basics.md",
         "chapters/10-large-models-and-agents.md"
       ],
+      "contentPreview": "按过拟合、模型评估、RAG 给出“能做到/还不行”判定式自查项和常见错因对照，仅用于自查、不替代正式答题。",
       "trust": { "confidence": 0.88, "status": "verified" }
     },
     {
-      "id": "res-video-script",
-      "type": "video_script",
-      "title": "如何判断模型过拟合",
-      "scriptFile": "media-scripts/chapter-04-video-script.md",
+      "id": "res-learning-path",
+      "type": "learning_path",
+      "title": "学习路径与跳转指引",
+      "personalizationReason": "把练、复盘环节具体引导到平台出题引擎与错题复盘完成，包内不埋题。",
       "sourceCitations": [
-        "media-scripts/chapter-04-video-script.md",
-        "chapters/04-machine-learning-basics.md"
+        "chapters/04-machine-learning-basics.md",
+        "chapters/10-large-models-and-agents.md"
       ],
+      "contentPreview": "按“学→查→练→复盘”四阶段组织：先讲义+导图，再自查清单，练跳转出题引擎、复盘跳转错题画像与学习计划。",
       "trust": { "confidence": 0.9, "status": "verified" }
     }
   ],
   "learningPath": [
     {
-      "dayRange": "Day 1-2",
-      "goal": "补齐训练集、验证集、测试集概念",
-      "resources": ["res-lecture-overfitting-rag", "res-quiz"],
-      "reason": "这是理解过拟合和模型评估的前置知识。"
+      "dayRange": "第 1 步 · 学",
+      "goal": "建立从过拟合到 RAG 的概念框架",
+      "resources": ["res-lecture-overfitting-rag", "res-mindmap"],
+      "reason": "先补齐概念边界，降低后续自查和练习的理解成本。"
     },
     {
-      "dayRange": "Day 3-5",
-      "goal": "掌握过拟合诊断和评价指标",
-      "resources": ["res-video-script", "res-mindmap"],
-      "reason": "学生对评估薄弱，先用图解和诊断题建立判断能力。"
+      "dayRange": "第 2 步 · 查",
+      "goal": "逐条自查薄弱点",
+      "resources": ["res-self-check"],
+      "reason": "用自查清单判断哪些点“能做到”、哪些“还不行”，为出题练习确定主题。"
     },
     {
-      "dayRange": "Day 6-9",
-      "goal": "完成 KNN 或决策树代码案例",
-      "resources": ["cases/knn-classification.md", "cases/decision-tree-iris.md"],
-      "reason": "用代码把概念落到实验。"
+      "dayRange": "第 3 步 · 练",
+      "goal": "跳转出题引擎针对性练习",
+      "resources": [],
+      "reason": "打开平台出题引擎，把自查后仍薄弱的点作为主题完成练习，包内不埋题。"
     },
     {
-      "dayRange": "Day 10-12",
-      "goal": "理解 RAG 流程和来源引用",
-      "resources": ["res-code-case-rag", "res-ppt-outline"],
-      "reason": "进入大模型智能体主题，并强化防幻觉意识。"
-    },
-    {
-      "dayRange": "Day 13-14",
-      "goal": "完成课程问答助手小项目说明",
-      "resources": ["assessment-rubric.md", "chapters/12-course-project.md"],
-      "reason": "用项目输出检验学习效果。"
+      "dayRange": "第 4 步 · 复盘",
+      "goal": "跳转错题复盘并更新学习顺序",
+      "resources": [],
+      "reason": "练习后回到错题画像与学习计划，把新错因回写并调整后续安排。"
     }
   ],
   "reviewResult": {

@@ -11,6 +11,7 @@ import { createLogger } from '@/lib/logger';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { createUserDAO } from '@/lib/storage/dao/users';
 import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personalization';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('API:CloudMindSlides');
 
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Slides analysis failed:', message);
-    return new Response(JSON.stringify({ success: false, error: message }), {
+    return new Response(JSON.stringify({ success: false, error: safeErrorMessage(error) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

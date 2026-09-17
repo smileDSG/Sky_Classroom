@@ -65,6 +65,7 @@ export const EMPTY_KB_STATS: KBStats = {
     slides: { chunks: 0, documents: 0 },
     cards: { chunks: 0, documents: 0 },
     classroom: { chunks: 0, documents: 0 },
+    course: { chunks: 0, documents: 0 },
   } satisfies Record<KBType, { chunks: number; documents: number }>,
 };
 

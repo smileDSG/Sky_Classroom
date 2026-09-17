@@ -6,6 +6,7 @@ import { ArrowUp, Sparkles, Atom, ImageIcon, FileText, X, Mic, Search, Wand2 } f
 import { cn } from '@/lib/utils';
 import { SpeechButton } from '@/components/audio/speech-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { StarBorder } from '@/components/reactbits/star-border';
 import { AgentSelector } from './agent-selector';
 
 // 主输入区域组件
@@ -326,24 +327,25 @@ export function HeroInput({
             />
           </div>
 
-          {/* 提交按钮 */}
-          <motion.button
-            whileHover={canSubmit ? { scale: 1.02 } : {}}
-            whileTap={canSubmit ? { scale: 0.98 } : {}}
+          {/* 提交按钮（React Bits StarBorder 星光描边） */}
+          <StarBorder
             onClick={onSubmit}
             disabled={!canSubmit}
             className={cn(
-              'flex items-center gap-2 px-5 py-2.5 rounded-xl',
               'text-sm font-semibold',
               'transition-all duration-200',
               canSubmit
-                ? 'bg-gradient-to-r from-sky-500 to-blue-500 text-white shadow-lg shadow-sky-500/25 hover:shadow-xl hover:shadow-sky-500/30'
+                ? 'shadow-lg shadow-sky-500/25 hover:shadow-xl hover:shadow-sky-500/30'
                 : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed',
+            )}
+            innerClassName={cn(
+              'flex items-center gap-2 px-5 py-2.5',
+              canSubmit && 'bg-gradient-to-r from-sky-500 to-blue-500 text-white',
             )}
           >
             <span>开始讲解</span>
             <ArrowUp className={cn('w-4 h-4', canSubmit && '-rotate-45')} />
-          </motion.button>
+          </StarBorder>
         </div>
       </div>
 

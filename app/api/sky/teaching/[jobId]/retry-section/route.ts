@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { retrySection } from '@/lib/server/teaching-job-runner';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { requireQuota } from '@/lib/server/billing/require-quota';
 import { createLogger } from '@/lib/logger';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('RetrySectionAPI');
+
+const RetrySectionSchema = z.object({
+  sectionId: z.string().min(1).max(200),
+});
 
 export async function POST(
   request: NextRequest,
@@ -16,7 +22,12 @@ export async function POST(
 
     const { jobId } = await params;
     const body = await request.json();
-    const { sectionId } = body;
+    const parsed = RetrySectionSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Missing sectionId parameter' }, { status: 400 });
+    }
+
+    const { sectionId } = parsed.data;
 
     if (!sectionId) {
       return NextResponse.json({ error: 'Missing sectionId parameter' }, { status: 400 });
@@ -45,7 +56,7 @@ export async function POST(
       data: result,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Retry section failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

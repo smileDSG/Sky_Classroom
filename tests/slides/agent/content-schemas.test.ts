@@ -3,9 +3,37 @@ import {
   CONTENT_SCHEMAS,
   autoFixContent,
   SCHEMA_DESCRIPTIONS,
+  normalizeInlineMathText,
+  convertInlineLatexToUnicode,
 } from '@/lib/slides/agent/content-schemas';
 
 describe('Content Schemas', () => {
+  describe('normalizeInlineMathText', () => {
+    it('turns greek/latin variable + digit into a true unicode subscript', () => {
+      expect(normalizeInlineMathText('折射角 θ1 C')).toBe('折射角 θ₁ C');
+      expect(normalizeInlineMathText('水中视深变浅 h2=h1/n1')).toBe('水中视深变浅 h₂=h₁/n₁');
+    });
+
+    it('turns base10/ exponent superscript into unicode', () => {
+      expect(normalizeInlineMathText('速度 3×10^8 m/s')).toBe('速度 3×10⁸ m/s');
+      expect(normalizeInlineMathText('光速 2.26×10^{8}m/s')).toBe('光速 2.26×10⁸m/s');
+    });
+
+    it('handles charge superscripts', () => {
+      expect(normalizeInlineMathText('离子 Na^+')).toBe('离子 Na⁺');
+      expect(normalizeInlineMathText('负离子 Cl^-')).toBe('负离子 Cl⁻');
+    });
+
+    it('leaves ordinary prose untouched (years, page numbers, chinese)', () => {
+      expect(normalizeInlineMathText('第2步 年份2024 见P3')).toBe('第2步 年份2024 见P₃');
+      expect(normalizeInlineMathText('重点：保持原文即可')).toBe('重点：保持原文即可');
+    });
+
+    it('does not double-subscript already-normalized unicode', () => {
+      expect(normalizeInlineMathText('θ₁ 已经好了')).toBe('θ₁ 已经好了');
+    });
+  });
+
   describe('Schema Registry', () => {
     it('has schemas for all core page types', () => {
       const required = [

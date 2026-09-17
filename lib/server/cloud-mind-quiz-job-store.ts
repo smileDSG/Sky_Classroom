@@ -2,7 +2,8 @@
  * Cloud Mind Quiz Job Store - in-memory background job state for quiz generation.
  */
 
-import type { QuizOutput } from '@/lib/agents/cloud-mind/quiz-agent';
+import type { QuizOutput, QuizQuestionType } from '@/lib/agents/cloud-mind/quiz-agent';
+import type { QuizBackfillStats } from '@/lib/agents/cloud-mind/quiz-backfill';
 
 export type CloudMindQuizJobStatus = 'queued' | 'running' | 'completed' | 'failed';
 
@@ -18,9 +19,11 @@ export interface CloudMindQuizJob {
   difficulty: string;
   topic: string;
   count: number;
+  questionType: QuizQuestionType;
   profileInjected: boolean;
   derived?: { subject: string; difficulty: string; topic: string; count: number };
   result?: QuizOutput;
+  backfill?: QuizBackfillStats;
   error?: string;
 }
 
@@ -44,7 +47,7 @@ export async function createCloudMindQuizJob(
   id: string,
   input: Pick<
     CloudMindQuizJob,
-    'userId' | 'subject' | 'difficulty' | 'topic' | 'count' | 'profileInjected'
+    'userId' | 'subject' | 'difficulty' | 'topic' | 'count' | 'questionType' | 'profileInjected'
   > & {
     derived?: CloudMindQuizJob['derived'];
   },
@@ -63,6 +66,7 @@ export async function createCloudMindQuizJob(
     difficulty: input.difficulty,
     topic: input.topic,
     count: input.count,
+    questionType: input.questionType,
     profileInjected: input.profileInjected,
     derived: input.derived,
   };

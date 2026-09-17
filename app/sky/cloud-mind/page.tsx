@@ -104,8 +104,8 @@ const TOOLS: Array<{
   },
   {
     id: 'course-studio',
-    label: '课程资源工坊',
-    description: '结合课程资料和你的学习情况，生成讲义、题库、导图、实操案例和视频脚本',
+    label: '学习包工坊',
+    description: '结合课程资料和你的学习情况，生成讲义、导图、自查清单和学习路径',
     href: '/sky/cloud-mind/course-studio',
     icon: Layers,
     gradient: 'from-emerald-500 to-teal-600',

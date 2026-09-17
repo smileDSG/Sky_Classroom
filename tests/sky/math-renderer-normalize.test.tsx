@@ -35,3 +35,45 @@ describe('MathRenderer 大三角命令归一化', () => {
     expect(html).toContain('>△<');
   });
 });
+
+/**
+ * 回归：快速路径 isWellFormedMath 曾把「无 $ 分隔符但含裸上/下标或 Unicode
+ * 数学符号」的内容误判为已规范，跳过 wrapBareLatex，导致填空题答案
+ * x^2、x² 等按纯文本原样显示（"公式没有渲染"）。
+ */
+describe('MathRenderer 裸公式包裹', () => {
+  test('x^2 渲染为上标数学而非纯文本', () => {
+    const html = renderMath('x^2');
+    expect(html).toContain('katex');
+    expect(html).not.toContain('katex-error');
+    expect(html).toContain('<msup><mi>x</mi><mn>2</mn></msup>');
+  });
+
+  test('a_1 渲染为下标数学而非纯文本', () => {
+    const html = renderMath('a_1');
+    expect(html).toContain('katex');
+    expect(html).not.toContain('katex-error');
+    expect(html).toContain('<msub><mi>a</mi><mn>1</mn></msub>');
+  });
+
+  test('Unicode 上标 x² 渲染为数学', () => {
+    const html = renderMath('x²');
+    expect(html).toContain('katex');
+    expect(html).not.toContain('katex-error');
+    expect(html).toContain('<msup>');
+  });
+
+  test('1+√2 渲染为数学而非纯文本', () => {
+    const html = renderMath('1+√2');
+    expect(html).toContain('katex');
+    expect(html).not.toContain('katex-error');
+    expect(html).toContain('<msqrt>');
+  });
+
+  test('含 $ 的规范公式仍走快速路径正常渲染', () => {
+    const html = renderMath('函数 $f(x)=\\frac{1}{3}x^3-x^2-3x+4$ 的单调递减区间为');
+    expect(html).toContain('katex');
+    expect(html).not.toContain('katex-error');
+    expect(html).toContain('>函数 </span>');
+  });
+});

@@ -14,6 +14,7 @@ import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personaliza
 import type { LearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
 import { requireAuth } from '@/lib/server/auth/helpers';
 import { validateProblemSpec } from '@/lib/recognition/problem-spec-parser';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('API:SolveJobs');
 
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
           API_ERROR_CODES.INVALID_REQUEST,
           400,
           'Invalid problemSpec',
-          err instanceof Error ? err.message : String(err),
+          safeErrorMessage(err),
         );
       }
     }
@@ -113,7 +114,7 @@ export async function POST(req: Request) {
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       '创建解题作业失败',
-      err instanceof Error ? err.message : undefined,
+      err instanceof Error ? safeErrorMessage(err) : undefined,
     );
   }
 }

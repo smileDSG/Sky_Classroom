@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import localFont from 'next/font/local';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
-import 'animate.css';
-import 'katex/dist/katex.min.css';
 import '@maic/renderer/fonts.css';
 import { ThemeProvider } from '@/lib/hooks/use-theme';
 import { Toaster } from '@/components/ui/sonner';
@@ -21,13 +20,6 @@ const inter = localFont({
   variable: '--font-sans',
   weight: '100 900',
 });
-
-// Force all routes to be dynamically rendered. This avoids the Next.js 16
-// SSG bail-out ("useSearchParams() should be wrapped in a suspense boundary")
-// for pages that read search params inside client components. It is safe here
-// because the app has no generateStaticParams and relies on runtime data
-// (LLM key pool, optional DB, in-memory storage fallback).
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: '智眸无界｜天空课堂',
@@ -50,7 +42,9 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
-            <OnboardingGate />
+            <Suspense fallback={null}>
+              <OnboardingGate />
+            </Suspense>
             <ServerProvidersInit />
             <ServiceWorkerReset />
             <SkyClassroomEntry />

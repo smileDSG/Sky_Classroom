@@ -15,6 +15,7 @@ import { createTeachingJob } from '@/lib/server/teaching-job-store';
 import { runTeachingJob } from '@/lib/server/teaching-job-runner';
 import { resolveTeachingPersonalizationPolicy } from '@/lib/server/teaching-personalization';
 import { getServerStorage } from '@/lib/server/server-storage';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import {
   planMistakeReview,
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
       'INTERNAL_ERROR',
       500,
       'Failed to create mistake review job',
-      err instanceof Error ? err.message : 'Unknown error',
+      safeErrorMessage(err),
     );
   }
 }

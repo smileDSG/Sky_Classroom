@@ -75,6 +75,8 @@ export function runSolveJob(
           steps: output.steps,
           knowledgePoints: output.knowledgePoints,
           similarQuestions: output.similarQuestions,
+          answerReview: output.answerReview ?? 'skipped',
+          verified: output.verified ?? false,
           fromQuestionBank: finalState.fromQuestionBank ?? false,
           fromSolveCache: finalState.fromSolveCache ?? false,
           solvingTime,
@@ -117,6 +119,7 @@ export function runSolveJob(
         }
         try {
           const { saveToQuestionBank, isProblemInBank } = await import('@/lib/solve/question-bank');
+          const { isVerifiedReview } = await import('@/lib/solve/solve-verify');
           const alreadyInBank = await isProblemInBank(problemText);
           if (!alreadyInBank) {
             await saveToQuestionBank({
@@ -133,7 +136,8 @@ export function runSolveJob(
               steps: output.steps,
               agentId: finalState.agentRoute ?? 'universal',
               solvedAt: Date.now(),
-              verified: false,
+              // 只有经独立复核(verified/corrected)才标 verified；待确认答案不入可信库
+              verified: isVerifiedReview(output.answerReview),
               questionType: output.questionType,
               options: output.options,
             });

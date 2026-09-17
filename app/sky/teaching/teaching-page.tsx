@@ -52,7 +52,7 @@ export function TeachingPage({
   }, []);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       {/* Header — hero-style title bar */}
       <div
         className="rounded-2xl border bg-gradient-to-br from-[var(--teaching-surface)] to-[var(--teaching-surface-elevated)] p-5 shadow-sm backdrop-blur-sm flex items-center justify-between gap-4"

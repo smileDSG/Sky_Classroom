@@ -1,6 +1,6 @@
 'use client';
 
-import { COLOR_PALETTES } from '@/lib/slides/agent/design-dna';
+import { COLOR_PALETTES, CURATED_PALETTE_IDS } from '@/lib/slides/agent/design-dna';
 
 interface ColorPickerProps {
   selectedPaletteId: string;
@@ -8,6 +8,7 @@ interface ColorPickerProps {
 }
 
 const PALETTE_META: Record<string, { label: string; desc: string }> = {
+  'modern-academic': { label: '现代学术', desc: '权威克制' },
   'midnight-executive': { label: '商务蓝', desc: '专业稳重' },
   'forest-moss': { label: '森林绿', desc: '自然清新' },
   'coral-energy': { label: '珊瑚橙', desc: '活力热情' },
@@ -45,7 +46,9 @@ export function ColorPicker({ selectedPaletteId, onSelect }: ColorPickerProps) {
       </div>
 
       <div className="grid grid-cols-6 gap-1.5">
-        {Object.entries(COLOR_PALETTES).map(([id, palette]) => {
+        {Object.entries(COLOR_PALETTES)
+          .filter(([id]) => CURATED_PALETTE_IDS.includes(id))
+          .map(([id, palette]) => {
           const meta = PALETTE_META[id] || { label: id, desc: '' };
           const isSelected = selectedPaletteId === id;
           const coverBg = palette.coverBg.startsWith('#') ? palette.coverBg : `#${palette.coverBg}`;

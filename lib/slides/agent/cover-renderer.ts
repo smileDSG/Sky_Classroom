@@ -6,6 +6,7 @@ import pptxgen from 'pptxgenjs';
 import path from 'path';
 import fs from 'fs/promises';
 import { createLogger } from '@/lib/logger';
+import { isDarkBg } from '../color-utils';
 import type { DesignDNA, LayoutType } from './design-dna';
 
 const log = createLogger('CoverRenderer');
@@ -81,6 +82,11 @@ function tagline(subtitle: string): string {
   return cleaned || 'TEACHING COURSEWARE';
 }
 
+/** Title color that always contrasts with the cover background (light bg → dark text). */
+function titleOnCover(dna: DesignDNA): string {
+  return isDarkBg(dna.colors.coverBg) ? dna.colors.textOnDark : dna.colors.textPrimary;
+}
+
 // ── Layout Registry ──────────────────────────────────────────────────
 
 type LayoutFn = (
@@ -151,7 +157,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       h: 1.6,
       fontSize: fonts.headingSize,
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'center',
       margin: 0,
@@ -182,22 +188,32 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
     });
   },
 
-  /* ── 2. hero-left: 左对齐文本 + 右侧装饰 ── */
+  /* ── 2. hero-left: 左对齐文本 + 右侧装饰（参照人工演示封面的精致层） ── */
   'hero-left'(slide, _pres, dna, title, subtitle) {
     const { colors, fonts } = dna;
     slide.background = { color: hex(colors.coverBg) };
-    // Right accent area
+    // Right soft halo — double-layer translucent circles for depth
     slide.addShape(
-      'rect' as never,
+      'ellipse' as never,
       {
-        x: 7.5,
-        y: 0,
-        w: 5.83,
-        h: 7.5,
-        fill: { color: hex(colors.accent), transparency: 95 },
+        x: 8.2,
+        y: 0.3,
+        w: 6.0,
+        h: 6.0,
+        fill: { color: hex(colors.accent), transparency: 92 },
       } as never,
     );
-    // Diagonal line
+    slide.addShape(
+      'ellipse' as never,
+      {
+        x: 10.2,
+        y: -1.4,
+        w: 7.6,
+        h: 7.6,
+        fill: { color: hex(colors.accent), transparency: 94 },
+      } as never,
+    );
+    // Diagonal dynamic line anchoring the right zone
     slide.addShape(
       'line' as never,
       {
@@ -208,7 +224,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
         line: { color: hex(colors.accent), width: 1.5 },
       } as never,
     );
-    // Decorative circle
+    // Decorative circle anchored bottom-right
     slide.addShape(
       'ellipse' as never,
       {
@@ -232,40 +248,66 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       align: 'left',
       margin: 0,
     });
-    // Accent line
+    // Accent line (overline above title)
     slide.addShape(
       'line' as never,
       { x: 1.0, y: 1.85, w: 1.2, h: 0, line: { color: hex(colors.accent), width: 2.5 } } as never,
     );
-    // Title
+    // Title — oversized, left-aligned
     slide.addText(title, {
       x: 1.0,
-      y: 2.2,
-      w: 6.0,
-      h: 1.6,
-      fontSize: fonts.headingSize,
+      y: 2.15,
+      w: 9.0,
+      h: 1.7,
+      fontSize: Math.max(fonts.headingSize + 12, 56),
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'left',
       margin: 0,
     });
-    // Subtitle
+    // Subtitle — with a small gold chip marker on its left
+    slide.addShape(
+      'rect' as never,
+      { x: 1.0, y: 4.28, w: 0.09, h: 0.34, fill: { color: hex(colors.accent) } } as never,
+    );
     slide.addText(subtitle, {
-      x: 1.0,
-      y: 4.0,
-      w: 5.5,
+      x: 1.28,
+      y: 4.1,
+      w: 8.0,
       h: 0.6,
-      fontSize: 16,
+      fontSize: 18,
       fontFace: fonts.body,
       color: hex(colors.textMuted),
       align: 'left',
       margin: 0,
     });
-    // Date
+    // Three progressively larger dots (signature academic accent)
+    const dotY = 5.05;
+    for (const [dx, d, op] of [
+      [1.0, 0.12, 30],
+      [1.3, 0.2, 45],
+      [1.7, 0.32, 60],
+    ] as const) {
+      slide.addShape(
+        'ellipse' as never,
+        {
+          x: dx,
+          y: dotY - d / 2,
+          w: d,
+          h: d,
+          fill: { color: hex(colors.accent), transparency: op },
+        } as never,
+      );
+    }
+    // Footer anchoring hairline + date
+    slide.addShape(
+      'line' as never,
+      { x: 1.0, y: 6.85, w: 11.3, h: 0, line: { color: hex(colors.accent), width: 0.75 } } as never,
+    );
     slide.addText(todayDate(), {
       x: 1.0,
-      y: 6.5,
+      y: 6.9,
       w: 4.0,
       h: 0.4,
       fontSize: 11,
@@ -332,7 +374,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       h: 1.6,
       fontSize: fonts.headingSize - 4,
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'left',
       margin: 0,
@@ -415,7 +457,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       h: 0.9,
       fontSize: 36,
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'center',
       margin: 0,
@@ -436,81 +478,190 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
   /* ── 5. vertical-poem: 竖排中文，中式书封感 ── */
   'vertical-poem'(slide, _pres, dna, title, subtitle) {
     const { colors, fonts } = dna;
+    const ink = colors.accentSecondary || colors.textPrimary; // 深墨
+    const accent = colors.accent; // 朱红
+    const onDark = colors.textOnDark; // 暖白
     slide.background = { color: hex(colors.coverBg) };
-    // Top / bottom decorative bars
+    // 背景水墨晕染（左上 + 右下淡墨圆，营造宣纸墨韵又补留白）
+    slide.addShape(
+      'ellipse' as never,
+      {
+        x: -0.4,
+        y: 0.1,
+        w: 4.6,
+        h: 4.6,
+        fill: { color: hex(ink), transparency: 88 },
+      } as never,
+    );
+    slide.addShape(
+      'ellipse' as never,
+      {
+        x: 8.6,
+        y: 4.3,
+        w: 3.7,
+        h: 3.7,
+        fill: { color: hex(ink), transparency: 88 },
+      } as never,
+    );
+    // 标题背后的淡朱光晕，为深墨标题托底形成对比
+    slide.addShape(
+      'ellipse' as never,
+      {
+        x: 8.4,
+        y: 1.1,
+        w: 3.9,
+        h: 4.2,
+        fill: { color: hex(accent), transparency: 92 },
+      } as never,
+    );
+    // 顶部 / 底部朱砂细边
+    for (const [yy, hh, op] of [
+      [0, 0.045, 30],
+      [7.455, 0.045, 30],
+    ] as const) {
+      slide.addShape(
+        'rect' as never,
+        {
+          x: 0,
+          y: yy,
+          w: 13.33,
+          h: hh,
+          fill: { color: hex(accent), transparency: op },
+        } as never,
+      );
+    }
+    // 左侧朱红竖线（填充留白 + 划分信息区）
+    slide.addShape(
+      'rect' as never,
+      {
+        x: 3.05,
+        y: 1.3,
+        w: 0.035,
+        h: 4.7,
+        fill: { color: hex(accent), transparency: 8 },
+      } as never,
+    );
+    // 底部深墨信息带（强对比、填底，消除大片空白）
     slide.addShape(
       'rect' as never,
       {
         x: 0,
-        y: 0,
+        y: 6.5,
         w: 13.33,
-        h: 0.04,
-        fill: { color: hex(colors.accent), transparency: 60 },
+        h: 1.0,
+        fill: { color: hex(ink) },
       } as never,
     );
     slide.addShape(
       'rect' as never,
       {
         x: 0,
-        y: 7.46,
+        y: 6.47,
         w: 13.33,
-        h: 0.04,
-        fill: { color: hex(colors.accent), transparency: 60 },
+        h: 0.035,
+        fill: { color: hex(accent) },
       } as never,
     );
-    // Right side seal-like square
-    slide.addShape(
-      'rect' as never,
-      {
-        x: 10.8,
-        y: 1.2,
-        w: 1.8,
-        h: 1.8,
-        fill: { color: hex(colors.accent), transparency: 88 },
-      } as never,
-    );
-    // Center: title rendered as stacked characters
-    const chars = title.replace(/\s/g, '').split('');
-    const charH = 0.55;
-    const totalH = chars.length * charH;
-    const startY = (H - totalH) / 2;
-    for (let i = 0; i < chars.length; i++) {
-      slide.addText(chars[i], {
-        x: 9.5,
-        y: startY + i * charH,
-        w: 2.0,
-        h: charH,
-        fontSize: 28,
-        fontFace: fonts.heading,
-        color: hex(colors.textOnDark),
+    // 顶部学科标签
+    slide.addText('OPTICS  ·  光 学', {
+      x: 0.8,
+      y: 0.58,
+      w: 6,
+      h: 0.42,
+      fontSize: 13,
+      fontFace: fonts.en,
+      color: hex(accent),
+      bold: true,
+      charSpacing: 4,
+      align: 'left',
+      margin: 0,
+    });
+    // 左侧竖排章题字（补白 + 强化文化点）
+    const sideChars = ['高', '中', '物', '理'];
+    for (let i = 0; i < sideChars.length; i++) {
+      slide.addText(sideChars[i], {
+        x: 1.15,
+        y: 1.95 + i * 0.5,
+        w: 1.2,
+        h: 0.5,
+        fontSize: 18,
+        fontFace: 'KaiTi',
+        color: hex(accent),
         bold: true,
         align: 'center',
         margin: 0,
       });
     }
-    // Small tag top-left
-    slide.addText(tagline(subtitle), {
-      x: 1.0,
-      y: 1.2,
-      w: 5.0,
-      h: 0.3,
-      fontSize: 10,
-      fontFace: fonts.en,
-      color: hex(colors.accent),
-      charSpacing: 4,
+    // 右侧竖排主标题（首字朱红对比，余字深墨）
+    const chars = title.replace(/\s/g, '').split('');
+    const charH = 0.62;
+    const totalH = chars.length * charH;
+    const startY = (6.1 - totalH) / 2;
+    for (let i = 0; i < chars.length; i++) {
+      slide.addText(chars[i], {
+        x: 8.9,
+        y: startY + i * charH,
+        w: 2.6,
+        h: charH,
+        fontSize: 40,
+        fontFace: 'KaiTi',
+        color: hex(i === 0 ? accent : ink),
+        bold: true,
+        align: 'center',
+        margin: 0,
+      });
+    }
+    // 朱红印章（落在信息带上，稳定落款）
+    const sealX = 12.15,
+      sealY = 6.62,
+      sealS = 0.78;
+    slide.addShape(
+      'rect' as never,
+      {
+        x: sealX,
+        y: sealY,
+        w: sealS,
+        h: sealS,
+        fill: { color: hex(accent) },
+        line: { color: hex(onDark), width: 0.6 },
+      } as never,
+    );
+    slide.addText('雅', {
+      x: sealX,
+      y: sealY,
+      w: sealS,
+      h: sealS,
+      fontSize: 16,
+      fontFace: 'KaiTi',
+      color: hex(onDark),
+      bold: true,
+      align: 'center',
+      valign: 'middle',
+      margin: 0,
+    });
+    // 底部信息带文字（白字，强对比）
+    slide.addText(subtitle || '教学课件', {
+      x: 0.95,
+      y: 6.68,
+      w: 10,
+      h: 0.6,
+      fontSize: 20,
+      fontFace: fonts.heading,
+      color: hex(onDark),
+      bold: true,
       align: 'left',
       margin: 0,
     });
-    // Subtitle bottom
-    slide.addText(subtitle, {
-      x: 2.5,
-      y: 6.0,
-      w: 6.0,
-      h: 0.4,
-      fontSize: 13,
-      fontFace: fonts.body,
-      color: hex(colors.textMuted),
-      align: 'center',
+    slide.addText('书 于 灯 火 处 · 传 授 光 之 理', {
+      x: 8.1,
+      y: 6.72,
+      w: 3.8,
+      h: 0.5,
+      fontSize: 11,
+      fontFace: fonts.en,
+      color: hex(accent),
+      align: 'right',
+      charSpacing: 2,
       margin: 0,
     });
   },
@@ -574,7 +725,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       h: 1.6,
       fontSize: fonts.headingSize,
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'left',
       margin: 0,
@@ -671,7 +822,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       h: 1.6,
       fontSize: fonts.headingSize,
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'center',
       margin: 0,
@@ -715,7 +866,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       h: 2.0,
       fontSize: fonts.headingSize + 8,
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'center',
       valign: 'middle',
@@ -794,7 +945,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       h: 1.6,
       fontSize: fonts.headingSize,
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'left',
       margin: 0,
@@ -903,7 +1054,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       h: 1.6,
       fontSize: fonts.headingSize,
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'center',
       margin: 0,
@@ -974,7 +1125,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       h: 2.0,
       fontSize: fonts.headingSize,
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'left',
       valign: 'middle',
@@ -1075,7 +1226,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
       h: 1.8,
       fontSize: fonts.headingSize - 4,
       fontFace: fonts.heading,
-      color: hex(colors.textOnDark),
+      color: hex(titleOnCover(dna)),
       bold: true,
       align: 'left',
       margin: 0,

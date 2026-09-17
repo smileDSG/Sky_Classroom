@@ -37,6 +37,8 @@ export interface ResourceGenerationJob {
   completedAt?: string;
   input: string;
   inputPreview: string;
+  /** 用户选择生成的资源类型（如 ['markdown_lecture','self_check']）；空/缺省表示全部 4 类。 */
+  resourceTypes?: string[];
   result?: SoftwareCupGenerationResult;
   error?: string;
 }
@@ -129,6 +131,7 @@ export async function createResourceGenerationJobHybrid(
   jobId: string,
   input: string,
   userId?: string,
+  resourceTypes?: string[],
 ): Promise<ResourceGenerationJob> {
   const now = new Date().toISOString();
   const job: ResourceGenerationJob = {
@@ -142,6 +145,7 @@ export async function createResourceGenerationJobHybrid(
     updatedAt: now,
     input,
     inputPreview: buildInputPreview(input),
+    ...(resourceTypes && resourceTypes.length > 0 ? { resourceTypes } : {}),
   };
 
   await ensureResourceJobsDir();

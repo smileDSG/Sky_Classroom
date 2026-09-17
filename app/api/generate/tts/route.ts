@@ -13,6 +13,7 @@ import { resolveTTSApiKey, resolveTTSBaseUrl } from '@/lib/server/provider-confi
 import type { TTSProviderId } from '@/lib/audio/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
@@ -116,10 +117,6 @@ export async function POST(req: NextRequest) {
       `TTS generation failed [provider=${ttsProviderId ?? 'unknown'}, voice=${ttsVoice ?? 'unknown'}, audioId=${audioId ?? 'unknown'}]:`,
       error,
     );
-    return apiError(
-      'GENERATION_FAILED',
-      500,
-      error instanceof Error ? error.message : String(error),
-    );
+    return apiError('GENERATION_FAILED', 500, safeErrorMessage(error));
   }
 }

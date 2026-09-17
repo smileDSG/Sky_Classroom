@@ -3,6 +3,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import CloudMindMemoryPage from '@/app/sky/cloud-mind/memory/page';
 import { useTaskStore } from '@/lib/store/use-task-store';
+import type { MemoryCardsStreamEvent } from '@/lib/agents/cloud-mind/memory-cards-agent';
+
+vi.mock('@/components/sky/layout/app-shell', () => ({
+  SkyAppShell: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
 vi.mock('@/lib/hooks/use-theme', () => ({
   useTheme: () => ({ setForceDark: vi.fn() }),
@@ -61,6 +66,30 @@ const mockDeck = {
   reviewIntervals: [1, 2, 4, 7],
 };
 
+function sseResponse(events: MemoryCardsStreamEvent[]): Response {
+  const encoder = new TextEncoder();
+  const payload = events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join('');
+  const bytes = encoder.encode(payload);
+  let offset = 0;
+  return {
+    ok: true,
+    status: 200,
+    headers: new Headers({ 'content-type': 'text/event-stream' }),
+    body: {
+      getReader: () => ({
+        read: async () => {
+          if (offset >= bytes.length) return { done: true, value: undefined };
+          const chunk = bytes.slice(offset, offset + 256);
+          offset += chunk.length;
+          return { done: false, value: chunk };
+        },
+        cancel: async () => {},
+        releaseLock: () => {},
+      }),
+    },
+  } as unknown as Response;
+}
+
 describe('CloudMindMemoryPage', () => {
   const mockFetch = vi.fn();
 
@@ -97,9 +126,18 @@ describe('CloudMindMemoryPage', () => {
           }),
         } as Response;
       }
-      if (url === '/api/sky/cloud-mind/memory-cards') {
+      if (url === '/api/sky/cloud-mind/memory-reviews?due=true') {
         return {
-          json: async () => ({ success: true, data: mockDeck }),
+          json: async () => ({ success: true, data: [] }),
+        } as Response;
+      }
+      if (url === '/api/sky/cloud-mind/memory-cards/stream') {
+        return sseResponse([{ type: 'done', deck: mockDeck }]);
+      }
+      if (url === '/api/sky/cloud-mind/memory-reviews' && init?.method === 'POST') {
+        return {
+          ok: true,
+          json: async () => ({ success: true, data: { profileImpact: [], decision: null } }),
         } as Response;
       }
       throw new Error(`Unexpected fetch: ${url} ${JSON.stringify(init)}`);
@@ -113,7 +151,7 @@ describe('CloudMindMemoryPage', () => {
     });
   });
 
-  it('submits manual content instead of treating the click event as auto mode', async () => {
+  it('submits manual content to the streaming endpoint', async () => {
     render(<CloudMindMemoryPage />);
 
     const [topicInput, contentTextarea] = screen.getAllByRole('textbox');
@@ -124,21 +162,21 @@ describe('CloudMindMemoryPage', () => {
       },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /启动收集引擎/ }));
+    fireEvent.click(screen.getByRole('button', { name: /生成记忆卡/ }));
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        '/api/sky/cloud-mind/memory-cards',
+        '/api/sky/cloud-mind/memory-cards/stream',
         expect.objectContaining({ method: 'POST' }),
       );
     });
 
-    const memoryCall = mockFetch.mock.calls.find(
-      ([input]) => String(input) === '/api/sky/cloud-mind/memory-cards',
+    const streamCall = mockFetch.mock.calls.find(
+      ([input]) => String(input) === '/api/sky/cloud-mind/memory-cards/stream',
     );
-    expect(memoryCall).toBeDefined();
+    expect(streamCall).toBeDefined();
 
-    const requestBody = JSON.parse((memoryCall?.[1] as RequestInit).body as string);
+    const requestBody = JSON.parse((streamCall?.[1] as RequestInit).body as string);
     expect(requestBody).toMatchObject({
       content: '已知二次函数 y = ax^2 + bx + c 的图象经过点 (1,0)、(-1,4) 和 (2,3)，求 a、b、c。',
       topic: '二次函数、待定系数法',
@@ -207,7 +245,7 @@ describe('CloudMindMemoryPage', () => {
     fireEvent.change(topicInput, { target: { value: '二次函数' } });
     fireEvent.change(contentTextarea, { target: { value: '求二次函数待定系数。' } });
 
-    fireEvent.click(screen.getByRole('button', { name: /启动收集引擎/ }));
+    fireEvent.click(screen.getByRole('button', { name: /生成记忆卡/ }));
 
     await waitFor(() => {
       expect(container.querySelector('.katex')).not.toBeNull();
@@ -219,19 +257,22 @@ describe('CloudMindMemoryPage', () => {
 
     const [, contentTextarea] = screen.getAllByRole('textbox');
     fireEvent.change(contentTextarea, { target: { value: '求二次函数待定系数。' } });
-    fireEvent.click(screen.getByRole('button', { name: /启动收集引擎/ }));
+    fireEvent.click(screen.getByRole('button', { name: /生成记忆卡/ }));
 
     await screen.findByText('二次函数的一般式是什么？');
-    fireEvent.click(screen.getByText('二次函数的一般式是什么？'));
-    fireEvent.click(screen.getByText('点击翻转星图'));
+    fireEvent.click(screen.getByRole('button', { name: /开始复习/ }));
 
-    expect(screen.getByText('0/2 碎片已收集')).toBeInTheDocument();
+    expect(screen.getByText('已完成 0/2 张')).toBeInTheDocument();
+
+    // 翻到背面后才会出现评分按钮
+    fireEvent.click(screen.getByText('点击查看答案'));
     expect(screen.getByRole('button', { name: '已掌握' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '还需复习' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '没记住' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '已掌握' }));
 
-    expect(screen.getByText('1/2 碎片已收集')).toBeInTheDocument();
+    expect(screen.getByText('已完成 1/2 张')).toBeInTheDocument();
   });
 
   it('keeps long study-card content inside a bounded scroll area', async () => {
@@ -239,13 +280,12 @@ describe('CloudMindMemoryPage', () => {
 
     const [, contentTextarea] = screen.getAllByRole('textbox');
     fireEvent.change(contentTextarea, { target: { value: '求二次函数待定系数。' } });
-    fireEvent.click(screen.getByRole('button', { name: /启动收集引擎/ }));
+    fireEvent.click(screen.getByRole('button', { name: /生成记忆卡/ }));
 
     await screen.findByText('二次函数的一般式是什么？');
-    fireEvent.click(screen.getByText('二次函数的一般式是什么？'));
-    fireEvent.click(screen.getByText('点击翻转星图'));
+    fireEvent.click(screen.getByRole('button', { name: /开始复习/ }));
 
-    expect(screen.getByTestId('memory-card-shell')).toHaveClass('h-[420px]', 'sm:h-[460px]');
+    expect(screen.getByTestId('memory-card-shell')).toHaveClass('h-[360px]', 'sm:h-[400px]');
     expect(screen.getByTestId('memory-card-back-scroll')).toHaveClass('overflow-y-auto');
   });
 });

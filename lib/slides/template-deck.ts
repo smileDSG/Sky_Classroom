@@ -16,6 +16,7 @@ import { renderDesignCoverSlide } from './agent/cover-renderer';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { createLogger } from '@/lib/logger';
+import { isDarkBg } from './color-utils';
 
 const log = createLogger('TemplateDeck');
 
@@ -44,7 +45,7 @@ export const templatePageSchema = z.discriminatedUnion('pageType', [
     items: z
       .array(z.object({ title: z.string().min(1).max(20), desc: z.string().max(40).optional() }))
       .min(3)
-      .max(8),
+      .max(10),
   }),
   z.object({
     pageType: z.literal('bullets'),
@@ -56,16 +57,16 @@ export const templatePageSchema = z.discriminatedUnion('pageType', [
     pageType: z.literal('comparison'),
     title: z.string().min(1).max(30),
     leftLabel: z.string().min(1).max(16),
-    leftPoints: z.array(z.string().min(1).max(40)).min(2).max(4),
+    leftPoints: z.array(z.string().min(1).max(40)).min(2).max(5),
     rightLabel: z.string().min(1).max(16),
-    rightPoints: z.array(z.string().min(1).max(40)).min(2).max(4),
-    note: z.string().max(60).optional(),
+    rightPoints: z.array(z.string().min(1).max(40)).min(2).max(5),
+    note: z.string().max(90).optional(),
   }),
   z.object({
     pageType: z.literal('steps'),
     title: z.string().min(1).max(30),
     steps: z
-      .array(z.object({ title: z.string().min(1).max(20), desc: z.string().max(50).optional() }))
+      .array(z.object({ title: z.string().min(1).max(20), desc: z.string().max(90).optional() }))
       .min(3)
       .max(5),
   }),
@@ -73,7 +74,7 @@ export const templatePageSchema = z.discriminatedUnion('pageType', [
     pageType: z.literal('formula'),
     title: z.string().min(1).max(30),
     latex: z.string().min(1).max(300),
-    meaning: z.array(z.string().min(1).max(50)).max(3).optional(),
+    meaning: z.array(z.string().min(1).max(50)).max(4).optional(),
     example: z.string().max(90).optional(),
   }),
   z.object({
@@ -83,7 +84,7 @@ export const templatePageSchema = z.discriminatedUnion('pageType', [
     rows: z
       .array(z.array(z.string().max(24)).min(2))
       .min(2)
-      .max(6),
+      .max(7),
   }),
   z.object({
     pageType: z.literal('quiz'),
@@ -96,7 +97,7 @@ export const templatePageSchema = z.discriminatedUnion('pageType', [
   z.object({
     pageType: z.literal('summary'),
     title: z.string().min(1).max(30),
-    points: z.array(pointSchema).min(3).max(4),
+    points: z.array(pointSchema).min(3).max(6),
   }),
 ]);
 
@@ -109,14 +110,14 @@ export const templateDeckSchema = z.object({
 // ── Content generation (LLM fills the fixed layouts) ───────────────
 
 const PAGE_TYPE_GUIDE = [
-  'toc — 目录页：items 3-8 条，title ≤8字，desc ≤18字',
-  'bullets — 概念/要点页：points 3-5 条，lead ≤14字，detail ≤28字，可选 keyTakeaway ≤30字',
-  'comparison — 左右对比页：leftLabel/rightLabel ≤10字，每侧 2-4 条、每条 ≤20字',
-  'steps — 流程/步骤页：steps 3-5 步，title ≤10字，desc ≤24字',
-  'formula — 公式聚焦页：latex 用标准 TeX（ASCII，不要 Unicode 上下标），meaning ≤3条各≤24字，可选 example ≤50字',
-  'table — 数据/对比表页：headers 2-5 个各≤8字，rows 2-6 行、单元格 ≤16字',
+  'toc — 目录页：items 4-8 条，title ≤8字，desc ≤18字',
+  'bullets — 概念/要点页：points 4-5 条，lead ≤14字，detail ≤28字，可选 keyTakeaway ≤30字',
+  'comparison — 左右对比页：leftLabel/rightLabel ≤10字，每侧 3-5 条、每条 ≤20字',
+  'steps — 流程/步骤页：steps 4-5 步，title ≤10字，desc ≤24字',
+  'formula — 公式聚焦页：latex 必须是标准 TeX（只允许 ASCII，禁止 Unicode 上下标 ² ³ ⁴ / 下标 ₀ ₁ ₂ 和线性分数如 (a+b)/(c+d)）；分数用 \\frac{}{}，上下标用 ^ 和 _（如 a^{2}、x_{1}），根式用 \\sqrt{}，符号用 \\Delta、\\times、\\rightarrow、\\pm、\\approx、\\leq、\\geq、\\neq、\\left( \\right) 等标准命令；meaning 3-4 条各≤24字，可选 example ≤50字',
+  'table — 数据/对比表页：headers 2-5 个各≤8字，rows 4-7 行、单元格 ≤16字，尽量填满',
   'quiz — 练习页：question ≤40字，options 2-4 个各≤20字，answer 必须是其中一个选项，可选 analysis ≤60字',
-  'summary — 小结页：points 3-4 条，lead ≤12字，detail ≤30字',
+  'summary — 小结页：points 5-6 条，lead ≤12字，detail ≤30字',
 ].join('\n');
 
 function buildContentSystemPrompt(stylePrompt?: string): string {
@@ -130,10 +131,12 @@ function buildContentSystemPrompt(stylePrompt?: string): string {
     '',
     '## Content rules (CRITICAL)',
     '- Content must be factually correct, curriculum-accurate, and specific to the topic. No filler, no placeholders.',
-    '- Vary page types across the deck: use at least 4 different pageType values; science/math topics MUST use formula, steps, or table pages where appropriate.',
+    '- VARIETY of page types: use at least 5 different pageType values; science/math topics MUST use formula, steps, table, quiz and summary pages where appropriate — do not make the deck all bullets.',
+    '- DENSITY: fill each page to the upper end of its page type capacity (bullets 5 points, comparison 4-5 per side, steps 5, table 5-7 rows, formula with meaning+example, summary 6). Pages must look materially full — no sparse pages, no half-empty panels.',
+    '- DEPTH: every point, step, comparison side and table cell should carry at least TWO of {exact number/datum, cause/principle, everyday or in-subject example} and explain the WHY — never a bare keyword, never a title phrase with nothing behind it. Prefer concrete values (n≈1.33, v≈3×10⁸ m/s, λ=600nm) over vague adjectives.',
     '- Text is the only thing you control — respect the length limits so text fits the fixed layout boxes.',
     '- Chinese content: use Simplified Chinese; math/chemistry symbols inside table cells or points use plain text (H₂O, CO₂, C₃ are fine).',
-    '- LaTeX in formula pages: standard TeX only (e.g. 6CO_2 + 6H_2O -> C_6H_{12}O_6 + 6O_2 using \\rightarrow, ^, _). No markdown.',
+    '- LaTeX in formula pages: standard TeX only, ASCII only (e.g. 6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2, y=ax^2+bx+c). NO Unicode superscripts/subscripts (², ₃), NO linear fractions like (a+b)/(c+d) — write \\frac{a+b}{c+d}. No markdown, no $ wrapping.',
     stylePrompt ? `\n## Style context (affects content emphasis only)\n${stylePrompt}` : '',
   ]
     .filter(Boolean)
@@ -154,7 +157,16 @@ function buildContentUserPrompt(
     ``,
     `## 要求`,
     `- 按教学递进组织：导入/目录 → 核心概念 → 深入拆解 → 例题/公式 → 对比辨析 → 应用 → 易错点 → 小结`,
-    `- 每页一个明确的教学目标，内容完整、信息量充足（不要只有标题的空页）`,
+    `- 每页一个明确教学目标，内容必须尽量写满该页型允许的条目上限，不要留一半空白`,
+    `- 页型多样化：整份课件至少用 5 种 pageType；理科/数学/化学类务必包含 table、formula、steps、quiz、summary，避免通篇都是 bullets`,
+    `- 深度展开：每条要点/步骤/对比/表格单元格要至少给出【具体数据/数值】【成因或原理】【生活或学科实例】中的两项并解释原因，不要只写关键词或标题句。优先用确数（水的折射率≈1.33、光速 c≈3×10⁸ m/s、红光波长约700nm），少用"较大/明显/重要"等空泛形容词`,
+    `- 容量参考：bullets 写满 5 条、comparison 每侧 4-5 条、steps 5 步、table 5-7 行真实数据、formula 尽量带 meaning + example、quiz 带 analysis、summary 写满 6 条；页面尽量填满，不留半空`,
+    `- 必填字段（漏一个整份就会校验失败，务必全部给出）：comparison 必须有 leftLabel、leftPoints、rightLabel、rightPoints 四个字段（数组至少 2 条）；steps 必须有 steps 数组（每个 step 含 title 和 desc）；formula 必须有 latex；table 必须有 headers 和 rows；quiz 必须有 question、options、answer`,
+    `- formula 页的 latex 字段必须是标准 TeX：只允许 ASCII 命令，分数写 \\frac{分子}{分母}（禁止 (a+b)/(c+d) 线性分数），上下标写 a^{2}、x_{1}（禁止 Unicode ² ³ ⁴ ₀ ₁ ₂），符号用 \\Delta、\\times、\\rightarrow、\\pm、\\approx、\\leq、\\geq、\\neq、\\left( \\right)；例：顶点式写 y=ax^{2}+bx+c=a\\left(x+\\frac{b}{2a}\\right)^{2}+\\frac{4ac-b^{2}}{4a}, \\Delta=b^{2}-4ac`,
+    `- 字段契约（区分对象数组与字符串数组，混淆会导致整份校验失败）：
+  · 对象数组（每项必须是 {…} 对象）：toc 的 items = [{title, desc}]；bullets 的 points = [{lead, detail}]；summary 的 points = [{lead, detail}]；steps = [{title, desc}]；
+  · 字符串数组（每项必须是纯字符串，禁止 {text}/{title} 包裹）；comparison 的 leftPoints/rightPoints；formula 的 meaning；table 的 headers、rows（rows 是字符串二维数组）；quiz 的 options；
+  · 正确示例：leftPoints: ["光从真空射入水中，入射角大于折射角", "折射率 n=c/v，数值由介质决定"]；toc.items: [{"title":"折射现象","desc":"光斜射入另一介质传播方向改变"}]`,
     `- 输出纯 JSON：{"pages": [ { "pageType": "...", "title": "...", ... }, ... ]}，共 ${contentCount} 个对象`,
     `- 页面顺序即页码顺序；不要输出封面页和结尾页`,
   ].join('\n');
@@ -301,6 +313,33 @@ function addContentChrome(
 
 function toHex(c: string): string {
   return c.replace('#', '').toUpperCase();
+}
+
+/**
+ * Mix two CSS colors by ratio t (0-1); returns lowercase 6-digit hex.
+ * Falls back to 'FFFFFF' when either input isn't plain hex (e.g. rgba tokens).
+ */
+function mixHex(color: string, target: string, t: number): string {
+  const parse = (c: string): number[] | null => {
+    const h = c.replace('#', '').trim();
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+  };
+  const a = parse(color);
+  const b = parse(target);
+  if (!a || !b) return 'FFFFFF';
+  return a
+    .map((v, i) =>
+      Math.round(v + (b[i] - v) * t)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('');
+}
+
+/** Text color that contrasts with the theme cover background (light bg → dark text). */
+function onCoverBg(theme: ThemeToken): string {
+  return isDarkBg(theme.coverBg) ? theme.coverTitleColor : theme.bodyColor;
 }
 
 function renderTocPage(page: PageChrome, data: Extract<TemplatePage, { pageType: 'toc' }>): void {
@@ -478,7 +517,7 @@ function renderBulletsPage(
       h: 2.7,
       fontSize: 17,
       fontFace: theme.fontFamily,
-      color: toHex(theme.coverTitleColor),
+      color: toHex(onCoverBg(theme)),
       valign: 'top',
       margin: 0,
     });
@@ -718,59 +757,113 @@ const SUPER_DIGITS = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸'
 const SUB_DIGITS = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'] as const;
 
 export function latexToUnicode(latex: string): string {
-  return latex
-    .replace(/\\xrightarrow\{([^}]*)\}/g, (_m, t) => ` —[${t}]→ `)
-    .replace(/\\(rightarrow|to)\b/g, '→')
-    .replace(/\\leftarrow\b/g, '←')
-    .replace(/\\(times|cdot)\b/g, '·')
-    .replace(/\\approx\b/g, '≈')
-    .replace(/\\leq\b/g, '≤')
-    .replace(/\\geq\b/g, '≥')
-    .replace(/\\neq?\b/g, '≠')
-    .replace(/\\Delta\b/g, 'Δ')
-    .replace(/\\alpha\b/g, 'α')
-    .replace(/\\beta\b/g, 'β')
-    .replace(/\\gamma\b/g, 'γ')
-    .replace(/\\pi\b/g, 'π')
-    .replace(/\\theta\b/g, 'θ')
-    .replace(/\\lambda\b/g, 'λ')
-    .replace(/\\mu\b/g, 'μ')
-    .replace(/\\infty\b/g, '∞')
-    .replace(/\\pm\b/g, '±')
-    .replace(/\\sum\b/g, 'Σ')
-    .replace(/\\sqrt\{([^}]*)\}/g, '√($1)')
-    .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '($1)/($2)')
-    .replace(/\^\{?([-+]?[0-9]+)\}?/g, (_m, d) => {
-      const digits = String(d).startsWith('-')
-        ? '⁻' +
-          String(d)
-            .slice(1)
-            .split('')
-            .map((x) => SUPER_DIGITS[+x])
-            .join('')
-        : String(d)
-            .split('')
-            .map((x) => SUPER_DIGITS[+x])
-            .join('');
-      return digits;
-    })
-    .replace(/_\{?([-+]?[0-9]+)\}?/g, (_m, d) => {
-      const digits = String(d).startsWith('-')
-        ? '₋' +
-          String(d)
-            .slice(1)
-            .split('')
-            .map((x) => SUB_DIGITS[+x])
-            .join('')
-        : String(d)
-            .split('')
-            .map((x) => SUB_DIGITS[+x])
-            .join('');
-      return digits;
-    })
-    .replace(/[{}]/g, '')
-    .replace(/\\\\/g, ' ')
-    .trim();
+  return (
+    latex
+      .replace(/\\xrightarrow\{([^}]*)\}/g, (_m, t) => ` —[${t}]→ `)
+      .replace(/\\(rightarrow|to)\b/g, '→')
+      .replace(/\\leftarrow\b/g, '←')
+      .replace(/\\Rightarrow\b/g, '⇒')
+      .replace(/\\Leftarrow\b/g, '⇐')
+      .replace(/\\Leftrightarrow\b/g, '⇔')
+      .replace(/\\leftrightarrow\b/g, '↔')
+      .replace(/\\uparrow\b/g, '↑')
+      .replace(/\\downarrow\b/g, '↓')
+      .replace(/\\(times|cdot)\b/g, '·')
+      .replace(/\\approx\b/g, '≈')
+      .replace(/\\equiv\b/g, '≡')
+      .replace(/\\sim\b/g, '∼')
+      .replace(/\\propto\b/g, '∝')
+      .replace(/\\leq\b/g, '≤')
+      .replace(/\\geq\b/g, '≥')
+      .replace(/\\neq?\b/g, '≠')
+      .replace(/\\circ\b/g, '°')
+      .replace(/\\Delta\b/g, 'Δ')
+      .replace(/\\alpha\b/g, 'α')
+      .replace(/\\beta\b/g, 'β')
+      .replace(/\\gamma\b/g, 'γ')
+      .replace(/\\delta\b/g, 'δ')
+      .replace(/\\epsilon\b/g, 'ε')
+      .replace(/\\varepsilon\b/g, 'ε')
+      .replace(/\\zeta\b/g, 'ζ')
+      .replace(/\\eta\b/g, 'η')
+      .replace(/\\theta\b/g, 'θ')
+      .replace(/\\vartheta\b/g, 'ϑ')
+      .replace(/\\iota\b/g, 'ι')
+      .replace(/\\kappa\b/g, 'κ')
+      .replace(/\\lambda\b/g, 'λ')
+      .replace(/\\mu\b/g, 'μ')
+      .replace(/\\nu\b/g, 'ν')
+      .replace(/\\xi\b/g, 'ξ')
+      .replace(/\\pi\b/g, 'π')
+      .replace(/\\rho\b/g, 'ρ')
+      .replace(/\\sigma\b/g, 'σ')
+      .replace(/\\tau\b/g, 'τ')
+      .replace(/\\upsilon\b/g, 'υ')
+      .replace(/\\phi\b/g, 'φ')
+      .replace(/\\varphi\b/g, 'φ')
+      .replace(/\\chi\b/g, 'χ')
+      .replace(/\\psi\b/g, 'ψ')
+      .replace(/\\omega\b/g, 'ω')
+      .replace(/\\Gamma\b/g, 'Γ')
+      .replace(/\\Theta\b/g, 'Θ')
+      .replace(/\\Lambda\b/g, 'Λ')
+      .replace(/\\Sigma\b/g, 'Σ')
+      .replace(/\\Phi\b/g, 'Φ')
+      .replace(/\\Psi\b/g, 'Ψ')
+      .replace(/\\Omega\b/g, 'Ω')
+      .replace(/\\infty\b/g, '∞')
+      .replace(/\\partial\b/g, '∂')
+      .replace(/\\nabla\b/g, '∇')
+      .replace(/\\pm\b/g, '±')
+      .replace(/\\sum\b/g, 'Σ')
+      .replace(/\\prod\b/g, '∏')
+      .replace(/\\int\b/g, '∫')
+      .replace(/\\sqrt\{([^}]*)\}/g, '√($1)')
+      .replace(/\\(dfrac|tfrac|frac)\{([^}]*)\}\{([^}]*)\}/g, '($2)/($3)')
+      .replace(/\\text\{([^}]*)\}/g, '$1')
+      .replace(/\\(mathrm|mathbf|mathit|textbf|textrm|mbox)\{([^}]*)\}/g, '$2')
+      .replace(/\\left\.|\\right\./g, '')
+      .replace(/\\left/g, '')
+      .replace(/\\right/g, '')
+      .replace(/\\qquad|\\quad|\\;/g, '  ')
+      .replace(/\\(,|:|\!| )/g, ' ')
+      .replace(/\^\{?(?=°)/g, '')
+      .replace(/\^\{?([-+]?[0-9]+)\}?/g, (_m, d) => {
+        const digits = String(d).startsWith('-')
+          ? '⁻' +
+            String(d)
+              .slice(1)
+              .split('')
+              .map((x) => SUPER_DIGITS[+x])
+              .join('')
+          : String(d)
+              .split('')
+              .map((x) => SUPER_DIGITS[+x])
+              .join('');
+        return digits;
+      })
+      .replace(/_\{?([-+]?[0-9]+)\}?/g, (_m, d) => {
+        const digits = String(d).startsWith('-')
+          ? '₋' +
+            String(d)
+              .slice(1)
+              .split('')
+              .map((x) => SUB_DIGITS[+x])
+              .join('')
+          : String(d)
+              .split('')
+              .map((x) => SUB_DIGITS[+x])
+              .join('');
+        return digits;
+      })
+      // Drop any remaining TeX commands (e.g. \left, \quad, unknown macros)
+      .replace(/\\[a-zA-Z]+\*?/g, '')
+      .replace(/[{}]/g, '')
+      .replace(/\\\\/g, ' ')
+      // \quad (and the space after it) can leave 3+ spaces; collapse to 2
+      .replace(/ {3,}/g, '  ')
+      .trim()
+  );
 }
 
 async function renderFormulaPage(
@@ -779,7 +872,12 @@ async function renderFormulaPage(
   renderFormulaPng?: FormulaPngRenderer,
 ): Promise<void> {
   const { slide, theme } = page;
-  // Formula panel with accent edge bar
+  // Formula panel: accent-tinted fill + visible border so it reads off the
+  // white page background (accentLight alone is too close to contentBg).
+  // Non-hex accentLight (e.g. tech-dark rgba) falls back to contentBg tint.
+  const panelBg = /^[0-9a-fA-F]{6}$/.test(theme.accentLight.replace('#', '').trim())
+    ? mixHex(theme.accentLight, theme.accent, 0.07)
+    : mixHex(theme.contentBg, theme.accent, 0.12);
   slide.addShape(
     'roundRect' as never,
     {
@@ -787,7 +885,8 @@ async function renderFormulaPage(
       y: 1.72,
       w: 10.53,
       h: 2.62,
-      fill: { color: toHex(theme.accentLight) },
+      fill: { color: toHex(panelBg) },
+      line: { color: toHex(theme.accent), width: 1, transparency: 40 },
       rectRadius: 0.12,
     } as never,
   );
@@ -805,7 +904,7 @@ async function renderFormulaPage(
   let rendered: RenderedFormulaPng | null = null;
   if (renderFormulaPng) {
     try {
-      rendered = await renderFormulaPng(data.latex, theme.accentLight.replace('#', ''));
+      rendered = await renderFormulaPng(data.latex, panelBg);
     } catch (err) {
       log.warn(`formula PNG render failed: ${err instanceof Error ? err.message : err}`);
     }
@@ -826,13 +925,15 @@ async function renderFormulaPage(
       h,
     });
   } else {
-    // Fallback: Unicode formula text
-    slide.addText(latexToUnicode(data.latex), {
+    // Fallback: Unicode formula text (auto-size so long formulas still fit)
+    const fallback = latexToUnicode(data.latex);
+    const fallbackSize = fallback.length > 90 ? 22 : fallback.length > 60 ? 26 : 30;
+    slide.addText(fallback, {
       x: 1.85,
       y: 1.72,
       w: 9.63,
       h: 2.62,
-      fontSize: 28,
+      fontSize: fallbackSize,
       fontFace: theme.headingFont,
       color: toHex(theme.bodyColor),
       bold: true,
@@ -846,10 +947,10 @@ async function renderFormulaPage(
   meaning.forEach((m, i) => {
     slide.addText(`▸  ${m}`, {
       x: 1.85,
-      y: 4.48 + i * 0.48,
+      y: 4.46 + i * 0.44,
       w: 9.63,
-      h: 0.46,
-      fontSize: 15,
+      h: 0.4,
+      fontSize: 16.5,
       fontFace: theme.fontFamily,
       color: toHex(theme.bodyColor),
       margin: 0,
@@ -857,7 +958,7 @@ async function renderFormulaPage(
   });
 
   if (data.example) {
-    const exY = 6.02;
+    const exY = 6.3;
     slide.addShape(
       'roundRect' as never,
       {
@@ -866,7 +967,7 @@ async function renderFormulaPage(
         w: 10.53,
         h: 1.0,
         fill: { color: toHex(theme.contentBg) },
-        line: { color: toHex(theme.accent), width: 1 },
+        line: { color: toHex(theme.accent), width: 1, transparency: 30 },
         rectRadius: 0.1,
       } as never,
     );
@@ -874,7 +975,7 @@ async function renderFormulaPage(
       'roundRect' as never,
       {
         x: 1.72,
-        y: exY + 0.27,
+        y: exY + 0.26,
         w: 0.48,
         h: 0.48,
         fill: { color: toHex(theme.accent) },
@@ -883,7 +984,7 @@ async function renderFormulaPage(
     );
     slide.addText('例', {
       x: 1.72,
-      y: exY + 0.27,
+      y: exY + 0.26,
       w: 0.48,
       h: 0.48,
       fontSize: 14,
@@ -899,7 +1000,7 @@ async function renderFormulaPage(
       y: exY,
       w: 9.3,
       h: 1.0,
-      fontSize: 14.5,
+      fontSize: 16.5,
       fontFace: theme.fontFamily,
       color: toHex(theme.bodyColor),
       valign: 'middle',
@@ -1066,7 +1167,7 @@ function renderQuizPage(page: PageChrome, data: Extract<TemplatePage, { pageType
     [
       { text: `答案：${answerLabel}`, options: { bold: true, color: toHex(theme.accent) } },
       ...(data.analysis
-        ? [{ text: `　${data.analysis}`, options: { color: toHex(theme.coverTitleColor) } }]
+        ? [{ text: `　${data.analysis}`, options: { color: toHex(onCoverBg(theme)) } }]
         : []),
     ],
     {
@@ -1087,18 +1188,26 @@ function renderSummaryPage(
   data: Extract<TemplatePage, { pageType: 'summary' }>,
 ): void {
   const { slide, theme } = page;
-  const cardW = 5.65;
-  const cardH = 2.5;
-  const gapX = 0.35;
-  const gapY = 0.32;
-  const startX = (PAGE_W - (cardW * 2 + gapX)) / 2;
+  const n = data.points.length;
+  const threeCol = n > 4;
+  const cols = threeCol ? 3 : 2;
+  const rows = Math.ceil(n / cols);
+  const gapX = 0.3;
+  const gapY = 0.28;
+  const cardW = (BODY_W - (cols - 1) * gapX) / cols;
+  const cardH = threeCol ? 2.3 : 2.5;
   const startY = 1.8;
 
-  data.points.forEach((p, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const x = startX + col * (cardW + gapX);
+  const layout = (i: number) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = MARGIN + col * (cardW + gapX);
     const y = startY + row * (cardH + gapY);
+    return { x, y };
+  };
+
+  data.points.forEach((p, i) => {
+    const { x, y } = layout(i);
 
     slide.addShape(
       'roundRect' as never,
@@ -1123,22 +1232,22 @@ function renderSummaryPage(
       } as never,
     );
     slide.addText(String(i + 1).padStart(2, '0'), {
-      x: x + 0.34,
-      y: y + 0.3,
-      w: 1.2,
-      h: 0.55,
-      fontSize: 24,
+      x: x + 0.26,
+      y: y + 0.24,
+      w: 1.1,
+      h: 0.5,
+      fontSize: 22,
       fontFace: theme.headingFont,
       color: toHex(theme.accent),
       bold: true,
       margin: 0,
     });
     slide.addText(p.lead, {
-      x: x + 0.34,
-      y: y + 0.92,
-      w: cardW - 0.68,
+      x: x + 0.26,
+      y: y + 0.78,
+      w: cardW - 0.52,
       h: 0.5,
-      fontSize: 18,
+      fontSize: 17,
       fontFace: theme.headingFont,
       color: toHex(theme.bodyColor),
       bold: true,
@@ -1146,11 +1255,11 @@ function renderSummaryPage(
     });
     if (p.detail) {
       slide.addText(p.detail, {
-        x: x + 0.34,
-        y: y + 1.48,
-        w: cardW - 0.68,
-        h: 0.9,
-        fontSize: 13.5,
+        x: x + 0.26,
+        y: y + 1.32,
+        w: cardW - 0.52,
+        h: 0.86,
+        fontSize: 12.5,
         fontFace: theme.fontFamily,
         color: toHex(theme.bodyMutedColor),
         valign: 'top',
@@ -1242,7 +1351,7 @@ function renderEndSlide(pres: pptxgen, dna: DesignDNA, theme: ThemeToken, topic:
     h: 1.35,
     fontSize: 48,
     fontFace: dna.fonts.heading,
-    color: toHex(theme.coverTitleColor),
+    color: toHex(onCoverBg(theme)),
     bold: true,
     align: 'center',
     margin: 0,

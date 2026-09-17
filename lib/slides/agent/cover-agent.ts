@@ -27,7 +27,7 @@ const log = createLogger('CoverAgent');
 
 export const coverSkeletonSchema = z.object({
   styleName: z.string().min(2).max(12),
-  fontId: z.enum(['arial-black-arial', 'calibri-light', 'impact-arial']),
+  fontId: z.enum(['noto-sans', 'arial-black-arial', 'calibri-light', 'impact-arial']),
   density: z.enum(['sparse', 'moderate', 'rich']),
   mood: z.string().min(2).max(15),
   bestFor: z.array(z.string().min(1).max(20)).min(1).max(4),
@@ -156,16 +156,15 @@ ${DESIGN_NOTES}
 ## Output Format
 A single JSON object:
 {
-  "styleName": "风格名称≤12字",
-  "fontId": "arial-black-arial",
   "styleName": "现代学术",
+  "fontId": "noto-sans",
   "density": "moderate",
   "mood": "风格情绪≤15字",
   "bestFor": ["学科1"]
 }
 
-Available fonts: arial-black-arial, calibri-light, impact-arial
-Recommended: arial-black-arial (modern sans-serif, best for Chinese academic presentations)
+Available fonts: noto-sans, arial-black-arial, calibri-light, impact-arial
+Recommended: noto-sans (思源黑体/Noto Sans SC, modern sans-serif, best for Chinese academic presentations)
 Available densities: sparse, moderate, rich
 
 ## Rules

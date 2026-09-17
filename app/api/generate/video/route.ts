@@ -22,6 +22,7 @@ import { resolveVideoApiKey, resolveVideoBaseUrl } from '@/lib/server/provider-c
 import type { VideoProviderId, VideoGenerationOptions } from '@/lib/media/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ result });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     // Detect content safety filter rejections (e.g. Seedance SensitiveContent errors)
     if (message.includes('SensitiveContent') || message.includes('sensitive information')) {
       log.warn(`Video blocked by content safety filter: ${message}`);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readTeachingJob, updateTeachingJobProgress } from '@/lib/server/teaching-job-store';
 import { createLogger } from '@/lib/logger';
 import { requireAuth } from '@/lib/server/auth/helpers';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('TeachingFavoriteAPI');
 
@@ -50,7 +51,7 @@ export async function POST(
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Toggle favorite failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

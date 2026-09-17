@@ -10,6 +10,7 @@ import { NextRequest } from 'next/server';
 import { callLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
 import { AGENT_COLOR_PALETTE } from '@/lib/constants/agent-defaults';
@@ -222,6 +223,6 @@ export async function POST(req: NextRequest) {
       `Agent profiles generation failed [stage="${stageName ?? 'unknown'}", model=${modelString ?? 'unknown'}]:`,
       error,
     );
-    return apiError('INTERNAL_ERROR', 500, error instanceof Error ? error.message : String(error));
+    return apiError('INTERNAL_ERROR', 500, safeErrorMessage(error));
   }
 }

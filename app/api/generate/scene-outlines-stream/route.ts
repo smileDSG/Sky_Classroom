@@ -33,6 +33,7 @@ import type {
   ImageMapping,
 } from '@/lib/types/generation';
 import { apiError } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { createLogger } from '@/lib/logger';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
@@ -402,7 +403,7 @@ export async function POST(req: NextRequest) {
         } catch (error) {
           const errorEvent = JSON.stringify({
             type: 'error',
-            error: error instanceof Error ? error.message : String(error),
+            error: safeErrorMessage(error),
           });
           controller.enqueue(encoder.encode(`data: ${errorEvent}\n\n`));
         } finally {

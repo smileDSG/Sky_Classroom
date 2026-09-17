@@ -1,7 +1,11 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   BookOpen,
   Brain,
+  CalendarClock,
   Camera,
   FileQuestion,
   Presentation,
@@ -12,6 +16,7 @@ import {
 import { MobileSkyShell } from '@/components/mobile/mobile-sky-shell';
 import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
 import { cn } from '@/lib/utils';
+import type { MemoryReviewRecord } from '@/lib/cloud-mind/types';
 
 const tools: Array<{
   label: string;
@@ -69,6 +74,24 @@ const tools: Array<{
 ];
 
 export default function MobileCloudMindPage() {
+  const [dueCount, setDueCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/sky/cloud-mind/memory-due', { credentials: 'include' })
+      .then((response) => response.json())
+      .then((json: { success?: boolean; data?: MemoryReviewRecord[] }) => {
+        if (cancelled || !json.success || !Array.isArray(json.data)) return;
+        setDueCount(json.data.length);
+      })
+      .catch(() => {
+        /* due reviews are optional */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <MobileSkyShell fullBleed>
       <div className="relative flex flex-col">
@@ -95,6 +118,24 @@ export default function MobileCloudMindPage() {
             <span>持续更新</span>
           </div>
         </section>
+
+        {/* due review reminder */}
+        {dueCount > 0 && (
+          <section className="relative px-4 pb-1">
+            <Link
+              href="/m/sky/cloud-mind/memory"
+              className="flex items-center justify-between gap-2 rounded-[18px] border border-amber-300/30 bg-amber-400/15 px-4 py-3 backdrop-blur-sm transition-transform active:scale-[0.98]"
+            >
+              <span className="flex items-center gap-2 text-[13px] font-extrabold text-amber-100">
+                <CalendarClock className="size-4 shrink-0" />
+                今天 {dueCount} 张记忆卡待复习
+              </span>
+              <span className="shrink-0 rounded-full bg-amber-400/25 px-3 py-1 text-[12px] font-bold text-amber-100">
+                开始复习
+              </span>
+            </Link>
+          </section>
+        )}
 
         {/* tools grid */}
         <section className="relative px-4 pb-24">

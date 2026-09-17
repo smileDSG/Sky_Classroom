@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>「现代学术」默认母版 · 预览 — 光的折射</title>
+<style>
+  :root{
+    --navy:#1B2A4A;      /* coverBg 主色深藏青 */
+    --bg:#FAFAFA;        /* contentBg 近白 */
+    --gold:#C9A227;      /* accent 金 */
+    --navy2:#1B2A4A;     /* accentSecondary */
+    --warm:#F3F0E4;      /* accentLight 暖白微金 */
+    --ink:#1B2A4A;       /* textPrimary */
+    --body:#2D3436;      /* textBody 近黑 */
+    --muted:#8A93A6;     /* textMuted 弱化灰蓝 */
+    --ondark:#FAFAFA;    /* textOnDark */
+    --stack:"Noto Sans SC","Noto Sans CJK SC","Source Han Sans SC","思源黑体",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#E7EAF1;font-family:var(--stack);}
+  .deck{display:flex;flex-direction:column;gap:26px;padding:34px;max-width:1280px;margin:0 auto;}
+  .deck-head{display:flex;justify-content:space-between;align-items:baseline;color:#33415C;font-size:13px;}
+  .deck-head .tag{color:var(--muted);}
+  .slide{width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;position:relative;box-shadow:0 10px 30px rgba(27,42,74,.16);}
+
+  /* ── 封面：hero-left · 深藏青 + 金 · 思源黑体 ── */
+  .cover{background:var(--navy);color:var(--ondark);display:flex;align-items:center;}
+  .cover .right{position:absolute;right:0;top:0;bottom:0;width:44%;background:linear-gradient(135deg, rgba(201,162,39,.28), rgba(201,162,39,.04));}
+  .cover .right::after{content:"";position:absolute;left:0;top:0;width:3px;height:100%;background:var(--gold);opacity:.7;}
+  .cover .right .dot{position:absolute;right:14%;bottom:18%;width:110px;height:110px;border-radius:50%;background:rgba(201,162,39,.22);}
+  .cover .fill{position:relative;z-index:2;padding:64px 80px;max-width:60%;}
+  .cover .tag{color:var(--gold);letter-spacing:6px;font-size:15px;margin-bottom:26px;font-weight:600;}
+  .cover .bar{width:150px;height:3px;background:var(--gold);margin-bottom:40px;}
+  .cover h1{font-size:60px;line-height:1.15;font-weight:800;letter-spacing:.5px;}
+  .cover .sub{margin-top:34px;color:rgba(250,250,250,.72);font-size:20px;font-weight:400;}
+  .cover .date{position:absolute;left:80px;bottom:48px;color:rgba(250,250,250,.5);font-size:14px;}
+
+  /* ── 内页 · 现代学术 版式基因 ── */
+  .inner{background:var(--bg);color:var(--body);display:flex;flex-direction:column;padding:56px 72px;position:relative;}
+  .inner .cap{display:flex;justify-content:space-between;align-items:center;border-left:4px solid var(--gold);padding-left:18px;margin-bottom:46px;}
+  .inner .cap h2{font-size:40px;color:var(--ink);font-weight:800;}
+  .inner .cap .pno{font-size:18px;color:var(--muted);}
+  .body24{font-size:24px;line-height:1.7;font-weight:400;}
+  .row{display:flex;gap:44px;align-items:stretch;flex:1;}
+  .col{flex:1;}
+  /* 弱化卡片：仅阴影 + 金描边，去掉大色块卡片盒 */
+  .card{background:#fff;border:1px solid #E8E3D6;border-left:4px solid var(--gold);border-radius:6px;padding:30px 34px;box-shadow:0 8px 20px rgba(27,42,74,.06);}
+  .card h3{font-size:26px;color:var(--navy2);font-weight:700;margin-bottom:18px;}
+  .card ul{list-style:none;}
+  .card li{font-size:20px;line-height:1.75;color:var(--body);padding-left:22px;position:relative;margin-bottom:12px;}
+  .card li::before{content:"";position:absolute;left:0;top:.92em;width:8px;height:8px;border-radius:50%;background:var(--gold);}
+  .muted{color:var(--muted);font-size:20px;}
+  .big{font-size:34px;color:var(--ink);font-weight:700;line-height:1.4;}
+  .quote blockquote{font-size:30px;color:var(--navy2);font-weight:700;line-height:1.5;}
+  .quote footer{color:var(--muted);font-size:20px;margin-top:22px;}
+  .foot{display:flex;justify-content:space-between;color:var(--muted);font-size:18px;margin-top:44px;border-top:1px solid #ECE4CF;padding-top:20px;}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="deck-head">
+    <div>「现代学术」默认母版 · DesignDNA <b>modern-academic</b> + 思源黑体 <b>noto-sans</b></div>
+    <div class="tag">正文≥24pt · 标题≥36pt · 单强调色金 · 弱化卡片</div>
+  </div>
+
+  <!-- 封面 -->
+  <div class="slide cover">
+    <div class="right"><div class="dot"></div></div>
+    <div class="fill">
+      <div class="tag">PHYSICS · OPTICS</div>
+      <div class="bar"></div>
+      <h1>光的折射</h1>
+      <div class="sub">高中物理 · 人教版选修 3-4</div>
+    </div>
+    <div class="date">2026-09-15</div>
+  </div>
+
+  <!-- 目录页 -->
+  <div class="slide inner">
+    <div class="cap"><h2>课程结构</h2><div class="pno">01 / 08</div></div>
+    <div class="row">
+      <div class="col"><div class="card" style="border-left-color:transparent;border-color:transparent;box-shadow:none"><ul>
+        <li>折射定律与折射率</li><li>全反射与临界角</li><li>光导纤维的应用</li><li class="muted">课堂小结 · 习题巩固</li>
+      </ul></div></div>
+      <div class="col body24" style="display:flex;align-items:center;">本讲围绕「光从一种介质进入另一种介质时方向改变」这一核心，逐层建立折射定律、折射率与全反射的完整图景。</div>
+    </div>
+    <div class="foot"><span>光的折射 · 课程结构</span><span>02</span></div>
+  </div>
+
+  <!-- 概念页：大字号 + 弱化卡片 -->
+  <div class="slide inner">
+    <div class="cap"><h2>折射定律</h2><div class="pno">03 / 08</div></div>
+    <div class="row">
+      <div class="col body24">光从真空射入介质时，入射角的正弦与折射角的正弦之比保持不变，这一比值称为该介质的<b style="color:var(--navy2)">折射率</b><i> n</i>。</div>
+      <div class="col"><div class="card"><h3>斯涅尔定律</h3><div class="big">n&#8321;·sin&#952;&#8321; = n&#8322;·sin&#952;&#8322;</div><div class="muted" style="margin-top:16px">折射率仅取决于介质本身，与入射角无关。</div></div></div>
+    </div>
+    <div class="foot"><span>折射定律</span><span>03</span></div>
+  </div>
+
+  <!-- 全反射页：留白 + 克制排版 -->
+  <div class="slide inner">
+    <div class="cap"><h2>全反射与临界角</h2><div class="pno">05 / 08</div></div>
+    <div class="body24" style="max-width:88%">当光从光密介质向光疏介质传播且入射角超过<b style="color:var(--navy2)">临界角</b><i> C</i> 时，折射光线消失，光被完全反射回原介质。</div>
+    <div class="row" style="margin-top:36px">
+      <div class="col card"><h3>临界角公式</h3><div class="big">sin C = 1 / n</div></div>
+      <div class="col card"><h3>发生条件</h3><div class="body24" style="font-size:20px">① 光密 → 光疏<br/>② 入射角 &gt; 临界角</div></div>
+    </div>
+    <div class="foot"><span>全反射与临界角</span><span>05</span></div>
+  </div>
+
+  <!-- 应用页 -->
+  <div class="slide inner">
+    <div class="cap"><h2>光导纤维</h2><div class="pno">06 / 08</div></div>
+    <div class="quote card" style="flex:1"><blockquote>「光在同一路径上，被视为可弯曲前行。」</blockquote><footer>—— 利用全反射，光可在纤芯内反复全反射，几乎无损耗地远距离传输</footer></div>
+    <div class="row" style="margin-top:32px">
+      <div class="col card"><h3>应用场景</h3><ul><li>光纤通信</li><li>医用内窥镜</li></ul></div>
+      <div class="col body24 muted" style="display:flex;align-items:center;">现代学术默认母版：深藏青主色 + 单一金色强调，配思源黑体大字号，弱化卡片仅以细边框+阴影区分。</div>
+    </div>
+    <div class="foot"><span>光导纤维</span><span>06</span></div>
+  </div>
+</div>
+</body>
+</html>

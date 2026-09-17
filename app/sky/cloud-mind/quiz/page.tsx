@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
+import { Suspense, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import type { QuestionBankRow } from '@/lib/question-bank/types';
@@ -93,16 +93,44 @@ const PACING_LABELS = {
 
 interface QuizQuestion {
   id: number;
+  questionType: 'choice' | 'fill' | 'judge';
   question: string;
   options: string[];
   answer: number;
+  answerText: string;
   explanation: string;
 }
+
+type QuizQuestionType = QuizQuestion['questionType'];
+
+const QUESTION_TYPES: { id: QuizQuestionType; label: string; desc: string }[] = [
+  { id: 'choice', label: '选择题', desc: '四选一' },
+  { id: 'fill', label: '填空题', desc: '输入答案' },
+  { id: 'judge', label: '判断题', desc: '正确/错误' },
+];
+
+const MATH_INSERT_SYMBOLS: { label: string; value: string }[] = [
+  { label: 'x²', value: '²' },
+  { label: 'x³', value: '³' },
+  { label: 'xⁿ', value: 'ⁿ' },
+  { label: '√', value: '√' },
+  { label: 'π', value: 'π' },
+  { label: '÷', value: '÷' },
+  { label: '×', value: '×' },
+  { label: '±', value: '±' },
+  { label: '°', value: '°' },
+  { label: '∞', value: '∞' },
+];
 
 type QuizState = 'idle' | 'generating' | 'answering' | 'done';
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'failed';
 type QuestionSource = 'ai' | 'bank';
-type BankSaveStatus = 'idle' | 'saving' | 'saved' | 'duplicate' | 'failed';
+
+interface QuizBackfillStats {
+  backfilled: number;
+  duplicates: number;
+  errors: number;
+}
 
 interface QuizEvidenceSummary {
   recordedEvents: number;
@@ -152,6 +180,40 @@ function normalizeQuizQuestions(rawQuestions: unknown): QuizQuestion[] {
   return rawQuestions
     .map((raw, index) => {
       const item = raw as Partial<QuizQuestion>;
+      if (!item.question) return null;
+
+      const questionType: QuizQuestionType =
+        item.questionType === 'fill' || item.questionType === 'judge'
+          ? item.questionType
+          : 'choice';
+
+      if (questionType === 'fill') {
+        const answerText = String(item.answerText ?? '').trim();
+        if (!answerText) return null;
+        return {
+          id: index + 1,
+          questionType: 'fill',
+          question: String(item.question),
+          options: [],
+          answer: 0,
+          answerText,
+          explanation: String(item.explanation ?? '暂无解析'),
+        };
+      }
+
+      if (questionType === 'judge') {
+        const isTrue = item.answer === 0;
+        return {
+          id: index + 1,
+          questionType: 'judge',
+          question: String(item.question),
+          options: ['正确', '错误'],
+          answer: isTrue ? 0 : 1,
+          answerText: String(item.answerText ?? (isTrue ? '正确' : '错误')),
+          explanation: String(item.explanation ?? '暂无解析'),
+        };
+      }
+
       const options = Array.isArray(item.options)
         ? item.options.map((option) => stripOptionPrefix(String(option))).filter(Boolean)
         : [];
@@ -160,14 +222,15 @@ function normalizeQuizQuestions(rawQuestions: unknown): QuizQuestion[] {
           ? item.answer
           : answerToIndex(String(item.answer ?? ''), options);
 
-      if (!item.question || options.length !== 4 || answer === null || answer < 0 || answer > 3)
-        return null;
+      if (options.length !== 4 || answer === null || answer < 0 || answer > 3) return null;
 
       return {
         id: index + 1,
+        questionType: 'choice',
         question: String(item.question),
         options,
         answer,
+        answerText: String(item.answerText ?? options[answer] ?? ''),
         explanation: String(item.explanation ?? '暂无解析'),
       };
     })
@@ -182,9 +245,11 @@ function bankRowToQuizQuestion(row: QuestionBankRow, index: number): QuizQuestio
 
   return {
     id: index + 1,
+    questionType: 'choice',
     question: row.content,
     options,
     answer,
+    answerText: options[answer],
     explanation: row.explanation || row.answer,
   };
 }
@@ -203,11 +268,14 @@ function mapBankRowToQuiz(row: QuestionBankRow, index: number): QuizQuestion {
       .toUpperCase()
       .match(/^[A-Z]/);
     const answerIndex = letterMatch ? letterMatch[0].charCodeAt(0) - 65 : 0;
+    const answer = Math.min(Math.max(0, answerIndex), row.options.length - 1);
     return {
       id: index,
+      questionType: 'choice',
       question: row.content,
       options: row.options,
-      answer: Math.min(Math.max(0, answerIndex), row.options.length - 1),
+      answer,
+      answerText: row.options[answer],
       explanation: row.explanation || row.answer,
     };
   }
@@ -216,17 +284,21 @@ function mapBankRowToQuiz(row: QuestionBankRow, index: number): QuizQuestion {
     const isTrue = /^(正确|对|是|yes|true|1|√)$/.test(ans);
     return {
       id: index,
+      questionType: 'judge',
       question: row.content,
       options: ['正确', '错误'],
       answer: isTrue ? 0 : 1,
+      answerText: isTrue ? '正确' : '错误',
       explanation: row.explanation || row.answer,
     };
   }
   return {
     id: index,
+    questionType: 'fill',
     question: row.content,
     options: ['查看答案'],
     answer: 0,
+    answerText: row.answer,
     explanation: row.explanation || row.answer,
   };
 }
@@ -265,6 +337,7 @@ function CloudMindQuizContent() {
   const [difficulty, setDifficulty] = useState<DifficultyId>('medium');
   const [topic, setTopic] = useState('');
   const [count, setCount] = useState(5);
+  const [questionType, setQuestionType] = useState<QuizQuestionType>('choice');
   const [state, setState] = useState<QuizState>('idle');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -285,15 +358,18 @@ function CloudMindQuizContent() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [attemptSaved, setAttemptSaved] = useState(false);
   const [questionSource, setQuestionSource] = useState<QuestionSource>('ai');
-  const [selectedForBank, setSelectedForBank] = useState<Set<number>>(new Set());
-  const [bankSaveStatusById, setBankSaveStatusById] = useState<Record<number, BankSaveStatus>>({});
-  const [bankSaveMessageById, setBankSaveMessageById] = useState<Record<number, string>>({});
+  const [backfillStats, setBackfillStats] = useState<QuizBackfillStats | null>(null);
   const [bankDialog, setBankDialog] = useState<{ title: string; message: string } | null>(null);
   const [mistakeBookIds, setMistakeBookIds] = useState<Set<number>>(new Set());
   const [mistakeBookStatus, setMistakeBookStatus] = useState<
     'idle' | 'saving' | 'saved' | 'skipped'
   >('idle');
   const [mistakeBookResult, setMistakeBookResult] = useState<{ added: number } | null>(null);
+  const [fillInput, setFillInput] = useState('');
+  const [fillRevealed, setFillRevealed] = useState(false);
+  const [fillSkipped, setFillSkipped] = useState(false);
+  const [fillInputs, setFillInputs] = useState<Record<number, string>>({});
+  const fillInputRef = useRef<HTMLInputElement>(null);
   const savePromiseRef = useRef<Promise<void> | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userEditedTopicRef = useRef(false);
@@ -382,11 +458,10 @@ function CloudMindQuizContent() {
       setQuizEvidence(null);
       setProfileImpact([]);
       setQuestionSource(source);
-      setSelectedForBank(
-        source === 'ai' ? new Set(nextQuestions.map((question) => question.id)) : new Set(),
-      );
-      setBankSaveStatusById({});
-      setBankSaveMessageById({});
+      setFillInput('');
+      setFillRevealed(false);
+      setFillSkipped(false);
+      setFillInputs({});
       savePromiseRef.current = null;
       setState('answering');
       learningDecisionRef.current = null;
@@ -398,6 +473,22 @@ function CloudMindQuizContent() {
     },
     [startLearningSession],
   );
+
+  const insertFillSymbol = (symbol: string) => {
+    const input = fillInputRef.current;
+    const start = input?.selectionStart ?? fillInput.length;
+    const end = input?.selectionEnd ?? fillInput.length;
+    const next = fillInput.slice(0, start) + symbol + fillInput.slice(end);
+    setFillInput(next);
+    requestAnimationFrame(() => {
+      const el = fillInputRef.current;
+      if (el) {
+        el.focus();
+        const pos = start + symbol.length;
+        el.setSelectionRange(pos, pos);
+      }
+    });
+  };
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current) {
@@ -412,7 +503,7 @@ function CloudMindQuizContent() {
         const res = await fetch(`/api/sky/cloud-mind/quiz?jobId=${encodeURIComponent(jobId)}`);
         const json = await res.json();
         if (!res.ok || !json.success) {
-          throw new Error(json.error || '????????');
+          throw new Error(json.error || '出题任务异常');
         }
 
         const task = useTaskStore.getState().getTask(taskId);
@@ -427,16 +518,19 @@ function CloudMindQuizContent() {
           stopPolling();
           if (json.status === 'completed' && json.result) {
             const generatedQuestions = normalizeQuizQuestions(json.result.questions);
-            if (generatedQuestions.length === 0) throw new Error('AI ????????????');
+            if (generatedQuestions.length === 0) throw new Error('AI 出题结果为空，请重试');
+            if (json.result.backfill || json.backfill) {
+              setBackfillStats(json.result.backfill ?? json.backfill);
+            }
             startAnswering(generatedQuestions, 'ai');
             useTaskStore.getState().updateTask(taskId, {
               status: 'completed',
               progress: 100,
-              phase: '????',
+              phase: '出题完成',
               result: { questions: generatedQuestions, source: 'ai' },
             });
           } else {
-            throw new Error(json.error || '????????');
+            throw new Error(json.error || '出题任务异常');
           }
           useTaskStore.getState().removeTask(taskId);
           setActiveTaskId(null);
@@ -448,11 +542,11 @@ function CloudMindQuizContent() {
         }, 2000);
       } catch (err) {
         stopPolling();
-        const msg = err instanceof Error ? err.message : '????';
+        const msg = err instanceof Error ? err.message : '出题失败';
         useTaskStore.getState().updateTask(taskId, {
           status: 'failed',
           progress: 0,
-          phase: '????',
+          phase: '出题失败',
           error: msg,
         });
         setError(msg);
@@ -630,7 +724,10 @@ function CloudMindQuizContent() {
         const topicLabel = topic.trim() ? ` · ${topic.trim()}` : '';
         setBankDialog({
           title: availableQuestions.length === 0 ? '星域题库暂未点亮' : '题库题量不足',
-          message: `${subjectLabel} · ${difficultyLabel}${topicLabel} 当前仅有 ${availableQuestions.length} 道可用选择题，少于本次需要的 ${count} 道。请降低题量、切换条件，或先用 AI 出题补充题库。`,
+          message:
+            availableQuestions.length === 0
+              ? `${subjectLabel} · ${difficultyLabel}${topicLabel} 还没有可用题目。可以先用上方「AI 出题」生成一组题（完成后会自动沉淀进题库），之后就能用「题库练习」抽题了。`
+              : `${subjectLabel} · ${difficultyLabel}${topicLabel} 当前仅有 ${availableQuestions.length} 道可用选择题，少于本次需要的 ${count} 道。可以降低题量、切换条件，或用「AI 出题」补充题库后再来。`,
         });
         setState('idle');
         return;
@@ -668,7 +765,13 @@ function CloudMindQuizContent() {
       const res = await fetch('/api/sky/cloud-mind/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, difficulty, topic: topic || undefined, count }),
+        body: JSON.stringify({
+          subject,
+          difficulty,
+          topic: topic || undefined,
+          count,
+          questionType,
+        }),
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || '生成失败');
@@ -691,7 +794,7 @@ function CloudMindQuizContent() {
       setError(msg);
       setState('idle');
     }
-  }, [count, difficulty, pollQuizJob, stopPolling, subject, topic]);
+  }, [count, difficulty, pollQuizJob, stopPolling, subject, topic, questionType]);
   const saveQuizAttempt = useCallback(
     (finalAnswers: (number | null)[]) => {
       if (savePromiseRef.current) return savePromiseRef.current;
@@ -769,6 +872,9 @@ function CloudMindQuizContent() {
       setCurrentIdx((i) => i + 1);
       setSelectedAnswer(null);
       setShowExplanation(false);
+      setFillInput('');
+      setFillRevealed(false);
+      setFillSkipped(false);
     } else {
       await saveQuizAttempt(answers);
       const context = learningDecisionRef.current ?? (await decisionPromiseRef.current);
@@ -792,121 +898,10 @@ function CloudMindQuizContent() {
     }
   }, [answers, correctCount, currentIdx, questions.length, saveQuizAttempt]);
 
-  const toggleQuestionForBank = useCallback(
-    (questionId: number) => {
-      const status = bankSaveStatusById[questionId] ?? 'idle';
-      if (status === 'saving' || status === 'saved' || status === 'duplicate') return;
-
-      setSelectedForBank((prev) => {
-        const next = new Set(prev);
-        if (next.has(questionId)) next.delete(questionId);
-        else next.add(questionId);
-        return next;
-      });
-    },
-    [bankSaveStatusById],
+  const wrongQuestions = useMemo(
+    () => questions.filter((question, index) => answers[index] !== question.answer),
+    [answers, questions],
   );
-
-  const buildQuestionBankPayload = useCallback(
-    (question: QuizQuestion) => ({
-      subject: SUBJECT_LABEL_BY_ID[subject] || subject,
-      grade: '',
-      difficulty,
-      questionType: 'choice',
-      content: question.question,
-      answer: answerIndexToLetter(question.answer),
-      explanation: question.explanation,
-      knowledgePoints: topic.trim() ? [topic.trim()] : [],
-      options: question.options.map(stripOptionPrefix),
-      source: 'AI智能出题',
-      tags: ['AI生成', '智能出题'],
-      verified: true,
-    }),
-    [difficulty, subject, topic],
-  );
-
-  const handleSaveQuestionToBank = useCallback(
-    async (question: QuizQuestion) => {
-      if (questionSource !== 'ai') return;
-      const currentStatus = bankSaveStatusById[question.id] ?? 'idle';
-      if (currentStatus === 'saving' || currentStatus === 'saved' || currentStatus === 'duplicate')
-        return;
-
-      setBankSaveStatusById((prev) => ({ ...prev, [question.id]: 'saving' }));
-      setBankSaveMessageById((prev) => ({ ...prev, [question.id]: '' }));
-
-      try {
-        const res = await fetch('/api/sky/question-bank', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(buildQuestionBankPayload(question)),
-        });
-        const data = await res.json();
-
-        if (data.success && data.saved === true) {
-          setBankSaveStatusById((prev) => ({ ...prev, [question.id]: 'saved' }));
-          setSelectedForBank((prev) => {
-            const next = new Set(prev);
-            next.delete(question.id);
-            return next;
-          });
-          return;
-        }
-
-        if (data.success && data.duplicated === true) {
-          setBankSaveStatusById((prev) => ({ ...prev, [question.id]: 'duplicate' }));
-          setBankSaveMessageById((prev) => ({ ...prev, [question.id]: '题库中已存在' }));
-          setSelectedForBank((prev) => {
-            const next = new Set(prev);
-            next.delete(question.id);
-            return next;
-          });
-          return;
-        }
-
-        throw new Error(data.error || data.details || '加入题库失败');
-      } catch (err) {
-        setBankSaveStatusById((prev) => ({ ...prev, [question.id]: 'failed' }));
-        setBankSaveMessageById((prev) => ({
-          ...prev,
-          [question.id]: err instanceof Error ? err.message : '加入题库失败',
-        }));
-      }
-    },
-    [bankSaveStatusById, buildQuestionBankPayload, questionSource],
-  );
-
-  const selectAllUnsavedForBank = useCallback(() => {
-    setSelectedForBank(
-      new Set(
-        questions
-          .filter((question) => {
-            const status = bankSaveStatusById[question.id] ?? 'idle';
-            return status !== 'saving' && status !== 'saved' && status !== 'duplicate';
-          })
-          .map((question) => question.id),
-      ),
-    );
-  }, [bankSaveStatusById, questions]);
-
-  const handleSaveSelectedToBank = useCallback(async () => {
-    if (questionSource !== 'ai') return;
-    const targets = questions.filter((question) => {
-      const status = bankSaveStatusById[question.id] ?? 'idle';
-      return (
-        selectedForBank.has(question.id) &&
-        status !== 'saving' &&
-        status !== 'saved' &&
-        status !== 'duplicate'
-      );
-    });
-
-    for (const question of targets) {
-      await handleSaveQuestionToBank(question);
-    }
-  }, [bankSaveStatusById, handleSaveQuestionToBank, questionSource, questions, selectedForBank]);
-
-  const wrongQuestions = questions.filter((question, index) => answers[index] !== question.answer);
   const hasWrongQuestions = wrongQuestions.length > 0;
 
   const handleAddWrongToMistakeBook = useCallback(async () => {
@@ -982,9 +977,7 @@ function CloudMindQuizContent() {
     setQuizEvidence(null);
     setProfileImpact([]);
     setQuestionSource('ai');
-    setSelectedForBank(new Set());
-    setBankSaveStatusById({});
-    setBankSaveMessageById({});
+    setBackfillStats(null);
     setMistakeBookIds(new Set());
     setMistakeBookStatus('idle');
     setMistakeBookResult(null);
@@ -1066,19 +1059,6 @@ function CloudMindQuizContent() {
       disabled: false,
     },
   ];
-  const selectedBankCount = questions.filter((question) => {
-    const status = bankSaveStatusById[question.id] ?? 'idle';
-    return (
-      selectedForBank.has(question.id) &&
-      status !== 'saving' &&
-      status !== 'saved' &&
-      status !== 'duplicate'
-    );
-  }).length;
-  const bankSaving = Object.values(bankSaveStatusById).some((status) => status === 'saving');
-  const bankHandledCount = Object.values(bankSaveStatusById).filter(
-    (status) => status === 'saved' || status === 'duplicate',
-  ).length;
 
   const panelStyle: React.CSSProperties = {
     background: 'var(--quiz-surface)',
@@ -1185,6 +1165,25 @@ function CloudMindQuizContent() {
           ))}
         </div>
       </QuizPanel>
+
+      {quizMode === 'ai' && (
+        <QuizPanel title="题型选择">
+          <div className="grid grid-cols-3 gap-2">
+            {QUESTION_TYPES.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setQuestionType(t.id)}
+                disabled={state === 'generating'}
+                className="flex flex-col items-center gap-1 rounded-xl border p-3 transition-all disabled:opacity-50"
+                style={questionType === t.id ? btnPrimary : btnIdle}
+              >
+                <span className="text-sm font-semibold text-[var(--quiz-text)]">{t.label}</span>
+                <span className="text-[10px] text-[var(--quiz-muted)]">{t.desc}</span>
+              </button>
+            ))}
+          </div>
+        </QuizPanel>
+      )}
     </div>
   );
 
@@ -1207,7 +1206,7 @@ function CloudMindQuizContent() {
 
       <BankInsufficientDialog dialog={bankDialog} onClose={() => setBankDialog(null)} />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-12 space-y-6 text-[var(--quiz-text)]">
+      <div className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-6 pt-6 pb-12 space-y-6 text-[var(--quiz-text)]">
         {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1426,56 +1425,159 @@ function CloudMindQuizContent() {
                   <MathRenderer content={currentQ.question} />
                 </div>
 
-                <div className="space-y-3">
-                  {currentQ.options.map((option, i) => {
-                    const isSelected = selectedAnswer === i;
-                    const isCorrectAnswer = i === currentQ.answer;
-                    const showResult = selectedAnswer !== null;
-                    let border =
-                      'border-[var(--quiz-border)] hover:border-[var(--quiz-border-strong)]';
-                    if (showResult && isCorrectAnswer)
-                      border = 'border-emerald-400/60 bg-emerald-500/10';
-                    else if (showResult && isSelected && !isCorrectAnswer)
-                      border = 'border-red-400/60 bg-red-500/10';
-                    else if (isSelected)
-                      border = 'border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/10';
-                    return (
-                      <motion.button
-                        key={i}
-                        onClick={() => handleAnswer(i)}
-                        disabled={selectedAnswer !== null}
-                        whileTap={selectedAnswer === null ? { scale: 0.98 } : undefined}
-                        className={`w-full text-left rounded-xl border p-4 transition-all disabled:cursor-default ${border}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-colors"
-                            style={{
-                              background:
-                                showResult && isCorrectAnswer
-                                  ? 'var(--quiz-success)'
-                                  : showResult && isSelected && !isCorrectAnswer
-                                    ? 'var(--quiz-error)'
-                                    : 'color-mix(in srgb, var(--quiz-primary) 15%, transparent)',
-                              color:
-                                showResult && (isCorrectAnswer || (isSelected && !isCorrectAnswer))
-                                  ? '#fff'
-                                  : 'var(--quiz-primary-bright)',
-                            }}
-                          >
-                            {String.fromCharCode(65 + i)}
-                          </span>
-                          <span className="text-sm text-[var(--quiz-text)]">
-                            <MathRenderer
-                              content={option}
-                              className="text-sm text-[var(--quiz-text)]"
-                            />
-                          </span>
+                {currentQ.questionType === 'fill' ? (
+                  <div className="space-y-3">
+                    {!fillRevealed ? (
+                      <>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {MATH_INSERT_SYMBOLS.map((s) => (
+                            <button
+                              key={s.label}
+                              type="button"
+                              onClick={() => insertFillSymbol(s.value)}
+                              disabled={selectedAnswer !== null}
+                              title={`插入 ${s.label}`}
+                              className="min-w-9 rounded-lg border border-[var(--quiz-border)] px-2 py-1.5 text-sm text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-primary)] hover:text-[var(--quiz-primary-bright)] disabled:opacity-40"
+                            >
+                              {s.label}
+                            </button>
+                          ))}
                         </div>
-                      </motion.button>
-                    );
-                  })}
-                </div>
+                        <input
+                          ref={fillInputRef}
+                          type="text"
+                          value={fillInput}
+                          onChange={(e) => setFillInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && fillInput.trim()) {
+                              e.preventDefault();
+                              setFillInputs((prev) => ({
+                                ...prev,
+                                [currentQ.id]: fillInput.trim(),
+                              }));
+                              setFillRevealed(true);
+                            }
+                          }}
+                          disabled={selectedAnswer !== null}
+                          placeholder="输入你的答案…"
+                          className="w-full rounded-xl border border-[var(--quiz-border)] bg-transparent px-4 py-3 text-sm text-[var(--quiz-text)] placeholder:text-[var(--quiz-muted)] focus:border-[var(--quiz-primary)] focus:outline-none transition-colors disabled:opacity-50"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFillInputs((prev) => ({ ...prev, [currentQ.id]: fillInput.trim() }));
+                            setFillRevealed(true);
+                          }}
+                          disabled={!fillInput.trim() || selectedAnswer !== null}
+                          className="quiz-button-sweep w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-all disabled:opacity-50"
+                          style={btnPrimary}
+                        >
+                          <CheckCircle2 className="h-4 w-4" /> 提交答案
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div
+                          className="rounded-xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 p-4"
+                          style={{ borderLeftWidth: '3px', borderLeftColor: 'var(--quiz-primary)' }}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <BookOpen className="h-4 w-4 text-[var(--quiz-primary)]" />
+                            <span className="text-xs font-semibold text-[var(--quiz-primary-bright)]">
+                              标准答案
+                            </span>
+                          </div>
+                          <p className="text-sm text-[var(--quiz-text)] leading-relaxed">
+                            <MathRenderer
+                              content={currentQ.answerText}
+                              className="text-sm text-[var(--quiz-text)] leading-relaxed"
+                            />
+                          </p>
+                        </div>
+                        {selectedAnswer === null && !fillSkipped && (
+                          <div className="grid grid-cols-3 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleAnswer(0)}
+                              className="rounded-xl border border-emerald-400/50 bg-emerald-500/10 px-3 py-2.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-300"
+                            >
+                              我答对了
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAnswer(1)}
+                              className="rounded-xl border border-red-400/50 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-500/20 dark:text-red-300"
+                            >
+                              我答错了
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFillSkipped(true);
+                                setShowExplanation(true);
+                              }}
+                              className="rounded-xl border border-[var(--quiz-border)] px-3 py-2.5 text-sm font-medium text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)]"
+                            >
+                              跳过自评
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {currentQ.options.map((option, i) => {
+                      const isSelected = selectedAnswer === i;
+                      const isCorrectAnswer = i === currentQ.answer;
+                      const showResult = selectedAnswer !== null;
+                      let border =
+                        'border-[var(--quiz-border)] hover:border-[var(--quiz-border-strong)]';
+                      if (showResult && isCorrectAnswer)
+                        border = 'border-emerald-400/60 bg-emerald-500/10';
+                      else if (showResult && isSelected && !isCorrectAnswer)
+                        border = 'border-red-400/60 bg-red-500/10';
+                      else if (isSelected)
+                        border = 'border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/10';
+                      return (
+                        <motion.button
+                          key={i}
+                          onClick={() => handleAnswer(i)}
+                          disabled={selectedAnswer !== null}
+                          whileTap={selectedAnswer === null ? { scale: 0.98 } : undefined}
+                          className={`w-full text-left rounded-xl border p-4 transition-all disabled:cursor-default ${border}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-colors"
+                              style={{
+                                background:
+                                  showResult && isCorrectAnswer
+                                    ? 'var(--quiz-success)'
+                                    : showResult && isSelected && !isCorrectAnswer
+                                      ? 'var(--quiz-error)'
+                                      : 'color-mix(in srgb, var(--quiz-primary) 15%, transparent)',
+                                color:
+                                  showResult &&
+                                  (isCorrectAnswer || (isSelected && !isCorrectAnswer))
+                                    ? '#fff'
+                                    : 'var(--quiz-primary-bright)',
+                              }}
+                            >
+                              {String.fromCharCode(65 + i)}
+                            </span>
+                            <span className="text-sm text-[var(--quiz-text)]">
+                              <MathRenderer
+                                content={option}
+                                className="text-sm text-[var(--quiz-text)]"
+                              />
+                            </span>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {selectedAnswer !== null &&
                   explanationMode === 'on-request' &&
@@ -1557,393 +1659,321 @@ function CloudMindQuizContent() {
               key="done"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mx-auto max-w-2xl space-y-6"
+              className="max-w-[1440px] space-y-6"
             >
-              <div
-                className="rounded-2xl border p-8 text-center quiz-score-appear"
-                style={panelStyle}
-              >
-                <div className="relative inline-flex items-center justify-center mb-4">
-                  <div className="absolute h-28 w-28 rounded-full border-2 border-[var(--quiz-border)]" />
+              <div className="grid gap-6 lg:grid-cols-[400px_minmax(0,1fr)]">
+                <div className="min-w-0 space-y-6">
                   <div
-                    className="h-24 w-24 rounded-full flex items-center justify-center"
-                    style={{
-                      background: 'color-mix(in srgb, var(--quiz-primary) 10%, transparent)',
-                      border: '2px solid color-mix(in srgb, var(--quiz-primary) 40%, transparent)',
-                      boxShadow: '0 0 20px var(--quiz-glow)',
-                    }}
+                    className="rounded-2xl border p-6 text-center quiz-score-appear"
+                    style={panelStyle}
                   >
-                    <div>
-                      <div className="text-3xl font-bold text-[var(--quiz-primary-bright)]">
-                        {accuracy}
+                    <div className="relative inline-flex items-center justify-center mb-4">
+                      <div className="absolute h-28 w-28 rounded-full border-2 border-[var(--quiz-border)]" />
+                      <div
+                        className="h-24 w-24 rounded-full flex items-center justify-center"
+                        style={{
+                          background: 'color-mix(in srgb, var(--quiz-primary) 10%, transparent)',
+                          border:
+                            '2px solid color-mix(in srgb, var(--quiz-primary) 40%, transparent)',
+                          boxShadow: '0 0 20px var(--quiz-glow)',
+                        }}
+                      >
+                        <div>
+                          <div className="text-3xl font-bold text-[var(--quiz-primary-bright)]">
+                            {accuracy}
+                          </div>
+                          <div className="text-[10px] text-[var(--quiz-muted)]">分</div>
+                        </div>
                       </div>
-                      <div className="text-[10px] text-[var(--quiz-muted)]">分</div>
+                      <div
+                        className="absolute h-28 w-28 animate-spin"
+                        style={{ animationDuration: '8s' }}
+                      >
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 h-2 w-2 rounded-full bg-[var(--quiz-primary)]" />
+                      </div>
+                    </div>
+                    <h2 className="text-xl font-bold text-[var(--quiz-text)] mb-1">
+                      {questions.length} 题中答对 {correctCount} 题
+                    </h2>
+                    <div className="mt-3 flex items-center justify-center gap-6 text-sm">
+                      <div className="flex items-center gap-1.5 text-[var(--quiz-success)]">
+                        <CheckCircle2 className="h-4 w-4" /> 正确 {correctCount}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[var(--quiz-error)]">
+                        <XCircle className="h-4 w-4" /> 错误 {questions.length - correctCount}
+                      </div>
+                    </div>
+                    <div className="mt-4 text-xs text-[var(--quiz-muted)]">
+                      {saveStatus === 'saving' && '正在保存答题记录…'}
+                      {saveStatus === 'saved' &&
+                        '答题记录已保存，返回学习情况页可查看各学科掌握情况'}
+                      {saveStatus === 'failed' && '保存答题记录失败，可稍后重试'}
                     </div>
                   </div>
-                  <div
-                    className="absolute h-28 w-28 animate-spin"
-                    style={{ animationDuration: '8s' }}
-                  >
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 h-2 w-2 rounded-full bg-[var(--quiz-primary)]" />
-                  </div>
-                </div>
-                <h2 className="text-xl font-bold text-[var(--quiz-text)] mb-1">
-                  {questions.length} 题中答对 {correctCount} 题
-                </h2>
-                <div className="mt-3 flex items-center justify-center gap-6 text-sm">
-                  <div className="flex items-center gap-1.5 text-[var(--quiz-success)]">
-                    <CheckCircle2 className="h-4 w-4" /> 正确 {correctCount}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[var(--quiz-error)]">
-                    <XCircle className="h-4 w-4" /> 错误 {questions.length - correctCount}
-                  </div>
-                </div>
-                <div className="mt-4 text-xs text-[var(--quiz-muted)]">
-                  {saveStatus === 'saving' && '正在保存答题记录…'}
-                  {saveStatus === 'saved' && '答题记录已保存，返回学习情况页可查看各学科掌握情况'}
-                  {saveStatus === 'failed' && '保存答题记录失败，可稍后重试'}
-                </div>
-              </div>
 
-              {hasWrongQuestions && mistakeBookStatus === 'idle' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border p-5"
-                  style={{
-                    borderColor: 'rgba(251,191,36,0.3)',
-                    background: 'rgba(251,191,36,0.04)',
-                  }}
-                >
-                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
-                    <BookOpen className="h-4 w-4 text-amber-500" />
-                    错题加入复习计划
-                  </div>
-                  <p className="mb-3 text-xs leading-5 text-[var(--quiz-muted)]">
-                    将错题加入错题本后，系统会按艾宾浩斯遗忘曲线安排复习，下方可取消不需要的题。
-                  </p>
-                  <div className="space-y-1.5">
-                    {wrongQuestions.map((q) => {
-                      const index = questions.findIndex((x) => x.id === q.id);
-                      return (
-                        <label
-                          key={q.id}
-                          className="flex items-center gap-2 rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-text)] transition-colors hover:border-amber-300/40 cursor-pointer"
+                  {hasWrongQuestions && mistakeBookStatus === 'idle' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-2xl border p-5"
+                      style={{
+                        borderColor: 'rgba(251,191,36,0.3)',
+                        background: 'rgba(251,191,36,0.04)',
+                      }}
+                    >
+                      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
+                        <BookOpen className="h-4 w-4 text-amber-500" />
+                        错题加入复习计划
+                      </div>
+                      <p className="mb-3 text-xs leading-5 text-[var(--quiz-muted)]">
+                        将错题加入错题本后，系统会按艾宾浩斯遗忘曲线安排复习，下方可取消不需要的题。
+                      </p>
+                      <div className="space-y-1.5">
+                        {wrongQuestions.map((q) => {
+                          const index = questions.findIndex((x) => x.id === q.id);
+                          return (
+                            <label
+                              key={q.id}
+                              className="flex items-center gap-2 rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-text)] transition-colors hover:border-amber-300/40 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={mistakeBookIds.has(q.id)}
+                                onChange={() => toggleMistakeBookId(q.id)}
+                                className="h-3.5 w-3.5 accent-amber-500"
+                              />
+                              <span className="truncate">
+                                <span className="font-medium text-rose-500/70">
+                                  错题 {index + 1}：
+                                </span>
+                                <MathRenderer
+                                  content={q.question}
+                                  className="text-xs text-[var(--quiz-text)]"
+                                />
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-4 flex gap-3">
+                        <button
+                          onClick={() => {
+                            setMistakeBookStatus('skipped');
+                            setMistakeBookResult(null);
+                          }}
+                          className="rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)]"
                         >
-                          <input
-                            type="checkbox"
-                            checked={mistakeBookIds.has(q.id)}
-                            onChange={() => toggleMistakeBookId(q.id)}
-                            className="h-3.5 w-3.5 accent-amber-500"
-                          />
-                          <span className="truncate">
-                            <span className="font-medium text-rose-500/70">错题 {index + 1}：</span>
-                            {q.question}
-                          </span>
-                        </label>
+                          全部跳过
+                        </button>
+                        <button
+                          onClick={handleAddWrongToMistakeBook}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 transition-all hover:bg-amber-100 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200"
+                        >
+                          <BookOpen className="h-3.5 w-3.5" />
+                          确认加入 {mistakeBookIds.size} 道错题
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {mistakeBookStatus === 'saving' && (
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 p-4 text-sm text-[var(--quiz-muted)]">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      正在加入错题本…
+                    </div>
+                  )}
+
+                  {mistakeBookStatus === 'saved' && mistakeBookResult && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-300/20 dark:bg-emerald-300/[0.07]"
+                    >
+                      <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                        <CheckCircle2 className="h-4 w-4" />
+                        已加入 {mistakeBookResult.added} 道错题到错题本
+                      </div>
+                      <p className="mt-1 text-xs text-[var(--quiz-muted)]">
+                        系统将按遗忘曲线安排复习，可在"学习情况"页查看。
+                      </p>
+                    </motion.div>
+                  )}
+
+                  {mistakeBookStatus === 'skipped' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-2xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 p-4"
+                    >
+                      <div className="flex items-center gap-2 text-sm text-[var(--quiz-muted)]">
+                        已跳过，后续可在"学习情况"页手动添加错题。
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
+                <div className="min-w-0 space-y-6">
+                  <QuizProfileUpdatePanel
+                    status={saveStatus}
+                    topic={nextActionTopic}
+                    evidence={quizEvidence}
+                    impacts={profileImpact}
+                    decision={nextDecision ?? null}
+                  />
+
+                  <div className="rounded-2xl border p-5" style={panelStyle}>
+                    <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
+                      <Zap className="h-4 w-4 text-[var(--quiz-primary)]" />
+                      下一步学习动作
+                    </div>
+                    <p className="mb-4 text-xs text-[var(--quiz-muted)]">
+                      基于本次答题结果推荐，点卡片即可直达对应学习工具
+                    </p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {nextActionLinks.map((action) => {
+                        const Icon = action.icon;
+                        const contentNode = (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <Icon className="h-4 w-4" />
+                              <span className="text-sm font-semibold">{action.label}</span>
+                            </div>
+                            <p className="mt-1 text-xs text-[var(--quiz-text)]/55">{action.desc}</p>
+                          </>
+                        );
+                        if (action.disabled) {
+                          return (
+                            <div
+                              key={action.label}
+                              className="rounded-xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 px-4 py-3 text-[var(--quiz-text)]/35"
+                            >
+                              {contentNode}
+                            </div>
+                          );
+                        }
+                        return (
+                          <Link
+                            key={action.label}
+                            href={action.href}
+                            className={`rounded-xl border px-4 py-3 transition-all hover:translate-y-[-1px] ${action.tone}`}
+                          >
+                            {contentNode}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {questionSource === 'ai' && (
+                    <div className="rounded-2xl border p-5" style={panelStyle}>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
+                        <BookOpen className="h-4 w-4 text-[var(--quiz-primary)]" />
+                        题库自动沉淀
+                      </div>
+                      <p className="mt-1 text-xs text-[var(--quiz-muted)]">
+                        {backfillStats
+                          ? `本次生成题目已自动去重沉淀至题库：新增 ${backfillStats.backfilled} 题，跳过重复 ${backfillStats.duplicates} 题${backfillStats.errors > 0 ? `，失败 ${backfillStats.errors} 题` : ''}。可在星域题库中按「AI生成」标签检索查看。`
+                          : '本次生成的题目将自动去重沉淀至题库，并标记为「AI生成」。'}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {questions.map((q, i) => {
+                      const userAnswer = answers[i];
+                      const isCorrect = userAnswer === q.answer;
+                      return (
+                        <motion.div
+                          key={q.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          className="rounded-xl border p-4"
+                          style={{
+                            borderColor: isCorrect
+                              ? 'rgba(52,211,153,0.3)'
+                              : 'rgba(248,113,113,0.3)',
+                            background: isCorrect
+                              ? 'rgba(52,211,153,0.05)'
+                              : 'rgba(248,113,113,0.05)',
+                          }}
+                        >
+                          <div className="flex items-start gap-3">
+                            {isCorrect ? (
+                              <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+                            ) : (
+                              <XCircle className="h-5 w-5 text-red-400 mt-0.5 shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-3">
+                                <p className="text-sm font-medium text-[var(--quiz-text)] mb-1">
+                                  {i + 1}.{' '}
+                                  <MathRenderer
+                                    content={q.question}
+                                    className="text-sm font-medium text-[var(--quiz-text)]"
+                                  />
+                                </p>
+                              </div>
+                              <p className="text-xs text-[var(--quiz-muted)]">
+                                你的答案：
+                                <MathRenderer
+                                  content={
+                                    q.questionType === 'fill'
+                                      ? (fillInputs[q.id] ?? '未作答')
+                                      : userAnswer !== null
+                                        ? q.options[userAnswer]
+                                        : '未作答'
+                                  }
+                                  className="text-xs text-[var(--quiz-muted)]"
+                                />{' '}
+                                · 正确答案：
+                                <MathRenderer
+                                  content={
+                                    q.questionType === 'fill' ? q.answerText : q.options[q.answer]
+                                  }
+                                  className="text-xs text-[var(--quiz-muted)]"
+                                />
+                              </p>
+                              {!isCorrect && (
+                                <div className="text-xs text-[var(--quiz-muted)] mt-1.5">
+                                  <MathRenderer
+                                    content={q.explanation}
+                                    className="text-xs text-[var(--quiz-muted)]"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
                       );
                     })}
                   </div>
-                  <div className="mt-4 flex gap-3">
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleReset}
+                      className="flex items-center justify-center gap-2 rounded-xl border border-[var(--quiz-border)] px-4 py-3 text-sm font-medium text-[var(--quiz-muted)] hover:text-[var(--quiz-primary-bright)] hover:border-[var(--quiz-border-strong)] transition-colors"
+                    >
+                      <RotateCcw className="h-4 w-4" /> 重新出题
+                    </button>
                     <button
                       onClick={() => {
-                        setMistakeBookStatus('skipped');
-                        setMistakeBookResult(null);
+                        setState('answering');
+                        setCurrentIdx(0);
+                        setSelectedAnswer(null);
+                        setShowExplanation(false);
+                        setAnswers(new Array(questions.length).fill(null));
+                        setSaveStatus('idle');
+                        setAttemptSaved(false);
+                        savePromiseRef.current = null;
                       }}
-                      className="rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)]"
-                    >
-                      全部跳过
-                    </button>
-                    <button
-                      onClick={handleAddWrongToMistakeBook}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 transition-all hover:bg-amber-100 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200"
-                    >
-                      <BookOpen className="h-3.5 w-3.5" />
-                      确认加入 {mistakeBookIds.size} 道错题
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {mistakeBookStatus === 'saving' && (
-                <div className="flex items-center justify-center gap-2 rounded-2xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 p-4 text-sm text-[var(--quiz-muted)]">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  正在加入错题本…
-                </div>
-              )}
-
-              {mistakeBookStatus === 'saved' && mistakeBookResult && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-300/20 dark:bg-emerald-300/[0.07]"
-                >
-                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
-                    <CheckCircle2 className="h-4 w-4" />
-                    已加入 {mistakeBookResult.added} 道错题到错题本
-                  </div>
-                  <p className="mt-1 text-xs text-[var(--quiz-muted)]">
-                    系统将按遗忘曲线安排复习，可在"学习情况"页查看。
-                  </p>
-                </motion.div>
-              )}
-
-              {mistakeBookStatus === 'skipped' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 p-4"
-                >
-                  <div className="flex items-center gap-2 text-sm text-[var(--quiz-muted)]">
-                    已跳过，后续可在"学习情况"页手动添加错题。
-                  </div>
-                </motion.div>
-              )}
-
-              <QuizProfileUpdatePanel
-                status={saveStatus}
-                topic={nextActionTopic}
-                evidence={quizEvidence}
-                impacts={profileImpact}
-                decision={nextDecision ?? null}
-              />
-
-              <div className="rounded-2xl border p-5" style={panelStyle}>
-                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
-                  <Zap className="h-4 w-4 text-[var(--quiz-primary)]" />
-                  下一步学习动作
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {nextActionLinks.map((action) => {
-                    const Icon = action.icon;
-                    const contentNode = (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          <span className="text-sm font-semibold">{action.label}</span>
-                        </div>
-                        <p className="mt-1 text-xs text-[var(--quiz-text)]/55">{action.desc}</p>
-                      </>
-                    );
-                    if (action.disabled) {
-                      return (
-                        <div
-                          key={action.label}
-                          className="rounded-xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 px-4 py-3 text-[var(--quiz-text)]/35"
-                        >
-                          {contentNode}
-                        </div>
-                      );
-                    }
-                    return (
-                      <Link
-                        key={action.label}
-                        href={action.href}
-                        className={`rounded-xl border px-4 py-3 transition-all hover:translate-y-[-1px] ${action.tone}`}
-                      >
-                        {contentNode}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {questionSource === 'ai' && (
-                <div className="rounded-2xl border p-5" style={panelStyle}>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
-                        <BookOpen className="h-4 w-4 text-[var(--quiz-primary)]" />将 AI
-                        题目加入题库
-                      </div>
-                      <p className="mt-1 text-xs text-[var(--quiz-muted)]">
-                        本次 AI 生成的题目不会自动入库，可选择需要沉淀的题目。
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <button
-                      onClick={selectAllUnsavedForBank}
-                      disabled={bankSaving}
-                      className="rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)] disabled:opacity-50"
-                    >
-                      全选未入库
-                    </button>
-                    <button
-                      onClick={() => setSelectedForBank(new Set())}
-                      disabled={bankSaving}
-                      className="rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)] disabled:opacity-50"
-                    >
-                      清空选择
-                    </button>
-                    <button
-                      onClick={handleSaveSelectedToBank}
-                      disabled={selectedBankCount === 0 || bankSaving}
-                      className="quiz-button-sweep inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all disabled:opacity-50"
+                      className="quiz-button-sweep flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all"
                       style={btnPrimary}
                     >
-                      {bankSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                      加入选中 {selectedBankCount} 题
+                      <Target className="h-4 w-4" /> 再做一次
                     </button>
-                    {bankHandledCount > 0 && (
-                      <span className="text-xs text-emerald-700/80 dark:text-emerald-300/80">
-                        已处理 {bankHandledCount} 题
-                      </span>
-                    )}
                   </div>
                 </div>
-              )}
-
-              <div className="space-y-3">
-                {questions.map((q, i) => {
-                  const userAnswer = answers[i];
-                  const isCorrect = userAnswer === q.answer;
-                  const bankStatus = bankSaveStatusById[q.id] ?? 'idle';
-                  const canSelectForBank =
-                    questionSource === 'ai' &&
-                    bankStatus !== 'saving' &&
-                    bankStatus !== 'saved' &&
-                    bankStatus !== 'duplicate';
-                  const bankButtonLabel =
-                    bankStatus === 'saving'
-                      ? '加入中…'
-                      : bankStatus === 'saved'
-                        ? '已加入'
-                        : bankStatus === 'duplicate'
-                          ? '已存在'
-                          : bankStatus === 'failed'
-                            ? '重试'
-                            : '加入题库';
-                  return (
-                    <motion.div
-                      key={q.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="rounded-xl border p-4"
-                      style={{
-                        borderColor: isCorrect ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)',
-                        background: isCorrect ? 'rgba(52,211,153,0.05)' : 'rgba(248,113,113,0.05)',
-                      }}
-                    >
-                      <div className="flex items-start gap-3">
-                        {isCorrect ? (
-                          <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-400 mt-0.5 shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-3">
-                            <p className="text-sm font-medium text-[var(--quiz-text)] mb-1">
-                              {i + 1}.{' '}
-                              <MathRenderer
-                                content={q.question}
-                                className="text-sm font-medium text-[var(--quiz-text)]"
-                              />
-                            </p>
-                            {questionSource === 'ai' && (
-                              <div className="flex shrink-0 items-center gap-2">
-                                <label
-                                  className={`flex items-center gap-1.5 text-xs ${canSelectForBank ? 'text-[var(--quiz-muted)]' : 'text-[var(--quiz-muted)]'}`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedForBank.has(q.id)}
-                                    disabled={!canSelectForBank}
-                                    onChange={() => toggleQuestionForBank(q.id)}
-                                    className="h-3.5 w-3.5 accent-amber-400"
-                                  />
-                                  入库
-                                </label>
-                                <button
-                                  onClick={() => handleSaveQuestionToBank(q)}
-                                  disabled={
-                                    bankStatus === 'saving' ||
-                                    bankStatus === 'saved' ||
-                                    bankStatus === 'duplicate'
-                                  }
-                                  className="inline-flex items-center gap-1 rounded-lg border border-[var(--quiz-border)] px-2.5 py-1.5 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)] disabled:opacity-60"
-                                >
-                                  {bankStatus === 'saving' && (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  )}
-                                  {bankButtonLabel}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-xs text-[var(--quiz-muted)]">
-                            你的答案：
-                            <MathRenderer
-                              content={userAnswer !== null ? q.options[userAnswer] : '未作答'}
-                              className="text-xs text-[var(--quiz-muted)]"
-                            />{' '}
-                            · 正确答案：
-                            <MathRenderer
-                              content={q.options[q.answer]}
-                              className="text-xs text-[var(--quiz-muted)]"
-                            />
-                          </p>
-                          {!isCorrect && (
-                            <div className="text-xs text-[var(--quiz-muted)] mt-1.5">
-                              <MathRenderer
-                                content={q.explanation}
-                                className="text-xs text-[var(--quiz-muted)]"
-                              />
-                            </div>
-                          )}
-                          {questionSource === 'ai' && bankSaveMessageById[q.id] && (
-                            <p
-                              className={`mt-2 text-xs ${bankStatus === 'failed' ? 'text-red-700/80 dark:text-red-300/80' : 'text-emerald-700/80 dark:text-emerald-300/80'}`}
-                            >
-                              {bankSaveMessageById[q.id]}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={handleReset}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-[var(--quiz-border)] px-4 py-3 text-sm font-medium text-[var(--quiz-muted)] hover:text-[var(--quiz-primary-bright)] hover:border-[var(--quiz-border-strong)] transition-colors"
-                >
-                  <RotateCcw className="h-4 w-4" /> 重新出题
-                </button>
-                <button
-                  onClick={() => {
-                    setState('answering');
-                    setCurrentIdx(0);
-                    setSelectedAnswer(null);
-                    setShowExplanation(false);
-                    setAnswers(new Array(questions.length).fill(null));
-                    setSaveStatus('idle');
-                    setAttemptSaved(false);
-                    setSelectedForBank(
-                      new Set(
-                        questions
-                          .filter((question) => {
-                            const status = bankSaveStatusById[question.id] ?? 'idle';
-                            return (
-                              questionSource === 'ai' &&
-                              status !== 'saving' &&
-                              status !== 'saved' &&
-                              status !== 'duplicate'
-                            );
-                          })
-                          .map((question) => question.id),
-                      ),
-                    );
-                    savePromiseRef.current = null;
-                  }}
-                  className="quiz-button-sweep flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all"
-                  style={btnPrimary}
-                >
-                  <Target className="h-4 w-4" /> 再做一次
-                </button>
               </div>
             </motion.div>
           )}

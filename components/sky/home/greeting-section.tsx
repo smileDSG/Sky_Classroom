@@ -6,6 +6,8 @@ import { Zap, Sparkles, Brain } from 'lucide-react';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useAuth } from '@/components/auth/auth-provider';
 import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
+import { BlurText } from '@/components/reactbits/blur-text';
+import { ShinyText } from '@/components/reactbits/shiny-text';
 
 interface LearningStats {
   todayStudyMinutes: number;
@@ -124,12 +126,15 @@ export function GreetingSection() {
           >
             {greetingEmoji}
           </motion.span>
-          <span className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 dark:from-sky-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-            {greeting}
-          </span>
+          <BlurText
+            text={greeting}
+            delay={0.15}
+            stagger={0.05}
+            charClassName="bg-gradient-to-b from-sky-600 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent"
+          />
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          今天是学习的好日子，继续加油！
+          今天是学习的好日子，<ShinyText>继续加油！</ShinyText>
         </p>
       </div>
 

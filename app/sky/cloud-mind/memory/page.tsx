@@ -15,6 +15,7 @@ import {
   Lightbulb,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   RotateCcw,
   CheckCircle2,
   BookOpen,
@@ -32,7 +33,7 @@ import {
 import type { MistakeCause } from '@/lib/solve/types';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import { useRouter } from 'next/navigation';
-import type { MemoryCardDeck } from '@/lib/agents/cloud-mind/memory-cards-agent';
+import type { MemoryCardDeck, MemoryCardsStreamEvent } from '@/lib/agents/cloud-mind/memory-cards-agent';
 import { MEMORY_COUNT_OPTIONS } from '@/lib/student/profile-config';
 import {
   buildMemoryCardId,
@@ -158,6 +159,7 @@ function CloudMindMemoryContent() {
   const outcomeReportedRef = useRef(false);
   const deckRef = useRef<MemoryCardDeck | null>(null);
   const studiedCardsRef = useRef<Set<number>>(new Set());
+  const streamAbortRef = useRef<AbortController | null>(null);
   const router = useRouter();
   const startLearningSession = useCallback((sessionTopic: string) => {
     learningDecisionRef.current = null;
@@ -435,11 +437,15 @@ function CloudMindMemoryContent() {
       return;
     }
 
+    streamAbortRef.current?.abort();
+
     setLoading(true);
     setError(null);
     setDeck(null);
+    deckRef.current = null;
     setFlipped(false);
     setStudiedCards(new Set());
+    studiedCardsRef.current = new Set();
     setCardReviewStatus({});
     setDueReviewSourceByIndex({});
     setReviewFeedbackByCard({});
@@ -462,23 +468,35 @@ function CloudMindMemoryContent() {
       const body = isAuto
         ? { auto: true }
         : { content: content.trim(), topic: topic || undefined, cardCount };
-      const res = await fetch('/api/sky/cloud-mind/memory-cards', {
+      const abortController = new AbortController();
+      streamAbortRef.current = abortController;
+      const res = await fetch('/api/sky/cloud-mind/memory-cards/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        signal: abortController.signal,
       });
-      const json = await res.json();
-      if (!json.success) {
-        throw new Error(json.error || '生成失败');
+      const contentType = res.headers.get('content-type') ?? '';
+      if (res.ok && contentType.includes('text/event-stream')) {
+        await consumeMemoryCardsStream(res, taskId);
+      } else {
+        // 非流式回退（旧端点/代理）
+        const json = await res.json();
+        if (!json.success) {
+          throw new Error(json.error || '生成失败');
+        }
+        useTaskStore.getState().updateTask(taskId, {
+          status: 'completed',
+          progress: 100,
+          phase: '收集完成',
+          result: json.data,
+        });
       }
-
-      useTaskStore.getState().updateTask(taskId, {
-        status: 'completed',
-        progress: 100,
-        phase: '收集完成',
-        result: json.data,
-      });
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        useTaskStore.getState().removeTask(taskId);
+        return;
+      }
       const msg = err instanceof Error ? err.message : '生成失败，请重试';
       useTaskStore.getState().updateTask(taskId, {
         status: 'failed',
@@ -486,6 +504,91 @@ function CloudMindMemoryContent() {
         phase: '生成失败',
         error: msg,
       });
+    }
+  };
+
+  const consumeMemoryCardsStream = async (res: Response, taskId: string) => {
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error('浏览器不支持流式响应');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let accCards: MemoryCardDeck['cards'] = [];
+    const partialTopic = topic.trim() || '记忆卡片';
+    const taskStore = useTaskStore.getState();
+
+    const applyPartial = (cards: MemoryCardDeck['cards']) => {
+      accCards = [...accCards, ...cards];
+      const partial: MemoryCardDeck = {
+        topic: partialTopic,
+        description: '',
+        cards: accCards,
+        studyTips: '',
+        reviewIntervals: [],
+      };
+      setDeck(partial);
+      deckRef.current = partial;
+      taskStore.updateTask(taskId, {
+        status: 'running',
+        progress: Math.min(90, 40 + accCards.length * 5),
+        phase: `已生成 ${accCards.length} 张，继续生成中…`,
+        updatedAt: Date.now(),
+      });
+    };
+
+    const completePartial = (event?: { message?: string }) => {
+      const partial: MemoryCardDeck = {
+        topic: partialTopic,
+        description: '',
+        cards: accCards,
+        studyTips: '',
+        reviewIntervals: [],
+      };
+      taskStore.updateTask(taskId, {
+        status: 'completed',
+        progress: 100,
+        phase: `已生成 ${accCards.length} 张`,
+        result: partial,
+      });
+      if (event?.message) setError(event.message);
+    };
+
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const event = JSON.parse(line.slice(6)) as MemoryCardsStreamEvent;
+        if (event.type === 'cards') {
+          applyPartial(event.cards);
+        } else if (event.type === 'done') {
+          taskStore.updateTask(taskId, {
+            status: 'completed',
+            progress: 100,
+            phase: '收集完成',
+            result: event.deck,
+          });
+          return;
+        } else if (event.type === 'error') {
+          if (accCards.length > 0) {
+            completePartial({ message: event.message || '剩余卡片生成失败，可重新生成' });
+          } else {
+            throw new Error(event.message || '生成失败，请重试');
+          }
+          return;
+        }
+      }
+    }
+
+    // 流结束但无 done 事件（极端情况）：保留已出卡片
+    if (accCards.length > 0) {
+      completePartial();
+    } else {
+      throw new Error('生成未返回卡片，请重试');
     }
   };
 
@@ -961,6 +1064,7 @@ function CloudMindMemoryContent() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => {
+                      streamAbortRef.current?.abort();
                       setDeck(null);
                       setContent('');
                       setStudiedCards(new Set());
@@ -988,6 +1092,34 @@ function CloudMindMemoryContent() {
                   </button>
                 </div>
               </div>
+
+              {loading && !error && (
+                <div
+                  className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm"
+                  style={{
+                    background: 'rgba(251, 113, 133, 0.06)',
+                    border: '1px solid var(--memory-border)',
+                    color: 'var(--memory-muted)',
+                  }}
+                >
+                  <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--memory-primary)' }} />
+                  正在生成剩余卡片，已生成的卡片可立即开始复习…
+                </div>
+              )}
+
+              {error && (
+                <div
+                  className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm"
+                  style={{
+                    background: 'rgba(248, 113, 113, 0.1)',
+                    border: '1px solid rgba(248, 113, 113, 0.2)',
+                    color: '#F87171',
+                  }}
+                >
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  {error}
+                </div>
+              )}
 
               {studyMode ? (
                 /* Flashcard study mode */
@@ -1059,7 +1191,7 @@ function CloudMindMemoryContent() {
                     >
                       {/* Front */}
                       <div
-                        className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden rounded-2xl p-6 sm:p-8"
+                        className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl p-6 sm:p-8"
                         style={{
                           background: 'var(--memory-surface-elevated)',
                           border: '1px solid var(--memory-border)',
@@ -1094,7 +1226,7 @@ function CloudMindMemoryContent() {
 
                       {/* Back */}
                       <div
-                        className="absolute inset-0 flex flex-col overflow-hidden rounded-2xl p-6 sm:p-8"
+                        className="absolute inset-0 flex flex-col rounded-2xl p-6 sm:p-8"
                         style={{
                           background:
                             'linear-gradient(135deg, var(--memory-surface-elevated) 0%, rgba(251, 113, 133, 0.08) 100%)',
@@ -1142,7 +1274,7 @@ function CloudMindMemoryContent() {
                             {deck.cards[currentCard].tags.map((tag, i) => (
                               <span
                                 key={i}
-                                className="text-[10px] rounded px-2 py-0.5"
+                                className="text-xs rounded px-2 py-0.5"
                                 style={{
                                   background: 'rgba(251, 113, 133, 0.08)',
                                   border: '1px solid var(--memory-border)',
@@ -1267,7 +1399,7 @@ function CloudMindMemoryContent() {
                         decision={latestDecision ?? null}
                       />
                       <button
-                        onClick={() => router.push('/sky/cloud-mind')}
+                        onClick={() => router.push('/sky/cloud-mind/memory')}
                         className="celestial-button flex items-center gap-2"
                         style={{
                           borderColor: 'var(--memory-collected)',
@@ -1275,7 +1407,7 @@ function CloudMindMemoryContent() {
                         }}
                       >
                         <CheckCircle2 className="h-4 w-4" />
-                        返回学习资源
+                        回到记忆卡片
                       </button>
                     </motion.div>
                   ) : (
@@ -1469,8 +1601,11 @@ function MemoryPersonalizationPanel({
   const mastery = weakPoint?.mastery ?? context.masteryByKnowledge[targetTopic];
   const duration = policy?.durationMinutes ?? Math.max(5, Math.ceil(cardCount * 1.2));
   const reasonCodes = policy?.reasonCodes ?? context.learnerDecision?.reasonCodes ?? [];
-  const reasons = reasonCodes.map((code) => MEMORY_REASON_LABELS[code] ?? code);
+  const reasons = reasonCodes
+    .filter((code) => !code?.startsWith('tool-'))
+    .map((code) => MEMORY_REASON_LABELS[code] ?? code);
   const earliestDue = dueReviews[0]?.nextReviewAt;
+  const [planOpen, setPlanOpen] = useState(false);
   const judgement =
     isReviewing
       ? `本轮 ${cardCount} 张卡片已经按画像排好，完成后会重新计算记忆状态。`
@@ -1484,34 +1619,56 @@ function MemoryPersonalizationPanel({
     <motion.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5"
+      className="mb-5 rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
     >
       <div>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300">
-              <Brain className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">本次复习安排</h2>
-                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-medium text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
-                  间隔复习已启用
-                </span>
-              </div>
-              <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--memory-muted)]">
-                当前判断：{judgement}
-              </p>
-            </div>
-          </div>
-          {hasManualOverride && (
-            <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1.5 text-[11px] text-amber-200">
-              已保留你的手动调整
+        {/* 折叠导航行：默认只占一行，避免挤占生成/复习主体 */}
+        <button
+          type="button"
+          onClick={() => setPlanOpen((v) => !v)}
+          aria-expanded={planOpen}
+          className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left sm:px-5"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <Brain className="h-4 w-4 shrink-0 text-sky-600 dark:text-sky-300" />
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              本次复习安排
             </span>
-          )}
-        </div>
+            <span className="hidden truncate text-xs text-[var(--memory-muted)] sm:inline">
+              {dueReviews.length > 0 ? `${dueReviews.length} 张已到期 · ` : ''}
+              已按画像预排 {cardCount} 张 · 约 {duration} 分钟
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2">
+            {hasManualOverride && (
+              <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2.5 py-0.5 text-[11px] text-amber-200">
+                已保留手动调整
+              </span>
+            )}
+            {dueReviews.length > 0 && !isReviewing && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStartDueReview();
+                }}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-sky-700"
+              >
+                <CalendarClock className="h-3.5 w-3.5" /> 立即复习 {dueReviews.length} 张
+              </button>
+            )}
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-[var(--memory-muted)] transition-transform ${planOpen ? 'rotate-180' : ''}`}
+            />
+          </span>
+        </button>
 
-        <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_1fr]">
+        {planOpen && (
+        <>
+        <p className="border-b border-slate-100 px-4 pb-3 text-xs leading-5 text-[var(--memory-muted)] dark:border-slate-800 sm:px-5">
+          当前判断：{judgement}
+        </p>
+        <div className="grid gap-3 px-4 pb-4 sm:px-5 lg:grid-cols-[1.1fr_1fr]">
           <div className="rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
             <div className="flex items-center gap-2 text-xs font-semibold text-sky-700 dark:text-sky-300">
               <Target className="h-4 w-4" /> 当前复习主题
@@ -1594,16 +1751,8 @@ function MemoryPersonalizationPanel({
             <Route className="mt-0.5 h-4 w-4 shrink-0 text-sky-600 dark:text-sky-300" />
             <span>完成后：记忆反馈 → 更新熟练度和全局知识状态 → 计算下次复习与下一工具。</span>
           </div>
-          {dueReviews.length > 0 && !isReviewing && (
-            <button
-              type="button"
-              onClick={onStartDueReview}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sky-700"
-            >
-              <CalendarClock className="h-4 w-4" /> 立即复习 {dueReviews.length} 张到期卡
-            </button>
-          )}
         </div>
+        </>)}
       </div>
     </motion.section>
   );

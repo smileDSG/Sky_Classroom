@@ -12,6 +12,25 @@ vi.mock('@/lib/server/server-storage', () => ({
   getServerStorage: async () => storage,
 }));
 
+vi.mock('next/headers', () => ({
+  cookies: async () => new Map(),
+}));
+
+vi.mock('@/lib/server/auth/helpers', () => ({
+  requireAuth: async () => ({
+    user: {
+      id: 'student-1',
+      email: 'student@example.com',
+      username: 'student',
+      passwordHash: null,
+      role: 'student',
+      status: 'active',
+      guestId: null,
+      planType: 'free',
+    },
+  }),
+}));
+
 describe('learning effect evaluate route', () => {
   it('persists profile signals for the evaluated practice result', async () => {
     const { POST } = await import('@/app/api/sky/learning-effect/evaluate/route');

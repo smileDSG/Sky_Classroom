@@ -16,6 +16,13 @@ interface FontMeta {
 }
 
 const FONT_META: Record<string, FontMeta> = {
+  'noto-sans': {
+    label: '思源黑体',
+    desc: '思源黑体，现代学术',
+    cnPreview: '学',
+    enPreview: 'Aa',
+    sample: '思源黑体 · 现代学术',
+  },
   'georgia-calibri': {
     label: '经典宋体',
     desc: '宋体衬线，典雅古典',

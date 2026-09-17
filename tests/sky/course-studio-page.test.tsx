@@ -17,6 +17,19 @@ vi.mock('next/link', async () => {
   };
 });
 
+// 可控的 useSearchParams / useRouter mock：测试可自主注入 resourceJobId 并断言跳转。
+const nav = vi.hoisted(() => {
+  const params = new URLSearchParams();
+  const push = vi.fn();
+  return { params, push };
+});
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: nav.push, replace: vi.fn(), back: vi.fn() }),
+  usePathname: () => '/',
+  useSearchParams: () => nav.params,
+}));
+
 describe('CourseStudioPage', () => {
   const mockFetch = vi.fn();
   const personalizationContext = {
@@ -107,15 +120,78 @@ describe('CourseStudioPage', () => {
     },
   };
 
+  const generationResult = {
+    jobId: 'job-1',
+    progress: 100,
+    studentProfile,
+    safety: {
+      passed: true,
+      riskLevel: 'low' as const,
+      categories: [],
+      action: 'allow' as const,
+      message: '内容安全',
+    },
+    courseHits: [
+      {
+        document: {
+          title: 'RAG 阅读材料',
+          kind: 'reading',
+          file: 'readings.md',
+          tags: ['RAG'],
+        },
+        score: 0.92,
+        snippet: '检索增强生成的基础流程',
+      },
+    ],
+    agentTrace: [{ agent: 'ResourceAgents', status: 'completed', output: '生成讲义' }],
+    resources: [
+      {
+        id: 'lecture-1',
+        type: 'markdown_lecture',
+        title: 'RAG 复习讲义',
+        sourceCitations: ['readings.md'],
+        contentPreview: '结构化解释和关键案例',
+        content: '# RAG 复习讲义\n\n结构化解释和关键案例',
+        trust: { confidence: 0.92, status: 'pass' },
+      },
+    ],
+    learningPath: [
+      {
+        dayRange: 'Day 1',
+        goal: '复习 RAG',
+        resources: ['lecture-1'],
+        reason: '薄弱点优先',
+      },
+    ],
+    p2Enhancements,
+    reviewResult: { passed: true, confidence: 0.92, issues: [], suggestions: [] },
+  };
+
   beforeEach(() => {
     mockFetch.mockReset();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        success: true,
-        data: personalizationContext,
-      }),
-    } as Response);
+    nav.params = new URLSearchParams();
+    nav.push.mockReset();
+    mockFetch.mockImplementation(async (href: string, init?: RequestInit) => {
+      if (href === '/api/sky/cloud-mind/personalization-context') {
+        return jsonResponse({ success: true, data: personalizationContext });
+      }
+      if (href === '/api/sky/resource-generation/jobs' && init?.method === 'POST') {
+        return jsonResponse({ success: true, jobId: 'job-1' }, 202);
+      }
+      if (href === '/api/sky/resource-generation/jobs/job-1' && !init?.method) {
+        return jsonResponse({
+          success: true,
+          jobId: 'job-1',
+          status: 'succeeded',
+          step: 'completed',
+          progress: 100,
+          message: '学习资料已生成完成',
+          result: generationResult,
+          done: true,
+        });
+      }
+      throw new Error(`Unhandled fetch: ${href}`);
+    });
     global.fetch = mockFetch;
   });
 
@@ -123,157 +199,83 @@ describe('CourseStudioPage', () => {
     render(<CourseStudioPage />);
 
     expect(
-      await screen.findByRole('heading', { name: '这次想生成什么学习资料？' }),
+      await screen.findByRole('heading', { name: '这次想生成什么样的学习包？' }),
     ).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('例如：帮我复习 RAG，准备期末考试')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /生成/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /讲义/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /PPT/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /题库/ })).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/sky/cloud-mind/personalization-context', {
-        credentials: 'include',
-        headers: expect.any(Headers),
-      });
-    });
-
-    expect(screen.queryByLabelText('专业背景')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('学习目标')).not.toBeInTheDocument();
-    expect(screen.queryByText('Agent 协同进度')).not.toBeInTheDocument();
-    expect(screen.queryByText('P1 Evidence')).not.toBeInTheDocument();
-    expect(screen.queryByText('P2 Long-Term')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('例如：帮我复习导数，准备期末考试')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^生成$/ })).toBeInTheDocument();
+    for (const label of ['讲义', '导图', '自查清单', '学习路径']) {
+      expect(screen.getByRole('button', { name: new RegExp(`^${label}$`) })).toBeInTheDocument();
+    }
   });
 
-  it('shows generated evidence sections as a tab-like detail navigation', async () => {
-    mockFetch.mockImplementation(async (href: string) => {
+  it('sends only the selected resource type to the server (on-demand single generation)', async () => {
+    render(<CourseStudioPage />);
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/sky/cloud-mind/personalization-context',
+        expect.any(Object),
+      );
+    });
+
+    // Unselect 3 types, keep only 讲义.
+    for (const label of ['导图', '自查清单', '学习路径']) {
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${label}$`) }));
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: /^生成$/ }));
+
+    const postCall = mockFetch.mock.calls.find(
+      ([href, init]) =>
+        href === '/api/sky/resource-generation/jobs' && (init as any)?.method === 'POST',
+    );
+    expect(postCall).toBeDefined();
+    const json = JSON.parse((postCall![1] as RequestInit).body as string);
+    expect(json.resourceTypes).toEqual(['markdown_lecture']);
+  });
+
+  it('shows an error with a retry button and preserves the input when submission fails', async () => {
+    mockFetch.mockImplementation(async (href: string, init?: RequestInit) => {
       if (href === '/api/sky/cloud-mind/personalization-context') {
-        return {
-          ok: true,
-          json: async () => ({ success: true, data: personalizationContext }),
-        } as Response;
+        return jsonResponse({ success: true, data: personalizationContext });
       }
-      if (href === '/api/sky/content-safety/check') {
-        return {
-          ok: true,
-          json: async () => ({
-            success: true,
-            data: {
-              passed: true,
-              riskLevel: 'low',
-              categories: [],
-              action: 'allow',
-              message: '内容安全',
-            },
-          }),
-        } as Response;
-      }
-      if (href === '/api/sky/student/profile/conversation') {
-        return {
-          ok: true,
-          json: async () => ({ success: true, data: { profile: studentProfile } }),
-        } as Response;
-      }
-      if (href.startsWith('/api/sky/course-knowledge/search')) {
-        return {
-          ok: true,
-          json: async () => ({
-            success: true,
-            data: {
-              results: [
-                {
-                  document: {
-                    title: 'RAG 阅读材料',
-                    kind: 'reading',
-                    file: 'readings.md',
-                    tags: ['RAG'],
-                  },
-                  score: 0.92,
-                  snippet: '检索增强生成的基础流程',
-                },
-              ],
-            },
-          }),
-        } as Response;
-      }
-      if (href === '/api/sky/resource-generation/jobs') {
-        return {
-          ok: true,
-          json: async () => ({
-            success: true,
-            data: {
-              jobId: 'job-1',
-              progress: 100,
-              studentProfile,
-              safety: {
-                passed: true,
-                riskLevel: 'low',
-                categories: [],
-                action: 'allow',
-                message: '内容安全',
-              },
-              courseHits: [
-                {
-                  document: {
-                    title: 'RAG 阅读材料',
-                    kind: 'reading',
-                    file: 'readings.md',
-                    tags: ['RAG'],
-                  },
-                  score: 0.92,
-                  snippet: '检索增强生成的基础流程',
-                },
-              ],
-              agentTrace: [{ agent: 'ResourceAgents', status: 'completed', output: '生成讲义' }],
-              resources: [
-                {
-                  id: 'lecture-1',
-                  type: 'markdown_lecture',
-                  title: 'RAG 复习讲义',
-                  sourceCitations: ['readings.md'],
-                  contentPreview: '结构化解释和关键案例',
-                  content: '# RAG 复习讲义\n\n结构化解释和关键案例',
-                  trust: { confidence: 0.92, status: 'pass' },
-                },
-              ],
-              learningPath: [
-                {
-                  dayRange: 'Day 1',
-                  goal: '复习 RAG',
-                  resources: ['lecture-1'],
-                  reason: '薄弱点优先',
-                },
-              ],
-              p2Enhancements,
-              reviewResult: { passed: true, confidence: 0.92, issues: [], suggestions: [] },
-            },
-          }),
-        } as Response;
+      if (href === '/api/sky/resource-generation/jobs' && init?.method === 'POST') {
+        return jsonResponse({ success: false, error: '生成任务提交失败' }, 500);
       }
       throw new Error(`Unhandled fetch: ${href}`);
     });
+    global.fetch = mockFetch;
 
     render(<CourseStudioPage />);
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
 
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/sky/cloud-mind/personalization-context', {
-        credentials: 'include',
-        headers: expect.any(Headers),
-      });
-    });
-
+    const intent = screen.getByPlaceholderText('例如：帮我复习导数，准备期末考试');
+    fireEvent.change(intent, { target: { value: '我的导数复习需求' } });
     fireEvent.click(screen.getByRole('button', { name: /^生成$/ }));
+
+    expect(await screen.findByText('生成任务提交失败')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^重试$/ })).toBeInTheDocument();
+    // 输入不丢失：失败后 textarea 仍保留用户填写的内容。
+    expect(intent).toHaveValue('我的导数复习需求');
+  });
+
+  it('renders the generated result when a background job finishes', async () => {
+    nav.params.set('resourceJobId', 'job-1');
+    render(<CourseStudioPage />);
 
     expect(await screen.findByText('已生成 1 份资料')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /为什么适合你/ })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /生成流程/ })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /可信审核/ })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /后续学习/ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /为什么适合你/ }));
     expect(screen.getByRole('tabpanel')).toHaveTextContent('软件工程大二');
-
-    fireEvent.click(screen.getByRole('tab', { name: /可信审核/ }));
-
-    expect(screen.getByRole('tabpanel')).toHaveTextContent('风险等级：low');
-    expect(screen.getByRole('tabpanel')).toHaveTextContent('RAG 阅读材料');
   });
 });
+
+function jsonResponse(payload: unknown, status = 200): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => payload,
+  } as Response;
+}

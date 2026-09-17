@@ -64,6 +64,9 @@ export interface TeachingJob {
   /** Whether the job is favorited by the user */
   isFavorited?: boolean;
 
+  /** Classroom stage id produced by a prior to-classroom conversion (idempotency marker). */
+  classroomStageId?: string;
+
   /** Section-level feedback collected during teaching */
   sectionFeedbacks?: SectionFeedback[];
 

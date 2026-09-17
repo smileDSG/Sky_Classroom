@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { generateText } from 'ai';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { resolveModel } from '@/lib/server/resolve-model';
 import { getClientIp, rateLimiters, rateLimitResponse } from '@/lib/api/middleware/rate-limiter';
 const log = createLogger('Verify Model');
@@ -31,11 +32,7 @@ export async function POST(req: NextRequest) {
       });
       languageModel = result.model;
     } catch (error) {
-      return apiError(
-        'INVALID_REQUEST',
-        401,
-        error instanceof Error ? error.message : String(error),
-      );
+      return apiError('INVALID_REQUEST', 401, safeErrorMessage(error));
     }
 
     // Send a minimal test message
@@ -65,7 +62,7 @@ export async function POST(req: NextRequest) {
       } else if (error.message.includes('timeout')) {
         errorMessage = 'Connection timed out, please check your network';
       } else {
-        errorMessage = error.message;
+        errorMessage = safeErrorMessage(error);
       }
     }
 

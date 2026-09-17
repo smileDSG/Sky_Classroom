@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { generateHomework } from '@/lib/teaching/homework-generator';
@@ -56,7 +57,7 @@ export async function GET(
       data: homework,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Homework generation failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
