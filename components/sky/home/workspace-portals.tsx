@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { ArrowUpRight, Compass, LibraryBig, Presentation, type LucideProps } from 'lucide-react';
 import { isQuickIdentity, QUICK_IDENTITY_KEY, type QuickIdentity } from '@/lib/onboarding/quick-onboarding';
+import { cn } from '@/lib/utils';
 
 interface QuickLink {
   label: string;
@@ -131,22 +132,44 @@ export function SkyWorkspacePortals() {
     return true;
   });
 
+  const heading =
+    identity === 'educator' ? '备课工作区' : identity === 'learner' ? '学习工作区' : '三大工作区';
+  const subtitle =
+    identity === 'educator'
+      ? '课程、教案、课件和课堂历史，集中打理'
+      : identity === 'learner'
+        ? '学习 · 资源，一处进入'
+        : '学习 · 资源 · 备课，一处进入';
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.35, duration: 0.5 }}
-      aria-label="三大工作区"
+      aria-label={heading}
       className="w-full"
     >
-      <div className="mb-3 flex items-baseline justify-between gap-3 px-1">
-        <h2 className="text-sm font-bold tracking-wide text-slate-700 dark:text-slate-200">
-          三大工作区
-        </h2>
-        <p className="text-xs text-slate-400 dark:text-slate-500">学习 · 资源 · 备课，一处进入</p>
+      <div className="mb-4 flex items-end justify-between gap-3 px-1">
+        <div className="flex items-center gap-2.5">
+          <span
+            className="h-4 w-1 shrink-0 rounded-full bg-gradient-to-b from-sky-400 via-blue-400 to-indigo-400"
+            aria-hidden="true"
+          />
+          <h2 className="text-base font-bold tracking-tight text-slate-800 dark:text-slate-100">
+            {heading}
+          </h2>
+        </div>
+        <p className="text-xs text-slate-400 dark:text-slate-500">{subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:gap-4">
+      <div
+        className={cn(
+          'grid gap-3 md:gap-4',
+          visibleWorkspaces.length === 1 && 'mx-auto max-w-md grid-cols-1',
+          visibleWorkspaces.length === 2 && 'mx-auto max-w-3xl grid-cols-1 sm:grid-cols-2',
+          visibleWorkspaces.length >= 3 && 'grid-cols-1 sm:grid-cols-3',
+        )}
+      >
         {visibleWorkspaces.map((ws, i) => {
           const Icon = ws.icon;
           return (
