@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import type { ComponentType } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { ArrowUpRight, Compass, LibraryBig, Presentation, type LucideProps } from 'lucide-react';
+import { isQuickIdentity, QUICK_IDENTITY_KEY, type QuickIdentity } from '@/lib/onboarding/quick-onboarding';
 
 interface QuickLink {
   label: string;
@@ -105,6 +106,16 @@ const workspaces: Workspace[] = [
 
 export function SkyWorkspacePortals() {
   const router = useRouter();
+  const [identity, setIdentity] = useState<QuickIdentity | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(QUICK_IDENTITY_KEY);
+      setIdentity(isQuickIdentity(stored) ? stored : null);
+    } catch {
+      setIdentity(null);
+    }
+  }, []);
 
   useEffect(() => {
     const prefetch = () => {
@@ -113,6 +124,12 @@ export function SkyWorkspacePortals() {
     const timer = window.setTimeout(prefetch, 600);
     return () => window.clearTimeout(timer);
   }, [router]);
+
+  const visibleWorkspaces = workspaces.filter((ws) => {
+    if (identity === 'learner') return ws.key !== 'teaching';
+    if (identity === 'educator') return ws.key === 'teaching';
+    return true;
+  });
 
   return (
     <motion.section
@@ -130,7 +147,7 @@ export function SkyWorkspacePortals() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:gap-4">
-        {workspaces.map((ws, i) => {
+        {visibleWorkspaces.map((ws, i) => {
           const Icon = ws.icon;
           return (
             <motion.div
