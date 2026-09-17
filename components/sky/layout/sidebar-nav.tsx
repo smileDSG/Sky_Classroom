@@ -17,6 +17,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { SECTION_GROUPS, type SkySection } from './sky-section-nav';
 import { cn } from '@/lib/utils';
+import { isQuickIdentity, QUICK_IDENTITY_KEY, type QuickIdentity } from '@/lib/onboarding/quick-onboarding';
 
 const SECTIONS: Array<{ key: SkySection; label: string; icon: typeof BookOpenCheck }> = [
   { key: 'learning', label: '学习工作台', icon: BookOpenCheck },
@@ -70,6 +71,16 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
   const pathname = usePathname();
   const navigationRef = useRef<HTMLElement>(null);
   const [expandedSections, setExpandedSections] = useState(INITIAL_EXPANDED_SECTIONS);
+  const [identity, setIdentity] = useState<QuickIdentity | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(QUICK_IDENTITY_KEY);
+      setIdentity(isQuickIdentity(stored) ? stored : null);
+    } catch {
+      setIdentity(null);
+    }
+  }, []);
 
   const persistScrollPosition = () => {
     const scrollTop = navigationRef.current?.scrollTop;
@@ -97,6 +108,12 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
   const toggleSection = (section: SkySection) => {
     setExpandedSections((current) => ({ ...current, [section]: !current[section] }));
   };
+
+  const visibleSections = SECTIONS.filter((section) => {
+    if (identity === 'learner') return section.key !== 'teaching';
+    if (identity === 'educator') return section.key === 'teaching';
+    return true;
+  });
 
   return (
     <aside
@@ -155,7 +172,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
         )}
 
         <div className="flex min-h-full flex-1 flex-col">
-          {SECTIONS.map((section) => {
+          {visibleSections.map((section) => {
             const SectionIcon = section.icon;
             const sectionActive = isSectionActive(pathname, section.key);
             const sectionExpanded = expandedSections[section.key];
