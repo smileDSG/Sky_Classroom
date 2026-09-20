@@ -7,6 +7,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import pMap from 'p-map';
 import { createLogger } from '@/lib/logger';
 import { CLASSROOMS_DIR } from '@/lib/server/classroom-storage';
 import { generateImage } from '@/lib/media/image-providers';
@@ -37,6 +38,9 @@ import { splitLongSpeechActions } from '@/lib/audio/tts-utils';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 
 const log = createLogger('ClassroomMedia');
+
+/** Max concurrent TTS synthesis requests (providers often rate-limit). */
+const TTS_GENERATION_CONCURRENCY = 4;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -251,16 +255,41 @@ export async function generateTTSForClassroom(
     // Split long speech actions into multiple shorter ones before TTS generation,
     // mirroring the client-side approach. Each sub-action gets its own audio file.
     scene.actions = splitLongSpeechActions(scene.actions, providerId);
+  }
 
-    // Use scene order to make audio IDs unique across scenes
+  // Collect all speech tasks up-front so they can be synthesized concurrently.
+  // Use scene order to make audio IDs unique across scenes.
+  const tasks: Array<{
+    audioId: string;
+    text: string;
+    speed?: number;
+    setAudio: (audioId: string, url: string) => void;
+  }> = [];
+
+  for (const scene of scenes) {
+    if (!scene.actions) continue;
     const sceneOrder = scene.order;
-
     for (const action of scene.actions) {
       if (action.type !== 'speech' || !(action as SpeechAction).text) continue;
       const speechAction = action as SpeechAction;
-      // Include scene order in audioId to prevent collision across scenes
       const audioId = `tts_s${sceneOrder}_${action.id}`;
+      tasks.push({
+        audioId,
+        text: speechAction.text,
+        speed: speechAction.speed,
+        setAudio: (id, url) => {
+          speechAction.audioId = id;
+          speechAction.audioUrl = url;
+        },
+      });
+    }
+  }
 
+  if (tasks.length === 0) return;
+
+  await pMap(
+    tasks,
+    async (task) => {
       try {
         const result = await generateTTS(
           {
@@ -269,20 +298,19 @@ export async function generateTTSForClassroom(
             apiKey,
             baseUrl: ttsBaseUrl,
             voice,
-            speed: speechAction.speed,
+            speed: task.speed,
           },
-          speechAction.text,
+          task.text,
         );
 
-        const filename = `${audioId}.${result.format || format}`;
+        const filename = `${task.audioId}.${result.format || format}`;
         await fs.writeFile(path.join(audioDir, filename), result.audio);
-
-        speechAction.audioId = audioId;
-        speechAction.audioUrl = mediaServingUrl(baseUrl, classroomId, `audio/${filename}`);
+        task.setAudio(task.audioId, mediaServingUrl(baseUrl, classroomId, `audio/${filename}`));
         log.info(`Generated TTS: ${filename} (${result.audio.length} bytes)`);
       } catch (err) {
-        log.warn(`TTS generation failed for action ${action.id}:`, err);
+        log.warn(`TTS generation failed for ${task.audioId}:`, err);
       }
-    }
-  }
+    },
+    { concurrency: TTS_GENERATION_CONCURRENCY },
+  );
 }

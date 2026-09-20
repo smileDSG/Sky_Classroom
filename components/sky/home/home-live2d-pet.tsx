@@ -117,21 +117,51 @@ export function HomeLive2DPet() {
         </div>
       )}
 
-      {/* 切换宠物: 主题猫 ⇄ VRM 人物。点击即在两者间轮换, 标签提示点击后换成谁 */}
-      <button
-        type="button"
-        aria-label="切换宠物"
-        title="切换宠物"
-        onClick={() => setKind(isVrm ? 'theme' : 'vrm')}
-        className="fixed z-[10000] flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-lg transition-transform hover:scale-105 active:scale-95 bg-white/90 border-slate-200 text-slate-600 dark:bg-slate-700/90 dark:border-slate-600 dark:text-slate-200"
+      {/* 宠物选择: 猫 / 人 二选一。低调地锚在右下角, 不抢主角。
+          「主题猫」= 随亮暗主题的白猫/黑猫, 「人物」= VRM 角色。选中的那项浅色高亮。 */}
+      <div
+        className="fixed z-[10000] flex items-center gap-0.5 rounded-full border px-1 py-1 text-xs font-medium shadow-sm backdrop-blur-md border-slate-200/60 bg-white/55 text-slate-500 dark:border-slate-600/40 dark:bg-slate-800/50 dark:text-slate-400"
         style={{ right: 20, bottom: 158 }}
+        role="group"
+        aria-label="选择陪伴宠物"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M7 16V4m0 0L3 8m4-4 4 4" />
-          <path d="M17 8v12m0 0 4-4m-4 4-4-4" />
-        </svg>
-        换{isVrm ? cat.name : VRM_PET.name}
-      </button>
+        <button
+          type="button"
+          aria-pressed={!isVrm}
+          onClick={() => setKind('theme')}
+          className={
+            'flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors ' +
+            (!isVrm
+              ? 'bg-gradient-to-br from-sky-500 to-violet-500 text-white shadow-sm'
+              : 'hover:text-slate-700 dark:hover:text-slate-200')
+          }
+        >
+          <svg width="13" height="13" viewBox="0 0 46 42" fill="currentColor" aria-hidden="true">
+            <circle cx="15" cy="24" r="6" />
+            <circle cx="31" cy="24" r="6" />
+            <path d="M18 6 q-12 -4 -14 8 q-2 6 6 8 l4 -8 q14 -8 22 -10 q-6 2 -10 8 z" opacity="0.9" />
+            <path d="M28 6 q12 -4 14 8 q2 6 -6 8 l-4 -8 q-14 -8 -22 -10 q6 2 10 8 z" opacity="0.9" />
+          </svg>
+          猫
+        </button>
+        <button
+          type="button"
+          aria-pressed={isVrm}
+          onClick={() => setKind('vrm')}
+          className={
+            'flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors ' +
+            (isVrm
+              ? 'bg-gradient-to-br from-sky-500 to-violet-500 text-white shadow-sm'
+              : 'hover:text-slate-700 dark:hover:text-slate-200')
+          }
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="12" cy="6.5" r="3.5" />
+            <path d="M12 11c-4 0-6 3-6 7v1h12v-1c0-4-2-7-6-7z" />
+          </svg>
+          人
+        </button>
+      </div>
 
       {/* 陪伴开关: 右下角固定小圆钮, 独立于宠物, 随时可打开/收起 */}
       <button
