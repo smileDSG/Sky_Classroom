@@ -298,16 +298,26 @@ const createMistakesSlice = (
 
 // ── Assistant Slice ────────────────────────────────────────────────
 
+/** 当前显示哪只宠物: 'theme'=随主题的白/黑猫, 'vrm'=VRM 人物。 */
+export type PetKind = 'theme' | 'vrm';
+
 interface AssistantSlice {
   isOpen: boolean;
   subject: string;
   style: string;
   difficulty: string;
+  /** 当前宠物。持久化, 这样每个页面(不只主页)都知道该显示哪只。 */
+  petKind: PetKind;
+  /** 由 petKind + 当前主题解析出来的小镜头像(白猫/黑猫/VRM人物)。
+   *  MascotSync 全局维护它 —— 猫随主题变, 人形与主题无关。 */
+  mascotImage: string;
 
   toggleOpen: () => void;
   setSubject: (subject: string) => void;
   setStyle: (style: string) => void;
   setDifficulty: (difficulty: string) => void;
+  setPetKind: (kind: PetKind) => void;
+  setMascotImage: (src: string) => void;
 }
 
 const createAssistantSlice = (set: SetFn<AssistantSlice>): AssistantSlice => ({
@@ -315,10 +325,14 @@ const createAssistantSlice = (set: SetFn<AssistantSlice>): AssistantSlice => ({
   subject: '',
   style: 'detailed',
   difficulty: 'high-school',
+  petKind: 'theme',
+  mascotImage: '',
   toggleOpen: () => set((s) => ({ isOpen: !s.isOpen })),
   setSubject: (subject) => set({ subject }),
   setStyle: (style) => set({ style }),
   setDifficulty: (difficulty) => set({ difficulty }),
+  setPetKind: (petKind) => set({ petKind }),
+  setMascotImage: (src) => set({ mascotImage: src }),
 });
 
 // ── Memory Slice ──────────────────────────────────────────────────
@@ -434,6 +448,8 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
         subject: state.subject,
         style: state.style,
         difficulty: state.difficulty,
+        petKind: state.petKind,
+        mascotImage: state.mascotImage,
         mistakes: state.mistakes,
         memoryProgress: state.memoryProgress,
         memoryReviews: state.memoryReviews,

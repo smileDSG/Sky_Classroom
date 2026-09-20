@@ -16,6 +16,11 @@ const SlidesJobPoller = dynamic(
   () => import('@/components/slides-job-poller').then((module) => module.SlidesJobPoller),
   { ssr: false },
 );
+// 头像随宠物 + 主题全局同步(离开主页后猫也要跟着亮暗换)
+const MascotSync = dynamic(
+  () => import('@/components/sky/pet/mascot-sync').then((module) => module.MascotSync),
+  { ssr: false },
+);
 
 export function DeferredGlobalServices() {
   const pathname = usePathname();
@@ -34,6 +39,7 @@ export function DeferredGlobalServices() {
   return (
     <>
       <KagamiPanelGuard />
+      <MascotSync />
       {!isAuthPage && pathname !== '/' && <ClassroomJobPoller />}
       {!isAuthPage && <SlidesJobPoller />}
     </>

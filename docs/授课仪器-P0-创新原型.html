@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>授课仪器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04070c;
+  --deck:#070c15;
+  --panel:#0b1330;
+  --panel2:#101a2c;
+  --graticule:rgba(126,231,160,.13);
+  --graticule2:rgba(156,232,255,.08);
+  --vec:#7ee7a0;          /* instrument vector green */
+  --phos:#9fe8ff;         /* phosphor readout */
+  --beam:#ffbe5c;         /* incident ray amber */
+  --refr:#5ef2dc;         /* refracted cyan */
+  --alert:#ff6b81;        /* call / attention */
+  --uv:#c084fc;           /* teacher accent */
+  --ink:#e9f2eb;          /* main text (slight green-white) */
+  --dim:rgba(233,242,235,.62);
+  --faint:rgba(233,242,235,.36);
+  --sans:"Work Sans",system-ui,"Segoe UI",sans-serif;
+  --disp:"Chakra Petch","Work Sans",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --shadow:0 30px 80px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;
+  padding:24px max(16px,calc((100vw - 1160px)/2)) 52px;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(circle at 85% -10%,rgba(84,120,255,.10),transparent 42%),
+   radial-gradient(circle at 8% 110%,rgba(126,231,160,.07),transparent 40%)}
+
+/* decorative graticule behind everything */
+.masthead{position:relative;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:6px}
+.brand{font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:.5px;color:var(--ink)}
+.brand .live{color:var(--beam)}
+.brand .tag{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--uv);margin-left:9px;vertical-align:2px}
+.meta{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--faint)}
+.meta b{color:var(--vec)}
+
+.notice{position:relative;z-index:1;font-size:13.5px;color:var(--dim);max-width:80ch;margin:0 0 18px}
+.notice b{color:var(--ink);font-weight:600}
+.notice .k{font-family:var(--mono);color:var(--vec);font-size:12.5px}
+
+.cmpbar{position:relative;z-index:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.cmpbar .lab{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.seg{display:inline-flex;border:1px solid var(--graticule);border-radius:6px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:transparent;color:var(--dim);font-family:var(--sans);font-size:13px;font-weight:600;padding:8px 15px;cursor:pointer;transition:.2s;border-right:1px solid var(--graticule)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--vec);color:#04100a}
+.seg button[aria-pressed="true"].meet{background:#c7d5e6;color:#0b0f1a}
+.seg button[aria-pressed="true"].obs{background:var(--vec);color:#04100a}
+.seg button:hover:not([aria-pressed="true"]){color:var(--ink)}
+.modes{display:flex;gap:6px;margin-left:auto;font-family:var(--mono)}
+.modes button{border:1px solid var(--graticule);background:var(--panel);color:var(--dim);font-family:var(--mono);
+  font-size:12px;font-weight:600;padding:8px 13px;border-radius:5px;cursor:pointer;transition:.2s;letter-spacing:.03em}
+.modes button[aria-pressed="true"]{color:#04100a;background:var(--beam);border-color:var(--beam)}
+.modes button:hover:not([aria-pressed="true"]){color:var(--ink);border-color:rgba(255,190,92,.4)}
+
+.frame{position:relative;z-index:1;border:1px solid var(--graticule);border-radius:14px;overflow:hidden;background:var(--deck);box-shadow:var(--shadow,var(--shadow))}
+.ticker{position:absolute;top:0;left:0;right:0;z-index:9;display:flex;justify-content:space-between;align-items:center;
+  padding:9px 14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--faint);
+  background:linear-gradient(180deg,rgba(4,6,12,.72),transparent)}
+.ticker .rt{color:var(--vec)}
+.ticker .rt{color:var(--phos)}
+.screen{position:relative;aspect-ratio:16/9.15;width:100%;overflow:hidden}
+
+/* ============ Model A : conference — finished & plausible, the syntax we replace ============ */
+.meeting{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;background:#eef2f7;color:#24303f;font-size:12px}
+.meeting .mrow{flex:1;display:flex;gap:10px;padding:10px 14px;min-height:0}
+.mtop{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 16px;background:#fff;border-bottom:1px solid rgba(30,50,75,.08)}
+.mtop .t{display:flex;align-items:center;gap:8px}
+.mtop .t b{font-weight:600;font-size:13px;color:#1d2c3c;white-space:nowrap}
+.mtop .t span{font-size:10.5px;color:#5a6b80;background:#eef2f7;padding:2px 8px;border-radius:10px}
+.mtop .mid{font-family:var(--mono);font-size:13px;color:#6b7f96;letter-spacing:.1em}
+.mtop .rhs{display:flex;align-items:center;gap:10px}
+.mtop .rec{color:#e5484d;font-weight:600;font-size:11px;letter-spacing:.04em;animation:blink 1.6s infinite}
+.mtop .ico{color:#9aaac0;font-size:15px;line-height:1}
+/* participants rail */
+.m-participants{width:17%;min-width:150px;display:flex;flex-direction:column;gap:7px;padding:10px;background:#fff;border:1px solid rgba(30,50,75,.07);border-radius:10px;overflow:hidden}
+.msec{font-size:11px;letter-spacing:.05em;color:#9fb0c4;margin-bottom:2px}
+.m-particle{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;background:#f4f7fa;border:1px solid transparent}
+.m-particle.on{border-color:#4070ff;background:#eef2ff}
+.m-particle.talk{border-color:rgba(226,121,31,.5);background:#fff7ee}
+.m-particle .av{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;background:linear-gradient(135deg,hsl(var(--hue,210) 70% 62%),hsl(var(--hue,210) 76% 46%))}
+.m-particle .info{flex:1;min-width:0}
+.m-particle .info b{display:block;font-size:12px;color:#26344a;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-particle .info i{display:block;font-style:normal;font-size:10px;color:#9fb0c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-particle .st{font-size:11px;color:#7f93ab}
+.m-particle .st.off{color:#c0cbda}
+.m-particle.talk .st{color:#e2791f}
+.m-particle.you{outline:1px dashed #9fb0c4}
+/* main stage */
+.m-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.m-stage{flex:1;position:relative;border-radius:12px;overflow:hidden;background:#131b2c;min-height:0}
+.camart{position:absolute;inset:0;background:
+  radial-gradient(120% 90% at 50% 28%,rgba(90,120,205,.4),transparent 60%),
+  radial-gradient(circle at 28% 18%,rgba(140,170,255,.28),transparent 42%),
+  linear-gradient(180deg,#242e42,#121a2c)}
+.camart::after{content:"";position:absolute;left:50%;top:36%;transform:translate(-50%,-50%);width:88px;height:88px;border-radius:50%;
+  background:radial-gradient(circle at 38% 30%,#e2eaf4,#9fb0c4 72%);box-shadow:0 12px 34px rgba(0,0,0,.45)}
+.m-camtag{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:6px;font-size:11px;color:#dfe7f2;background:rgba(0,0,0,.32);border-radius:5px;padding:4px 9px}
+.m-camtag b{font-weight:600}
+.m-camtag .rec{color:#ff5c5c}
+.m-react{position:absolute;right:12px;top:12px;display:flex;gap:5px;font-size:15px;background:rgba(0,0,0,.3);border-radius:20px;padding:3px 9px}
+.m-caption{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);max-width:88%;background:rgba(0,0,0,.52);border-radius:7px;padding:7px 13px;font-size:12.5px;color:#eef2f7;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-selfview{position:absolute;right:12px;bottom:52px;width:118px;border-radius:9px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.m-selfview .camart{position:absolute}
+.m-selfview > span{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);color:#fff;font-size:10.5px;text-align:center;padding:3px 0}
+.m-ctrlrow{flex:none;height:52px;display:flex;align-items:center;gap:8px;padding:0 10px;background:#fff;border:1px solid rgba(30,50,75,.07);border-radius:12px}
+.m-ctrlrow .c{width:42px;height:38px;border-radius:9px;border:1px solid #e2e8f0;background:#f6f9fc;color:#41546a;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.m-ctrlrow .c svg{width:18px;height:18px;display:block}
+.m-ctrlrow .c.on{background:#eef2ff;border-color:#c7d3ff;color:#4070ff}
+.m-ctrlrow .c.leave{margin-left:auto;background:#e5484d;border-color:#e5484d;color:#fff}
+.m-ctrlrow .c.leave svg{color:#fff}
+/* chat */
+.m-chat{width:20%;min-width:170px;display:flex;flex-direction:column;background:#fff;border:1px solid rgba(30,50,75,.07);border-radius:10px;overflow:hidden}
+.mchat-head{padding:11px 13px;font-size:12.5px;font-weight:600;color:#26344a;border-bottom:1px solid #eef2f6;display:flex;align-items:center;justify-content:space-between}
+.mchat-head span{font-weight:400;color:#9fb0c4;font-size:11px}
+.mchat-body{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:9px;padding:12px 13px}
+.m-msg b{font-size:11px;color:#5a6b80;font-weight:600}
+.m-msg time{float:right;color:#c0cbda;font-size:10px}
+.m-msg p{margin:3px 0 0;padding:7px 10px;background:#f1f5f9;border-radius:3px 8px 8px 8px;color:#2b3a52;line-height:1.4}
+.m-msg.own p{background:#eef2ff;color:#22325a}
+.m-msg.sys{color:#9fb0c4;font-style:italic;text-align:center;font-size:11px}
+.mchat-in{display:flex;gap:7px;padding:9px 10px;border-top:1px solid #eef2f6;align-items:center}
+.mchat-in .at{color:#9fb0c4;font-size:16px;line-height:1}
+.mchat-in input{flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;font-size:12px;color:#c0cbda;background:#f8fafc;pointer-events:none}
+.mchat-in button{border:0;border-radius:8px;background:#4070ff;color:#fff;padding:8px 12px;font-size:12px;opacity:.55}
+.m-legend{position:absolute;left:16px;bottom:12px;display:flex;gap:14px;font-size:11px;color:#7f93ab;background:rgba(255,255,255,.82);padding:4px 12px;border-radius:20px;backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(30,50,75,.08);z-index:2}
+
+/* ============ Model B : the instrument / observatory ============ */
+.field{position:absolute;inset:0;overflow:hidden;background:radial-gradient(120% 120% at 50% 20%,#0a1330,#050912 62%);color:var(--ink);transition:background .8s}
+[data-mode="demo"] .field{background:radial-gradient(120% 120% at 50% 22%,#0a1330,#050912 62%)}
+[data-mode="tune"] .field{background:radial-gradient(120% 120% at 52% 46%,#0a1a22,#05090f 62%)}
+[data-mode="discuss"] .field{background:radial-gradient(120% 120% at 46% 55%,#150f26,#050711 62%)}
+.field.touch .fieldbg{opacity:1}
+#modeTxt{font-weight:700;font-size:12px}
+[data-mode="demo"] #modeTxt{color:var(--beam);text-shadow:0 0 10px rgba(255,190,92,.4)}
+[data-mode="tune"] #modeTxt{color:var(--refr);text-shadow:0 0 10px rgba(94,242,220,.4)}
+[data-mode="discuss"] #modeTxt{color:var(--uv);text-shadow:0 0 10px rgba(192,132,252,.4)}
+.field .lab-vignette{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 70px rgba(2,4,10,.85)}
+.tele .live{color:var(--vec);text-shadow:0 0 8px rgba(126,231,160,.6)}
+.field .signal{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;transition:opacity .8s}
+[data-mode="demo"] .signal{background:radial-gradient(46% 58% at 38% 42%,rgba(255,190,92,.30),rgba(255,190,92,0) 72%)}
+[data-mode="tune"] .signal{background:radial-gradient(52% 64% at 52% 46%,rgba(94,242,220,.26),rgba(94,242,220,0) 74%)}
+[data-mode="discuss"] .signal{background:radial-gradient(64% 68% at 44% 54%,rgba(192,132,252,.24),rgba(192,132,252,0) 78%)}
+
+/* top telemetry strip */
+.tele{position:absolute;top:34px;left:0;right:0;z-index:5;display:flex;align-items:center;gap:14px;padding:0 16px;font-family:var(--mono);font-size:11px}
+.tele .cell{display:inline-flex;align-items:baseline;gap:6px;color:var(--dim);letter-spacing:.05em}
+.tele .v{color:var(--phos);font-weight:600}
+.tele .bar{flex:1;height:1px;background:var(--graticule)}
+.t-title{font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:.4px;color:var(--ink)}
+.t-title .sec{color:var(--vec);font-size:11px;vertical-align:2px}
+
+/* the bench (instrument) */
+.bench{position:absolute;left:6%;top:16%;width:56%;height:58%;border:1px solid var(--graticule);border-radius:10px;
+  background:linear-gradient(180deg,#0d1530,#0a1124);padding:0;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+.bench .hd{align-items:center;display:flex;gap:8px;padding:7px 12px;border-bottom:1px solid var(--graticule);font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--faint)}
+.bench .hd .dot{width:6px;height:6px;border-radius:50%;background:var(--beam);box-shadow:0 0 8px var(--beam)}
+.bench .hd .idc{margin-left:auto;color:var(--vec)}
+.bench canvas{position:absolute;inset:24px 0 34px;width:calc(100% - 0px);height:calc(100% - 58px);display:block}
+.bench .readout{position:absolute;left:12px;bottom:8px;right:12px;display:flex;gap:16px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.bench .readout .r b{color:var(--phos);font-weight:600}
+.bench .readout .r .bh{color:var(--beam)}
+.bench .readout .r .rc{color:var(--refr)}
+.bench .epl{position:absolute;right:10px;top:9px;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;color:rgba(156,232,255,.5)}
+
+/* the teacher (PI at the bench) */
+.pi{position:absolute;right:2%;top:34%;width:74px;height:120px;opacity:.95;transform-origin:50% 100%;transition:transform .9s,opacity .9s,filter .9s}
+.pi .fig{position:relative;width:100%;height:100%}
+.pi .halo{position:absolute;left:50%;top:6px;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;
+  background:radial-gradient(circle at 50% 45%,rgba(192,132,252,.5),rgba(192,132,252,.06) 70%);filter:blur(2px)}
+.pi .head{position:absolute;left:50%;top:6px;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;
+  background:radial-gradient(circle at 40% 32%,#cfaeff,#7a5cc0);box-shadow:0 0 20px rgba(192,132,252,.5);z-index:2}
+.pi .sash{position:absolute;left:50%;top:44px;transform:translateX(-50%);width:2px;height:44px;background:linear-gradient(180deg,rgba(192,132,252,.7),rgba(192,132,252,.05))}
+.pi .tag{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:var(--mono);font-size:10px;color:var(--uv);letter-spacing:.08em}
+[data-mode="demo"] .pi{opacity:.85;transform:none;filter:brightness(1)}
+[data-mode="tune"] .pi{opacity:.3;transform:scale(.8) translateX(5%);filter:brightness(.9)}
+[data-mode="discuss"] .pi{opacity:.14;transform:scale(.6) translateX(8%);filter:brightness(.7)}
+
+/* motion animates the bench to shift focus */
+[data-mode="demo"] .bench{transform:none;opacity:1}
+[data-mode="tune"] .bench{transform:scale(1.24) translate(-3%,1.5%);opacity:1;box-shadow:0 44px 96px rgba(0,0,0,.62)}
+[data-mode="discuss"] .bench{transform:scale(.56) translate(72%,-7%);opacity:.34}
+.bench{transform-origin:50% 44%;will-change:transform;transition:transform 1s cubic-bezier(.22,.61,.36,1),opacity 1s,box-shadow 1s}
+
+/* peers at consoles (researchers) */
+.peers{position:absolute;left:0;right:0;bottom:2%;display:flex;justify-content:center;gap:6%;align-items:flex-end;z-index:6;transform-origin:50% 100%;transition:transform 1s cubic-bezier(.22,.61,.36,1),opacity 1s;opacity:.3}
+[data-mode="demo"] .peers{opacity:.28;transform:translateY(38px) scale(.82)}
+[data-mode="tune"] .peers{opacity:.22;transform:translateY(46px) scale(.7)}
+[data-mode="discuss"] .peers{opacity:1;transform:translateY(2px) scale(1.34)}
+.peer{display:flex;flex-direction:column;align-items:center;gap:6px;transition:.5s;width:96px}
+.peer .console{width:76px;height:46px;border:1px solid var(--graticule);border-radius:6px;background:linear-gradient(180deg,#0e1630,#0a0f20);position:relative;overflow:hidden}
+.peer .console .scr{position:absolute;inset:5px 6px 9px 6px;border-radius:3px;background:#050a16;display:flex;align-items:flex-end;gap:2px;padding:4px}
+.peer .console .scr i{flex:1;width:100%;background:rgba(94,242,220,.26);border-radius:1px;transition:height .5s}
+.peer .console .scr i:nth-child(1){height:34%}
+.peer .console .scr i:nth-child(2){height:62%}
+.peer .console .scr i:nth-child(3){height:46%}
+.peer .console .scr i:nth-child(4){height:78%}
+.peer .console .scr i:nth-child(5){height:38%}
+.peer .console .scr i:nth-child(6){height:56%}
+.peer .console .led{position:absolute;top:5px;right:6px;width:5px;height:5px;border-radius:50%;background:#203048}
+[data-mode="discuss"] .peer.live .scr i{animation:wav .7s ease-in-out infinite}
+[data-mode="discuss"] .peer.live .scr i:nth-child(2n){animation-delay:.15s}
+[data-mode="discuss"] .peer.live .scr i:nth-child(3n){animation-delay:.32s}
+@keyframes wav{0%,100%{height:18%}50%{height:88%}}
+.peer .nm{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.06em}
+.peer .role{font-family:var(--mono);font-size:8.5px;color:rgba(156,232,255,.45);letter-spacing:.1em}
+[data-mode="discuss"] .peer.live .console{border-color:rgba(192,132,252,.6);box-shadow:0 0 18px rgba(192,132,252,.25)}
+[data-mode="discuss"] .peer.live .led{background:var(--uv);box-shadow:0 0 6px var(--uv)}
+[data-mode="discuss"] .peer.live .scr{background:rgba(10,6,20,.8)}
+/* oscilloscope spikes for speakers */
+[data-mode="discuss"] .peer.live .scr{--spk:1}
+
+/* caption beam (the "subtitle") — ephemeral */
+.caption{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);z-index:7;display:flex;flex-direction:column;gap:5px;align-items:center;opacity:0;transition:.5s}
+[data-mode="demo"] .caption.on,[data-mode="tune"] .caption.on{opacity:1}
+[data-mode="discuss"] .caption.on{opacity:1}
+.caption .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--phos);font-weight:600}
+[data-mode="discuss"] .caption .who{color:var(--uv)}
+.caption .beam-bar{display:flex;align-items:center;gap:7px;max-width:min(60vw,600px);
+  background:rgba(6,10,20,.82);border:1px solid var(--graticule);border-radius:7px;padding:8px 14px}
+.caption .beam-bar .t{font-size:14.5px;color:var(--ink);text-align:center}
+.caption .beam-bar .vp{display:flex;gap:2px;align-items:flex-end;height:14px}
+.caption .beam-bar .vp i{width:2.5px;background:var(--beam);border-radius:2px;animation:vp 0.8s ease-in-out infinite}
+.caption .beam-bar .vp i:nth-child(even){animation-delay:.25s}
+
+/* knob + tune controls */
+/* control layers — only surfaces when active */
+.tune{position:absolute;right:4%;top:15%;z-index:7;padding:8px 12px;border-radius:7px;
+  background:rgba(6,10,20,.72);border:1px solid var(--graticule);
+  opacity:0;pointer-events:none;transition:.4s}
+[data-mode="tune"] .tune{opacity:1;pointer-events:auto}
+.tune .n2row{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+.tune .n2row .al{color:var(--refr)}
+.tune input{flex:1;accent-color:var(--refr);height:24px;min-width:80px}
+.tune .n2v{color:var(--refr);min-width:36px;text-align:right;font-weight:600}
+/* incident-angle track: the ONE primary control, always in the demo */
+.anglebar{position:absolute;left:8%;right:44%;bottom:6%;z-index:7;display:flex;align-items:center;gap:9px;
+  padding:5px 11px;border-radius:6px;background:rgba(6,10,20,.7);border:1px solid rgba(255,190,92,.3);
+  opacity:.95;transition:.35s}
+[data-mode="discuss"] .anglebar{opacity:0;pointer-events:none}
+.anglebar .al{font-family:var(--mono);font-size:11px;color:var(--beam)}
+.anglebar input{flex:1;height:24px;accent-color:var(--beam);cursor:grab;min-width:60px}
+.anglebar .av{font-family:var(--mono);font-size:11.5px;color:var(--phos);min-width:34px;text-align:right}
+.knobwrap .kread small{color:var(--faint);font-size:9.5px;letter-spacing:.1em}
+.n2row{display:flex;align-items:center;gap:8px;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.n2row input{flex:1;accent-color:var(--refr);height:26px}
+.n2row .n2v{color:var(--refr);min-width:34px;text-align:right}
+
+/* trace (the oscilloscope lesson-outline along bottom) */
+.trace{position:absolute;left:0;right:0;bottom:0;height:14px;z-index:5;opacity:.32;
+  border-top:1px solid var(--graticule2)}
+.trace .grid{position:absolute;inset:0;background:repeating-linear-gradient(90deg,var(--graticule2) 0 1px,transparent 1px 14%)}
+.trace .sweep{position:absolute;left:0;top:6px;height:2px;width:100%;overflow:hidden;opacity:.5}
+.trace .sweep i{position:absolute;left:0;top:0;height:2px;border-radius:2px;width:36%;background:linear-gradient(90deg,transparent,var(--vec),transparent);animation:swipe 4.5s linear infinite}
+.trace .marks{position:absolute;left:10%;top:0;bottom:0;width:80%;white-space:nowrap}
+.trace .marks span{display:inline-block;height:100%;position:relative}
+.trace .marks .p{position:absolute;bottom:3px;width:2px;height:6px;background:var(--beam);opacity:.5}
+.trace .marks .done{background:var(--vec)}
+
+/* ephemeral control ring */
+.controls{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:8;display:flex;gap:4px;align-items:center;
+  padding:5px 6px;border-radius:7px;background:rgba(7,11,22,.72);border:1px solid var(--graticule);backdrop-filter:blur(8px);
+  opacity:0;transition:.35s}
+.field:hover .controls,.field.touch .controls{opacity:1}
+.controls button{width:32px;height:30px;border-radius:5px;border:1px solid transparent;background:transparent;color:var(--dim);font-size:13px;cursor:pointer;transition:.15s}
+.controls button:hover{background:rgba(126,231,160,.12);color:var(--ink)}
+.controls .cue{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--faint);padding:0 6px;text-transform:uppercase}
+
+@keyframes swipe{from{transform:translateX(-40%)}to{transform:translateX(300%)}}
+@keyframes vp{0%,100%{height:3px}50%{height:13px}}
+@keyframes blink{50%{opacity:.25}}
+
+/* material cards (instrument parts) */
+.mats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+.mat{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--graticule);border-radius:10px;padding:15px 16px 13px}
+.mat .t{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:4px;font-family:var(--disp)}
+.mat .t .ch{color:var(--vec);font-family:var(--mono);font-size:11px}
+.mat p{margin:0;font-size:12.5px;color:var(--dim);line-height:1.5}
+.mini{margin:10px 0 12px;height:34px}
+.mini.bench{background:radial-gradient(40% 80% at 40% 50%,rgba(255,190,92,.25),rgba(94,242,220,0) 74%);border-radius:8px;border:1px solid var(--graticule)}
+.mini.trace{background:repeating-linear-gradient(90deg,rgba(126,231,160,.25) 0 2px,transparent 2px 13%);border-radius:8px;border:1px solid var(--graticule)}
+.mini.ctl{display:flex;justify-content:center;gap:7px;align-items:center}
+.mini.ctl i{width:34px;height:26px;border-radius:4px;border:1px solid var(--graticule);background:var(--panel);position:relative}
+.mini.ctl i::after{content:"";position:absolute;left:6px;right:6px;top:9px;height:6px;background:rgba(94,242,220,.3);border-radius:2px}
+.mini span{font-family:var(--mono);font-size:9px;color:var(--faint)}
+
+.foot{position:relative;z-index:1;margin-top:24px;padding-top:16px;border-top:1px solid var(--graticule);display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+.foot .test{font-family:var(--mono);font-size:13px;color:var(--dim)}
+.foot .test b{color:var(--ink)}
+.chips{display:flex;gap:9px;margin-left:auto}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:6px 11px;border-radius:4px;border:1px solid var(--graticule);color:var(--dim)}
+.chip b{color:var(--vec);font-weight:600}
+.hint{position:relative;z-index:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--faint);margin-top:13px;text-align:center}
+
+body[data-field] .meeting{display:none}
+body:not([data-field]) .field{display:none}
+/* the three modes are the field's CAMERA grammar — a meeting is a fixed camera */
+body:not([data-field]) .modes{opacity:.28;pointer-events:none;filter:grayscale(1)}
+body:not([data-field]) .modes button[aria-pressed="true"]{background:#c7d5e6;color:#5a6b80}
+
+@media (prefers-reduced-motion: reduce){.trace .sweep i,.caption .beam-bar .vp i{animation:none}}
+@media (max-width:760px){
+  .mats{grid-template-columns:1fr}
+  .m-participants{width:24%}.m-chat{width:26%}
+  .caption .beam-bar{max-width:76vw}
+  .knobwrap{right:6%}
+}
+</style>
+</head>
+<body data-field>
+
+<header class="masthead">
+  <div class="brand">智眸·无界 <span class="live">◎</span> 授课仪器</div>
+  <div class="meta">MODEL / 003 — <b>天文馆设台</b> · 单一观测现场</div>
+</header>
+
+<p class="notice">这不是"一间能看的房间"，是<b>一台你正在观测的活实验台</b>。看右边的<b>折射测量仪</b>：一束光当场打进玻璃、弯折、波前变密——<span class="k">把鼠标移到台上、切到「调参」，亲手转那个旋钮，光会实时地弯给你看</span>。探讨课，则把镜头切换到围坐一台台小仪表的"研究员"身旁。盖住标题看 5 秒——它像"又一个视频会议 / 聊天 / 网课"吗？</p>
+
+<div class="cmpbar">
+  <span class="lab">呈现方式</span>
+  <div class="seg"><button data-cmp="meeting" aria-pressed="false" class="meet">会议语法</button><button data-cmp="field" aria-pressed="true" class="obs">授课仪器 · 观测现场</button></div>
+  <div class="modes" id="modes">
+    <button data-mode="demo" aria-pressed="true">演示</button>
+    <button data-mode="tune" aria-pressed="false">调参</button>
+    <button data-mode="discuss" aria-pressed="false">讨论</button>
+  </div>
+</div>
+
+<div class="frame">
+  <div class="ticker"><span>智眸·无界 / 光的折射 · 实验第 3 节</span><span class="rt" id="rt">DEMO · 台面演示中</span></div>
+  <div class="screen">
+
+    <!-- Model A -->
+    <div class="meeting">
+      <div class="mtop">
+        <div class="t"><b>物理 · 光的折射</b><span>正在直播</span></div>
+        <div class="mid">00:12:38</div>
+        <div class="rhs"><span class="rec">● REC</span><span class="ico">⋮</span><span class="ico">⊞</span></div>
+      </div>
+      <div class="mrow">
+        <div class="m-participants" aria-hidden="true">
+          <div class="msec">参与者 · 5</div>
+          <div class="m-particle on"><span class="av" style="--hue:24">张</span><span class="info"><b>张老师</b><i>正在讲授</i></span><span class="st">◎</span></div>
+          <div class="m-particle talk"><span class="av" style="--hue:130">然</span><span class="info"><b>阿然</b><i>正在发言</i></span><span class="st">◎</span></div>
+          <div class="m-particle"><span class="av" style="--hue:200">林</span><span class="info"><b>小林</b><i>麦克风静音</i></span><span class="st off">◌</span></div>
+          <div class="m-particle"><span class="av" style="--hue:280">蝉</span><span class="info"><b>蝉</b><i>举了下手</i></span><span class="st">◎</span></div>
+          <div class="m-particle you"><span class="av" style="--hue:320">你</span><span class="info"><b>你</b><i>麦克风静音</i></span><span class="st off">◌</span></div>
+        </div>
+
+        <div class="m-main">
+          <div class="m-stage">
+            <div class="camart"></div>
+            <div class="m-camtag"><span class="rec">●</span> <b>张老师</b> · 摄像头</div>
+            <div class="m-react">👍 👏</div>
+            <div class="m-caption">「把入射角调大，折射角也变大——但也到顶了，再大就全反射了。」</div>
+            <div class="m-selfview"><div class="camart"></div><span>你</span></div>
+          </div>
+          <div class="m-ctrlrow">
+            <button class="c on" aria-label="麦克风"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z" fill="currentColor"/><path d="M19 12a7 7 0 0 1-14 0h2a5 5 0 0 0 10 0z" fill="currentColor"/></svg></button>
+            <button class="c on" aria-label="摄像头"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor"/><path d="M15 10l5-3v10l-5-3z" fill="currentColor"/></svg></button>
+            <button class="c" aria-label="举手"><svg viewBox="0 0 24 24"><path d="M7 6v6a1 1 0 0 0 2 0V4a1 1 0 0 1 2 0v6h1V5a1 1 0 0 1 2 0v6h1V6a1 1 0 0 1 2 0v7l-1.2 2.8A5 5 0 0 1 11.4 19H10a6 6 0 0 1-6-6z" fill="currentColor"/></svg></button>
+            <button class="c" aria-label="投屏"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2" fill="currentColor"/><path d="M12 19v-3M9 22h6" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+            <button class="c" aria-label="字幕"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="currentColor"/><path d="M7 11h2m3 0h5M7 14h4m1 0h3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg></button>
+            <button class="c leave" aria-label="离开"><svg viewBox="0 0 24 24"><path d="M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4M16 17l5-5-5-5M21 12H9" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+
+        <div class="m-chat">
+          <div class="mchat-head">班级讨论 <span>5 位成员</span></div>
+          <div class="mchat-body">
+            <div class="m-msg own"><b>你</b><time>12:03</time><p>老师，n₂=1.5 时临界角是多少？</p></div>
+            <div class="m-msg"><b>张老师</b><time>12:04</time><p>@你 ≈41.8°——超过它，光就全反射，进不去了。</p></div>
+            <div class="m-msg"><b>小林</b><time>12:05</time><p>👌 懂了，界面就是一道门。</p></div>
+            <div class="m-msg sys">阿然 正在输入…</div>
+          </div>
+          <div class="mchat-in"><span class="at">＋</span><input disabled placeholder="给所有人发消息…"><button>发送</button></div>
+        </div>
+      </div>
+      <div class="m-legend"><span>参与者</span><span>摄像头画面</span><span>聊天</span><span>控制条</span></div>
+    </div>
+
+    <!-- Model B : the instrument -->
+    <div class="field" id="field" data-mode="demo">
+
+      <div class="tele">
+        <span class="t-title">折射 <span class="sec">SECTION 03</span></span>
+        <span class="bar"></span>
+        <span class="cell" id="modeTxt">台面演示中</span>
+        <span class="cell live">● LIVE</span>
+      </div>
+
+      <div class="bench">
+        <div class="hd"><span class="dot"></span> OPTICAL BENCH · RFR-104 <span class="idc">LIVE</span></div>
+        <canvas id="opt"></canvas>
+        <div class="readout">
+          <span class="r">入射 <b id="r1">θ₁=--</b></span>
+          <span class="r">折射 <b class="rc" id="r2">θ₂=--</b></span>
+          <span class="r">介质 <b class="bh" id="rn">n₂=1.50</b></span>
+        </div>
+      </div>
+
+      <div class="pi"><div class="fig"><div class="halo"></div><div class="head"></div><div class="sash"></div></div><div class="tag">PI · 主讲</div></div>
+
+      <div class="peers">
+        <div class="peer"><div class="console"><div class="scr"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="led"></div></div><div class="nm">小林</div><div class="role">理论组</div></div>
+        <div class="peer live"><div class="console"><div class="scr"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="led"></div></div><div class="nm">阿然</div><div class="role">实验组</div></div>
+        <div class="peer"><div class="console"><div class="scr"><i></i><i></i><i></i><i></i></div><div class="led"></div></div><div class="nm">蝉</div><div class="role">记录组</div></div>
+        <div class="peer"><div class="console"><div class="scr"><i></i><i></i><i></i></div><div class="led"></div></div><div class="nm">你</div><div class="role">观测席</div></div>
+      </div>
+
+      <div class="caption on" id="caption">
+        <span class="who" id="capWho">PI · 主讲</span>
+        <div class="beam-bar"><div class="vp"><i></i><i></i><i></i></div><span class="t" id="capText">看这束光——刚打进玻璃就弯了。我们把入射角设为 45°。</span></div>
+      </div>
+
+      <div class="tune" id="knobwrap">
+        <div class="n2row"><span class="al">介质 n₂</span><input id="n2slider" type="range" min="1.0" max="2.2" step="0.05" value="1.5"><span class="n2v" id="n2v">1.50</span></div>
+      </div>
+
+      <div class="anglebar" id="anglebar">
+        <span class="al">θ₁</span>
+        <input id="angslider" type="range" min="5" max="85" step="0.5" value="45">
+        <span class="av" id="angv">45°</span>
+      </div>
+
+      <div class="trace"><div class="grid"></div><div class="sweep"><i></i></div></div>
+
+      <div class="controls" id="controls">
+        <span class="cue">瞬时控件</span>
+        <button aria-label="暂停">⏸</button>
+        <button aria-label="下一节">⏭</button>
+        <button aria-label="参数">⤨</button>
+        <button aria-label="遥测">≡</button>
+      </div>
+
+      <div class="lab-vignette"></div>
+      <div class="signal"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="mats">
+  <div class="mat">
+    <div class="t"><span class="ch">01</span>光学台 = 真演示</div>
+    <div class="mini bench"></div>
+    <p>板书变成一台在跑的仪器：光当场弯折、波前变密。演示就是真内容，不是配图。</p>
+  </div>
+  <div class="mat">
+    <div class="t"><span class="ch">02</span>控制环 = 瞬时</div>
+    <div class="mini ctl"><i></i><i></i><i></i></div>
+    <p>旋钮、参数只在需要时现身。除此以外一片空白——专注光路，无面板。</p>
+  </div>
+  <div class="mat">
+    <div class="t"><span class="ch">03</span>遥测 = 课程轨迹</div>
+    <div class="mini trace"></div>
+    <p>聊天与大纲降级为一条示波器式的课程轨迹，沿边滚动，永不挡内容。</p>
+  </div>
+</div>
+
+<div class="foot">
+  <div class="test">成分测试 → <b>盖住标题看 5 秒，说出它是什么。</b> 不像"会议 / 聊天 / 网课播放器"，即通过。</div>
+  <div class="chips">
+    <span class="chip">演示即真 <b>LIVE</b></span>
+    <span class="chip">亲手调参 <b>TUNE</b></span>
+    <span class="chip">在场观测 <b>OBS</b></span>
+  </div>
+</div>
+<div class="hint">拖入射角滑杆（或直接在台面上方拖动瞄准光）→ 光当场弯给你看 · 切「调参」调 n₂ · 切「讨论」→ 镜头交给研究员</div>
+
+<script>
+(function(){
+  var body=document.body;
+  var cmpseg=document.querySelector('.seg'), rt=document.getElementById('rt'),
+      modes=document.getElementById('modes'), field=document.getElementById('field');
+  var capWho=document.getElementById('capWho'), capText=document.getElementById('capText'),
+      caption=document.getElementById('caption');
+
+  cmpseg.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b)return;
+    var cmp=b.getAttribute('data-cmp');
+    cmpseg.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});
+    body.toggleAttribute('data-field', cmp==='field');
+  });
+
+  /* ---- optics state ---- */
+  var S={theta:45, n2:1.5, anim:true, mode:'demo', lastGrab:-Infinity};
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- physics + draw : a real optical bench ---- */
+  var cv=document.getElementById('opt'), cx=cv.getContext('2d');
+  var DPR=Math.min(2,(window.devicePixelRatio||1));
+  function sizeCanvas(){
+    var r=cv.getBoundingClientRect(), w=Math.max(60,r.width), h=Math.max(40,r.height);
+    // backing store is DPR-scaled for crispness, but geometry space stays in CSS px
+    var dw=Math.round(w*DPR), dh=Math.round(h*DPR);
+    if(cv.width!==dw||cv.height!==dh){cv.width=dw;cv.height=dh;}
+    return {w:w,h:h,css:true};
+  }
+
+  // a parallel light beam with traveling wavefronts (wavelength ∝ 1/n)
+  function band(x0,y0,x1,y1,width,spacing,phase,color,alpha){
+    var L=Math.hypot(x1-x0,y1-y0), ux=(x1-x0)/L, uy=(y1-y0)/L;
+    var nx=-uy, ny=ux;                               // unit normal across the beam
+    var rays=[-width/2,0,width/2];
+    for(var k=0;k<rays.length;k++){
+      var off=rays[k], ox=nx*off, oy=ny*off;
+      cx.globalAlpha=alpha*(k===1?1:.45);
+      cx.strokeStyle=color; cx.lineWidth=k===1?2:1.1; cx.lineCap='round';
+      cx.beginPath(); cx.moveTo(x0+ox,y0+oy); cx.lineTo(x1+ox,y1+oy); cx.stroke();
+      // moving crests (perpendicular ticks), spacing = wavelength
+      cx.globalAlpha=alpha*1;
+      for(var d=phase%spacing; d<L; d+=spacing){
+        var px=x0+ux*d+ox, py=y0+uy*d+oy, m=width*0.6;
+        cx.beginPath(); cx.moveTo(px-nx*m,py-ny*m); cx.lineTo(px+nx*m,py+ny*m);
+        cx.strokeStyle=color; cx.lineWidth=1.7; cx.lineCap='round'; cx.stroke();
+      }
+    }
+    cx.globalAlpha=1;
+  }
+  function arcMetric(x,y,r,a0,a1,color,lw){
+    cx.beginPath(); cx.arc(x,y,r,a0,a1);
+    cx.strokeStyle=color; cx.lineWidth=lw; cx.stroke();
+  }
+
+  function draw(t){
+    var g=sizeCanvas(); var W=g.w, H=g.h;
+    cx.setTransform(DPR,0,0,DPR,0,0); cx.clearRect(0,0,W,H);
+    // demo mode: the bench scans the angle by itself, until you grab it
+    if(S.mode==='demo' && performance.now()-S.lastGrab>3000){ S.theta=42+26*Math.sin(t*0.55); updateTele(); }
+    var th=S.theta*Math.PI/180, n2=S.n2;
+    var hi=H*0.60, ix=W*0.54;                         // interface height, impact x
+    var sin2=Math.sin(th)/n2;
+    var tir=sin2>1;
+    var th2=tir?Math.PI/2:Math.asin(Math.max(-1,sin2));
+    var crit=Math.min(90,Math.asin(Math.min(1,1/n2))*180/Math.PI);
+    var speed=reduce?0:38;                            // wavefront advance (px/s)
+
+    /* medium split : glass below interface */
+    var grad=cx.createLinearGradient(0,hi,0,H);
+    grad.addColorStop(0,'rgba(94,242,220,.11)'); grad.addColorStop(1,'rgba(94,242,220,.02)');
+    cx.fillStyle=grad; cx.fillRect(0,hi,W,H-hi);
+    cx.strokeStyle='rgba(126,231,160,.05)';
+    for(var gx=36; gx<W; gx+=36){cx.beginPath();cx.moveTo(gx,0);cx.lineTo(gx,H);cx.stroke();}
+
+    /* interface line + ticked film */
+    cx.strokeStyle='rgba(156,232,255,.55)'; cx.lineWidth=1.6;
+    cx.beginPath(); cx.moveTo(0,hi); cx.lineTo(W,hi); cx.stroke();
+    cx.strokeStyle='rgba(156,232,255,.10)';
+    for(var tx=4; tx<W; tx+=9){cx.beginPath();cx.moveTo(tx,hi+3);cx.lineTo(tx+5,hi+6);cx.stroke();}
+
+    /* medium labels */
+    cx.font='600 10px "JetBrains Mono",monospace'; cx.textAlign='left';
+    cx.fillStyle='rgba(233,242,235,.45)'; cx.fillText('AIR  n₁ = 1.00',10,hi-8);
+    cx.fillStyle='rgba(94,242,220,.6)';  cx.fillText('MEDIUM  n₂ = '+n2.toFixed(2),W-152,hi+15);
+
+    /* normal (dashed) */
+    cx.setLineDash([3,6]); cx.strokeStyle='rgba(156,232,255,.32)';
+    cx.beginPath(); cx.moveTo(ix,hi); cx.lineTo(ix,10); cx.stroke(); cx.setLineDash([]);
+
+    /* emitter : a glowing source pointer that actually aims the beam */
+    var sk=Math.min(Math.hypot(ix-W*0.06, hi-H*0.22), W*0.46);
+    var sx=ix-Math.sin(th)*sk, sy=hi-Math.cos(th)*sk;
+    var exx=ix-Math.sin(th)*0.2, eyy=hi-Math.cos(th)*0.2;
+    cx.save();
+    cx.translate(sx,sy); cx.rotate(Math.atan2(hi-sy,ix-sx));
+    cx.fillStyle='rgba(255,214,138,.95)'; cx.shadowColor='#ffbe5c'; cx.shadowBlur=14;
+    cx.beginPath(); cx.moveTo(-3.5,0); cx.lineTo(3.5,0); cx.lineTo(0,10); cx.closePath(); cx.fill();
+    cx.restore(); cx.shadowBlur=0;
+
+    /* incident beam : amber, λ=14 in air */
+    band(sx,sy,ix,hi,9,14,(t*speed)%14,'rgba(255,190,92,1)',.88);
+
+    /* reflected beam : dim amber, θ(r)=θ(i), back up-left */
+    if(S.theta>2){
+      var rx=ix+Math.sin(th)*sk*0.5, ry=hi-Math.cos(th)*sk*0.5;
+      band(ix,hi,rx,ry,5,10,(t*speed)%10,'rgba(255,168,120,.5)',.36);
+    }
+
+    /* refracted beam : cyan, λ=14/n, slower (speed/n) */
+    if(!tir){
+      var D=H-hi+16;
+      var bx=ix+Math.sin(th2)*D*0.9, by=hi+Math.cos(th2)*D*0.9;
+      if(n2<=1.02){ band(ix,hi,bx,by,8,14,(t*speed)%14,'rgba(94,242,220,1)',.82); }
+      else { band(ix,hi,bx,by,8,14/n2,(t*speed/n2)%(14/n2),'rgba(94,242,220,1)',.82); }
+    }
+
+    /* impact glint */
+    cx.beginPath(); cx.arc(ix,hi,5,0,7);
+    cx.fillStyle='#fff'; cx.shadowColor='#ffbe5c'; cx.shadowBlur=18; cx.fill(); cx.shadowBlur=0;
+    cx.beginPath(); cx.arc(ix,hi,13,0,7); cx.strokeStyle='rgba(255,190,92,.6)'; cx.lineWidth=1; cx.stroke();
+
+    /* protractor : θ₁ above normal, θ₂ below */
+    arcMetric(ix,hi,26, -Math.PI/2-th, -Math.PI/2, 'rgba(255,190,92,.8)',1.7);
+    arcMetric(ix,hi,26, Math.PI/2-th2, Math.PI/2, 'rgba(94,242,220,.8)',1.7);
+    cx.strokeStyle='rgba(233,242,235,.12)';
+    for(var dg=0; dg<=180; dg+=15){
+      var aR=dg*Math.PI/180;
+      cx.beginPath();
+      cx.moveTo(ix+Math.cos(aR)*31, hi+Math.sin(aR)*31);
+      cx.lineTo(ix+Math.cos(aR)*35, hi+Math.sin(aR)*35);
+      cx.stroke();
+    }
+
+    /* labels */
+    cx.font='600 12px "JetBrains Mono",monospace'; cx.textAlign='right';
+    cx.fillStyle='rgba(255,190,92,.95)';
+    cx.fillText('θ₁='+S.theta.toFixed(1)+'°', ix-30, hi-Math.sin(th)*46-14);
+    cx.textAlign='left';
+    if(!tir){
+      cx.fillStyle='rgba(94,242,220,.95)';
+      cx.fillText('θ₂='+(th2*180/Math.PI).toFixed(1)+'°', ix+30, hi+Math.cos(th2)*40+20);
+    } else {
+      cx.fillStyle='#ff6b81';
+      cx.fillText('全内反射', ix+30, hi-18);
+      cx.font='500 10.5px "JetBrains Mono",monospace';
+      cx.fillStyle='rgba(255,107,129,.85)';
+      cx.fillText('θ₁>θc='+crit.toFixed(1)+'° · 无折射', ix+30, hi-4);
+    }
+  }
+
+  function startLoop(){
+    var t0=performance.now();
+    (function loop(now){ draw((now-t0)/1000); requestAnimationFrame(loop); })(t0);
+  }
+
+  /* ---- telemetry DOM ---- */
+  function updateTele(){
+    var th2=Math.asin(Math.max(-1,Math.min(1,Math.sin(S.theta*Math.PI/180)/S.n2)))||0;
+    var el, put=function(id,v){el=document.getElementById(id); if(el){el.textContent=v;}};
+    put('t1',S.theta.toFixed(0));
+    put('t2',(th2*180/Math.PI).toFixed(1));
+    put('n2tel',S.n2.toFixed(2));
+    put('n2v',S.n2.toFixed(2));
+    put('r1','θ₁='+S.theta.toFixed(1)+'°');
+    put('r2','θ₂='+(th2*180/Math.PI).toFixed(1)+'°');
+    put('rn','n₂='+S.n2.toFixed(2));
+    put('knobVal',S.theta.toFixed(0));
+    el=document.getElementById('knobNeedle'); if(el){el.style.transform='translateX(-50%) rotate('+S.theta+'deg)';}
+    el=document.getElementById('angslider'); if(el){el.value=S.theta; put('angv',S.theta.toFixed(0)+'°');}
+    el=document.getElementById('n2slider'); if(el&&Math.abs(parseFloat(el.value)-S.n2)>0.001){el.value=S.n2;}
+  }
+
+  /* controls : n₂ (tune panel) + θ₁ (always slider) + drag-on-bench (aim the light) */
+  document.getElementById('n2slider').addEventListener('input',function(e){S.n2=+e.target.value;S.lastGrab=performance.now();updateTele();});
+
+  /* incident angle : slider (always) + drag-on-bench (aim the light) */
+  document.getElementById('angslider').addEventListener('input',function(e){S.theta=+e.target.value;S.lastGrab=performance.now();updateTele();});
+  function sweepAngle(clientX,clientY){
+    var r=cv.getBoundingClientRect();
+    var x=clientX-r.left, y=clientY-r.top;
+    var ixX=r.width*0.54, hiY=r.height*0.60;
+    if(y>=hiY*0.96){ return null; }          // drag below the interface: ignore
+    var ang=Math.atan2(ixX-x, hiY-y)*180/Math.PI;
+    ang=Math.max(5,Math.min(85,ang));
+    return ang;
+  }
+  cv.addEventListener('pointerdown',function(e){e.preventDefault();cv.setPointerCapture(e.pointerId);var a=sweepAngle(e.clientX,e.clientY);if(a!==null){S.theta=a;S.lastGrab=performance.now();updateTele();}});
+  cv.addEventListener('pointermove',function(e){if(e.buttons){var a=sweepAngle(e.clientX,e.clientY);if(a!==null){S.theta=a;S.lastGrab=performance.now();updateTele();}}});
+
+  /* ---- modes ---- */
+  var copy={
+    demo:{rt:'DEMO · 台面演示中',who:'PI · 主讲',txt:'光现在自己在扫——角度越拉越陡。看，入射角超过临界角那一刻，光就进不去了。'},
+    tune:{rt:'TUNE · 交到你手里',who:'观测席 · 你',txt:'光停在你的角度上了。拖入射角滑杆，光当场弯给你看；切 n₂ 拉大，弯得更深。'},
+    discuss:{rt:'DISCUSS · 研究员汇合',who:'实验组 · 阿然',txt:'我这边实测 n₂≈1.50，和小林的理论一致——你们带到的临界角很有意思。'}
+  };
+  modes.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b)return;
+    var m=b.getAttribute('data-mode');
+    modes.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});
+    field.setAttribute('data-mode',m);
+    S.mode=m;
+    var c=copy[m];
+    rt.textContent=c.rt; capWho.textContent=c.who; capText.textContent=c.txt;
+    caption.classList.add('on');
+    document.getElementById('knobwrap').style.pointerEvents=(m==='tune'?'auto':'none');
+    document.getElementById('modeTxt').textContent=c.rt.split('·')[1]||c.rt;
+    var peers=document.querySelectorAll('.peer');
+    peers.forEach(function(p,i){p.classList.remove('live');});
+    if(m==='discuss'){peers[1].classList.add('live');}
+    document.getElementById('modeTxt').textContent=c.rt;
+  });
+
+  /* ---- whisper controls ---- */
+  var controls=document.getElementById('controls'),hid;
+  field.addEventListener('pointermove',function(){controls.classList.add('touch');clearTimeout(hid);hid=setTimeout(function(){controls.classList.remove('touch');},2400);});
+  field.addEventListener('pointerleave',function(){controls.classList.remove('touch');});
+
+  updateTele(); startLoop();
+})();
+</script>
+</body>
+</html>
