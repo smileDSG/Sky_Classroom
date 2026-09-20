@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>落点地图 · 授课仪器放哪里</title>
+<style>
+:root{--bg:#04070c;--panel:#0a1020;--panel2:#0c1428;--line:rgba(126,231,160,.16);--vec:#7ee7a0;--phos:#9fe8ff;--beam:#ffbe5c;--refr:#5ef2dc;--uv:#c084fc;--ink:#e9f2eb;--dim:rgba(233,242,235,.62);--faint:rgba(233,242,235,.36);
+--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Work Sans",system-ui,"Segoe UI",sans-serif;--disp:"Chakra Petch","Work Sans",sans-serif}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background-color:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;padding:26px max(16px,calc((100vw - 1080px)/2)) 60px;-webkit-font-smoothing:antialiased;
+ background-image:radial-gradient(80% 60% at 90% -10%,rgba(84,120,255,.12),transparent 46%),radial-gradient(70% 60% at 6% 110%,rgba(126,231,160,.06),transparent 40%)}
+a{color:var(--vec);text-decoration:none}
+a:hover{text-decoration:underline}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+h1{font-family:var(--disp);font-size:27px;margin:0;letter-spacing:.4px}
+h1 .dot{color:var(--beam)}
+.sub{color:var(--dim);font-size:15.5px;max-width:70ch;margin:8px 0 0}
+.lead{font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+
+/* route bar */
+.flow{display:flex;flex-direction:column;gap:12px;margin:20px 0}
+.flow .rail{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}
+.node{flex:1;min-width:170px;border:1px solid var(--line);border-radius:12px;padding:15px 18px;background:linear-gradient(180deg,var(--panel),var(--panel2));position:relative}
+.node .rt{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--faint)}
+.node .nm{font-family:var(--disp);font-weight:600;font-size:17.5px;margin:5px 0 3px}
+.node .dn{font-size:13.5px;color:var(--dim);line-height:1.5}
+.node.head .nm{color:var(--phos)}
+.arrow{align-self:center;color:var(--faint);font-size:16px;padding:0 2px}
+.node.hot{border-color:rgba(255,190,92,.55);background:linear-gradient(180deg,rgba(255,190,92,.08),rgba(255,190,92,0) 55%),linear-gradient(180deg,var(--panel),var(--panel2))}
+.node.hot::after{content:"← 原型替换这里";position:absolute;top:-13px;right:10px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--beam)}
+.badge{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:2px 9px;border-radius:10px;border:1px solid var(--line);color:var(--dim);margin-right:6px;text-transform:uppercase}
+.badge.cur{color:var(--beam);border-color:rgba(255,190,92,.4)}
+.badge.new{color:var(--vec);border-color:rgba(126,231,160,.4)}
+
+/* the swap card */
+.swap{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:20px 0;background:var(--panel)}
+.swap h2{margin:0;padding:16px 20px;font-family:var(--disp);font-size:18px;font-weight:600;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.swap h2 .tag{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.08em}
+.swap .cols{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.swap .col{padding:20px}
+.swap .col.before{border-right:1px solid var(--line)}
+.swap .col .head{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;letter-spacing:.1em;margin-bottom:14px}
+.swap .before .head{color:#c7d5e6}
+.swap .after .head{color:var(--beam)}
+.col h3{margin:16px 0 9px;font-size:15px;color:var(--ink)}
+ul{margin:0;padding-left:20px;color:var(--dim);font-size:14px}
+ul li{margin:7px 0}
+code{font-family:var(--mono);font-size:13px;color:var(--phos);background:rgba(126,231,160,.06);padding:1px 6px;border-radius:4px;border:1px solid var(--line)}
+.codearrow{margin:22px 0;font-family:var(--mono);font-size:14px;color:var(--dim);line-height:2}
+.step{display:flex;gap:10px;align-items:baseline}
+.step .n{color:var(--vec);font-weight:700;min-width:18px}
+.step code{white-space:nowrap}
+
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:10px}
+.tile{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:linear-gradient(180deg,var(--panel),var(--panel2))}
+.tile .ph{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--beam)}
+.tile h4{margin:7px 0 5px;font-family:var(--disp);font-size:16px;font-weight:600}
+.tile p{margin:0;font-size:13.5px;line-height:1.5;color:var(--dim)}
+.tile .mv{margin-top:10px;font-size:12.5px;color:var(--faint)}
+.tile .mv b{color:var(--vec);font-weight:600}
+.foot{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:12.5px;color:var(--faint);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.foot .rec{color:var(--beam)}
+@media (max-width:720px){.swap .cols{grid-template-columns:1fr}.swap .col.before{border-right:0;border-bottom:1px solid var(--line)}.tiles{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>落点地图 <span class="dot">·</span> 「授课仪器」放哪里</h1>
+    <p class="sub">给组长的一页定位：这份「授课仪器」原型要替换真实产品里的哪一处，改动动哪些文件。不是新做一个页面——是重造 <code>/classroom</code> 的主画面。</p>
+  </div>
+  <div class="lead">SKY_CLASSROOM · STAGE 对接图</div>
+</header>
+
+<div class="flow">
+  <div class="rail">
+    <div class="node head">
+      <div class="rt">/</div>
+      <div class="nm">主页 · 仪表盘</div>
+      <div class="dn">输入课题→生成课程；我的课堂列表。<code>app/page.tsx</code></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node">
+      <div class="rt">/generation-preview</div>
+      <div class="nm">生成预览</div>
+      <div class="dn">课件草稿审阅（锻造端前身，可复用 outline 编辑器）。</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node hot">
+      <div class="rt">/classroom/[id]</div>
+      <div class="nm">实时课堂 · 主画面 ↲</div>
+      <div class="dn">讲师讲授、学生陪伴上完课的中枢。<code>app/[id]/page.tsx → components/stage.tsx</code></div>
+    </div>
+  </div>
+  <div class="flow-hint" style="font-family:var(--mono);font-size:13px;color:var(--faint)">▲ 原型替换的是这条链路终点 —— 课堂屏 <code>&lt;Stage/&gt;</code>，不是主页。</div>
+</div>
+
+<div class="swap">
+  <h2>同一块屏幕 · 两种语法 <span class="tag">P0 · 换世界</span></h2>
+  <div class="cols">
+    <div class="col before">
+      <div class="head">● 现状 —— 会议语法（<code>stage.tsx</code> 三栏）</div>
+      <h3>布局代码锚点</h3>
+      <ul>
+        <li>左：参与者竖条 <code>Roundtable w-16 · L1178</code></li>
+        <li>中：课件画布 <code>CanvasArea · L1320</code></li>
+        <li>右：常驻聊天 <code>ChatArea · L1427</code></li>
+      </ul>
+      <h3>它给人什么感觉</h3>
+      <ul>
+        <li>盖住标题 = “又是一个 Zoom / 网课播放器”</li>
+        <li>你的注意力被切碎在四块面板里</li>
+      </ul>
+    </div>
+    <div class="col after">
+      <div class="head">● 原型 —— 授课仪器（单一 Field + 瞬时层）</div>
+      <h3>改成什么</h3>
+      <ul>
+        <li>撤掉三栏 → <b>单一观测现场</b>：台面/同学/字幕同一画面</li>
+        <li>控件一律<b>瞬时覆盖层</b>，用完即溶（旋钮、字幕、同学）</li>
+        <li>切换不是翻页，是<b>镜头重取景</b>：演示→调参→讨论</li>
+      </ul>
+      <h3>承接一切学习价值</h3>
+      <ul>
+        <li>专注：知道该看哪 · 记忆：知识累积成型 · 在场：同学坐在身边</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="codearrow">
+  <div style="margin-bottom:10px;font-family:var(--disp);font-size:14px;font-weight:600;color:var(--ink)">跟真实代码怎么对接 —— 三步落点</div>
+  <div class="step"><span class="n">1</span><span>改布局：<code>components/stage.tsx</code> 拆三栏 → 单一 Field + 覆盖层（把 L1178 / L1320 / L1427 的通栏换成一层舞台）。</span></div>
+  <div class="step"><span class="n">2</span><span>新增一类动作：在 <code>lib/types/action.ts</code> 加 <code>camera</code>（镜头：dolly / pan / 聚焦），告诉 `PlaybackEngine` 这节要推近哪个机位。</span></div>
+  <div class="step"><span class="n">3</span><span>消费端：<code>lib/playback/engine.ts</code> / <code>lib/action/engine.ts</code> 照常逐条吃 <code>Scene.actions[]</code> —— action 的<b>落点</b>从“弹窗/侧栏”改为“对 Field 的重取景”。现成的白板（<code>wb_draw_*</code>）、讨论、字幕动作都可复用。</span></div>
+</div>
+
+<div class="tiles">
+  <div class="tile">
+    <div class="ph">P0</div>
+    <h4>换世界</h4>
+    <p>三栏 → 单一 Field + 瞬时层。直接终结“会议语法”。</p>
+    <div class="mv">工作量 <b>中</b> · 价值 <b>最高</b> · 关键决策点</div>
+  </div>
+  <div class="tile">
+    <div class="ph">P1</div>
+    <h4>镜头 + 灯光 + 座位</h4>
+    <p>新增 <code>lib/director/</code>（摄像机+光），<code>camera</code> 动作入 engine；side-rays 作光、circle 作座位地理。</p>
+    <div class="mv">工作量 <b>中</b> · 各阶段可独立演示验收</div>
+  </div>
+  <div class="tile">
+    <div class="ph">P2</div>
+    <h4>锻造端 + 知识墙回流</h4>
+    <p>生成端改“播种”体验；下课 Field → 可导出的复习图谱（复用 <code>lib/utils/database.ts</code>）。</p>
+    <div class="mv">工作量 <b>大</b> · 单独排期</div>
+  </div>
+</div>
+
+<div class="foot">
+  <span class="rec">●</span> 结论一句话：原型不是一个新页面，是 <code>classroom</code> 那颗 <code>Stage</code> 在世界模型上的重选 —— 从“带面板的软件”换成“你身处其间的活仪器”。
+  <span style="margin-left:auto">SKY_CLASSROOM · 前端创新落点图</span>
+</div>
+</body>
+</html>
