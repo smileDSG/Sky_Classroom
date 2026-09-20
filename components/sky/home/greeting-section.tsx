@@ -3,7 +3,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Zap, Sparkles, Brain } from 'lucide-react';
-import { useTheme } from '@/lib/hooks/use-theme';
 import { useAuth } from '@/components/auth/auth-provider';
 import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 import { BlurText } from '@/components/reactbits/blur-text';
@@ -23,39 +22,48 @@ function formatStudyTime(minutes: number): string {
   return m > 0 ? `${h}h${m}m` : `${h}h`;
 }
 
-function getGreeting(isDark: boolean): string {
-  const hour = new Date().getHours();
-  if (isDark) {
-    if (hour >= 5 && hour < 12) return '晚上好，同学！';
-    if (hour >= 12 && hour < 18) return '夜晚好，同学！';
-    if (hour >= 18 && hour < 22) return '晚上好，同学！';
-    return '夜深了，注意休息！';
-  }
+// 这两个只接受外部传进来的小时数, 自己**不读** new Date():
+// 服务端容器跑在 UTC、浏览器在 UTC+8, 渲染时直接算会让两边文本对不上,
+// React 报 #418 水合失配。改由调用方在挂载后再算(见下面的 greetingHour)。
+function getGreeting(hour: number): string {
   if (hour >= 5 && hour < 12) return '早上好，同学！';
   if (hour >= 12 && hour < 18) return '下午好，同学！';
   if (hour >= 18 && hour < 22) return '晚上好，同学！';
   return '夜深了，注意休息！';
 }
 
-function getGreetingEmoji(isDark: boolean): string {
-  const hour = new Date().getHours();
-  if (isDark) return '🌙';
+function getGreetingEmoji(hour: number): string {
   if (hour >= 5 && hour < 12) return '☀️';
   if (hour >= 12 && hour < 18) return '🌤️';
-  return '🌙';
+  if (hour >= 18 && hour < 22) return '🌙';
+  return '🌌';
+}
+
+// 次行：不喊空口号，按学习数据给一句"下一刻该干嘛"。
+function getWarmSubtext(stats: LearningStats): string {
+  if (stats.todayStudyMinutes > 0) {
+    return `今天已学 ${formatStudyTime(stats.todayStudyMinutes)}，接着把你手头那门课学完。`;
+  }
+  if (stats.streakDays > 0) {
+    return `你已连续打卡 ${stats.streakDays} 天，今天别断。`;
+  }
+  return `写一句想学的，我陪你开出第一堂课。`;
 }
 
 export function GreetingSection() {
-  const { resolvedTheme } = useTheme();
   const { user } = useAuth();
-  const greeting = useMemo(() => getGreeting(resolvedTheme === 'dark'), [resolvedTheme]);
-  const greetingEmoji = useMemo(() => getGreetingEmoji(resolvedTheme === 'dark'), [resolvedTheme]);
+  // 首帧留空 → 服务端与客户端首屏一致; 挂载后再按访问者本地时间填, 避免 #418。
+  const [greetingHour, setGreetingHour] = useState<number | null>(null);
+  useEffect(() => setGreetingHour(new Date().getHours()), []);
+  const greeting = greetingHour === null ? '' : getGreeting(greetingHour);
+  const greetingEmoji = greetingHour === null ? '' : getGreetingEmoji(greetingHour);
 
   const [stats, setStats] = useState<LearningStats>({
     todayStudyMinutes: 0,
     streakDays: 0,
     masteryPercent: 0,
   });
+  const warmSubtext = useMemo(() => getWarmSubtext(stats), [stats]);
 
   // Fetch learning stats (real data from user_stats table)
   useEffect(() => {
@@ -134,7 +142,7 @@ export function GreetingSection() {
           />
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          今天是学习的好日子，<ShinyText>继续加油！</ShinyText>
+          <ShinyText>{warmSubtext}</ShinyText>
         </p>
       </div>
 
