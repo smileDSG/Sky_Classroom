@@ -2,12 +2,12 @@ packages:
   - "packages/*"
   - "packages/@maic/*"
 allowBuilds:
-  '@biomejs/biome': set this to true or false
-  '@scarf/scarf': set this to true or false
-  better-sqlite3: set this to true or false
-  core-js: set this to true or false
-  es5-ext: set this to true or false
-  esbuild: set this to true or false
-  msw: set this to true or false
-  sharp: set this to true or false
-  unrs-resolver: set this to true or false
+  '@biomejs/biome': true
+  '@scarf/scarf': false
+  better-sqlite3: true
+  core-js: false
+  es5-ext: false
+  esbuild: true
+  msw: true
+  sharp: true
+  unrs-resolver: true
