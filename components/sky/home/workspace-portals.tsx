@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import type { ComponentType } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { ArrowUpRight, Compass, LibraryBig, Presentation, type LucideProps } from 'lucide-react';
-import { isQuickIdentity, QUICK_IDENTITY_KEY, type QuickIdentity } from '@/lib/onboarding/quick-onboarding';
+import { useQuickIdentity } from '@/lib/hooks/use-quick-identity';
 import { cn } from '@/lib/utils';
 
 interface QuickLink {
@@ -107,16 +107,7 @@ const workspaces: Workspace[] = [
 
 export function SkyWorkspacePortals() {
   const router = useRouter();
-  const [identity, setIdentity] = useState<QuickIdentity | null>(null);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(QUICK_IDENTITY_KEY);
-      setIdentity(isQuickIdentity(stored) ? stored : null);
-    } catch {
-      setIdentity(null);
-    }
-  }, []);
+  const identity = useQuickIdentity();
 
   useEffect(() => {
     const prefetch = () => {

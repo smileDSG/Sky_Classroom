@@ -13,3 +13,12 @@ export function persistQuickIdentity(identity: QuickIdentity): void {
     /* localStorage 不可用时静默失败 */
   }
 }
+
+export function getQuickIdentity(): QuickIdentity | null {
+  try {
+    const stored = localStorage.getItem(QUICK_IDENTITY_KEY);
+    return isQuickIdentity(stored) ? stored : null;
+  } catch {
+    return null;
+  }
+}

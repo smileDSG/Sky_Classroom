@@ -36,7 +36,7 @@ export interface SectionNavGroup {
   items: SectionNavItem[];
 }
 
-const SECTION_META: Record<SkySection, { label: string; description: string }> = {
+export const SECTION_META: Record<SkySection, { label: string; description: string }> = {
   learning: {
     label: '学习工作台',
     description: '今天学什么、为什么学、下一步怎么走',
@@ -127,6 +127,22 @@ export const SECTION_GROUPS: Record<SkySection, SectionNavGroup[]> = {
     },
   ],
 };
+
+export function getSkySection(pathname: string): SkySection {
+  if (pathname.startsWith('/sky/teaching') || pathname.startsWith('/sky/cloud-mind/teaching')) {
+    return 'teaching';
+  }
+  if (
+    pathname.startsWith('/sky/cloud-mind') ||
+    pathname.startsWith('/sky/assistant') ||
+    pathname.startsWith('/sky/solve') ||
+    pathname.startsWith('/sky/slides') ||
+    pathname.startsWith('/sky/question-bank')
+  ) {
+    return 'resources';
+  }
+  return 'learning';
+}
 
 function getSectionItems(section: SkySection): SectionNavItem[] {
   return SECTION_GROUPS[section].flatMap((group) => group.items);

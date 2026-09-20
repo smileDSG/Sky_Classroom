@@ -5,48 +5,23 @@ import { usePathname } from 'next/navigation';
 import {
   BookOpenCheck,
   ChevronRight,
-  FlaskConical,
   Home,
   LibraryBig,
   PanelLeft,
   PanelLeftClose,
   Presentation,
-  Sparkles,
   Settings,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { SECTION_GROUPS, type SkySection } from './sky-section-nav';
+import { getSkySection, SECTION_GROUPS, type SkySection } from './sky-section-nav';
 import { cn } from '@/lib/utils';
-import { isQuickIdentity, QUICK_IDENTITY_KEY, type QuickIdentity } from '@/lib/onboarding/quick-onboarding';
+import { useQuickIdentity } from '@/lib/hooks/use-quick-identity';
 
 const SECTIONS: Array<{ key: SkySection; label: string; icon: typeof BookOpenCheck }> = [
   { key: 'learning', label: '学习工作台', icon: BookOpenCheck },
   { key: 'resources', label: '学习资源', icon: LibraryBig },
   { key: 'teaching', label: '备课工作区', icon: Presentation },
 ];
-
-function isSectionActive(pathname: string, section: SkySection): boolean {
-  if (section === 'learning') {
-    return (
-      pathname === '/sky' ||
-      pathname.startsWith('/sky/learning') ||
-      pathname.startsWith('/sky/study-lab') ||
-      pathname.startsWith('/sky/student')
-    );
-  }
-
-  if (section === 'resources') {
-    return (
-      (pathname.startsWith('/sky/cloud-mind') &&
-        !pathname.startsWith('/sky/cloud-mind/teaching')) ||
-      pathname.startsWith('/sky/assistant') ||
-      pathname.startsWith('/sky/solve') ||
-      pathname.startsWith('/sky/slides')
-    );
-  }
-
-  return pathname.startsWith('/sky/teaching') || pathname.startsWith('/sky/cloud-mind/teaching');
-}
 
 function isItemActive(pathname: string, item: { href: string; exact?: boolean }): boolean {
   if (item.href.includes('#') || item.href.includes('?')) return false;
@@ -71,16 +46,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
   const pathname = usePathname();
   const navigationRef = useRef<HTMLElement>(null);
   const [expandedSections, setExpandedSections] = useState(INITIAL_EXPANDED_SECTIONS);
-  const [identity, setIdentity] = useState<QuickIdentity | null>(null);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(QUICK_IDENTITY_KEY);
-      setIdentity(isQuickIdentity(stored) ? stored : null);
-    } catch {
-      setIdentity(null);
-    }
-  }, []);
+  const identity = useQuickIdentity();
 
   const persistScrollPosition = () => {
     const scrollTop = navigationRef.current?.scrollTop;
@@ -97,7 +63,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
   }, []);
 
   useEffect(() => {
-    const activeSection = SECTIONS.find((section) => isSectionActive(pathname, section.key));
+    const activeSection = SECTIONS.find((section) => getSkySection(pathname) === section.key);
     if (!activeSection) return;
 
     setExpandedSections((current) =>
@@ -174,7 +140,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
         <div className="flex min-h-full flex-1 flex-col">
           {visibleSections.map((section) => {
             const SectionIcon = section.icon;
-            const sectionActive = isSectionActive(pathname, section.key);
+            const sectionActive = getSkySection(pathname) === section.key;
             const sectionExpanded = expandedSections[section.key];
             const sectionContentId = `sidebar-${section.key}-content`;
 
