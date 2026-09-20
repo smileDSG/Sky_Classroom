@@ -277,6 +277,8 @@ export function AssistantPanel({
   const subject = useSkyClassroomStore((s) => s.subject);
   const difficulty = useSkyClassroomStore((s) => s.difficulty);
   const style = useSkyClassroomStore((s) => s.style);
+  // 宠物联动: 有宠物形象(白猫/黑猫/VRM人物)时用它当小镜头像, 否则退回二次元/常规头像
+  const mascotImage = useSkyClassroomStore((s) => s.mascotImage);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -720,6 +722,15 @@ export function AssistantPanel({
 
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
+  // 宠物联动: 根据当前显示的小镜头像判断用户点的是哪只(主题猫 / VRM人物),
+  // 让对话框的欢迎内容与之保持一致。小镜头像未设置时退回小镜/常规默认。
+  const petPersona =
+    mascotImage && mascotImage.includes('/mascot/ren')
+      ? 'vrm'
+      : mascotImage && mascotImage.includes('/mascot/')
+        ? 'cat'
+        : null;
+
   const difficultyLabel = difficulty === 'college' ? '大学' : '高中';
 
   const styleLabel = style === 'concise' ? '简洁' : style === 'heuristic' ? '启发' : '详细';
@@ -946,18 +957,23 @@ export function AssistantPanel({
               <div className="mb-3 flex justify-center">
                 <img
                   src={
-                    mode === 'anime'
+                    mascotImage ||
+                    (mode === 'anime'
                       ? '/avatars/kagami/chibi.png'
-                      : '/avatars/student-glasses-new.jpg'
+                      : '/avatars/student-glasses-new.jpg')
                   }
                   className="h-16 w-16 rounded-full object-cover"
                   alt="小镜"
                 />
               </div>
               <p className="text-sm leading-relaxed text-gray-500 dark:text-slate-400">
-                {mode === 'anime'
-                  ? '哈？遇到不会的题目了？告诉我吧。'
-                  : '你好！有任何学习问题，尽管问我。'}
+                {petPersona === 'vrm'
+                  ? '你好呀，我是来陪你的学习伙伴，有什么难题尽管问我。'
+                  : petPersona === 'cat'
+                    ? '喵~ 我一直陪着你，遇到不会的题就指给我看吧。'
+                    : mode === 'anime'
+                      ? '哈？遇到不会的题目了？告诉我吧。'
+                      : '你好！有任何学习问题，尽管问我。'}
               </p>
               <div className="mt-4 flex flex-col gap-1.5">
                 {hints.map((hint) => (
@@ -1013,9 +1029,10 @@ export function AssistantPanel({
                     ) : (
                       <img
                         src={
-                          mode === 'anime'
+                          mascotImage ||
+                          (mode === 'anime'
                             ? '/avatars/kagami/chibi.png'
-                            : '/avatars/student-glasses-new.jpg'
+                            : '/avatars/student-glasses-new.jpg')
                         }
                         className="size-full rounded-full object-cover"
                         alt="小镜"
@@ -1145,9 +1162,10 @@ export function AssistantPanel({
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full">
                   <img
                     src={
-                      mode === 'anime'
+                      mascotImage ||
+                      (mode === 'anime'
                         ? '/avatars/kagami/chibi.png'
-                        : '/avatars/student-glasses-new.jpg'
+                        : '/avatars/student-glasses-new.jpg')
                     }
                     className="size-full object-cover"
                     alt="小镜"

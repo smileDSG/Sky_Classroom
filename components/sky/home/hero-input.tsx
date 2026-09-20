@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowUp, Sparkles, Atom, ImageIcon, FileText, X, Mic, Search, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -8,6 +8,7 @@ import { SpeechButton } from '@/components/audio/speech-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { StarBorder } from '@/components/reactbits/star-border';
 import { AgentSelector } from './agent-selector';
+import { InputCat } from './input-cat';
 
 // 主输入区域组件
 export function HeroInput({
@@ -48,6 +49,18 @@ export function HeroInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  // 空态示例轮播：让首访者秒懂"这里能打什么"。聚焦或已输入就停，把位置让给你。
+  const EXAMPLES = [
+    '从零学 Python，30 分钟写出第一个程序',
+    '用白板给我讲傅里叶变换',
+    '阿瓦隆桌游怎么玩',
+  ];
+  const [exIdx, setExIdx] = useState(0);
+  useEffect(() => {
+    if (isFocused || value.trim().length > 0) return;
+    const t = setInterval(() => setExIdx((i) => (i + 1) % EXAMPLES.length), 3800);
+    return () => clearInterval(t);
+  }, [isFocused, value]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -224,10 +237,11 @@ export function HeroInput({
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            placeholder={`输入你想学的任何内容，例如：
-「从零学 Python，30 分钟写出第一个程序」
-「用白板给我讲解傅里叶变换」
-「阿瓦隆桌游怎么玩」`}
+            placeholder={
+              isFocused || value.trim().length > 0
+                ? '输入你想学的任何内容…'
+                : `点这里，输入你想学的，例如：\n「${EXAMPLES[exIdx]}」`
+            }
             className={cn(
               'w-full px-3 py-3 min-h-[226px] max-h-[400px]',
               'bg-transparent resize-none',
@@ -237,6 +251,9 @@ export function HeroInput({
             )}
             rows={9}
           />
+
+          {/* 小陪伴：聚焦或输入时"醒"过来 */}
+          <InputCat active={isFocused || value.trim().length > 0} />
 
           {/* 拖拽提示 */}
           <AnimatePresence>

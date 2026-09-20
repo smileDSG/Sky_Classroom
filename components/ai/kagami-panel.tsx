@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import { BookOpen, Send, Sparkles, Volume2, VolumeX, X } from 'lucide-react';
 import { InlineMath } from '@/components/ui/inline-math';
 import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 
 type Scene = 'idle' | 'thinking' | 'teaching' | 'done';
 type KagamiMode = 'anime' | 'normal';
@@ -109,6 +110,12 @@ interface Message {
 
 export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
+  // 宠物联动: 有宠物形象(白猫/黑猫/VRM人物)时用它当小镜头像, 否则退回二次元/常规头像
+  const mascotImage = useSkyClassroomStore((s) => s.mascotImage);
+  // 宠物舞台(#oml2d-stage z-9997 / #vrm-pet-stage z-9996)固定在右下角, 且整块画布
+  // 都吃指针事件 —— 会把这个 z-50 的头像整个压住(点不动也拖不动)。
+  // 宠物预览页的宠物就是主角, 所以那页把头像一个挪到左下角, 把右下角让给宠物。
+  const petOwnsCorner = pathname === '/sky/pet-buddy';
   const [open, setOpen] = useState(false);
   const [scene, setScene] = useState<Scene>('idle');
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -585,8 +592,14 @@ export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
       <button
         ref={fabRef}
         aria-label={mode === 'anime' ? '打开小镜课堂' : '打开 AI 学习助手'}
-        className={`fixed z-50 h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${mobile || pathname?.startsWith('/m/') ? 'hidden' : 'flex'} ${open ? 'hidden' : ''}`}
-        style={hasDragged ? { left: pos.x, top: pos.y } : { right: 24, bottom: 24 }}
+        className={`fixed z-50 h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${mobile || pathname === '/' || pathname?.startsWith('/m/') ? 'hidden' : 'flex'} ${open ? 'hidden' : ''}`}
+        style={
+          hasDragged
+            ? { left: pos.x, top: pos.y }
+            : petOwnsCorner
+              ? { left: 24, bottom: 24 }
+              : { right: 24, bottom: 24 }
+        }
         title={
           mode === 'anime'
             ? '小镜课堂 (Ctrl+Shift+A) — 点击打开 / 拖拽移动'
@@ -594,7 +607,7 @@ export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
         }
       >
         <img
-          src={mode === 'anime' ? CHIBI : NORMAL_ICON}
+          src={mascotImage || (mode === 'anime' ? CHIBI : NORMAL_ICON)}
           alt="小镜"
           draggable={false}
           className="h-full w-full object-cover pointer-events-none"
@@ -641,9 +654,18 @@ export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
               >
                 <img
                   key={sceneKey.current}
-                  src={mode === 'anime' ? SCENES[scene] : NORMAL_SCENES[scene]}
-                  alt={mode === 'anime' ? '小镜头像' : 'AI 学习助手头像'}
-                  className={`size-full ${mode === 'normal' ? 'object-cover' : 'object-contain'}`}
+                  // 宠物联动: 用户选了宠物(白/黑猫、VRM人物)时, 进入对话后的头像就
+                  // 用那只宠物, 与右下角浮钮一致 —— 而不是一直显示小镜。没设宠物(访客
+                  // 或未开宠物)才退回二次元/常规场景头像。这与 home 用 AssistantPanel 时
+                  // 消息头像渲染宠物是同一套 petKind→mascotImage 换算(/avatars/mascot)。
+                  src={
+                    mascotImage ||
+                    (mode === 'anime' ? SCENES[scene] : NORMAL_SCENES[scene])
+                  }
+                  alt={mascotImage ? '当前宠物头像' : mode === 'anime' ? '小镜头像' : 'AI 学习助手头像'}
+                  className={`size-full ${
+                    mascotImage || mode === 'normal' ? 'object-cover' : 'object-contain'
+                  }`}
                   style={{
                     animation: transition
                       ? 'kagamiSlideOut 350ms ease-in forwards'

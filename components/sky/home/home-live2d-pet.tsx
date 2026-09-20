@@ -1,0 +1,198 @@
+'use client';
+
+// 主页陪伴宠物 —— Live2D 版本(替代被否的 SVG 小猫)。
+// 主题联动: 亮色界面用白猫(Tororo), 暗色界面用黑猫(Hijiki)。
+// 受 oml2d 限制, 宠物只能停靠在窗口右下角(无法塞进输入框盒内),
+// 挂载点由 Live2DPet 内部交给 document.body, 本组件自己不占布局。
+// 提供开/关开关: 右下角一个可折叠的小圆钮, 控制宠物显隐。
+// 单文件、可回滚: 想要回退, 删掉主页那行挂载即可。
+
+import { useEffect, useState } from 'react';
+import { useTheme } from '@/lib/hooks/use-theme';
+import { Live2DPet } from '@/components/sky/pet/live2d-pet';
+// VRM 陪伴人物(替换被否的二次元人物「米亚拉」)
+import { VrmPet } from '@/components/sky/pet/vrm-pet';
+// 宠物问候语气泡: 猫和 VRM 人物共用同一套问候语, 停在宠物旁边(不压在宠物身上)
+import { PetGreetingBubble } from '@/components/sky/pet/pet-greeting-bubble';
+// 点击宠物唤起小镜课堂(复用现有对话组件 + 其开关状态, 不改它的实现)
+import { AssistantPanel } from '@/components/sky/assistant/assistant-panel';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+
+const CATS = {
+  // 亮色 → 白猫 Tororo(本地自托管)
+  light: { name: '白猫 · Tororo', path: '/live2d/tororo/tororo.model.json' },
+  // 暗色 → 黑猫 Hijiki(本地自托管)
+  dark: { name: '黑猫 · Hijiki', path: '/live2d/hijiki/hijiki.model.json' },
+};
+
+// VRM 陪伴人物(组长否定了米亚拉, 换成本地自托管的 VRM 模型)。用户可一键与主题猫互换。
+const VRM_PET = {
+  name: 'VRM 人物',
+  path: '/vrm/pet',
+};
+
+// 三只宠物(白猫 / 黑猫 / VRM 人物)共用的基准尺寸 —— 0.6 即整体等比缩小 40%。
+// 白猫黑猫是同一组件的两个模型, 靠 scale 缩: 猫的舞台盒子是按模型渲染盒算出来的,
+// 倍数一变, 人和盒子一起等比缩。VRM 人物靠容器宽高缩: 相机 FOV 与机位都不动,
+// 所以画面在盒子里占的比例不变 —— 盒子等比缩 = 人等比缩。
+const PET_BASE_SIZE = 0.6;
+
+export function HomeLive2DPet() {
+  const { resolvedTheme } = useTheme();
+  const [enabled, setEnabled] = useState(true);
+  // 尺寸固定为基准倍数, 不再提供 +/− 缩放
+  const scale = PET_BASE_SIZE;
+  // 显示哪只: 'theme' = 随主题的白/黑猫(默认, 保持原行为) ; 'vrm' = VRM 人物。
+  // 存在全局 store(持久化), 这样别的页面也知道该显示哪只 —— 各页头像才不会对不上。
+  const kind = useSkyClassroomStore((s) => s.petKind);
+  const setKind = useSkyClassroomStore((s) => s.setPetKind);
+  const cat = resolvedTheme === 'dark' ? CATS.dark : CATS.light;
+  const isVrm = kind === 'vrm';
+
+  // 小镜课堂的开关状态(复用现有全局 store, 不改它的实现)
+  const isOpen = useSkyClassroomStore((s) => s.isOpen);
+  const toggleOpen = useSkyClassroomStore((s) => s.toggleOpen);
+  // 小镜头像的换算已移到全局的 <MascotSync />(见 components/sky/pet/mascot-sync.tsx):
+  // 原先只在主页算, 一离开主页主题再切换猫就不跟着换了。全局算才能每页都跟着亮暗走。
+
+  // 点击宠物 → 唤起/收起小镜课堂。
+  // 宠物舞台挂载在 document.body(见 Live2DPet), 用 document 事件委托兜底:
+  // 按下时记录坐标, 抬起时若位移很小(<6px)判为「点击」而非拖动, 再触发开关。
+  // 只响应发生在 #oml2d-stage 内的事件, 不影响宠物自己的缩放/切换等按钮。
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    let downX = 0;
+    let downY = 0;
+    let hasDown = false;
+    // 返回命中的「当前显示宠物」的舞台元素: 猫挂在 #oml2d-stage, VRM 挂在 #vrm-pet-stage。
+    const hitStage = (target: Node | null) => {
+      for (const id of ['oml2d-stage', 'vrm-pet-stage']) {
+        const el = document.getElementById(id);
+        if (el && target && el.contains(target)) return el;
+      }
+      return null;
+    };
+    const onDown = (e: PointerEvent) => {
+      if (e.button !== 0 || !hitStage(e.target as Node)) return;
+      downX = e.clientX;
+      downY = e.clientY;
+      hasDown = true;
+    };
+    const onUp = (e: PointerEvent) => {
+      if (!hasDown || e.button !== 0 || !hitStage(e.target as Node)) {
+        hasDown = false;
+        return;
+      }
+      const dx = e.clientX - downX;
+      const dy = e.clientY - downY;
+      hasDown = false;
+      if (Math.hypot(dx, dy) < 6) toggleOpen();
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('pointerup', onUp);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('pointerup', onUp);
+    };
+  }, [toggleOpen]);
+
+  return (
+    <>
+      {isVrm ? (
+        <VrmPet visible={enabled} size={PET_BASE_SIZE} />
+      ) : (
+        <Live2DPet modelPath={cat.path} modelName={cat.name} visible={enabled} draggable scale={scale} />
+      )}
+
+      {/* 问候语气泡: 谁在场就跟谁走, 停在宠物旁边而不是压在身上。key 随宠物变化 → 换宠物重新问好 */}
+      {enabled && (
+        <PetGreetingBubble key={isVrm ? 'vrm' : 'theme'} anchorId={isVrm ? 'vrm-pet-stage' : 'oml2d-stage'} />
+      )}
+
+      {/* 点击宠物唤起的小镜课堂。z 高于宠物舞台(9998)。锚在左下角,
+          把右下角(宠物老家)空出来 —— 否则打开对话会盖住小镜, 使人拖不动它。 */}
+      {isOpen && (
+        <div className="fixed bottom-6 left-6 z-[10001] flex w-[380px] flex-col gap-3">
+          <AssistantPanel />
+        </div>
+      )}
+
+      {/* 宠物选择: 猫 / 人 二选一。低调地锚在右下角, 不抢主角。
+          「主题猫」= 随亮暗主题的白猫/黑猫, 「人物」= VRM 角色。选中的那项浅色高亮。 */}
+      <div
+        className="fixed z-[10000] flex items-center gap-0.5 rounded-full border px-1 py-1 text-xs font-medium shadow-sm backdrop-blur-md border-slate-200/60 bg-white/55 text-slate-500 dark:border-slate-600/40 dark:bg-slate-800/50 dark:text-slate-400"
+        style={{ right: 20, bottom: 158 }}
+        role="group"
+        aria-label="选择陪伴宠物"
+      >
+        <button
+          type="button"
+          aria-pressed={!isVrm}
+          onClick={() => setKind('theme')}
+          className={
+            'flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors ' +
+            (!isVrm
+              ? 'bg-gradient-to-br from-sky-500 to-violet-500 text-white shadow-sm'
+              : 'hover:text-slate-700 dark:hover:text-slate-200')
+          }
+        >
+          <svg width="13" height="13" viewBox="0 0 46 42" fill="currentColor" aria-hidden="true">
+            <circle cx="15" cy="24" r="6" />
+            <circle cx="31" cy="24" r="6" />
+            <path d="M18 6 q-12 -4 -14 8 q-2 6 6 8 l4 -8 q14 -8 22 -10 q-6 2 -10 8 z" opacity="0.9" />
+            <path d="M28 6 q12 -4 14 8 q2 6 -6 8 l-4 -8 q-14 -8 -22 -10 q6 2 10 8 z" opacity="0.9" />
+          </svg>
+          猫
+        </button>
+        <button
+          type="button"
+          aria-pressed={isVrm}
+          onClick={() => setKind('vrm')}
+          className={
+            'flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors ' +
+            (isVrm
+              ? 'bg-gradient-to-br from-sky-500 to-violet-500 text-white shadow-sm'
+              : 'hover:text-slate-700 dark:hover:text-slate-200')
+          }
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="12" cy="6.5" r="3.5" />
+            <path d="M12 11c-4 0-6 3-6 7v1h12v-1c0-4-2-7-6-7z" />
+          </svg>
+          人
+        </button>
+      </div>
+
+      {/* 陪伴开关: 右下角固定小圆钮, 独立于宠物, 随时可打开/收起 */}
+      <button
+        type="button"
+        aria-label={enabled ? '关闭陪伴宠物' : '打开陪伴宠物'}
+        title={enabled ? '关闭陪伴宠物' : '打开陪伴宠物'}
+        onClick={() => setEnabled((v) => !v)}
+        className={
+          'fixed z-[9998] flex h-9 w-9 items-center justify-center rounded-full border shadow-lg transition-transform hover:scale-105 active:scale-95 ' +
+          (enabled
+            ? 'bg-sky-500/90 border-sky-300 text-white'
+            : 'bg-slate-200/80 border-slate-300 text-slate-500 dark:bg-slate-700/80 dark:border-slate-600 dark:text-slate-300')
+        }
+        style={{ right: 18, bottom: 18 }}
+      >
+        {enabled ? (
+          /* 开 → 显示猫脸, 表示当前开着 */
+          <svg width="18" height="18" viewBox="0 0 46 42" fill="none" aria-hidden="true">
+            <circle cx="24" cy="16" r="10" fill="currentColor" />
+            <circle cx="20.5" cy="15" r="2" fill="#fff" opacity="0.9" />
+            <circle cx="27.5" cy="15" r="2" fill="#fff" opacity="0.9" />
+            <path d="M20 20 q4 2 8 0" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none" />
+          </svg>
+        ) : (
+          /* 关 → 斜杠圆圈, 表示已收起 */
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M5 5l14 14" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
+    </>
+  );
+}

@@ -37,6 +37,7 @@ import type { AudioPlayer } from '@/lib/utils/audio-player';
 import { ActionEngine } from '@/lib/action/engine';
 import { useCanvasStore } from '@/lib/store/canvas';
 import { useSettingsStore } from '@/lib/store/settings';
+import { generateAndStoreTTS } from '@/lib/audio/client-tts';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('PlaybackEngine');
@@ -47,6 +48,9 @@ const log = createLogger('PlaybackEngine');
  * numbers, and short Latin fragments (e.g. "AI课堂").
  */
 const CJK_LANG_THRESHOLD = 0.3;
+
+/** Max wait for on-demand TTS synthesis before falling back to the reading timer. */
+const TTS_ONDEMAND_TIMEOUT_MS = 30_000;
 
 export class PlaybackEngine {
   private scenes: Scene[] = [];
@@ -82,6 +86,8 @@ export class PlaybackEngine {
   private browserTTSChunkIndex: number = 0; // current chunk being spoken
   private browserTTSPausedChunks: string[] = []; // remaining chunks saved on pause (for cancel+re-speak)
   private speechTimerRemaining: number = 0; // remaining ms (set on pause)
+  // Monotonic token to invalidate in-flight on-demand TTS when pause/stop/interrupt happens
+  private ttsGenerationSeq: number = 0;
 
   constructor(
     scenes: Scene[],
@@ -161,6 +167,8 @@ export class PlaybackEngine {
         this.speechTimer = null;
       }
       this.setMode('paused');
+      // Invalidate any in-flight on-demand TTS — resume() moves to the next action
+      this.ttsGenerationSeq++;
       // Freeze TTS — but skip if waiting on ProactiveCard (no active speech)
       if (!this.currentTrigger) {
         if (this.browserTTSActive) {
@@ -231,6 +239,8 @@ export class PlaybackEngine {
     // Set mode BEFORE stopping audio to prevent spurious processNext from
     // synchronous onend callbacks (see handleUserInterrupt for details).
     this.setMode('idle');
+    // Invalidate any in-flight on-demand TTS
+    this.ttsGenerationSeq++;
     this.audioPlayer.stop();
     this.cancelBrowserTTS();
     this.actionEngine.clearEffects();
@@ -357,6 +367,8 @@ export class PlaybackEngine {
     // processNext that would advance actionIndex past the interrupted speech.
     this.currentTopicState = 'active';
     this.setMode('live');
+    // Invalidate any in-flight on-demand TTS before stopping audio
+    this.ttsGenerationSeq++;
     this.audioPlayer.stop();
     this.cancelBrowserTTS();
     this.callbacks.onUserInterrupt?.(text);
@@ -465,6 +477,9 @@ export class PlaybackEngine {
           }
         });
 
+        // Preload the next speech audio while the current one plays
+        this.prefetchNextAudio();
+
         // Estimated reading time when no pre-generated audio (TTS disabled).
         // CJK text: ~150ms/char (one char ≈ one word).
         // Non-CJK text: ~240ms/word (≈250 WPM).
@@ -503,6 +518,9 @@ export class PlaybackEngine {
                 window.speechSynthesis
               ) {
                 this.playBrowserTTS(speechAction);
+              } else if (settings.ttsEnabled && settings.ttsProviderId !== 'browser-native-tts') {
+                // Third-party TTS configured — synthesize on demand instead of staying silent
+                this.generateAndPlayTTS(speechAction, scheduleReadingTimer);
               } else {
                 scheduleReadingTimer();
               }
@@ -595,6 +613,69 @@ export class PlaybackEngine {
         // Unknown action, skip
         this.processNext();
         break;
+    }
+  }
+
+  // ==================== On-demand TTS (third-party providers) ====================
+
+  /**
+   * Fallback for speech without pre-generated audio when a third-party TTS
+   * provider is configured: synthesize now, cache in IndexedDB, then play
+   * from cache. Falls back to the reading timer on failure, timeout, or if
+   * playback was paused/stopped/interrupted while waiting.
+   */
+  private generateAndPlayTTS(speechAction: SpeechAction, fallback: () => void): void {
+    const generationId = ++this.ttsGenerationSeq;
+    const sceneOrder = this.scenes[this.sceneIndex]?.order ?? this.sceneIndex + 1;
+    const audioId = speechAction.audioId || `tts_s${sceneOrder}_${speechAction.id}`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), TTS_ONDEMAND_TIMEOUT_MS);
+
+    generateAndStoreTTS(audioId, speechAction.text, undefined, controller.signal)
+      .then(() => {
+        clearTimeout(timeout);
+        // Interrupted (pause/stop/interrupt) or engine moved on — discard the audio
+        if (generationId !== this.ttsGenerationSeq || this.mode !== 'playing') return;
+
+        this.audioPlayer.onEnded(() => {
+          this.callbacks.onSpeechEnd?.();
+          if (this.mode === 'playing') this.processNext();
+        });
+        this.audioPlayer
+          .play(audioId)
+          .then((started) => {
+            if (!started && this.mode === 'playing') fallback();
+          })
+          .catch(() => {
+            if (this.mode === 'playing') fallback();
+          });
+      })
+      .catch(() => {
+        clearTimeout(timeout);
+        if (this.mode === 'playing') fallback();
+      });
+  }
+
+  /**
+   * Preload the next upcoming speech audio so the sentence gap is not stalled
+   * by a network/IndexedDB fetch. Skips actions without audio; no-op when the
+   * current speech has no pre-generated audio (e.g. on-demand TTS path).
+   */
+  private prefetchNextAudio(): void {
+    let si = this.sceneIndex;
+    let ai = this.actionIndex; // already incremented past the current action
+    while (si < this.scenes.length) {
+      const actions = this.scenes[si].actions || [];
+      for (; ai < actions.length; ai++) {
+        const a = actions[ai];
+        if (a.type === 'speech' && (a.audioId || a.audioUrl)) {
+          this.audioPlayer.prefetch(a.audioId || '', a.audioUrl);
+          return;
+        }
+      }
+      si++;
+      ai = 0;
     }
   }
 

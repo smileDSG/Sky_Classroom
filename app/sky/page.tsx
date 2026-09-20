@@ -35,8 +35,10 @@ type RouteTopic = {
   mistakeCount: number;
 };
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
+// 时段问候。只接受外部传进来的小时数, 自己**不读** new Date():
+// 服务端容器跑在 UTC、浏览器在 UTC+8, 渲染时直接算会让两边文本对不上,
+// React 报 #418 水合失配。改由调用方在挂载后再算(见下面的 greetingHour)。
+function getGreeting(hour: number): string {
   if (hour < 12) return '早上好，同学';
   if (hour < 18) return '下午好，同学';
   return '晚上好，同学';
@@ -244,7 +246,10 @@ export default function SkyDashboardPage() {
   const [personalization, setPersonalization] = useState<PersonalizationContext | null>(null);
   const [learningPlanData, setLearningPlanData] = useState<LearningPlanPanelData | null>(null);
   const [learningPlanError, setLearningPlanError] = useState<string | null>(null);
-  const greeting = useMemo(() => getGreeting(), []);
+  // 首帧留空 → 服务端与客户端首屏一致; 挂载后再按访问者本地时间填, 避免 #418。
+  const [greetingHour, setGreetingHour] = useState<number | null>(null);
+  useEffect(() => setGreetingHour(new Date().getHours()), []);
+  const greeting = greetingHour === null ? '' : getGreeting(greetingHour);
 
   useEffect(() => {
     syncMistakesFromQuizzes();

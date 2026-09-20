@@ -42,6 +42,7 @@ import { HeroInput } from '@/components/sky/home/hero-input';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
 import { PageTour } from '@/components/sky/tour/page-tour';
 import { HOME_TOUR_SEEN_KEY } from '@/lib/sky/home-tour';
+import { HomeLive2DPet } from '@/components/sky/home/home-live2d-pet';
 import type { SettingsSection } from '@/lib/types/settings';
 
 // 折页下方 / 非首屏区块 — 按需加载，加快首屏解析
@@ -693,6 +694,9 @@ function HomeApp() {
       {/* 悬浮答疑按钮 */}
       <DraggableQaButton />
 
+      {/* 陪伴宠物 —— Live2D(亮色白猫 / 暗色黑猫), 停靠在窗口右下角 */}
+      <HomeLive2DPet />
+
       {/* 导航栏 */}
       <MinimalNavbar
         userSection={<FloatingUserCard onUpgradeOpen={() => setUpgradeDialogOpen(true)} />}
@@ -941,8 +945,11 @@ function HomeApp() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
-                className="text-center"
+                className="text-center space-y-2"
               >
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  第一堂课，从你刚学会的那个点开始。
+                </p>
                 <button
                   onClick={triggerFileSelect}
                   disabled={importing}

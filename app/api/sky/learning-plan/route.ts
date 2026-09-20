@@ -13,7 +13,7 @@ import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/reposi
 import { planningDateFromInstant } from '@/lib/adaptive-learning/planning/learning-plan-date';
 import { requireAuth } from '@/lib/server/auth/helpers';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getRequiredServerStorage } from '@/lib/server/server-storage';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
 import { createLearningPlanDAO } from '@/lib/storage/dao/learning-plans';
@@ -133,7 +133,10 @@ export async function GET(req: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'date must be a valid YYYY-MM-DD');
     }
 
-    const storage = await getRequiredServerStorage();
+    // 用宽松版存储: 生产没接 MySQL/SUPABASE 时回退到内存(客户端按 plan:null 渲染空态)。
+    // 之前用 getRequiredServerStorage 在纯内存部署下直接抛「No persistent server storage」→ 500,
+    // 把 /sky 主面板整个打崩。改回 getServerStorage 后, 无计划时优雅返回 {plan:null}。
+    const storage = await getServerStorage();
     const planDAO = createLearningPlanDAO(storage);
     let plan = await planDAO.getActiveByUser(auth.user.id);
 
@@ -176,7 +179,8 @@ export async function GET(req: NextRequest) {
 
     const view = projectLearningPlan(plan, requestedView as LearningPlanViewKind, selectedDate);
     return apiSuccess({ data: { plan, view } });
-  } catch {
+  } catch (err) {
+    console.error('[learning-plan GET]', (err as Error)?.stack || err);
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to load learning plan');
   }
 }
@@ -206,7 +210,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const storage = await getRequiredServerStorage();
+    const storage = await getServerStorage();
     const planDAO = createLearningPlanDAO(storage);
     const previousPlan = await planDAO.getActiveByUser(auth.user.id);
     if (!previousPlan) {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 
 const BUTTON_SIZE = 56;
 const EDGE_GAP = 12;
@@ -14,6 +15,8 @@ interface Position {
 
 export function MobileAIFloatingButton() {
   const pathname = usePathname();
+  // 宠物联动: 有宠物形象(白猫/黑猫/VRM人物)时用它当小镜头像, 否则退回默认二次元头像
+  const mascotImage = useSkyClassroomStore((s) => s.mascotImage);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dragRef = useRef({
     pointerId: null as number | null,
@@ -143,7 +146,7 @@ export function MobileAIFloatingButton() {
       className="pointer-events-auto fixed bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] right-4 z-[90] flex size-14 touch-none select-none items-center justify-center overflow-hidden rounded-full border-2 border-white/30 bg-white shadow-lg shadow-slate-900/20 transition-[transform,box-shadow] active:scale-95 active:cursor-grabbing dark:border-white/20 dark:bg-[#0d1728]"
     >
       <img
-        src="/avatars/kagami/chibi.png"
+        src={mascotImage || '/avatars/kagami/chibi.png'}
         alt="小镜"
         draggable={false}
         className="pointer-events-none h-full w-full object-cover"
