@@ -24,6 +24,7 @@ import {
 } from '@/components/sky/student/profile-onboarding-chat';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import type { ConversationalProfilePatch } from '@/lib/student/conversation-profile';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { cn } from '@/lib/utils';
 
 type FieldStatus = 'complete' | 'missing' | 'weak';
@@ -355,7 +356,7 @@ export function ProfileCompletionPage() {
   return (
     <SkyAppShell>
       <main className="mx-auto max-w-7xl space-y-5 px-4 pb-8 sm:px-6 lg:px-8">
-        <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-5">
+        <section data-tour-step="page-header" className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-5">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
             <div className="min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-100">
@@ -405,7 +406,7 @@ export function ProfileCompletionPage() {
           </div>
         )}
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
+        <div data-tour-step="page-primary" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
           <section className="min-w-0">
             <ProfileOnboardingChat
               title="告诉我你现在怎么学"
@@ -466,6 +467,8 @@ export function ProfileCompletionPage() {
           </aside>
         </div>
       </main>
+
+      <PageTour id="learning-profile" />
     </SkyAppShell>
   );
 }

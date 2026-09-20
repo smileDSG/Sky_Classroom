@@ -13,6 +13,7 @@ import {
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
 import { TeachingPage } from '@/app/sky/teaching/teaching-page';
+import { PageTour } from '@/components/sky/tour/page-tour';
 
 interface TeacherWorkspacePageProps {
   initialTopic?: string;
@@ -70,7 +71,10 @@ export function TeacherWorkspacePage({
       <div className="mx-auto max-w-6xl space-y-5 pb-8">
         <SkySectionNav section="teaching" />
 
-        <section className="overflow-hidden rounded-[24px] border border-violet-200/80 bg-[linear-gradient(135deg,#f5f3ff_0%,#f8fafc_55%,#ffffff_100%)] shadow-[0_20px_60px_rgba(79,70,229,0.12)] dark:border-violet-200/15 dark:bg-[linear-gradient(135deg,#17143a_0%,#0b1729_58%,#07111f_100%)] dark:shadow-[0_24px_68px_rgba(0,0,0,0.3)]">
+        <section
+          data-tour-step="page-header"
+          className="overflow-hidden rounded-[24px] border border-violet-200/80 bg-[linear-gradient(135deg,#f5f3ff_0%,#f8fafc_55%,#ffffff_100%)] shadow-[0_20px_60px_rgba(79,70,229,0.12)] dark:border-violet-200/15 dark:bg-[linear-gradient(135deg,#17143a_0%,#0b1729_58%,#07111f_100%)] dark:shadow-[0_24px_68px_rgba(0,0,0,0.3)]"
+        >
           <div className="flex flex-col gap-5 p-5 md:flex-row md:items-end md:justify-between md:p-7">
             <div className="max-w-2xl">
               <div className="flex flex-wrap items-center gap-2">
@@ -98,7 +102,7 @@ export function TeacherWorkspacePage({
           </div>
         </section>
 
-        <section aria-labelledby="teacher-workspace-tools">
+        <section aria-labelledby="teacher-workspace-tools" data-tour-step="page-primary">
           <div className="flex items-end justify-between gap-3">
             <div>
               <h2
@@ -162,6 +166,7 @@ export function TeacherWorkspacePage({
           <TeachingPage initialTopic={initialTopic} showHistoryInitially={showHistoryInitially} />
         </section>
       </div>
+      <PageTour id="teaching-overview" />
     </SkyAppShell>
   );
 }

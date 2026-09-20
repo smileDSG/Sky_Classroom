@@ -70,7 +70,7 @@ export function AuthLayout({
         {/* Logo header */}
         <div className="mb-7 flex flex-col items-center">
           <Link
-            href="/"
+            href="/sky"
             className="group flex min-h-14 items-center gap-3 rounded-2xl border border-white/80 bg-white/70 px-3.5 py-2 shadow-lg shadow-sky-200/45 backdrop-blur-md transition-transform active:scale-[0.99] dark:border-slate-700/70 dark:bg-slate-900/72 dark:shadow-slate-950/40"
           >
             <img

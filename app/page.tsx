@@ -40,6 +40,8 @@ import { MinimalNavbar } from '@/components/sky/home/minimal-navbar';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { HeroInput } from '@/components/sky/home/hero-input';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
+import { PageTour } from '@/components/sky/tour/page-tour';
+import { HOME_TOUR_SEEN_KEY } from '@/lib/sky/home-tour';
 import { HomeLive2DPet } from '@/components/sky/home/home-live2d-pet';
 import type { SettingsSection } from '@/lib/types/settings';
 
@@ -76,10 +78,6 @@ const ClassroomGrid = dynamic(
     ssr: false,
     loading: () => <div className="min-h-48 w-full animate-pulse rounded-2xl bg-white/40" />,
   },
-);
-const IntroSequence = dynamic(
-  () => import('@/components/sky/home/intro-sequence').then((m) => ({ default: m.IntroSequence })),
-  { ssr: false },
 );
 const FloatingParticles = dynamic(() =>
   import('@/components/sky/home/floating-particles').then((m) => ({
@@ -139,13 +137,20 @@ interface StageListItem {
 import { SkyLandingPage } from '@/components/sky/auth/sky-landing-page';
 
 export default function HomePage() {
-  const router = useRouter();
   const { user, isLoading } = useAuth();
 
-  // Show landing page for unauthenticated users
-  if (!isLoading && (!user || user.role === 'guest')) {
+  if (isLoading) return null;
+
+  if (!user || user.role === 'guest') {
     return <SkyLandingPage />;
   }
+
+  return <HomeApp />;
+}
+
+function HomeApp() {
+  const router = useRouter();
+  const { user } = useAuth();
 
   // 状态
   const [requirement, setRequirement] = useState('');
@@ -153,13 +158,6 @@ export default function HomePage() {
   const [webSearch, setWebSearch] = useState(false);
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [introDone, setIntroDone] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (sessionStorage.getItem('introDone') === 'true') {
-      setIntroDone(true);
-    }
-  }, []);
 
   // ── Classroom background generation state (multi-job) ──
   interface JobCardState {
@@ -676,21 +674,13 @@ export default function HomePage() {
 
   const canGenerate = !!requirement.trim();
 
-  if (!introDone) {
-    return (
-      <IntroSequence
-        onComplete={() => {
-          sessionStorage.setItem('introDone', 'true');
-          setIntroDone(true);
-        }}
-      />
-    );
-  }
-
   return (
     <div suppressHydrationWarning className="min-h-screen w-full relative overflow-x-hidden">
       {/* 动态天空背景 */}
       <SkyBackground />
+
+      {/* 首次进入的分步高亮引导 */}
+      <PageTour id="home" />
 
       {/* 文件输入（用于导入） */}
       <input
@@ -808,7 +798,7 @@ export default function HomePage() {
           </div>
 
           {/* 输入区域 */}
-          <div className="w-full">
+          <div className="w-full" data-tour-step="hero-input">
             <HeroInput
               value={requirement}
               onChange={handleRequirementChange}
@@ -927,7 +917,9 @@ export default function HomePage() {
           <LearningPlanPreview />
 
           {/* 三大工作区入口 */}
-          <SkyWorkspacePortals />
+          <div data-tour-step="workspace-portals">
+            <SkyWorkspacePortals />
+          </div>
 
           {/* 精选推荐 + 趣味内容 */}
           <FeaturedSection />
@@ -946,39 +938,41 @@ export default function HomePage() {
             )}
           </AnimatePresence>
 
-          {/* 导入按钮（无课堂时） */}
-          {classrooms.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="text-center space-y-2"
-            >
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                第一堂课，从你刚学会的那个点开始。
-              </p>
-              <button
-                onClick={triggerFileSelect}
-                disabled={importing}
-                className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          <div data-tour-step="classroom-grid">
+            {/* 导入按钮（无课堂时） */}
+            {classrooms.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-center space-y-2"
               >
-                <span>导入已有课堂</span>
-              </button>
-            </motion.div>
-          )}
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  第一堂课，从你刚学会的那个点开始。
+                </p>
+                <button
+                  onClick={triggerFileSelect}
+                  disabled={importing}
+                  className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  <span>导入已有课堂</span>
+                </button>
+              </motion.div>
+            )}
 
-          {/* 最近讲解 */}
-          {classrooms.length > 0 && (
-            <section>
-              <ClassroomGrid
-                classrooms={classrooms}
-                thumbnails={thumbnails}
-                formatDate={formatDate}
-                onDelete={handleDelete}
-                onRename={handleRename}
-              />
-            </section>
-          )}
+            {/* 最近讲解 */}
+            {classrooms.length > 0 && (
+              <section>
+                <ClassroomGrid
+                  classrooms={classrooms}
+                  thumbnails={thumbnails}
+                  formatDate={formatDate}
+                  onDelete={handleDelete}
+                  onRename={handleRename}
+                />
+              </section>
+            )}
+          </div>
         </div>
       </main>
 
@@ -1008,20 +1002,21 @@ export default function HomePage() {
           <p className="text-[11px] text-slate-300 dark:text-slate-600">
             &copy; 2026 Sky Classroom. All rights reserved.
           </p>
-          <button
-            onClick={() => {
-              try {
-                localStorage.removeItem('skyIntroDone');
-                window.location.reload();
-              } catch {
-                /* ignore */
-              }
-            }}
-            className="text-[10px] text-slate-400/50 hover:text-slate-500 dark:hover:text-slate-400 transition-colors mt-1"
-          >
-            重置开场动画
-          </button>
         </motion.div>
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              localStorage.removeItem(HOME_TOUR_SEEN_KEY);
+              window.location.reload();
+            } catch {
+              /* ignore */
+            }
+          }}
+          className="mt-6 text-[10px] text-slate-400/50 transition-colors hover:text-slate-500 dark:hover:text-slate-400"
+        >
+          重新播放引导
+        </button>
       </footer>
     </div>
   );

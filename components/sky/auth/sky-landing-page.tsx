@@ -108,7 +108,7 @@ function LoginForm({ onToggle }: { onToggle: () => void }) {
   const { login, isGuest } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/';
+  const redirect = searchParams.get('redirect') || '/sky';
   const reason = searchParams.get('reason');
   const [emailOrUsername, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -566,7 +566,7 @@ export function SkyLandingPage() {
 
   useEffect(() => {
     if (!isLoading && user && !user.role.includes('guest')) {
-      router.push('/');
+      router.replace('/sky');
     }
   }, [user, isLoading, router]);
 

@@ -125,7 +125,7 @@ export function MistakeReviewStrip({ className }: { className?: string }) {
           </div>
 
           <Link
-            href="/sky/learning/review?dailyTask=1"
+            href="/sky/cloud-mind/memory"
             className={cn(
               'inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition-colors sm:min-w-40',
               totalDue > 0

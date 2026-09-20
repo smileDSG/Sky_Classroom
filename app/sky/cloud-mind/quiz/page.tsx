@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { Suspense, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import type { QuestionBankRow } from '@/lib/question-bank/types';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { motion, AnimatePresence } from 'motion/react';
@@ -1209,6 +1210,7 @@ function CloudMindQuizContent() {
       <div className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-6 pt-6 pb-12 space-y-6 text-[var(--quiz-text)]">
         {/* Hero */}
         <motion.div
+          data-tour-step="page-header"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative overflow-hidden rounded-2xl p-6 sm:p-8"
@@ -1234,6 +1236,7 @@ function CloudMindQuizContent() {
           {(state === 'idle' || state === 'generating') && (
             <motion.div
               key="config"
+              data-tour-step="page-primary"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
@@ -1979,6 +1982,8 @@ function CloudMindQuizContent() {
           )}
         </AnimatePresence>
       </div>
+
+      <PageTour id="resources-quiz" />
     </div>
   );
 }

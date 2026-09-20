@@ -16,10 +16,10 @@ export const SOLVE_THINKING_CONFIG: ThinkingConfig = { mode: 'disabled', enabled
 
 export const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> =
   {
-    universal: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-    science: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-    humanities: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-    grading: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
+    universal: { providerId: 'deepseek', modelId: 'deepseek-flash' },
+    science: { providerId: 'deepseek', modelId: 'deepseek-flash' },
+    humanities: { providerId: 'deepseek', modelId: 'deepseek-flash' },
+    grading: { providerId: 'deepseek', modelId: 'deepseek-flash' },
   };
 
 export const ENV_KEY_MAP: Record<string, string> = {

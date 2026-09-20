@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { QuickIdentity } from '@/lib/onboarding/quick-onboarding';
 
 export type SkySection = 'learning' | 'resources' | 'teaching';
 
@@ -36,7 +37,7 @@ export interface SectionNavGroup {
   items: SectionNavItem[];
 }
 
-const SECTION_META: Record<SkySection, { label: string; description: string }> = {
+export const SECTION_META: Record<SkySection, { label: string; description: string }> = {
   learning: {
     label: '学习工作台',
     description: '今天学什么、为什么学、下一步怎么走',
@@ -64,7 +65,6 @@ export const SECTION_GROUPS: Record<SkySection, SectionNavGroup[]> = {
       label: '学习进度',
       items: [
         { label: '学习路径', href: '/sky/learning/path', icon: Route },
-        { label: '复习计划', href: '/sky/learning/review', icon: CalendarClock },
         { label: '错题本', href: '/sky/learning/mistakes', icon: NotebookPen },
         { label: '知识地图', href: '/sky/learning/graph', icon: Network },
       ],
@@ -107,7 +107,6 @@ export const SECTION_GROUPS: Record<SkySection, SectionNavGroup[]> = {
       label: '课程准备',
       items: [
         { label: '备课总览', href: '/sky/teaching', icon: FolderKanban, exact: true },
-        { label: '授课设计', href: '/sky/teaching/design', icon: NotebookPen },
       ],
     },
     {
@@ -127,6 +126,28 @@ export const SECTION_GROUPS: Record<SkySection, SectionNavGroup[]> = {
     },
   ],
 };
+
+export function getSkySection(pathname: string): SkySection {
+  if (pathname.startsWith('/sky/teaching') || pathname.startsWith('/sky/cloud-mind/teaching')) {
+    return 'teaching';
+  }
+  if (
+    pathname.startsWith('/sky/cloud-mind') ||
+    pathname.startsWith('/sky/assistant') ||
+    pathname.startsWith('/sky/solve') ||
+    pathname.startsWith('/sky/slides') ||
+    pathname.startsWith('/sky/question-bank')
+  ) {
+    return 'resources';
+  }
+  return 'learning';
+}
+
+export function isSkySectionVisible(section: SkySection, identity: QuickIdentity | null): boolean {
+  if (identity === 'learner') return section !== 'teaching';
+  if (identity === 'educator') return section === 'teaching';
+  return true;
+}
 
 function getSectionItems(section: SkySection): SectionNavItem[] {
   return SECTION_GROUPS[section].flatMap((group) => group.items);

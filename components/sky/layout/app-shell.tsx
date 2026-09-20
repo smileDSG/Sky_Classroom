@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { CheckCircle2, Sparkles } from 'lucide-react';
 import { MobileSkyShell } from '@/components/mobile/shell/mobile-sky-shell';
-import { SkySectionNav, type SkySection } from './sky-section-nav';
+import { getSkySection, SECTION_META, SkySectionNav, type SkySection } from './sky-section-nav';
 import { fetchLearningStats } from '@/lib/client/learning-stats';
 
 const SettingsDialog = dynamic(
@@ -141,25 +141,7 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
     }
   }, [user, checkedIn, checkingIn]);
 
-  const workspace =
-    pathname.startsWith('/sky/teaching') || pathname.startsWith('/sky/cloud-mind/teaching')
-      ? {
-          label: '备课工作区',
-          description: '课程、教案、课件和课堂历史',
-        }
-      : pathname.startsWith('/sky/cloud-mind') ||
-          pathname.startsWith('/sky/question-bank') ||
-          pathname.startsWith('/sky/assistant') ||
-          pathname.startsWith('/sky/solve') ||
-          pathname.startsWith('/sky/slides')
-        ? {
-            label: '学习资源',
-            description: '题目、讲解、复习和课程材料',
-          }
-        : {
-            label: '学习工作台',
-            description: '今天学什么、为什么学、下一步怎么走',
-          };
+  const workspace = SECTION_META[getSkySection(pathname)];
 
   return (
     <div className="relative min-h-dvh w-full overflow-x-clip">

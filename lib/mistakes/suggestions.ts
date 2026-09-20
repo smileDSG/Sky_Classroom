@@ -77,7 +77,7 @@ export function generateSuggestions(mistakes: MistakeRecord[], stats: QuickStats
       text: `你的"${weakest.name}"掌握度仅 ${weakest.mastery}%，错因集中在${topCause}，建议今天重点复习`,
       action: {
         label: '去复习',
-        href: `/sky/learning/review?topic=${encodeURIComponent(weakest.name)}`,
+        href: `/sky/cloud-mind/memory?topic=${encodeURIComponent(weakest.name)}`,
       },
     });
   }
@@ -117,7 +117,7 @@ export function generateSuggestions(mistakes: MistakeRecord[], stats: QuickStats
     suggestions.push({
       icon: '⏰',
       text: `今天有 ${dueToday.length} 道题需要复习，花 10 分钟巩固一下吧`,
-      action: { label: '去复习', href: '/sky/learning/review' },
+      action: { label: '去复习', href: '/sky/cloud-mind/memory' },
     });
   }
 
