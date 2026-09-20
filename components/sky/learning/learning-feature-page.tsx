@@ -1,8 +1,7 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, CalendarClock } from 'lucide-react';
 import { StudentProfilePage } from '@/app/sky/student/student-profile-page';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
@@ -13,7 +12,6 @@ import {
 import { KnowledgeGraphView } from '@/components/sky/learning/knowledge-graph-view';
 import { LearningStats } from '@/components/sky/learning/learning-stats';
 import { MistakeBook } from '@/components/sky/learning/mistake-book';
-import { ReviewPlan } from '@/components/sky/learning/review-plan';
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import type { MistakeRecord } from '@/lib/mistakes/types';
@@ -57,9 +55,6 @@ export function LearningFeaturePage(props: LearningFeaturePageProps) {
 }
 
 function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const mistakes = useSkyClassroomStore((state) => state.mistakes);
   const prioritizeReview = useSkyClassroomStore((state) => state.prioritizeReview);
   const activeMeta =
@@ -67,7 +62,6 @@ function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps)
   const ActiveIcon = activeMeta.icon;
 
   const tourId: Record<LearningFeatureKey, string> = {
-    review: 'learning-review',
     mistakes: 'learning-mistakes',
     graph: 'learning-graph',
     stats: 'learning-stats',
@@ -109,14 +103,6 @@ function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps)
     };
   }, []);
 
-  const handleReviewAutoStartConsumed = useCallback(() => {
-    if (searchParams.get('dailyTask') !== '1') return;
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('dailyTask');
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [pathname, router, searchParams]);
-
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-6xl space-y-5 pb-8">
@@ -142,12 +128,6 @@ function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps)
           <div className="bg-slate-50/70 p-4 dark:bg-[#07111f]/70">
             <div data-tour-step="feature-content" className="rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-inner shadow-slate-200/30 dark:border-cyan-100/10 dark:bg-slate-950/20 dark:shadow-none lg:p-4">
               {activeFeature === 'mistakes' && <MistakeBook />}
-              {activeFeature === 'review' && (
-                <ReviewPlan
-                  autoStart={searchParams.get('dailyTask') === '1'}
-                  onAutoStartConsumed={handleReviewAutoStartConsumed}
-                />
-              )}
               {activeFeature === 'graph' && (
                 <div className="space-y-4">
                   <KnowledgeGraphView />

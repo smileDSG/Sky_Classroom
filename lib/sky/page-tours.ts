@@ -1,4 +1,7 @@
 import type { TourStep } from '@/lib/sky/tour';
+import { HOME_TOUR_SEEN_KEY, HOME_TOUR_STEPS } from '@/lib/sky/home-tour';
+import { PROFILE_TOUR_SEEN_KEY, PROFILE_TOUR_STEPS } from '@/lib/sky/profile-tour';
+import { TOUR_SEEN_KEY, TOUR_STEPS } from '@/lib/sky/tour';
 
 export interface PageTourConfig {
   seenKey: string;
@@ -130,5 +133,17 @@ export const PAGE_TOURS: Record<string, PageTourConfig> = {
       step('page-header', '生成互动课堂', '输入一个知识点，AI 老师和同学为你生成一堂互动课。'),
       step('page-primary', '输入知识点', '填写知识点或上传 PDF，点击开始讲解即可生成课堂。'),
     ],
+  },
+  onboarding: {
+    seenKey: TOUR_SEEN_KEY,
+    steps: TOUR_STEPS,
+  },
+  home: {
+    seenKey: HOME_TOUR_SEEN_KEY,
+    steps: HOME_TOUR_STEPS,
+  },
+  profile: {
+    seenKey: PROFILE_TOUR_SEEN_KEY,
+    steps: PROFILE_TOUR_STEPS,
   },
 };

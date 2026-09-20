@@ -7,6 +7,11 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { ArrowUpRight, Compass, LibraryBig, Presentation, type LucideProps } from 'lucide-react';
 import { useQuickIdentity } from '@/lib/hooks/use-quick-identity';
+import {
+  isSkySectionVisible,
+  SECTION_META,
+  type SkySection,
+} from '@/components/sky/layout/sky-section-nav';
 import { cn } from '@/lib/utils';
 
 interface QuickLink {
@@ -15,9 +20,8 @@ interface QuickLink {
 }
 
 interface Workspace {
-  key: string;
+  key: SkySection;
   role: string;
-  title: string;
   tagline: string;
   href: string;
   icon: ComponentType<LucideProps>;
@@ -37,7 +41,6 @@ const workspaces: Workspace[] = [
   {
     key: 'learning',
     role: '学生 · 每日',
-    title: '学习工作台',
     tagline: '今天学什么、为什么学、下一步怎么走',
     href: '/sky',
     icon: Compass,
@@ -60,7 +63,6 @@ const workspaces: Workspace[] = [
   {
     key: 'resources',
     role: '工具 · 随取',
-    title: '学习资源',
     tagline: '题目、讲解、复习和课程材料，一站取用',
     href: '/sky/cloud-mind',
     icon: LibraryBig,
@@ -83,12 +85,10 @@ const workspaces: Workspace[] = [
   {
     key: 'teaching',
     role: '教师 · 备课',
-    title: '备课工作区',
     tagline: '课程、教案、课件和课堂历史，集中打理',
     href: '/sky/teaching',
     icon: Presentation,
     quickLinks: [
-      { label: '授课设计', href: '/sky/teaching/design' },
       { label: '课件设计', href: '/sky/teaching/slides' },
       { label: '授课记录', href: '/sky/teaching/history' },
     ],
@@ -117,11 +117,7 @@ export function SkyWorkspacePortals() {
     return () => window.clearTimeout(timer);
   }, [router]);
 
-  const visibleWorkspaces = workspaces.filter((ws) => {
-    if (identity === 'learner') return ws.key !== 'teaching';
-    if (identity === 'educator') return ws.key === 'teaching';
-    return true;
-  });
+  const visibleWorkspaces = workspaces.filter((ws) => isSkySectionVisible(ws.key, identity));
 
   const heading =
     identity === 'educator' ? '备课工作区' : identity === 'learner' ? '学习工作区' : '三大工作区';
@@ -198,7 +194,7 @@ export function SkyWorkspacePortals() {
                   </div>
 
                   <h3 className="mt-4 text-xl font-bold tracking-tight text-slate-900 dark:text-white md:text-2xl">
-                    {ws.title}
+                    {SECTION_META[ws.key].label}
                   </h3>
                   <p className="mt-1.5 text-sm leading-6 text-slate-500 dark:text-slate-400">
                     {ws.tagline}
@@ -207,7 +203,7 @@ export function SkyWorkspacePortals() {
                   <span
                     className={`mt-4 inline-flex items-center gap-1 text-sm font-semibold text-slate-400 transition-colors duration-300 dark:text-slate-500 ${ws.accent.arrow}`}
                   >
-                    进入{ws.title}
+                    进入{SECTION_META[ws.key].label}
                     <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </span>
                 </Link>

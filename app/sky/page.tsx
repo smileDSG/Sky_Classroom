@@ -16,7 +16,7 @@ import {
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-strip';
 import { LearningProfilePrompt } from '@/components/sky/dashboard/learning-profile-prompt';
-import { OnboardingTour } from '@/components/sky/dashboard/onboarding-tour';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { TOUR_SEEN_KEY } from '@/lib/sky/tour';
 import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
 import {
@@ -100,9 +100,9 @@ function ContinueLearningLinks({
     },
     {
       icon: BookOpenCheck,
-      label: '复习计划',
+      label: '记忆复习',
       description: mistakeCount > 0 ? `有 ${mistakeCount} 道错题待处理` : '安排下一次巩固复习',
-      href: '/sky/learning/review',
+      href: '/sky/cloud-mind/memory',
     },
     {
       icon: ShieldCheck,
@@ -313,7 +313,7 @@ export default function SkyDashboardPage() {
       <div className="mx-auto max-w-6xl space-y-6 pb-8">
         <SkySectionNav section="learning" />
 
-        <OnboardingTour />
+        <PageTour id="onboarding" />
 
         <Link
           href="/classroom/new"

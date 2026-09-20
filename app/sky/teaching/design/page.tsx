@@ -1,5 +1,5 @@
-import { TeacherWorkspacePage } from '@/components/sky/teaching/teacher-workspace-page';
+import { redirect } from 'next/navigation';
 
 export default function TeachingDesignPage() {
-  return <TeacherWorkspacePage />;
+  redirect('/sky/teaching');
 }

@@ -13,14 +13,20 @@ import {
   Settings,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { getSkySection, SECTION_GROUPS, type SkySection } from './sky-section-nav';
+import {
+  getSkySection,
+  isSkySectionVisible,
+  SECTION_GROUPS,
+  SECTION_META,
+  type SkySection,
+} from './sky-section-nav';
 import { cn } from '@/lib/utils';
 import { useQuickIdentity } from '@/lib/hooks/use-quick-identity';
 
-const SECTIONS: Array<{ key: SkySection; label: string; icon: typeof BookOpenCheck }> = [
-  { key: 'learning', label: '学习工作台', icon: BookOpenCheck },
-  { key: 'resources', label: '学习资源', icon: LibraryBig },
-  { key: 'teaching', label: '备课工作区', icon: Presentation },
+const SECTIONS: Array<{ key: SkySection; icon: typeof BookOpenCheck }> = [
+  { key: 'learning', icon: BookOpenCheck },
+  { key: 'resources', icon: LibraryBig },
+  { key: 'teaching', icon: Presentation },
 ];
 
 function isItemActive(pathname: string, item: { href: string; exact?: boolean }): boolean {
@@ -75,11 +81,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
     setExpandedSections((current) => ({ ...current, [section]: !current[section] }));
   };
 
-  const visibleSections = SECTIONS.filter((section) => {
-    if (identity === 'learner') return section.key !== 'teaching';
-    if (identity === 'educator') return section.key === 'teaching';
-    return true;
-  });
+  const visibleSections = SECTIONS.filter((section) => isSkySectionVisible(section.key, identity));
 
   return (
     <aside
@@ -162,7 +164,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
                   id={`sidebar-${section.key}`}
                   aria-controls={sectionContentId}
                   aria-expanded={sectionExpanded}
-                  title={collapsed ? section.label : undefined}
+                  title={collapsed ? SECTION_META[section.key].label : undefined}
                   className={cn(
                     'group flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
                     collapsed && 'justify-center px-0',
@@ -181,7 +183,9 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
                   >
                     <SectionIcon className="h-4 w-4" />
                   </span>
-                  {!collapsed && <span className="min-w-0 flex-1 truncate">{section.label}</span>}
+                  {!collapsed && (
+                    <span className="min-w-0 flex-1 truncate">{SECTION_META[section.key].label}</span>
+                  )}
                   {!collapsed && (
                     <ChevronRight
                       className={cn(

@@ -1,4 +1,4 @@
-import { BarChart3, BookOpenCheck, CalendarClock, Network, ShieldCheck } from 'lucide-react';
+import { BarChart3, BookOpenCheck, Network, ShieldCheck } from 'lucide-react';
 
 export const LEARNING_FEATURES = [
   {
@@ -7,13 +7,6 @@ export const LEARNING_FEATURES = [
     desc: '查看错因、题目样本和闭环状态',
     href: '/sky/learning/mistakes',
     icon: BookOpenCheck,
-  },
-  {
-    key: 'review',
-    label: '复习计划',
-    desc: '处理到期复习，沉淀长期记忆',
-    href: '/sky/learning/review',
-    icon: CalendarClock,
   },
   {
     key: 'graph',

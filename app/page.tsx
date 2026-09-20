@@ -40,7 +40,7 @@ import { MinimalNavbar } from '@/components/sky/home/minimal-navbar';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { HeroInput } from '@/components/sky/home/hero-input';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
-import { HomeTour } from '@/components/sky/home/home-tour';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { HOME_TOUR_SEEN_KEY } from '@/lib/sky/home-tour';
 import type { SettingsSection } from '@/lib/types/settings';
 
@@ -679,7 +679,7 @@ function HomeApp() {
       <SkyBackground />
 
       {/* 首次进入的分步高亮引导 */}
-      <HomeTour />
+      <PageTour id="home" />
 
       {/* 文件输入（用于导入） */}
       <input

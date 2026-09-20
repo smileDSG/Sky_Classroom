@@ -29,7 +29,7 @@ import { useAnimatedNumber } from '@/lib/hooks/use-animated-number';
 import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { Button } from '@/components/ui/button';
-import { ProfileTour } from '@/components/sky/learning/profile-tour';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { PROFILE_TOUR_SEEN_KEY } from '@/lib/sky/profile-tour';
 import type { LearningStatsResponse, LearningPath } from '@/lib/teaching/learning-path-types';
 import type { CloudMindDashboardData } from '@/lib/cloud-mind/types';
@@ -957,7 +957,7 @@ export function LearnerProfileDashboard() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
 
       <div className="relative">
-        <ProfileTour />
+        <PageTour id="profile" />
 
         {/* Header */}
         <motion.header
