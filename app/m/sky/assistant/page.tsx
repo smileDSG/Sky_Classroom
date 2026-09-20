@@ -27,6 +27,8 @@ import { MobileSkyShell } from '@/components/mobile/mobile-sky-shell';
 import { MobileSkyShell as MobileNavShell } from '@/components/mobile/shell/mobile-sky-shell';
 import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
 import { listConversations, deleteConversation } from '@/lib/storage/dao/assistant-conversation';
+// 宠物联动: 与网页端一致, 用当前选中的宠物(白/黑猫、VRM人物)当助手头像
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 
 const assistantNav: Array<{
   label: string;
@@ -85,6 +87,8 @@ function MobileAssistantContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const view = searchParams.get('view');
+  // 宠物联动: 有宠物形象(白/黑猫、VRM人物)时用它当助手头像, 否则退回小镜
+  const mascotImage = useSkyClassroomStore((s) => s.mascotImage);
   const [subject] = useState('化学');
   const [style] = useState('detailed');
   const [difficulty] = useState('senior');
@@ -156,8 +160,8 @@ function MobileAssistantContent() {
             <div className="flex shrink-0 items-center gap-2">
               <span className="flex size-12 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-white/[0.06] shadow-lg shadow-slate-950/25 ring-4 ring-sky-300/8">
                 <img
-                  src="/avatars/kagami/chibi.png"
-                  alt="小镜头像"
+                  src={mascotImage || '/avatars/kagami/chibi.png'}
+                  alt={mascotImage ? '当前宠物头像' : '小镜头像'}
                   className="h-full w-full object-cover"
                 />
               </span>
@@ -214,8 +218,8 @@ function MobileAssistantContent() {
             <div className="flex min-h-[220px] flex-col items-center justify-center px-4 py-5 text-center">
               <div className="flex size-14 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-white/[0.06] shadow-lg shadow-slate-950/25 ring-4 ring-sky-300/8">
                 <img
-                  src="/avatars/kagami/chibi.png"
-                  alt="小镜头像"
+                  src={mascotImage || '/avatars/kagami/chibi.png'}
+                  alt={mascotImage ? '当前宠物头像' : '小镜头像'}
                   className="h-full w-full object-cover"
                 />
               </div>
