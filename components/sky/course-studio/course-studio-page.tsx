@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { CourseStudioP1EvidencePanel } from '@/components/sky/course-studio/p1-evidence-panel';
 import { CourseStudioP2LongTermPanel } from '@/components/sky/course-studio/p2-long-term-panel';
 import { Badge } from '@/components/ui/badge';
@@ -855,7 +856,7 @@ export function CourseStudioPage() {
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-6xl space-y-5 pb-24 sm:pb-10">
-        <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70 sm:p-6">
+        <section data-tour-step="page-header" className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <Badge
@@ -916,7 +917,7 @@ export function CourseStudioPage() {
           </div>
         )}
 
-        <section className="rounded-2xl border border-cyan-200/70 bg-cyan-50/60 p-4 shadow-sm dark:border-cyan-300/20 dark:bg-cyan-300/10 sm:p-5">
+        <section data-tour-step="page-primary" className="rounded-2xl border border-cyan-200/70 bg-cyan-50/60 p-4 shadow-sm dark:border-cyan-300/20 dark:bg-cyan-300/10 sm:p-5">
           <Textarea
             id="course-studio-intent"
             value={supplement}
@@ -1409,6 +1410,8 @@ export function CourseStudioPage() {
           </section>
         )}
       </div>
+
+      <PageTour id="resources-course-studio" />
     </SkyAppShell>
   );
 }

@@ -27,6 +27,7 @@ import type {
   StrategyAlias,
 } from '@/lib/teaching/learning-path-types';
 import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-strip';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { cn } from '@/lib/utils';
 
 const STATUS_LABELS: Record<LearningPathNode['status'], string> = {
@@ -244,7 +245,7 @@ export function LearningPathPage() {
           </button>
         </div>
 
-        <section className="relative overflow-hidden rounded-3xl border border-sky-200 bg-white/85 p-6 shadow-[0_18px_50px_-30px_rgba(14,165,233,0.35)] dark:border-cyan-300/15 dark:bg-white/[0.04] dark:shadow-[0_0_50px_-24px_rgba(34,211,238,0.45)] sm:p-8">
+        <section data-tour-step="page-header" className="relative overflow-hidden rounded-3xl border border-sky-200 bg-white/85 p-6 shadow-[0_18px_50px_-30px_rgba(14,165,233,0.35)] dark:border-cyan-300/15 dark:bg-white/[0.04] dark:shadow-[0_0_50px_-24px_rgba(34,211,238,0.45)] sm:p-8">
           <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-violet-400/10 blur-3xl" />
           <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -413,7 +414,7 @@ export function LearningPathPage() {
 
             <MistakeReviewStrip className="mt-5" />
 
-            <section className="mt-6 space-y-4">
+            <section data-tour-step="page-primary" className="mt-6 space-y-4">
               {path.nodes.map((node, index) => {
                 const mastery = getNodeMastery(node, context);
                 const primaryTool = getPrimaryTool(node, mastery, context);
@@ -546,7 +547,7 @@ export function LearningPathPage() {
             </section>
           </>
         ) : (
-          <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/75 p-8 text-center dark:border-white/15 dark:bg-white/[0.03]">
+          <div data-tour-step="page-primary" className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/75 p-8 text-center dark:border-white/15 dark:bg-white/[0.03]">
             <Route className="mx-auto h-10 w-10 text-slate-400 dark:text-slate-500" />
             <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
               还没有个人学习路线
@@ -557,6 +558,8 @@ export function LearningPathPage() {
           </div>
         )}
       </div>
+
+      <PageTour id="learning-path" />
     </div>
   );
 }

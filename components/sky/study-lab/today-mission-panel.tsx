@@ -57,7 +57,7 @@ function buildMission(viewModel: StudyLabViewModel) {
     return {
       title: `处理 ${viewModel.workshop.dueReviewCount} 条到期复习`,
       detail: '先把到期内容转为短周期复习，避免遗忘继续累积。',
-      href: '/sky/learning/review?dailyTask=1',
+      href: '/sky/cloud-mind/memory',
       badge: '到期复习',
       duration: '约 10-20 分钟',
       actionLabel: '开始今日任务',

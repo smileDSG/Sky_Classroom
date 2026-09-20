@@ -80,7 +80,7 @@ export function buildPersonalizedActionPlan(mistakes: MistakeRecord[]): Personal
         id: 'review',
         label: '复习待办',
         description: dueReviewCount > 0 ? `处理 ${dueReviewCount} 道到期错题` : '查看复习节奏',
-        href: '/sky/learning/review',
+        href: '/sky/cloud-mind/memory',
       },
       {
         id: 'quiz',

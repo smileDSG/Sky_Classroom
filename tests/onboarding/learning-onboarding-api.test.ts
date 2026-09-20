@@ -24,6 +24,7 @@ import { requireAuth } from '@/lib/server/auth/helpers';
 import { createUserDAO } from '@/lib/storage/dao/users';
 import { GET, PUT } from '@/app/api/user/learning-onboarding/route';
 import { POST as SKIP } from '@/app/api/user/learning-onboarding/skip/route';
+import { POST as RESET } from '@/app/api/user/learning-onboarding/reset/route';
 
 const mockRequireAuth = vi.mocked(requireAuth);
 const mockCreateUserDAO = vi.mocked(createUserDAO);
@@ -313,6 +314,25 @@ describe('learning onboarding API', () => {
       },
     });
     expect(update.mock.calls[0][1]).not.toHaveProperty('educationLevel');
+  });
+
+  it('resets onboarding back to pending', async () => {
+    const update = mockUpdate();
+    mockRequireAuth.mockResolvedValue({
+      user: makeUser({
+        learningOnboarding: { version: 2, status: 'skipped', skippedAt: 5 },
+      }),
+    });
+
+    const response = await RESET();
+
+    expect(response.status).toBe(200);
+    expect(update).toHaveBeenCalledWith('user-1', { learningOnboarding: null });
+    expect(await response.json()).toEqual({
+      success: true,
+      onboarding: null,
+      status: 'pending',
+    });
   });
 
   it('allows the same completion payload to be retried', async () => {

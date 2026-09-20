@@ -5,47 +5,29 @@ import { usePathname } from 'next/navigation';
 import {
   BookOpenCheck,
   ChevronRight,
-  FlaskConical,
   Home,
   LibraryBig,
   PanelLeft,
   PanelLeftClose,
   Presentation,
-  Sparkles,
   Settings,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { SECTION_GROUPS, type SkySection } from './sky-section-nav';
+import {
+  getSkySection,
+  isSkySectionVisible,
+  SECTION_GROUPS,
+  SECTION_META,
+  type SkySection,
+} from './sky-section-nav';
 import { cn } from '@/lib/utils';
+import { useQuickIdentity } from '@/lib/hooks/use-quick-identity';
 
-const SECTIONS: Array<{ key: SkySection; label: string; icon: typeof BookOpenCheck }> = [
-  { key: 'learning', label: '学习工作台', icon: BookOpenCheck },
-  { key: 'resources', label: '学习资源', icon: LibraryBig },
-  { key: 'teaching', label: '备课工作区', icon: Presentation },
+const SECTIONS: Array<{ key: SkySection; icon: typeof BookOpenCheck }> = [
+  { key: 'learning', icon: BookOpenCheck },
+  { key: 'resources', icon: LibraryBig },
+  { key: 'teaching', icon: Presentation },
 ];
-
-function isSectionActive(pathname: string, section: SkySection): boolean {
-  if (section === 'learning') {
-    return (
-      pathname === '/sky' ||
-      pathname.startsWith('/sky/learning') ||
-      pathname.startsWith('/sky/study-lab') ||
-      pathname.startsWith('/sky/student')
-    );
-  }
-
-  if (section === 'resources') {
-    return (
-      (pathname.startsWith('/sky/cloud-mind') &&
-        !pathname.startsWith('/sky/cloud-mind/teaching')) ||
-      pathname.startsWith('/sky/assistant') ||
-      pathname.startsWith('/sky/solve') ||
-      pathname.startsWith('/sky/slides')
-    );
-  }
-
-  return pathname.startsWith('/sky/teaching') || pathname.startsWith('/sky/cloud-mind/teaching');
-}
 
 function isItemActive(pathname: string, item: { href: string; exact?: boolean }): boolean {
   if (item.href.includes('#') || item.href.includes('?')) return false;
@@ -70,6 +52,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
   const pathname = usePathname();
   const navigationRef = useRef<HTMLElement>(null);
   const [expandedSections, setExpandedSections] = useState(INITIAL_EXPANDED_SECTIONS);
+  const identity = useQuickIdentity();
 
   const persistScrollPosition = () => {
     const scrollTop = navigationRef.current?.scrollTop;
@@ -86,7 +69,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
   }, []);
 
   useEffect(() => {
-    const activeSection = SECTIONS.find((section) => isSectionActive(pathname, section.key));
+    const activeSection = SECTIONS.find((section) => getSkySection(pathname) === section.key);
     if (!activeSection) return;
 
     setExpandedSections((current) =>
@@ -97,6 +80,8 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
   const toggleSection = (section: SkySection) => {
     setExpandedSections((current) => ({ ...current, [section]: !current[section] }));
   };
+
+  const visibleSections = SECTIONS.filter((section) => isSkySectionVisible(section.key, identity));
 
   return (
     <aside
@@ -155,9 +140,9 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
         )}
 
         <div className="flex min-h-full flex-1 flex-col">
-          {SECTIONS.map((section) => {
+          {visibleSections.map((section) => {
             const SectionIcon = section.icon;
-            const sectionActive = isSectionActive(pathname, section.key);
+            const sectionActive = getSkySection(pathname) === section.key;
             const sectionExpanded = expandedSections[section.key];
             const sectionContentId = `sidebar-${section.key}-content`;
 
@@ -179,7 +164,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
                   id={`sidebar-${section.key}`}
                   aria-controls={sectionContentId}
                   aria-expanded={sectionExpanded}
-                  title={collapsed ? section.label : undefined}
+                  title={collapsed ? SECTION_META[section.key].label : undefined}
                   className={cn(
                     'group flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
                     collapsed && 'justify-center px-0',
@@ -198,7 +183,9 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
                   >
                     <SectionIcon className="h-4 w-4" />
                   </span>
-                  {!collapsed && <span className="min-w-0 flex-1 truncate">{section.label}</span>}
+                  {!collapsed && (
+                    <span className="min-w-0 flex-1 truncate">{SECTION_META[section.key].label}</span>
+                  )}
                   {!collapsed && (
                     <ChevronRight
                       className={cn(
@@ -274,6 +261,17 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
         >
           <Settings className="h-4 w-4 shrink-0" />
           {!collapsed && <span>设置</span>}
+        </Link>
+        <Link
+          href="/classroom/new"
+          title={collapsed ? '生成互动课堂' : undefined}
+          className={cn(
+            'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white',
+            collapsed && 'justify-center px-0',
+          )}
+        >
+          <Presentation className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>生成互动课堂</span>}
         </Link>
       </div>
     </aside>

@@ -1,8 +1,7 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, CalendarClock } from 'lucide-react';
 import { StudentProfilePage } from '@/app/sky/student/student-profile-page';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
@@ -13,11 +12,11 @@ import {
 import { KnowledgeGraphView } from '@/components/sky/learning/knowledge-graph-view';
 import { LearningStats } from '@/components/sky/learning/learning-stats';
 import { MistakeBook } from '@/components/sky/learning/mistake-book';
-import { ReviewPlan } from '@/components/sky/learning/review-plan';
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { PageTour } from '@/components/sky/tour/page-tour';
 
 interface LearningFeaturePageProps {
   activeFeature: LearningFeatureKey;
@@ -56,14 +55,18 @@ export function LearningFeaturePage(props: LearningFeaturePageProps) {
 }
 
 function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const mistakes = useSkyClassroomStore((state) => state.mistakes);
   const prioritizeReview = useSkyClassroomStore((state) => state.prioritizeReview);
   const activeMeta =
     LEARNING_FEATURES.find((feature) => feature.key === activeFeature) ?? LEARNING_FEATURES[0];
   const ActiveIcon = activeMeta.icon;
+
+  const tourId: Record<LearningFeatureKey, string> = {
+    mistakes: 'learning-mistakes',
+    graph: 'learning-graph',
+    stats: 'learning-stats',
+    profile: 'learning-profile',
+  };
 
   const weakPoints = useMemo(() => {
     if (mistakes.length === 0) return [];
@@ -100,19 +103,11 @@ function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps)
     };
   }, []);
 
-  const handleReviewAutoStartConsumed = useCallback(() => {
-    if (searchParams.get('dailyTask') !== '1') return;
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('dailyTask');
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [pathname, router, searchParams]);
-
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-6xl space-y-5 pb-8">
         <section className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/90 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-cyan-100/10 dark:bg-[#07111f]/95 dark:shadow-[0_24px_72px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
-          <div className="flex flex-col gap-4 border-b border-slate-200/70 bg-[linear-gradient(135deg,#f0fdf4_0%,#f0f9ff_52%,#f8fafc_100%)] px-5 py-5 dark:border-cyan-100/10 dark:bg-[linear-gradient(135deg,#123346_0%,#0d2438_52%,#0b1729_100%)] md:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div data-tour-step="feature-header" className="flex flex-col gap-4 border-b border-slate-200/70 bg-[linear-gradient(135deg,#f0fdf4_0%,#f0f9ff_52%,#f8fafc_100%)] px-5 py-5 dark:border-cyan-100/10 dark:bg-[linear-gradient(135deg,#123346_0%,#0d2438_52%,#0b1729_100%)] md:px-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-[0_10px_28px_rgba(16,185,129,0.08)] dark:border-emerald-200/25 dark:bg-emerald-300/10 dark:text-emerald-100 dark:shadow-none">
@@ -131,14 +126,8 @@ function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps)
           </div>
 
           <div className="bg-slate-50/70 p-4 dark:bg-[#07111f]/70">
-            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-inner shadow-slate-200/30 dark:border-cyan-100/10 dark:bg-slate-950/20 dark:shadow-none lg:p-4">
+            <div data-tour-step="feature-content" className="rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-inner shadow-slate-200/30 dark:border-cyan-100/10 dark:bg-slate-950/20 dark:shadow-none lg:p-4">
               {activeFeature === 'mistakes' && <MistakeBook />}
-              {activeFeature === 'review' && (
-                <ReviewPlan
-                  autoStart={searchParams.get('dailyTask') === '1'}
-                  onAutoStartConsumed={handleReviewAutoStartConsumed}
-                />
-              )}
               {activeFeature === 'graph' && (
                 <div className="space-y-4">
                   <KnowledgeGraphView />
@@ -184,6 +173,8 @@ function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps)
           </div>
         </section>
       </div>
+
+      <PageTour id={tourId[activeFeature]} />
     </SkyAppShell>
   );
 }

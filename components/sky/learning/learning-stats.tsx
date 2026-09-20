@@ -180,7 +180,7 @@ function InsightBanner({
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <Link
-            href="/sky/learning/review"
+            href="/sky/cloud-mind/memory"
             className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 dark:bg-emerald-300 dark:text-slate-950 dark:hover:bg-emerald-200"
           >
             开始复习

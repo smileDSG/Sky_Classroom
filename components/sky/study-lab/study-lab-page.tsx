@@ -16,6 +16,7 @@ import {
 } from '@/lib/sky/study-lab-data';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { cn } from '@/lib/utils';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { LearningPathTimeline } from './learning-path-timeline';
 import { ProfileSummaryPanel } from './profile-summary-panel';
 import { TodayMissionPanel } from './today-mission-panel';
@@ -156,7 +157,7 @@ export function StudyLabPage() {
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-6xl space-y-4 pb-24 sm:pb-10">
-        <section className="overflow-hidden rounded-2xl border border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5_0%,#f0f9ff_58%,#ffffff_100%)] p-4 shadow-sm dark:border-emerald-200/15 dark:bg-[linear-gradient(135deg,#0e2f36_0%,#0b2035_58%,#07111f_100%)] dark:shadow-none sm:p-5">
+        <section data-tour-step="page-header" className="overflow-hidden rounded-2xl border border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5_0%,#f0f9ff_58%,#ffffff_100%)] p-4 shadow-sm dark:border-emerald-200/15 dark:bg-[linear-gradient(135deg,#0e2f36_0%,#0b2035_58%,#07111f_100%)] dark:shadow-none sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
@@ -192,6 +193,7 @@ export function StudyLabPage() {
         {viewModel && <MetricStrip viewModel={viewModel} />}
 
         <div
+          data-tour-step="page-primary"
           className={cn(
             'transition-opacity',
             loadState === 'loading' && !viewModel ? 'opacity-100' : 'opacity-100',
@@ -219,6 +221,8 @@ export function StudyLabPage() {
           )}
         </div>
       </div>
+
+      <PageTour id="learning-today" />
     </SkyAppShell>
   );
 }

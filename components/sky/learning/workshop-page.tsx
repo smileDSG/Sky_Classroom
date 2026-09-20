@@ -280,10 +280,9 @@ function buildMissionSteps(insights: LearningInsights): MissionStep[] {
         insights.metrics.dueReviewCount > 0
           ? `${insights.metrics.dueReviewCount} 道错题处于复习窗口`
           : '先确认今天是否有需要回看内容',
-      href: getWorkshopFeatureHref('review'),
+      href: '/sky/cloud-mind/memory',
       icon: CalendarClock,
       tone: 'amber',
-      feature: 'review',
       duration: reviewDuration,
     },
     {
@@ -346,10 +345,8 @@ function buildDailyTaskAction(
         insights.metrics.overdueReviewCount > 0
           ? `其中 ${insights.metrics.overdueReviewCount} 道已逾期，点击后直接进入沉浸复习`
           : '点击后直接进入今日沉浸复习',
-      href: withQueryParam(getWorkshopFeatureHref('review'), 'dailyTask', '1'),
+      href: '/sky/cloud-mind/memory',
       icon: CalendarClock,
-      feature: 'review',
-      autoStartReview: true,
       duration:
         missionSteps.find((step) => step.id === 'review')?.duration ??
         estimateReviewDuration(insights),
@@ -360,9 +357,8 @@ function buildDailyTaskAction(
     return {
       title: `补齐 ${insights.metrics.reviewBacklogCount} 道错题闭环`,
       detail: '先进入复习计划，确认下一轮复习节奏',
-      href: getWorkshopFeatureHref('review'),
+      href: '/sky/cloud-mind/memory',
       icon: BookOpenCheck,
-      feature: 'review',
       duration:
         missionSteps.find((step) => step.id === 'review')?.duration ??
         estimateReviewDuration(insights),

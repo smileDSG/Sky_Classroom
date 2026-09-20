@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { InlineMath } from '@/components/ui/inline-math';
@@ -784,6 +785,7 @@ function CloudMindMemoryContent() {
       <div className="mx-auto max-w-6xl px-4 pb-12 pt-5 sm:px-6 lg:pt-6">
         {/* Page heading */}
         <motion.div
+          data-tour-step="page-header"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-5 flex items-start gap-3"
@@ -814,6 +816,7 @@ function CloudMindMemoryContent() {
         {/* Input Section — 收集任务台 */}
         {!deck && (
           <motion.div
+            data-tour-step="page-primary"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -1567,6 +1570,8 @@ function CloudMindMemoryContent() {
           )}
         </AnimatePresence>
       </div>
+
+      <PageTour id="resources-memory" />
     </div>
   );
 }

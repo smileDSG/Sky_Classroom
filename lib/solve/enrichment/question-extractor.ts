@@ -63,7 +63,7 @@ const EXTRACTION_SYSTEM_PROMPT = `你是一个教育题目提取专家。你的�
  */
 function resolveExtractorModel() {
   const providerId = 'deepseek' as const;
-  const modelId = 'deepseek-v4-flash';
+  const modelId = 'deepseek-flash';
   return {
     providerId,
     modelId,

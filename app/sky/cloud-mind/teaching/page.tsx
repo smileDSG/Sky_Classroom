@@ -8,6 +8,7 @@ import { useSearchParams } from 'next/navigation';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import type { TeachingGenerationPolicy } from '@/lib/teaching/personalization-policy';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { PageTour } from '@/components/sky/tour/page-tour';
 
 export default function CloudMindTeachingRoute() {
   return (
@@ -112,15 +113,21 @@ function CloudMindTeachingContent() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-12">
-        <TeachingPage
-          initialTopic={effectiveInitialTopic}
-          personalizationNotice={effectivePersonalizationNotice}
-          personalizationPolicy={personalizationPolicy}
-          personalizationContext={personalizationContext}
-          showHistoryInitially={showHistoryInitially}
-        />
+      <div
+        className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-12"
+        data-tour-step="page-header"
+      >
+        <div data-tour-step="page-primary">
+          <TeachingPage
+            initialTopic={effectiveInitialTopic}
+            personalizationNotice={effectivePersonalizationNotice}
+            personalizationPolicy={personalizationPolicy}
+            personalizationContext={personalizationContext}
+            showHistoryInitially={showHistoryInitially}
+          />
+        </div>
       </div>
+      <PageTour id="teaching-ai" />
     </div>
   );
 }
