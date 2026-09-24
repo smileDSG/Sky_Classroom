@@ -107,18 +107,18 @@ export function TodayMissionPanel({
         </Button>
       }
     >
-      <MistakeReviewStrip className="mb-4 shadow-none" />
+      <MistakeReviewStrip className="mb-5 shadow-none" />
 
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-200/20 dark:bg-emerald-300/10">
+      <div className="rounded-2xl border border-sky-200 bg-sky-50 p-5 dark:border-sky-200/20 dark:bg-sky-300/10">
         <div className="flex items-center justify-between gap-3">
-          <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-200/20 dark:bg-white/[0.08] dark:text-emerald-50">
+          <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-xs font-semibold text-sky-700 dark:border-sky-200/20 dark:bg-white/[0.08] dark:text-sky-50">
             {mission.badge}
           </span>
-          <span className="text-xs text-emerald-700/80 dark:text-emerald-50/80">
+          <span className="text-xs text-sky-700/80 dark:text-sky-50/80">
             {mission.duration}
           </span>
         </div>
-        <h3 className="mt-3 text-lg font-semibold leading-7 text-slate-950 dark:text-white">
+        <h3 className="mt-4 text-lg font-semibold leading-7 text-slate-950 dark:text-white">
           {mission.title}
         </h3>
         <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-200">
@@ -126,7 +126,7 @@ export function TodayMissionPanel({
         </p>
         <Link
           href={mission.href}
-          className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 dark:bg-emerald-300 dark:text-slate-950 dark:hover:bg-emerald-200 sm:w-auto"
+          className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700 dark:bg-sky-300 dark:text-slate-950 dark:hover:bg-sky-200 sm:w-auto"
         >
           <CalendarClock className="h-4 w-4" />
           {mission.actionLabel}

@@ -172,10 +172,10 @@ describe('CloudMindPage', () => {
     expect(screen.getByText('智能出题')).toBeInTheDocument();
     expect(screen.getByText('记忆卡片')).toBeInTheDocument();
     expect(screen.getByText('智能授课')).toBeInTheDocument();
-    expect(screen.getByText('课程资源工坊')).toBeInTheDocument();
+    expect(screen.getByText('学习包工坊')).toBeInTheDocument();
 
     expect(await screen.findByText('今日推荐工具')).toBeInTheDocument();
-    expect(screen.getAllByText('先复习二次函数')).toHaveLength(2);
+    expect(screen.getAllByText('先复习二次函数')).toHaveLength(1);
     expect(
       screen
         .getAllByRole('link', { name: '开始练习' })
@@ -189,13 +189,18 @@ describe('CloudMindPage', () => {
       'href',
       expect.stringContaining('/sky/cloud-mind/memory?topic='),
     );
-    expect(screen.getByRole('link', { name: '智能出题：开始小测' })).toHaveAttribute(
-      'href',
-      expect.stringContaining('topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0'),
-    );
-    expect(screen.getByRole('link', { name: '课程资源工坊：进入资源工坊' })).toHaveAttribute(
-      'href',
-      expect.stringContaining('topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0'),
+    await waitFor(
+      () => {
+        expect(screen.getByRole('link', { name: '智能出题：开始小测' })).toHaveAttribute(
+          'href',
+          expect.stringContaining('topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0'),
+        );
+        expect(screen.getByRole('link', { name: '学习包工坊：进入资源工坊' })).toHaveAttribute(
+          'href',
+          expect.stringContaining('topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0'),
+        );
+      },
+      { timeout: 5000 },
     );
 
     expect(screen.queryByText('待复习队列')).not.toBeInTheDocument();

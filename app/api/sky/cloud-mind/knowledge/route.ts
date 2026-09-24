@@ -25,7 +25,6 @@ const MATERIAL_TYPE_TO_KB_TYPE: Record<string, KBType> = {
   mistake: 'solve',
   memory: 'cards',
   writing: 'classroom',
-  translation: 'classroom',
   slides: 'slides',
   solve: 'solve',
   cards: 'cards',

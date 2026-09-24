@@ -89,7 +89,7 @@
   --celestial-horizon: #dce7f2;
   --celestial-haze: #a8b7c7;
   --celestial-starlight: #152238;
-  --celestial-dawn: #0f766e;
+  --celestial-dawn: #d97706;
   --celestial-nebula: #155e75;
   --celestial-zenith: #0369a1;
   --celestial-surface: rgba(255, 255, 255, 0.94);
@@ -1901,52 +1901,10 @@ body::-webkit-scrollbar,
   }
 }
 
-/* Light-mode slide authoring is a calm workspace, not a faded dark-mode scene. */
+/* Light mode keeps the IDENTICAL deep-space layout as dark mode —
+   only colors/readability are tuned, never the page structure. */
 html:not(.dark) .slides-workspace-header {
   box-shadow: 0 1px 0 rgba(148, 163, 184, 0.24);
-}
-
-html:not(.dark) .slides-workspace-mark {
-  background: #e6f4f1 !important;
-  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.18) !important;
-}
-
-html:not(.dark) .slides-empty-atmosphere,
-html:not(.dark) .slides-empty-horizon {
-  display: none;
-}
-
-html:not(.dark) .slides-empty-state {
-  background: #eaf0f7;
-}
-
-html:not(.dark) .slides-empty-content {
-  max-width: 70rem;
-  align-items: stretch;
-  gap: 1.25rem;
-}
-
-html:not(.dark) .slides-empty-hero {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-}
-
-html:not(.dark) .slides-empty-icon {
-  height: 3rem;
-  width: 3rem;
-  border-color: rgba(15, 118, 110, 0.16);
-  background: #e6f4f1;
-  color: #0f766e;
-}
-
-html:not(.dark) .slides-empty-title {
-  text-align: left;
-}
-
-html:not(.dark) .slides-empty-title h2 {
-  font-size: 1.25rem;
-  letter-spacing: 0;
 }
 
 html:not(.dark) .slides-empty-title p {
@@ -1995,18 +1953,8 @@ html:not(.dark) .slides-adaptive-brief a {
 }
 
 html:not(.dark) .slides-adaptive-brief a:hover {
-  border-color: rgba(15, 118, 110, 0.35);
-  color: #0f766e;
-}
-
-html:not(.dark) .slides-generation-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 13rem;
-  gap: 1rem;
-  align-items: end;
-  border: 1px solid #d8e2ec;
-  border-radius: 0.75rem;
-  padding: 1rem;
+  border-color: var(--celestial-dawn);
+  color: var(--celestial-dawn);
 }
 
 html:not(.dark) .slides-topic-control label,
@@ -2016,81 +1964,11 @@ html:not(.dark) .slides-difficulty-control label {
 }
 
 html:not(.dark) .slides-topic-input {
-  border: 1px solid #d8e2ec;
-  border-radius: 0.5rem;
-  background: #f8fafc !important;
-  padding: 0.625rem 0.75rem !important;
   color: #152238;
 }
 
 html:not(.dark) .slides-topic-input::placeholder {
   color: #8291a5;
-}
-
-html:not(.dark) .slides-topic-underline,
-html:not(.dark) .slides-topic-glow {
-  display: none;
-}
-
-html:not(.dark) .slides-difficulty-options {
-  justify-content: flex-start;
-  gap: 0.5rem;
-}
-
-html:not(.dark) .slides-difficulty-option {
-  min-height: 2.75rem;
-  flex: 1;
-  flex-direction: row;
-  justify-content: center;
-  gap: 0.375rem;
-  border: 1px solid #d8e2ec;
-  border-radius: 0.5rem;
-  background: #ffffff;
-}
-
-html:not(.dark) .slides-difficulty-option > div:first-child {
-  display: none;
-}
-
-html:not(.dark) .slides-difficulty-option--active {
-  border-color: #0f766e;
-  background: #e6f4f1;
-}
-
-html:not(.dark) .slides-difficulty-option--active span,
-html:not(.dark) .slides-difficulty-option--active svg {
-  color: #0f766e !important;
-}
-
-html:not(.dark) .slides-generate-action {
-  grid-column: 1 / -1;
-}
-
-html:not(.dark) .slides-generate-button {
-  border-color: #0f766e;
-  background: #0f766e;
-  color: #ffffff;
-  box-shadow: 0 6px 14px rgba(15, 118, 110, 0.18);
-}
-
-html:not(.dark) .slides-generate-button:hover {
-  border-color: #115e59;
-  background: #115e59;
-}
-
-html:not(.dark) .slides-generate-button > div {
-  display: none;
-}
-
-@media (max-width: 767px) {
-  html:not(.dark) .slides-generation-form {
-    display: block;
-  }
-
-  html:not(.dark) .slides-difficulty-control,
-  html:not(.dark) .slides-generate-action {
-    margin-top: 1rem;
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2100,40 +1978,45 @@ html:not(.dark) .slides-generate-button > div {
 /* CSS variables used by the dashboard component */
 :root {
   --dashboard-bg:
-    radial-gradient(ellipse at 20% 0%, #ede9fe 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, #dbeafe 0%, transparent 50%),
-    linear-gradient(180deg, #f8faff 0%, #f0f5ff 100%);
-  --dashboard-grid: rgba(139, 92, 246, 0.06);
-  --dashboard-card-bg: rgba(255, 255, 255, 0.78);
-  --dashboard-card-border: rgba(148, 163, 184, 0.2);
-  --dashboard-card-shadow: 0 4px 20px rgba(30, 64, 112, 0.08);
-  --dashboard-text-primary: #1e293b;
-  --dashboard-text-secondary: #475569;
-  --dashboard-text-muted: #94a3b8;
-  --dashboard-glow-violet: rgba(139, 92, 246, 0.15);
-  --dashboard-glow-cyan: rgba(6, 182, 212, 0.15);
+    radial-gradient(ellipse at 50% -10%, #cfe9ff 0%, transparent 55%),
+    linear-gradient(180deg, #eef7ff 0%, #f7fbff 62%, #eaf3fc 100%);
+  --dashboard-grid: rgba(56, 189, 248, 0.05);
+  --dashboard-card-bg: rgba(255, 255, 255, 0.85);
+  --dashboard-card-border: rgba(148, 163, 184, 0.35);
+  --dashboard-card-shadow:
+    0 1px 2px rgba(30, 41, 59, 0.04), 0 12px 28px -16px rgba(30, 64, 112, 0.14);
+  --dashboard-text-primary: #0f172a;
+  --dashboard-text-secondary: #334155;
+  --dashboard-text-muted: #7c8ba1;
+  --dashboard-panel-top: rgba(255, 255, 255, 0.98);
+  --dashboard-panel-bg: rgba(255, 255, 255, 0.82);
+  --dashboard-panel-border: rgba(148, 163, 184, 0.42);
+  --dashboard-glow-violet: rgba(56, 189, 248, 0.15);
+  --dashboard-glow-cyan: rgba(56, 189, 248, 0.15);
   --dashboard-glow-rose: rgba(244, 63, 94, 0.15);
   --dashboard-glow-emerald: rgba(16, 185, 129, 0.15);
-  --dashboard-glow-indigo: rgba(99, 102, 241, 0.15);
+  --dashboard-glow-indigo: rgba(56, 189, 248, 0.15);
 }
 
 html.dark {
   --dashboard-bg:
-    radial-gradient(ellipse at 20% 0%, #1e1b4b 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, #0c1b2e 0%, transparent 50%),
-    linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%);
-  --dashboard-grid: rgba(139, 92, 246, 0.04);
+    radial-gradient(ellipse at 50% -8%, #1a5b8f 0%, transparent 50%),
+    linear-gradient(180deg, #0d1b33 0%, #0a1526 100%);
+  --dashboard-grid: rgba(56, 189, 248, 0.05);
   --dashboard-card-bg: rgba(255, 255, 255, 0.05);
-  --dashboard-card-border: rgba(255, 255, 255, 0.1);
+  --dashboard-card-border: rgba(255, 255, 255, 0.14);
   --dashboard-card-shadow: none;
   --dashboard-text-primary: #f1f5f9;
   --dashboard-text-secondary: #cbd5e1;
-  --dashboard-text-muted: #64748b;
-  --dashboard-glow-violet: rgba(139, 92, 246, 0.15);
-  --dashboard-glow-cyan: rgba(6, 182, 212, 0.15);
+  --dashboard-text-muted: #7c88a1;
+  --dashboard-panel-top: rgba(255, 255, 255, 0.1);
+  --dashboard-panel-bg: rgba(255, 255, 255, 0.05);
+  --dashboard-panel-border: rgba(255, 255, 255, 0.16);
+  --dashboard-glow-violet: rgba(56, 189, 248, 0.15);
+  --dashboard-glow-cyan: rgba(56, 189, 248, 0.15);
   --dashboard-glow-rose: rgba(244, 63, 94, 0.15);
   --dashboard-glow-emerald: rgba(16, 185, 129, 0.15);
-  --dashboard-glow-indigo: rgba(99, 102, 241, 0.15);
+  --dashboard-glow-indigo: rgba(56, 189, 248, 0.15);
 }
 
 /* Light mode overrides for the dashboard */
@@ -2181,6 +2064,22 @@ html:not(.dark) [data-dashboard-theme] [class*='text-slate-500'] {
 
 html:not(.dark) [data-dashboard-theme] [class*='text-white/'] {
   color: var(--dashboard-text-secondary) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] .text-white {
+  color: var(--dashboard-text-primary) !important;
+}
+
+html:not(.dark)
+  [data-dashboard-theme]
+  :is(.text-sky-100, .text-sky-200, .text-sky-300, .text-sky-400) {
+  color: #0284c7 !important;
+}
+
+html:not(.dark)
+  [data-dashboard-theme]
+  :is(.text-sky-100, .text-sky-200, .text-sky-300, .text-sky-400):hover {
+  color: #0369a1 !important;
 }
 
 /* Specific text colors */

@@ -47,7 +47,7 @@ export function MistakeReviewStrip({ className }: { className?: string }) {
           className,
         )}
       >
-        <Loader2 className="h-4 w-4 animate-spin text-emerald-600 dark:text-emerald-300" />
+        <Loader2 className="h-4 w-4 animate-spin text-sky-600 dark:text-sky-300" />
         正在读取今日错题复习…
       </div>
     );
@@ -64,8 +64,8 @@ export function MistakeReviewStrip({ className }: { className?: string }) {
       className={cn(
         'overflow-hidden rounded-2xl border bg-white shadow-sm dark:bg-[#081423]',
         totalDue > 0
-          ? 'border-amber-200 dark:border-amber-200/25'
-          : 'border-emerald-200 dark:border-emerald-200/15',
+          ? 'border-sky-200 dark:border-sky-200/25'
+          : 'border-sky-200 dark:border-sky-200/15',
         className,
       )}
     >
@@ -76,8 +76,8 @@ export function MistakeReviewStrip({ className }: { className?: string }) {
               className={cn(
                 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
                 totalDue > 0
-                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-300/15 dark:text-amber-100'
-                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-300/15 dark:text-emerald-100',
+                  ? 'bg-sky-100 text-sky-700 dark:bg-sky-300/15 dark:text-sky-100'
+                  : 'bg-sky-100 text-sky-700 dark:bg-sky-300/15 dark:text-sky-100',
               )}
             >
               <BookOpenCheck className="h-5 w-5" />
@@ -86,7 +86,7 @@ export function MistakeReviewStrip({ className }: { className?: string }) {
               <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                 错题复习
                 {totalDue > 0 && (
-                  <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:border-amber-200/25 dark:bg-amber-300/10 dark:text-amber-100">
+                  <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700 dark:border-sky-200/25 dark:bg-sky-300/10 dark:text-sky-100">
                     今日 {todayCount} 道
                   </span>
                 )}
@@ -129,8 +129,8 @@ export function MistakeReviewStrip({ className }: { className?: string }) {
             className={cn(
               'inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition-colors sm:min-w-40',
               totalDue > 0
-                ? 'bg-amber-600 hover:bg-amber-700 dark:bg-amber-300 dark:text-slate-950 dark:hover:bg-amber-200'
-                : 'bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-300 dark:text-slate-950 dark:hover:bg-emerald-200',
+                ? 'bg-sky-600 hover:bg-sky-700 dark:bg-sky-300 dark:text-slate-950 dark:hover:bg-sky-200'
+                : 'bg-sky-600 hover:bg-sky-700 dark:bg-sky-300 dark:text-slate-950 dark:hover:bg-sky-200',
             )}
           >
             <CalendarClock className="h-4 w-4" />

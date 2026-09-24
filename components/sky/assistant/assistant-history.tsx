@@ -91,7 +91,7 @@ export function AssistantHistory({ mode, onLoadConversation }: AssistantHistoryP
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="搜索对话…"
-            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 pl-10 pr-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition-all"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 pl-10 pr-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400 transition-all"
           />
         </div>
         <p className="mt-2 text-[11px] text-slate-400">
@@ -103,7 +103,7 @@ export function AssistantHistory({ mode, onLoadConversation }: AssistantHistoryP
       <div className="flex-1 overflow-y-auto px-5 pb-5">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 text-sky-500 animate-spin mb-3" />
+            <Loader2 className="h-8 w-8 text-rose-500 animate-spin mb-3" />
             <p className="text-sm text-slate-400">加载中…</p>
           </div>
         ) : filtered.length === 0 ? (
@@ -128,10 +128,10 @@ export function AssistantHistory({ mode, onLoadConversation }: AssistantHistoryP
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ delay: i * 0.03 }}
                   onClick={() => void handleLoad(conv.id)}
-                  className="group relative flex items-center gap-3 rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm p-4 cursor-pointer hover:border-sky-300 dark:hover:border-sky-600 hover:shadow-md transition-all"
+                  className="group relative flex items-center gap-3 rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm p-4 cursor-pointer hover:border-rose-300 dark:hover:border-rose-600 hover:shadow-md transition-all"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-900/30">
-                    <MessageCircle className="h-4 w-4 text-sky-500" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-900/30">
+                    <MessageCircle className="h-4 w-4 text-rose-500" />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -161,7 +161,7 @@ export function AssistantHistory({ mode, onLoadConversation }: AssistantHistoryP
                         <Trash2 className="h-3.5 w-3.5" />
                       )}
                     </button>
-                    <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600 group-hover:text-sky-400 transition-colors" />
+                    <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600 group-hover:text-rose-400 transition-colors" />
                   </div>
                 </motion.div>
               ))}

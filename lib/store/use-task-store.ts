@@ -15,7 +15,6 @@ export type TaskType =
   | 'general'
   | 'quiz'
   | 'write'
-  | 'translate'
   | 'memory'
   | 'teaching';
 export type TaskStatus = 'running' | 'completed' | 'failed';

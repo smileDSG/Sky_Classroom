@@ -2,15 +2,22 @@
 
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, X, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
-import type { KnowledgeNode, KnowledgeGraph as KnowledgeGraphType } from '@/lib/mistakes/types';
+import { Brain, Search, X, Plus, Minus, Maximize2 } from 'lucide-react';
+import type { KnowledgeNode } from '@/lib/mistakes/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { buildKnowledgeGraph, recommendLearningPath } from '@/lib/knowledge-graph';
+import {
+  BookDoodle,
+  GraphPaperBg,
+  MountainDoodle,
+  SunDoodle,
+} from '@/components/sky/pattern/sky-doodles';
 
 // ── Internal types ────────────────────────────────────────────────────
 
 interface NodeLayout {
   id: string;
+  category: string;
   x: number;
   y: number;
   vx: number;
@@ -23,23 +30,42 @@ interface TooltipData {
   y: number;
 }
 
+interface ColumnBox {
+  category: string;
+  left: number;
+  right: number;
+  x: number;
+  width: number;
+}
+
 interface LayoutData {
   layoutNodes: NodeLayout[];
   nodeMap: Map<string, NodeLayout>;
   nodes: KnowledgeNode[];
+  columns: ColumnBox[];
+  categories: string[];
+  width: number;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────
 
-const MIN_RADIUS = 15;
-const MAX_RADIUS = 25;
-const ITERATIONS = 100;
-const REPULSION = 3000;
-const ATTRACTION = 0.005;
-const DAMPING = 0.9;
-const CANVAS_HEIGHT: number = 400;
+const CANVAS_HEIGHT: number = 500;
+const PAD_TOP = 60;
+const PAD_BOTTOM = 26;
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 3;
+const MIN_LABEL_ZOOM = 0.72; // 低于该缩放比例时隐藏节点文字，避免糊成一团
+
+// 掌握度四段配色：由好到弱（青 → 蓝 → 橙 → 玫红）
+const MASTERY_COLORS: { min: number; color: string }[] = [
+  { min: 85, color: '#14B8A6' },
+  { min: 60, color: '#3B82F6' },
+  { min: 40, color: '#F59E0B' },
+  { min: 0, color: '#F43F5E' },
+];
+
+const masteryColor = (m: number): string =>
+  MASTERY_COLORS.find((c) => m >= c.min)?.color ?? MASTERY_COLORS[MASTERY_COLORS.length - 1].color;
 
 // ── Component ─────────────────────────────────────────────────────────
 
@@ -64,6 +90,7 @@ export function KnowledgeGraphView() {
     origNodeY: number;
   } | null>(null);
   const isDraggingRef = useRef(false);
+  const animRef = useRef<number | null>(null);
 
   const { mistakes, setKnowledgeGraph } = useSkyClassroomStore();
 
@@ -90,6 +117,7 @@ export function KnowledgeGraphView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [, forceRedraw] = useState(0);
+  const [zoomPct, setZoomPct] = useState(100);
 
   const allCategories = useMemo(() => {
     if (!knowledgeGraph) return [];
@@ -146,7 +174,9 @@ export function KnowledgeGraphView() {
     if (!canvas || !knowledgeGraph || knowledgeGraph.nodes.length === 0) return;
 
     const { nodes, edges, weakPoints } = knowledgeGraph;
-    const w = containerWidth;
+    // 以画布实时尺寸为准，避免 ResizeObserver 所在容器节点被重建时宽度读成 0 导致画布空白
+    const measuredW = canvas.getBoundingClientRect().width;
+    const w = measuredW > 0 ? measuredW : containerWidth;
     const h = CANVAS_HEIGHT;
     if (w === 0) return;
 
@@ -158,76 +188,134 @@ export function KnowledgeGraphView() {
 
     // ── 1. Layout (only if not already computed or width changed) ────
 
-    if (!layoutRef.current || layoutRef.current.nodes !== nodes) {
+    if (!layoutRef.current || layoutRef.current.nodes !== nodes || layoutRef.current.width !== w) {
       const categories = [...new Set(nodes.map((n) => n.category))];
-      const catColumns: Record<string, number> = {};
-      const colWidth = w / categories.length;
-      categories.forEach((cat, i) => {
-        catColumns[cat] = colWidth * i + colWidth / 2;
-      });
+      const nodeById = new Map(nodes.map((n) => [n.id, n]));
 
-      const layoutNodes: NodeLayout[] = nodes.map((n) => {
-        const catCenterX = catColumns[n.category] ?? w / 2;
-        const catNodes = nodes.filter((x) => x.category === n.category);
-        const catIndex = catNodes.indexOf(n);
-        const spacing = h / (catNodes.length + 1);
-        return {
-          id: n.id,
-          x: catCenterX + (Math.random() - 0.5) * 80,
-          y: spacing * (catIndex + 1) + (Math.random() - 0.5) * 40,
-          vx: 0,
-          vy: 0,
-        };
-      });
-      const nodeMap = new Map(layoutNodes.map((ln) => [ln.id, ln]));
-
-      // Force-directed iterations
-      const alpha = { value: 1 };
-      for (let iter = 0; iter < ITERATIONS; iter++) {
-        for (let i = 0; i < layoutNodes.length; i++) {
-          for (let j = i + 1; j < layoutNodes.length; j++) {
-            const a = layoutNodes[i],
-              b = layoutNodes[j];
-            const dx = a.x - b.x,
-              dy = a.y - b.y;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-            const force = (REPULSION / (dist * dist)) * alpha.value;
-            const fx = (dx / dist) * force,
-              fy = (dy / dist) * force;
-            a.vx += fx;
-            a.vy += fy;
-            b.vx -= fx;
-            b.vy -= fy;
+      // ── 有向递进布局 ────────────────────────────────────────────────
+      // 仅用 prerequisite 有向边构建 DAG 层次（最长路径法）：depth[i] 表示
+      // 「到该知识点前需先掌握多少层前置」，最左为基础、最右为深层，
+      // 学习递进方向天然从左到右，一目了然。
+      const depthOf: Record<string, number> = {};
+      for (const n of nodes) depthOf[n.id] = 0;
+      for (let iter = 0; iter < nodes.length + 1; iter++) {
+        let changed = false;
+        for (const e of edges) {
+          if (e.relation !== 'prerequisite') continue;
+          if (depthOf[e.to] < depthOf[e.from] + 1) {
+            depthOf[e.to] = depthOf[e.from] + 1;
+            changed = true;
           }
         }
-        for (const edge of edges) {
-          const from = nodeMap.get(edge.from),
-            to = nodeMap.get(edge.to);
-          if (!from || !to) continue;
-          const dx = to.x - from.x,
-            dy = to.y - from.y;
-          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-          const force = dist * ATTRACTION * alpha.value;
-          const fx = (dx / dist) * force,
-            fy = (dy / dist) * force;
-          from.vx += fx;
-          from.vy += fy;
-          to.vx -= fx;
-          to.vy -= fy;
-        }
-        for (const ln of layoutNodes) {
-          ln.vx += (w / 2 - ln.x) * 0.001;
-          ln.vy += (h / 2 - ln.y) * 0.001;
-          ln.vx *= DAMPING;
-          ln.vy *= DAMPING;
-          ln.x += ln.vx;
-          ln.y += ln.vy;
-          ln.x = Math.max(MAX_RADIUS + 5, Math.min(w - MAX_RADIUS - 5, ln.x));
-          ln.y = Math.max(MAX_RADIUS + 5, Math.min(h - MAX_RADIUS - 5, ln.y));
-        }
-        alpha.value *= 0.98;
+        if (!changed) break;
       }
-      layoutRef.current = { layoutNodes, nodeMap, nodes };
+      const maxDepth = Math.max(0, ...Object.values(depthOf));
+      const layers: string[][] = Array.from({ length: maxDepth + 1 }, () => []);
+      for (const n of nodes) layers[depthOf[n.id]].push(n.id);
+
+      // 层内排序：barycenter 启发式，让前置连线尽量短、少交叉
+      const inLayerIdx = (lid: number, id: string) => layers[lid].indexOf(id);
+      const barycenter = (id: string): number => {
+        const ins = edges.filter((e) => e.relation === 'prerequisite' && e.to === id);
+        if (ins.length === 0) return 0.5;
+        let sum = 0;
+        for (const e of ins) {
+          const pl = depthOf[e.from];
+          const plist = layers[pl];
+          sum += (inLayerIdx(pl, e.from) + 0.5) / plist.length;
+        }
+        return sum / ins.length;
+      };
+      for (let iter = 0; iter < 6; iter++) {
+        for (let li = 0; li < layers.length; li++) {
+          layers[li].sort((a, b) => barycenter(a) - barycenter(b));
+        }
+      }
+
+      // 列宽按每层节点数占比分配；总宽超出画布时等比压缩，杜绝右侧溢出留白
+      const gap = 14;
+      const availW = Math.max(60, w - 24 - gap * (layers.length - 1));
+      const countSum = layers.reduce((s, l) => s + l.length, 0) || 1;
+      let rawWidths = layers.map((l) => Math.max(92, (availW * l.length) / countSum));
+      const totalRaw = rawWidths.reduce((s, x) => s + x, 0);
+      if (totalRaw > availW) {
+        rawWidths = rawWidths.map((x) => Math.max(64, (x * availW) / totalRaw));
+      }
+      // 二次压缩：窄画布且层数多时，64px 下限仍可能溢出，去下限再压一次
+      const totalAfterFloor = rawWidths.reduce((s, x) => s + x, 0);
+      if (totalAfterFloor > availW) {
+        rawWidths = rawWidths.map((x) => (x * availW) / totalAfterFloor);
+      }
+      let xCursor = 12;
+      const columns: ColumnBox[] = layers.map((layer, i) => {
+        const width = rawWidths[i];
+        const cat =
+          layers.length === 1
+            ? '知识地图'
+            : i === 0
+              ? '基础'
+              : i === layers.length - 1
+                ? '深入'
+                : '进阶';
+        const box: ColumnBox = {
+          category: cat,
+          left: xCursor + 5,
+          right: xCursor + width - 5,
+          x: xCursor + width / 2,
+          width,
+        };
+        xCursor += width + gap;
+        return box;
+      });
+
+      // 层内网格排布：行列数按列宽与画布高度自适应（尽量接近正方形单元），
+      // 节点均匀铺满整列，从根本上避免「顶部挤成一团、中下部大片留白」
+      const availH = h - PAD_TOP - PAD_BOTTOM;
+      const layoutNodes: NodeLayout[] = [];
+      for (let li = 0; li < layers.length; li++) {
+        const col = columns[li];
+        const ids = layers[li];
+        const maxR =
+          Math.max(
+            ...ids.map((id) => {
+              const n = nodeById.get(id)!;
+              return 16 + (n.mastery / 100) * 12;
+            }),
+          ) + 4;
+        const maxColsByRadius = Math.max(1, Math.floor((col.width - 12) / (2 * maxR + 8)));
+        const idealCols = Math.round(Math.sqrt((ids.length * col.width) / availH));
+        const cols = Math.max(1, Math.min(ids.length, Math.min(maxColsByRadius, idealCols)));
+        const rows = Math.ceil(ids.length / cols);
+        const cellW = col.width / cols;
+        const cellH = availH / rows;
+        const lastRowCount = ids.length - (rows - 1) * cols;
+        ids.forEach((id, idx) => {
+          const r = Math.floor(idx / cols);
+          const c = idx % cols;
+          // 末行不满时整行居中，避免靠边
+          const centered = r === rows - 1 && lastRowCount < cols;
+          const cellX0 = centered ? (col.width - cellW * lastRowCount) / 2 : 0;
+          const x = Math.max(
+            col.left + 2,
+            Math.min(
+              col.right - 2,
+              col.left + cellX0 + cellW * (c + 0.5) + (Math.random() - 0.5) * 4,
+            ),
+          );
+          const y = PAD_TOP + cellH * (r + 0.5) + (Math.random() - 0.5) * 4;
+          layoutNodes.push({
+            id,
+            category: nodeById.get(id)!.category,
+            x,
+            y,
+            vx: 0,
+            vy: 0,
+          });
+        });
+      }
+      const nodeMap = new Map(layoutNodes.map((ln) => [ln.id, ln]));
+
+      layoutRef.current = { layoutNodes, nodeMap, nodes, columns, categories, width: w };
     }
 
     // ── 2. Draw ─────────────────────────────────────────────────────
@@ -258,6 +346,44 @@ export function KnowledgeGraphView() {
         }
       }
 
+      const weakSet = new Set(weakPoints);
+
+      // ── 递进泳道底色：从左（基础·浅蓝）到右（深入·浅靛），不靠线条靠渐变色带表达层次
+      layout.columns.forEach((col, i) => {
+        const t = layout.columns.length === 1 ? 0 : i / (layout.columns.length - 1);
+        const hue = 205 + t * 64; // 205(蓝) → 269(靛/紫蓝)，随层深加深，呼应「基础→深入」
+        const bx = col.left - 4;
+        const bw = col.right - col.left + 8;
+        const by = 26;
+        const bh = h - 26 - 10;
+        const r = 12;
+        ctx.beginPath();
+        ctx.moveTo(bx + r, by);
+        ctx.arcTo(bx + bw, by, bx + bw, by + bh, r);
+        ctx.arcTo(bx + bw, by + bh, bx, by + bh, r);
+        ctx.arcTo(bx, by + bh, bx, by, r);
+        ctx.arcTo(bx, by, bx + bw, by, r);
+        ctx.closePath();
+        ctx.fillStyle = `hsla(${hue}, 58%, 96%, 0.92)`;
+        ctx.fill();
+        // 递进阶段徽标：序号跟随左右方向提示（基础→进阶→深入），字号随缩放反向保持恒定
+        // 序号圆点
+        ctx.fillStyle = `hsl(${hue}, 55%, 34%)`;
+        ctx.beginPath();
+        ctx.arc(col.left + 6, 42, 9 / scale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${10 / scale}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(String(i + 1), col.left + 6, 42);
+        // 阶段名（紧贴序号右侧，形成「① 基础」徽标）
+        ctx.fillStyle = `hsl(${hue}, 45%, 28%)`;
+        ctx.font = `bold ${13 / scale}px sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(col.category, col.left + 20, 42);
+      });
+
       for (const edge of edges) {
         const from = layout.nodeMap.get(edge.from);
         const to = layout.nodeMap.get(edge.to);
@@ -265,68 +391,113 @@ export function KnowledgeGraphView() {
         const bothMatch =
           !isFiltering || (matchingNodeIds!.has(edge.from) && matchingNodeIds!.has(edge.to));
         const isPathEdge = hasPath && pathEdgePairs.has(`${edge.from}→${edge.to}`);
+        const isPrereq = edge.relation === 'prerequisite';
+        // 曲线连线：垂直法线方向轻度弯折，减少直线交叉带来的杂乱
+        const ddx = to.x - from.x,
+          ddy = to.y - from.y;
+        const len = Math.hypot(ddx, ddy) || 1;
+        const bend = Math.min(26, len * 0.18) * (edge.relation === 'related' ? 0.6 : 1);
+        const nx = (-ddy / len) * bend,
+          ny = (ddx / len) * bend;
+        const mx = (from.x + to.x) / 2 + nx,
+          my = (from.y + to.y) / 2 + ny;
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
-        ctx.globalAlpha = isPathEdge ? 1 : bothMatch ? 0.6 : 0.1;
-        ctx.strokeStyle = isPathEdge ? '#3B82F6' : bothMatch ? '#D1D5DB' : '#E5E7EB';
-        ctx.lineWidth = isPathEdge ? 2.5 : edge.relation === 'prerequisite' ? 1.5 : 1;
+        ctx.quadraticCurveTo(mx, my, to.x, to.y);
+        ctx.globalAlpha = isPathEdge ? 1 : bothMatch ? 0.6 : 0.07;
+        ctx.strokeStyle = isPathEdge ? '#2F80ED' : isPrereq ? '#6E8CA9' : '#C9D4DF';
+        ctx.lineWidth = isPathEdge ? 2.2 : isPrereq ? 1.6 : 1.1;
         ctx.setLineDash(edge.relation === 'related' && !isPathEdge ? [4, 4] : []);
         ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 前置依赖箭头：指向……先学 A 再学 B，箭头放在目标节点边缘表示「依赖方向」
+        if ((isPrereq || isPathEdge) && bothMatch) {
+          // 贝塞尔终点的切线方向（由控制点 M 指向终点 to）
+          const tvx = to.x - mx,
+            tvy = to.y - my;
+          const tvl = Math.hypot(tvx, tvy) || 1;
+          const ux = tvx / tvl,
+            uy = tvy / tvl;
+          const toNode = layout.nodes.find((n) => n.id === to.id);
+          const tRadius = toNode ? 16 + (toNode.mastery / 100) * 12 : 18;
+          const arrow = (6.5 / scale) * (isPathEdge ? 1.15 : 1);
+          const ax = to.x - ux * tRadius,
+            ay = to.y - uy * tRadius;
+          const px = -uy,
+            py = ux;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(ax - ux * arrow + px * arrow * 0.6, ay - uy * arrow + py * arrow * 0.6);
+          ctx.lineTo(ax - ux * arrow - px * arrow * 0.6, ay - uy * arrow - py * arrow * 0.6);
+          ctx.closePath();
+          ctx.fillStyle = isPathEdge ? '#2F80ED' : '#6E8CA9';
+          ctx.fill();
+        }
       }
       ctx.setLineDash([]);
       ctx.globalAlpha = 1;
 
       // Nodes
-      const weakSet = new Set(weakPoints);
       for (const ln of layout.layoutNodes) {
         const node = nodes.find((n) => n.id === ln.id)!;
         const isOnPath = hasPath && pathNodeIds.has(node.id);
-        const radius = MIN_RADIUS + node.mastery / 10 + (isOnPath ? 3 : 0);
+        const radius = 16 + (node.mastery / 100) * 12 + (isOnPath ? 3 : 0);
         const isMatch = !isFiltering || matchingNodeIds!.has(node.id);
+        const color =
+          MASTERY_COLORS.find((c) => node.mastery >= c.min)?.color ??
+          MASTERY_COLORS[MASTERY_COLORS.length - 1].color;
 
-        let color: string;
-        if (node.mastery >= 80) color = '#10B981';
-        else if (node.mastery >= 50) color = '#F59E0B';
-        else color = '#EF4444';
-
-        ctx.globalAlpha = isMatch || isOnPath ? 1 : 0.15;
+        ctx.globalAlpha = isMatch || isOnPath ? 1 : 0.12;
 
         ctx.beginPath();
         ctx.arc(ln.x, ln.y, radius, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.fill();
+        // 浅色描边让节点与底色块之间更有层次，避免糊在一起
+        ctx.beginPath();
+        ctx.arc(ln.x, ln.y, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
 
-        // Path node highlight (white dashed border)
+        // Path node highlight (blue dashed border)
         if (isOnPath && isMatch) {
           ctx.beginPath();
-          ctx.arc(ln.x, ln.y, radius + 3, 0, Math.PI * 2);
+          ctx.arc(ln.x, ln.y, radius + 4, 0, Math.PI * 2);
           ctx.strokeStyle = '#3B82F6';
           ctx.lineWidth = 2;
-          ctx.setLineDash([4, 3]);
+          ctx.setLineDash([5, 3]);
           ctx.stroke();
           ctx.setLineDash([]);
         }
 
-        // Weak point highlight
+        // Weak point highlight (bright rim)
         if (weakSet.has(node.id) && isMatch && !isOnPath) {
           ctx.beginPath();
-          ctx.arc(ln.x, ln.y, radius + 3, 0, Math.PI * 2);
-          ctx.strokeStyle = '#EF4444';
+          ctx.arc(ln.x, ln.y, radius + 4, 0, Math.PI * 2);
+          ctx.strokeStyle = '#FB7185';
           ctx.lineWidth = 2;
-          ctx.setLineDash([4, 3]);
+          ctx.setLineDash([5, 3]);
           ctx.stroke();
           ctx.setLineDash([]);
         }
 
-        // Label — scale font inversely so text stays readable
-        ctx.fillStyle = '#FFFFFF';
-        const fontSize = Math.max(9, 11 / scale);
-        ctx.font = `bold ${fontSize}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const label = node.name.length > 4 ? node.name.slice(0, 4) + '..' : node.name;
-        ctx.fillText(label, ln.x, ln.y);
+        // Label — 仅在足够放大时显示，字号随缩放反向补偿，并按节点宽度自动省略
+        if (scale >= MIN_LABEL_ZOOM && isMatch) {
+          ctx.fillStyle = '#FFFFFF';
+          const maxChars = scale >= 1.5 ? 12 : scale >= 1 ? 7 : 5;
+          let label = node.name.length > maxChars ? node.name.slice(0, maxChars) + '…' : node.name;
+          const fontSize = Math.max(9, 11 / scale);
+          ctx.font = `bold ${fontSize}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const maxW = Math.max(radius * 1.9, 24);
+          while (label.length > 1 && ctx.measureText(label).width > maxW) {
+            label = label.slice(0, label.replace(/…$/, '').length - 1) + '…';
+          }
+          ctx.fillText(label, ln.x, ln.y);
+        }
       }
       ctx.globalAlpha = 1;
       ctx.restore();
@@ -355,7 +526,7 @@ export function KnowledgeGraphView() {
     for (const ln of layout.layoutNodes) {
       const node = layout.nodes.find((n) => n.id === ln.id);
       if (!node) continue;
-      const radius = MIN_RADIUS + node.mastery / 10;
+      const radius = 16 + (node.mastery / 100) * 12;
       const dx = gx - ln.x,
         dy = gy - ln.y;
       if (dx * dx + dy * dy <= (radius + 6) ** 2) return ln;
@@ -456,36 +627,105 @@ export function KnowledgeGraphView() {
     [screenToGraph, hitTestNode],
   );
 
-  const handleWheelNative = useCallback((e: WheelEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // ── Zoom 平滑过渡（rAF 缓动，避免按钮/滚轮跳变，手感顺滑）──────
 
-    const canvas = canvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
+  const animateZoomTo = useCallback(
+    (targetScale: number, fx: number, fy: number, targetOffset?: { x: number; y: number }) => {
+      if (animRef.current !== null) cancelAnimationFrame(animRef.current);
+      const start = scaleRef.current;
+      const startOff = { ...offsetRef.current };
+      const clamped = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, targetScale));
+      const sameScale = Math.abs(clamped - start) < 0.001;
+      const sameOff =
+        targetOffset &&
+        Math.abs(targetOffset.x - startOff.x) < 0.5 &&
+        Math.abs(targetOffset.y - startOff.y) < 0.5;
+      if (sameScale && (!targetOffset || sameOff)) return;
+      const dur = 150;
+      const t0 = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - t0) / dur);
+        const k = t * t * (3 - 2 * t); // smoothstep
+        const s = start + (clamped - start) * k;
+        scaleRef.current = s;
+        if (targetOffset) {
+          offsetRef.current = {
+            x: startOff.x + (targetOffset.x - startOff.x) * k,
+            y: startOff.y + (targetOffset.y - startOff.y) * k,
+          };
+        } else {
+          const ratio = s / start;
+          offsetRef.current = {
+            x: fx - (fx - startOff.x) * ratio,
+            y: fy - (fy - startOff.y) * ratio,
+          };
+        }
+        drawRef.current();
+        forceRedraw((n) => n + 1);
+        setZoomPct(Math.round(s * 100));
+        if (t < 1) animRef.current = requestAnimationFrame(step);
+        else animRef.current = null;
+      };
+      animRef.current = requestAnimationFrame(step);
+    },
+    [],
+  );
 
-    const oldScale = scaleRef.current;
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, oldScale * delta));
+  const handleWheelNative = useCallback(
+    (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const canvas = canvasRef.current!;
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      // 提速缩放：单次滚轮变化幅度更大，操作更省力
+      const factor = e.deltaY > 0 ? 0.845 : 1.18;
+      const newScale = scaleRef.current * factor;
+      animateZoomTo(newScale, mx, my);
+    },
+    [animateZoomTo],
+  );
 
-    const ratio = newScale / oldScale;
-    offsetRef.current = {
-      x: mx - (mx - offsetRef.current.x) * ratio,
-      y: my - (my - offsetRef.current.y) * ratio,
-    };
-    scaleRef.current = newScale;
-
-    drawRef.current();
-    forceRedraw((n) => n + 1);
-  }, []);
-
+  // 滚轮缩放：挂在 window 上并校验指针是否落在画布内再响应，避免受画布挂载/覆盖影响
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.addEventListener('wheel', handleWheelNative, { passive: false });
-    return () => canvas.removeEventListener('wheel', handleWheelNative);
+    const onWheelAtWindow = (e: WheelEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      if (mx < 0 || my < 0 || mx > rect.width || my > rect.height) return;
+      handleWheelNative(e);
+    };
+    window.addEventListener('wheel', onWheelAtWindow, { passive: false });
+    return () => window.removeEventListener('wheel', onWheelAtWindow);
   }, [handleWheelNative]);
+
+  // 键盘快捷键：+ / - / 0 快速缩放与复位（输入框聚焦时不响应）
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const cx = rect.width / 2,
+        cy = rect.height / 2;
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        animateZoomTo(scaleRef.current * 1.28, cx, cy);
+      } else if (e.key === '-') {
+        e.preventDefault();
+        animateZoomTo(scaleRef.current / 1.28, cx, cy);
+      } else if (e.key === '0') {
+        e.preventDefault();
+        animateZoomTo(1, cx, cy);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [animateZoomTo]);
 
   // ── Zoom controls ───────────────────────────────────────────────────
 
@@ -493,44 +733,22 @@ export function KnowledgeGraphView() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const cx = rect.width / 2,
-      cy = rect.height / 2;
-    const oldScale = scaleRef.current;
-    const newScale = Math.min(MAX_ZOOM, oldScale * 1.3);
-    const ratio = newScale / oldScale;
-    offsetRef.current = {
-      x: cx - (cx - offsetRef.current.x) * ratio,
-      y: cy - (cy - offsetRef.current.y) * ratio,
-    };
-    scaleRef.current = newScale;
-    drawRef.current();
-    forceRedraw((n) => n + 1);
-  }, []);
+    animateZoomTo(scaleRef.current * 1.28, rect.width / 2, rect.height / 2);
+  }, [animateZoomTo]);
 
   const handleZoomOut = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const cx = rect.width / 2,
-      cy = rect.height / 2;
-    const oldScale = scaleRef.current;
-    const newScale = Math.max(MIN_ZOOM, oldScale / 1.3);
-    const ratio = newScale / oldScale;
-    offsetRef.current = {
-      x: cx - (cx - offsetRef.current.x) * ratio,
-      y: cy - (cy - offsetRef.current.y) * ratio,
-    };
-    scaleRef.current = newScale;
-    drawRef.current();
-    forceRedraw((n) => n + 1);
-  }, []);
+    animateZoomTo(scaleRef.current / 1.28, rect.width / 2, rect.height / 2);
+  }, [animateZoomTo]);
 
   const handleResetView = useCallback(() => {
-    scaleRef.current = 1;
-    offsetRef.current = { x: 0, y: 0 };
-    drawRef.current();
-    forceRedraw((n) => n + 1);
-  }, []);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    animateZoomTo(1, rect.width / 2, rect.height / 2, { x: 0, y: 0 });
+  }, [animateZoomTo]);
 
   const handleCloseTooltip = useCallback(() => setTooltip(null), []);
 
@@ -538,12 +756,28 @@ export function KnowledgeGraphView() {
 
   if (!knowledgeGraph || knowledgeGraph.nodes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 shadow-sm dark:bg-slate-800">
-        <div className="text-6xl">🧠</div>
+      <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-lg bg-white p-12 shadow-sm dark:bg-slate-800">
+        <GraphPaperBg className="opacity-50" />
+        <div
+          className="pointer-events-none absolute bottom-4 right-7 hidden select-none text-sky-500/35 dark:text-sky-200/25 md:flex md:items-end md:gap-2"
+          aria-hidden="true"
+        >
+          <SunDoodle className="h-8 w-8 -rotate-12" />
+          <MountainDoodle className="h-9 w-12 translate-y-1" />
+        </div>
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-500/10">
+          <Brain className="h-8 w-8 text-sky-500" />
+        </div>
         <h3 className="mt-4 text-lg font-semibold text-gray-700 dark:text-slate-200">
           暂无知识地图数据
         </h3>
         <p className="mt-2 text-sm text-gray-400 dark:text-slate-400">完成一些练习后自动生成</p>
+        <div
+          className="pointer-events-none absolute left-8 top-6 hidden select-none text-sky-500/30 dark:text-sky-200/20 md:block"
+          aria-hidden="true"
+        >
+          <BookDoodle className="h-9 w-11 rotate-6" />
+        </div>
       </div>
     );
   }
@@ -560,9 +794,6 @@ export function KnowledgeGraphView() {
               匹配 {matchingNodeIds.size} / {knowledgeGraph!.nodes.length}
             </span>
           )}
-          <span className="text-xs text-muted-foreground">
-            {Math.round(scaleRef.current * 100)}%
-          </span>
         </div>
       </div>
 
@@ -574,7 +805,7 @@ export function KnowledgeGraphView() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="搜索知识点..."
-            className="w-full rounded-lg border border-input bg-background py-1.5 pl-8 pr-8 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            className="w-full rounded-lg border border-input bg-background py-1.5 pl-8 pr-8 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
           />
           {(searchQuery || selectedCategories.size > 0) && (
             <button
@@ -595,8 +826,8 @@ export function KnowledgeGraphView() {
                   onClick={() => toggleCategory(cat)}
                   className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-muted text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20'
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-muted text-muted-foreground hover:bg-sky-50 hover:text-sky-600 dark:hover:bg-sky-900/20'
                   }`}
                 >
                   {cat}
@@ -631,28 +862,32 @@ export function KnowledgeGraphView() {
         />
 
         {/* Zoom controls */}
-        <div className="absolute bottom-3 right-3 flex flex-col gap-1">
+        <div className="absolute left-3 top-3 z-[5] flex w-9 flex-col items-stretch gap-0.5 rounded-xl border border-gray-200 bg-white/95 p-1 shadow-sm dark:border-slate-600 dark:bg-slate-800/95">
           <button
             onClick={handleZoomIn}
-            className="flex h-7 w-7 items-center justify-center rounded-md bg-white/90 shadow-sm border border-gray-200 hover:bg-gray-50 dark:bg-slate-700/90 dark:border-slate-600 dark:hover:bg-slate-600"
-            title="放大"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-sky-50 hover:text-sky-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            title="放大 (+)"
           >
-            <ZoomIn className="h-3.5 w-3.5 text-gray-600 dark:text-slate-300" />
+            <Plus className="h-4 w-4" />
           </button>
           <button
             onClick={handleZoomOut}
-            className="flex h-7 w-7 items-center justify-center rounded-md bg-white/90 shadow-sm border border-gray-200 hover:bg-gray-50 dark:bg-slate-700/90 dark:border-slate-600 dark:hover:bg-slate-600"
-            title="缩小"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-sky-50 hover:text-sky-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            title="缩小 (-)"
           >
-            <ZoomOut className="h-3.5 w-3.5 text-gray-600 dark:text-slate-300" />
+            <Minus className="h-4 w-4" />
           </button>
+          <div className="mx-1 my-0.5 h-px bg-gray-200 dark:bg-slate-700" />
           <button
             onClick={handleResetView}
-            className="flex h-7 w-7 items-center justify-center rounded-md bg-white/90 shadow-sm border border-gray-200 hover:bg-gray-50 dark:bg-slate-700/90 dark:border-slate-600 dark:hover:bg-slate-600"
-            title="重置视图"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-sky-50 hover:text-sky-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            title="适配视图 (0)"
           >
-            <Maximize2 className="h-3.5 w-3.5 text-gray-600 dark:text-slate-300" />
+            <Maximize2 className="h-4 w-4" />
           </button>
+          <div className="pt-0.5 text-center text-[11px] font-semibold tabular-nums text-gray-700 dark:text-slate-200">
+            {zoomPct}%
+          </div>
         </div>
 
         {/* Tooltip */}
@@ -665,8 +900,14 @@ export function KnowledgeGraphView() {
               maxWidth: 200,
             }}
           >
-            <div className="text-sm font-semibold text-gray-800 dark:text-slate-100">
-              {tooltip.node.name}
+            <div className="flex items-center gap-1.5">
+              <span
+                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: masteryColor(tooltip.node.mastery) }}
+              />
+              <div className="text-sm font-semibold text-gray-800 dark:text-slate-100">
+                {tooltip.node.name}
+              </div>
             </div>
             <div className="mt-1 space-y-0.5 text-xs text-gray-500 dark:text-slate-400">
               <div>类别：{tooltip.node.category}</div>
@@ -685,7 +926,7 @@ export function KnowledgeGraphView() {
                       `/sky/cloud-mind/quiz?topic=${encodeURIComponent(tooltip.node.name)}`,
                     );
                   }}
-                  className="rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm hover:shadow-md transition-all"
+                  className="rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm hover:shadow-md transition-all"
                 >
                   生成同类题
                 </button>
@@ -696,7 +937,7 @@ export function KnowledgeGraphView() {
                       `/sky/cloud-mind/memory?topic=${encodeURIComponent(tooltip.node.name)}&content=${encodeURIComponent(`知识点：${tooltip.node.name}`)}`,
                     );
                   }}
-                  className="rounded-lg bg-gradient-to-r from-rose-500 to-pink-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm hover:shadow-md transition-all"
+                  className="rounded-lg bg-gradient-to-r from-rose-500 to-sky-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm hover:shadow-md transition-all"
                 >
                   记忆卡片
                 </button>
@@ -716,20 +957,31 @@ export function KnowledgeGraphView() {
       <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-slate-400">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-[#10B981]" />
-            掌握 ≥80%
+            <svg width="12" height="10" viewBox="0 0 12 10" className="shrink-0">
+              <line x1="1" y1="5" x2="8" y2="5" stroke="#6E8CA9" strokeWidth="1.6" />
+              <path d="M8 2 L11 5 L8 8 Z" fill="#6E8CA9" />
+            </svg>
+            前置依赖：先学左边 → 再学箭头所指
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-3 w-3 rounded-full bg-[#14B8A6]" />
+            出色 ≥85
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-3 w-3 rounded-full bg-[#3B82F6]" />
+            良好 60-84
           </span>
           <span className="flex items-center gap-1">
             <span className="inline-block h-3 w-3 rounded-full bg-[#F59E0B]" />
-            一般 50-79%
+            需加强 40-59
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-[#EF4444]" />
-            薄弱 &lt;50%
+            <span className="inline-block h-3 w-3 rounded-full bg-[#F43F5E]" />
+            薄弱 &lt;40
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full border-2 border-dashed border-[#EF4444] bg-transparent" />
-            虚线边框 = 薄弱点
+            <span className="inline-block h-3 w-3 rounded-full border-2 border-dashed border-[#FB7185] bg-transparent" />
+            玫红虚线 = 待巩固
           </span>
           {pathNodeIds.size > 0 && (
             <span className="flex items-center gap-1">
@@ -739,7 +991,7 @@ export function KnowledgeGraphView() {
           )}
         </div>
         <span className="text-[10px] text-gray-400 dark:text-slate-500">
-          滚轮缩放 · 拖拽平移 · 拖拽节点
+          滚轮缩放 · 拖拽平移 · 点击查看 · + / - / 0 快捷缩放
         </span>
       </div>
 
@@ -765,13 +1017,10 @@ export function KnowledgeGraphView() {
                       if (!canvas) return;
                       const rect = canvas.getBoundingClientRect();
                       const targetScale = 1.5;
-                      scaleRef.current = targetScale;
-                      offsetRef.current = {
+                      animateZoomTo(targetScale, rect.width / 2, rect.height / 2, {
                         x: rect.width / 2 - ln.x * targetScale,
                         y: rect.height / 2 - ln.y * targetScale,
-                      };
-                      drawRef.current();
-                      forceRedraw((n) => n + 1);
+                      });
                     }}
                     className="rounded px-1.5 py-0.5 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
                   >

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowRight,
+  BookOpen,
   Brain,
   CheckCircle2,
   CheckSquare,
@@ -21,6 +22,12 @@ import { useTaskStore } from '@/lib/store/use-task-store';
 import { addActiveTeachingJobEntry } from '@/lib/teaching/teaching-session';
 import { MathRenderer } from '@/components/sky/solve/math-renderer';
 import { ReviewSession } from './review-session';
+import {
+  BookDoodle,
+  GraphPaperBg,
+  PencilDoodle,
+  SunDoodle,
+} from '@/components/sky/pattern/sky-doodles';
 
 /** Must match the Ebbinghaus intervals in storage/dao/mistakes.ts */
 const EBBINGHAUS_INTERVALS_LENGTH = 6;
@@ -37,11 +44,11 @@ const causeLabels: Record<MistakeCause, string> = {
 };
 
 const causeBadgeColors: Record<MistakeCause, string> = {
-  'concept-unclear': 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-  'calculation-error': 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+  'concept-unclear': 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
+  'calculation-error': 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
   misreading: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
   'method-wrong': 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-  careless: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+  careless: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
   'format-error': 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300',
 };
 
@@ -69,7 +76,7 @@ function getProfilePriority(
     return {
       label: '已完成',
       reason: '这道题已完成当前复习轮次',
-      className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+      className: 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
     };
   }
   const matchesTarget = Boolean(
@@ -85,7 +92,7 @@ function getProfilePriority(
   return {
     label: '待处理',
     reason: '尚未完成复习，建议今天处理',
-    className: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    className: 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
   };
 }
 
@@ -313,12 +320,22 @@ export function MistakeBook() {
 
   if (mistakes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 shadow-sm dark:bg-slate-800">
-        <div className="text-6xl">📖</div>
+      <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-lg bg-white p-12 shadow-sm dark:bg-slate-800">
+        <GraphPaperBg className="opacity-50" />
+        <div className="pointer-events-none absolute bottom-4 right-7 hidden select-none text-sky-500/35 dark:text-sky-200/25 md:flex md:items-end md:gap-2" aria-hidden="true">
+          <PencilDoodle className="h-9 w-9 -rotate-6" />
+          <BookDoodle className="h-10 w-12 translate-y-1" />
+        </div>
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-500/10">
+          <BookOpen className="h-8 w-8 text-sky-500" />
+        </div>
         <h3 className="mt-4 text-lg font-semibold text-gray-700 dark:text-slate-200">
           还没有错题记录
         </h3>
         <p className="mt-2 text-sm text-gray-400 dark:text-slate-400">去搜题页练习一下吧！</p>
+        <div className="pointer-events-none absolute left-8 top-5 hidden select-none text-sky-500/30 dark:text-sky-200/20 md:block" aria-hidden="true">
+          <SunDoodle className="h-8 w-8 rotate-6" />
+        </div>
       </div>
     );
   }
@@ -355,10 +372,10 @@ export function MistakeBook() {
       </div>
 
       {quickReviewResult && (
-        <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-cyan-50 to-sky-50 p-4 shadow-sm dark:border-emerald-200/15 dark:from-emerald-950/35 dark:via-cyan-950/30 dark:to-sky-950/30 dark:shadow-none">
+        <div className="rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 via-sky-50 to-sky-50 p-4 shadow-sm dark:border-sky-200/15 dark:from-sky-950/35 dark:via-sky-950/30 dark:to-sky-950/30 dark:shadow-none">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/20">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white shadow-lg shadow-sky-500/20">
                 <CheckCircle2 className="h-5 w-5" />
               </span>
               <div className="min-w-0">
@@ -388,7 +405,7 @@ export function MistakeBook() {
                 <div className="text-xs font-semibold text-slate-800 dark:text-slate-100">
                   {change.knowledgePoint}
                 </div>
-                <div className="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-300">
+                <div className="mt-1 text-sm font-bold text-sky-600 dark:text-sky-300">
                   掌握情况 {formatMastery(change.masteryBefore)} →{' '}
                   {formatMastery(change.masteryAfter)}
                 </div>
@@ -399,7 +416,7 @@ export function MistakeBook() {
             ))}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-950 px-3 py-2.5 text-white dark:bg-cyan-200 dark:text-slate-950">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-950 px-3 py-2.5 text-white dark:bg-sky-200 dark:text-slate-950">
             <span className="text-xs font-semibold">
               新目标：{quickReviewResult.profileUpdate.learnerDecision.topic ?? '继续积累学习记录'}
             </span>
@@ -496,7 +513,7 @@ export function MistakeBook() {
           {filtered.filter((m) => !m.reviewed).length > 0 && (
             <button
               onClick={() => setSessionItems(filtered.filter((m) => !m.reviewed))}
-              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-md transition-all hover:from-sky-600 hover:to-blue-700 hover:shadow-lg hover:-translate-y-0.5"
             >
               全部沉浸复习
             </button>
@@ -504,8 +521,8 @@ export function MistakeBook() {
         </div>
       </div>
 
-      {/* ── Batch action bar (multi-select) ── */}
-      {filtered.length > 0 && (
+      {/* ── Batch action bar (appears once something is selected) ── */}
+      {selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-3 shadow-sm dark:bg-slate-800">
           <button
             onClick={toggleSelectAll}
@@ -519,27 +536,23 @@ export function MistakeBook() {
             全选
           </button>
 
-          {selectedIds.size > 0 && (
-            <>
-              <span className="text-xs text-gray-500 dark:text-slate-400">
-                已选 {selectedIds.size} 道
-              </span>
-              <button
-                onClick={clearSelection}
-                className="text-xs text-red-500 transition-colors hover:text-red-600 dark:text-red-400"
-              >
-                取消选择
-              </button>
-              <button
-                onClick={handleMistakeReviewTeaching}
-                disabled={isTeachingLoading}
-                className="ml-auto flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#4A90D9] to-blue-600 px-4 py-2 text-xs font-medium text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-              >
-                <GraduationCap className="h-4 w-4" />
-                {isTeachingLoading ? '生成中...' : '错题回溯授课'}
-              </button>
-            </>
-          )}
+          <span className="text-xs text-gray-500 dark:text-slate-400">
+            已选 {selectedIds.size} 道
+          </span>
+          <button
+            onClick={clearSelection}
+            className="text-xs text-red-500 transition-colors hover:text-red-600 dark:text-red-400"
+          >
+            取消选择
+          </button>
+          <button
+            onClick={handleMistakeReviewTeaching}
+            disabled={isTeachingLoading}
+            className="ml-auto flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2 text-xs font-medium text-white shadow-md transition-all hover:from-sky-600 hover:to-blue-700 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          >
+            <GraduationCap className="h-4 w-4" />
+            {isTeachingLoading ? '生成中...' : '错题回溯授课'}
+          </button>
         </div>
       )}
 
@@ -552,18 +565,25 @@ export function MistakeBook() {
         <div className="space-y-3">
           {paged.map((m, i) => {
             const priority = getProfilePriority(m, targetTopic);
+            const accent =
+              m.reviewed
+                ? 'border-l-sky-400'
+                : priority.label === '高优先级'
+                  ? 'border-l-rose-400'
+                  : 'border-l-blue-400';
             return (
               <div
                 key={`${m.id}-${i}`}
-                className={`rounded-lg bg-white p-4 shadow-sm transition-opacity dark:bg-slate-800 ${
-                  m.reviewed ? 'opacity-60' : ''
+                title={priority.reason}
+                className={`rounded-xl border border-l-4 bg-white p-4 shadow-sm transition-opacity dark:bg-slate-800 ${accent} ${
+                  m.reviewed ? 'opacity-70' : ''
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  {/* Checkbox */}
+                {/* Meta row: select · priority · cause · date */}
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => toggleSelect(m.id)}
-                    className="mt-0.5 shrink-0 text-gray-400 transition-colors hover:text-[#4A90D9] dark:text-slate-500 dark:hover:text-blue-300"
+                    className="shrink-0 rounded-md text-gray-400 transition-colors hover:text-[#4A90D9] dark:text-slate-500 dark:hover:text-blue-300"
                     aria-label={selectedIds.has(m.id) ? '取消选择' : '选择'}
                   >
                     {selectedIds.has(m.id) ? (
@@ -572,98 +592,109 @@ export function MistakeBook() {
                       <Square className="h-5 w-5" />
                     )}
                   </button>
-                  <div className="min-w-0 flex-1">
-                    {/* Problem — 2-line clamp */}
-                    <div className="line-clamp-2 text-sm font-medium text-gray-800 dark:text-slate-100">
-                      <MathRenderer content={m.problem} />
-                    </div>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-bold ${priority.className}`}
+                  >
+                    {priority.label}
+                  </span>
+                  <span
+                    className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${causeBadgeColors[m.cause]}`}
+                  >
+                    {causeLabels[m.cause]}
+                  </span>
+                  {m.reviewed && (
+                    <span className="inline-flex items-center gap-1 rounded bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      已复习 ×{m.reviewCount}
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-gray-400 dark:text-slate-500">
+                    {formatDate(m.solvedAt)}
+                  </span>
+                </div>
 
-                    {/* User answer (red) + correct answer (green) */}
-                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                      <span className="text-red-500 dark:text-red-400">
-                        我的答案：
-                        <MathRenderer content={m.userAnswer} />
-                      </span>
-                      <span className="text-[#10B981] dark:text-emerald-400">
-                        正确答案：
-                        <MathRenderer content={m.correctAnswer} />
-                      </span>
-                    </div>
+                {/* Problem — 2-line clamp */}
+                <div className="mt-3 line-clamp-2 text-[15px] font-semibold leading-relaxed text-gray-800 dark:text-slate-100">
+                  <MathRenderer content={m.problem} />
+                </div>
 
-                    {/* Badges row */}
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-bold ${priority.className}`}
-                      >
-                        {priority.label}
-                      </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {priority.reason}
-                      </span>
-                      <span
-                        className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${causeBadgeColors[m.cause]}`}
-                      >
-                        {causeLabels[m.cause]}
-                      </span>
-                      {m.knowledgePoints.map((kp, ki) => (
-                        <span
-                          key={`${m.id}-kp-${ki}`}
-                          className="inline-block rounded bg-[#E8F4FD] px-2 py-0.5 text-xs text-[#4A90D9] dark:bg-blue-900/30 dark:text-blue-300"
-                        >
-                          {kp}
-                        </span>
-                      ))}
-                      <span className="text-xs text-gray-400 dark:text-slate-400">
-                        {formatDate(m.solvedAt)}
-                      </span>
-                      {m.reviewed && (
-                        <span className="inline-block rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                          已复习 ×{m.reviewCount}
-                        </span>
-                      )}
-                    </div>
+                {/* My / correct answer — labeled split blocks */}
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-6">
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0 rounded-md bg-red-50 px-1.5 py-0.5 text-[11px] font-bold text-red-500 dark:bg-red-900/30">
+                      我的
+                    </span>
+                    <span className="text-sm text-red-500 dark:text-red-400">
+                      <MathRenderer content={m.userAnswer} />
+                    </span>
                   </div>
-
-                  {/* Action buttons */}
-                  <div className="flex shrink-0 flex-col gap-2">
-                    {!m.reviewed && (
-                      <>
-                        <button
-                          onClick={() => void handleQuickReview(m)}
-                          disabled={reviewingId === m.id}
-                          className="whitespace-nowrap rounded-lg bg-[#10B981] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-600 disabled:cursor-wait disabled:opacity-60"
-                        >
-                          {reviewingId === m.id
-                            ? '正在更新学习情况…'
-                            : `快速复习 ${m.reviewCount}/${EBBINGHAUS_INTERVALS_LENGTH}`}
-                        </button>
-                        <button
-                          onClick={() => setSessionItems([m])}
-                          className="whitespace-nowrap rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:from-violet-700 hover:to-indigo-700"
-                        >
-                          沉浸复习
-                        </button>
-                        <Link
-                          href={`/sky/cloud-mind/memory?topic=${encodeURIComponent(m.knowledgePoints[0] ?? '')}`}
-                          className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300 dark:hover:bg-sky-900/40"
-                        >
-                          <Brain className="h-3.5 w-3.5" />
-                          生成记忆卡
-                        </Link>
-                      </>
-                    )}
-                    {m.reviewed && (
-                      <span className="whitespace-nowrap rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                        已掌握
-                      </span>
-                    )}
-                    <button
-                      onClick={() => deleteMistake(m.id)}
-                      className="whitespace-nowrap rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                    >
-                      删除
-                    </button>
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0 rounded-md bg-sky-50 px-1.5 py-0.5 text-[11px] font-bold text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+                      正确
+                    </span>
+                    <span className="text-sm font-medium text-sky-600 dark:text-sky-400">
+                      <MathRenderer content={m.correctAnswer} />
+                    </span>
                   </div>
+                </div>
+
+                {/* Knowledge points */}
+                {m.knowledgePoints.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                    {m.knowledgePoints.map((kp, ki) => (
+                      <span
+                        key={`${m.id}-kp-${ki}`}
+                        className="inline-block rounded bg-[#E8F4FD] px-2 py-0.5 text-xs text-[#4A90D9] dark:bg-blue-900/30 dark:text-blue-300"
+                      >
+                        {kp}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Footer actions */}
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-700/60">
+                  {!m.reviewed ? (
+                    <>
+                      <button
+                        onClick={() => void handleQuickReview(m)}
+                        disabled={reviewingId === m.id}
+                        className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg bg-[#0EA5E9] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-sky-600 disabled:cursor-wait disabled:opacity-60"
+                      >
+                        {reviewingId === m.id ? (
+                          '正在更新学习情况…'
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            快速复习 {m.reviewCount}/{EBBINGHAUS_INTERVALS_LENGTH}
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setSessionItems([m])}
+                        className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:from-sky-600 hover:to-blue-700"
+                      >
+                        沉浸复习
+                      </button>
+                      <Link
+                        href={`/sky/cloud-mind/memory?topic=${encodeURIComponent(m.knowledgePoints[0] ?? '')}`}
+                        className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300 dark:hover:bg-sky-900/40"
+                      >
+                        <Brain className="h-3.5 w-3.5" />
+                        生成记忆卡
+                      </Link>
+                    </>
+                  ) : (
+                    <span className="whitespace-nowrap rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+                      已掌握
+                    </span>
+                  )}
+                  <button
+                    onClick={() => deleteMistake(m.id)}
+                    className="ml-auto whitespace-nowrap rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                  >
+                    删除
+                  </button>
                 </div>
               </div>
             );

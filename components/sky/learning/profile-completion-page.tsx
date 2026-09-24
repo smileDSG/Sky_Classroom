@@ -231,14 +231,14 @@ function buildSuggestionPrompts(
 }
 
 function StatusIcon({ status }: { status: FieldStatus }) {
-  if (status === 'complete') return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
-  if (status === 'weak') return <ClipboardCheck className="h-4 w-4 text-amber-600" />;
+  if (status === 'complete') return <CheckCircle2 className="h-4 w-4 text-sky-600" />;
+  if (status === 'weak') return <ClipboardCheck className="h-4 w-4 text-blue-600" />;
   return <Circle className="h-4 w-4 text-slate-400" />;
 }
 
 function ProfileFieldPreview({ field }: { field: ProfileField }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 dark:border-slate-700 dark:bg-slate-950/45">
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 dark:border-slate-700 dark:bg-slate-950/45">
       <div className="flex items-start gap-2.5">
         <StatusIcon status={field.status} />
         <div className="min-w-0 flex-1">
@@ -250,9 +250,9 @@ function ProfileFieldPreview({ field }: { field: ProfileField }) {
               className={cn(
                 'rounded-full px-2 py-0.5 text-[11px] font-medium',
                 field.status === 'complete' &&
-                  'bg-emerald-50 text-emerald-700 dark:bg-emerald-300/10 dark:text-emerald-100',
+                  'bg-sky-50 text-sky-700 dark:bg-sky-300/10 dark:text-sky-100',
                 field.status === 'weak' &&
-                  'bg-amber-50 text-amber-700 dark:bg-amber-300/10 dark:text-amber-100',
+                  'bg-blue-50 text-blue-700 dark:bg-blue-300/10 dark:text-blue-100',
                 field.status === 'missing' &&
                   'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300',
               )}
@@ -264,14 +264,9 @@ function ProfileFieldPreview({ field }: { field: ProfileField }) {
                   : '待补充'}
             </span>
           </div>
-          <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
             {field.value || field.helper}
           </p>
-          {field.evidence.length > 0 && (
-            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-              依据：{field.evidence.slice(0, 3).join('、')}
-            </p>
-          )}
         </div>
       </div>
     </div>
@@ -290,7 +285,7 @@ function NextAction({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 dark:border-emerald-300/20 dark:bg-slate-950/40 dark:text-emerald-100 dark:hover:bg-emerald-300/10"
+      className="inline-flex min-h-11 items-center justify-between gap-3 rounded-xl border border-sky-200 bg-white px-3 py-2 text-sm font-semibold text-sky-800 transition-colors hover:bg-sky-50 dark:border-sky-300/20 dark:bg-slate-950/40 dark:text-sky-100 dark:hover:bg-sky-300/10"
     >
       <span className="inline-flex items-center gap-2">
         <Icon className="h-4 w-4" />
@@ -356,63 +351,60 @@ export function ProfileCompletionPage() {
   return (
     <SkyAppShell>
       <main className="mx-auto max-w-7xl space-y-5 px-4 pb-8 sm:px-6 lg:px-8">
-        <section data-tour-step="page-header" className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-5">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+        <section
+          data-tour-step="page-header"
+          className="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-5">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-100">
+              <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 dark:border-sky-300/20 dark:bg-sky-300/10 dark:text-sky-100">
                 <UserCheck className="h-3.5 w-3.5" />
                 学习情况
               </div>
               <h1 className="mt-3 text-2xl font-semibold leading-tight text-slate-950 dark:text-white md:text-3xl">
                 完善学习情况
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                让摘星锦囊先认识你的目标、薄弱点和学习偏好。
-              </p>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                后续资料生成、练习和学习路径都会参考你的情况调整。
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                用几句话告诉摘星锦囊你的目标、薄弱点和偏好，后续推荐会更贴近你。
               </p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/70">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    关键信息完成度
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">
-                    {completedCoreCount}/4
-                  </p>
+            <div className="flex min-w-56 items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 px-5 py-3.5 dark:border-slate-700 dark:bg-slate-900/70">
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-300/10 dark:text-sky-300">
+                  <Sparkles className="h-6 w-6" />
                 </div>
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-sky-500" />
-                ) : (
-                  <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
-                )}
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
-                <span>目标已明确</span>
-                <span>薄弱点已明确</span>
-                <span>偏好已明确</span>
-                <span>讲解方式已明确</span>
+              )}
+              <div>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  关键信息完成度
+                </p>
+                <p className="mt-0.5 text-2xl font-semibold text-slate-950 dark:text-white">
+                  {completedCoreCount}/4
+                </p>
               </div>
             </div>
           </div>
         </section>
 
         {error && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-300/25 dark:bg-amber-300/10 dark:text-amber-100">
+          <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-300/25 dark:bg-sky-300/10 dark:text-sky-100">
             {error}
           </div>
         )}
 
-        <div data-tour-step="page-primary" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
+        <div
+          data-tour-step="page-primary"
+          className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px]"
+        >
           <section className="min-w-0">
             <ProfileOnboardingChat
               title="告诉我你现在怎么学"
-              description="用自然语言说就好，我会整理你的目标、需要加强的内容和学习偏好。"
-              starterQuestion="你最近最想提升哪门课或哪项能力？也可以直接说当前最卡的知识点，以及你希望我怎么带你学。"
-              placeholder="例如：我想两周内补机器学习，过拟合和模型评估总是搞不懂，希望多用代码案例和图解讲。"
+              description="用自然语言说就够，我会整理你的目标、薄弱点和偏好。"
+              starterQuestion="你最近最想提升哪门课或哪项能力？也可以直接说最卡的知识点。"
+              placeholder="例如：我想两周内补机器学习，过拟合和模型评估总搞不懂，希望多用代码案例和图解讲。"
               submitLabel="更新学习情况"
               suggestionPrompts={suggestionPrompts}
               onPatchChange={(incomingPatch) => {
@@ -422,7 +414,7 @@ export function ProfileCompletionPage() {
             />
           </section>
 
-          <aside className="space-y-4">
+          <aside className="space-y-5">
             <section className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
               <div className="mb-3 flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4 text-sky-600 dark:text-sky-300" />
@@ -430,21 +422,19 @@ export function ProfileCompletionPage() {
                   实时学习情况预览
                 </h2>
               </div>
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {previewFields.map((field) => (
                   <ProfileFieldPreview key={field.key} field={field} />
                 ))}
               </div>
             </section>
 
-            <section className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-300/20 dark:bg-emerald-300/10">
+            <section className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 dark:border-sky-300/20 dark:bg-sky-300/10">
               <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-emerald-700 dark:text-emerald-100" />
-                <h2 className="text-base font-semibold text-emerald-950 dark:text-emerald-50">
-                  下一步
-                </h2>
+                <Target className="h-4 w-4 text-sky-700 dark:text-sky-100" />
+                <h2 className="text-base font-semibold text-sky-950 dark:text-sky-50">下一步</h2>
               </div>
-              <p className="mt-2 text-sm leading-6 text-emerald-800 dark:text-emerald-100">
+              <p className="mt-2 text-sm leading-6 text-sky-800 dark:text-sky-100">
                 {hasActionContext
                   ? '已经可以按当前学习情况开始推荐。信息越完整，后续建议越贴近你。'
                   : '先补充目标或薄弱点，也可以直接进入工具后继续完善。'}

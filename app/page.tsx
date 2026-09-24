@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { GraduationCap, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { resolveLocale } from '@/lib/templates/types';
@@ -40,27 +39,16 @@ import { MinimalNavbar } from '@/components/sky/home/minimal-navbar';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { HeroInput } from '@/components/sky/home/hero-input';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
+import { GenerationExamples } from '@/components/sky/home/generation-examples';
 import { PageTour } from '@/components/sky/tour/page-tour';
 import { HOME_TOUR_SEEN_KEY } from '@/lib/sky/home-tour';
 import { HomeLive2DPet } from '@/components/sky/home/home-live2d-pet';
 import type { SettingsSection } from '@/lib/types/settings';
 
-// 折页下方 / 非首屏区块 — 按需加载，加快首屏解析
-const LearningPlanPreview = dynamic(() =>
-  import('@/components/sky/home/learning-plan-preview').then((m) => ({
-    default: m.LearningPlanPreview,
-  })),
-);
-const SkyWorkspacePortals = dynamic(() =>
-  import('@/components/sky/home/workspace-portals').then((m) => ({
-    default: m.SkyWorkspacePortals,
-  })),
-);
-const FeaturedSection = dynamic(() =>
-  import('@/components/sky/home/featured-section').then((m) => ({
-    default: m.FeaturedSection,
-  })),
-);
+// 右列辅助区 — 轻量组件，同步导入
+import { ContinueLearning } from '@/components/sky/home/continue-learning';
+import { SkyWorkspacePortals } from '@/components/sky/home/workspace-portals';
+import { DailyStrip } from '@/components/sky/home/daily-strip';
 
 // 重型组件 — 懒加载
 const SettingsDialog = dynamic(() =>
@@ -79,12 +67,6 @@ const ClassroomGrid = dynamic(
     loading: () => <div className="min-h-48 w-full animate-pulse rounded-2xl bg-white/40" />,
   },
 );
-const FloatingParticles = dynamic(() =>
-  import('@/components/sky/home/floating-particles').then((m) => ({
-    default: m.FloatingParticles,
-  })),
-);
-
 const log = createLogger('Home');
 
 const WEB_SEARCH_STORAGE_KEY = 'webSearchEnabled';
@@ -731,118 +713,98 @@ function HomeApp() {
       )}
 
       {/* 主内容区 */}
-      <main className="relative z-10 pt-20 pb-12 px-4 md:px-6">
-        <div className="max-w-6xl mx-auto space-y-6">
-          {/* 问候语 */}
-          <GreetingSection />
+      <main className="relative z-10 px-4 pb-16 pt-20 md:px-6">
+        <div className="mx-auto max-w-6xl">
+          {/* 首屏：左列输入是主角，右列是"接着上次继续"的辅助入口 */}
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+            {/* 左列：主角区 */}
+            <div className="min-w-0">
+              <GreetingSection />
 
-          <div className="flex items-center gap-2 px-1 py-1 sm:gap-3">
-            <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-              <motion.span
-                animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 3, repeat: Infinity }}
-                className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400"
-              />
-              <span
-                className="h-px w-8 bg-gradient-to-r from-transparent to-sky-300 dark:to-sky-600 sm:w-10"
-                aria-hidden="true"
-              />
-              <svg
-                className="h-5 w-5 shrink-0 text-sky-400/70"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
-            <div className="flex shrink-0 items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-400/15 dark:text-sky-200">
-                <GraduationCap className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <div>
-                <h2 className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 bg-clip-text text-center text-xl font-bold tracking-tight text-transparent dark:from-sky-300 dark:via-blue-300 dark:to-indigo-300">
-                  智眸无界
-                </h2>
-                <p className="mt-0.5 text-center text-[11px] text-slate-500 dark:text-slate-400">
-                  输入知识点，生成专属互动课堂
-                </p>
+              {/* 输入区域 */}
+              <div className="mt-5 w-full" data-tour-step="hero-input">
+                <HeroInput
+                  value={requirement}
+                  onChange={handleRequirementChange}
+                  onSubmit={handleGenerate}
+                  onTemplateClick={() => setTemplatePickerOpen(true)}
+                  pdfFile={pdfFile}
+                  onPdfChange={setPdfFile}
+                  interactiveMode={interactiveMode}
+                  onInteractiveModeChange={handleInteractiveModeChange}
+                  webSearch={webSearch}
+                  onWebSearchChange={handleWebSearchChange}
+                  canSubmit={canGenerate}
+                  onSettingsOpen={() => {
+                    setSettingsSection('providers');
+                    setSettingsOpen(true);
+                  }}
+                  selectedTeacherId={selectedTeacherId}
+                  selectedStudentIds={selectedStudentIds}
+                  onTeacherChange={setSelectedTeacherId}
+                  onStudentsChange={setSelectedStudentIds}
+                />
               </div>
-            </div>
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              <svg
-                className="h-5 w-5 shrink-0 text-indigo-400/70"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
-                <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
-                <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
-              </svg>
-              <span
-                className="h-px w-8 bg-gradient-to-l from-transparent to-indigo-300 dark:to-indigo-600 sm:w-10"
-                aria-hidden="true"
-              />
-              <motion.span
-                animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 3, repeat: Infinity, delay: 1.5 }}
-                className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400"
-              />
-            </div>
-          </div>
 
-          {/* 输入区域 */}
-          <div className="w-full" data-tour-step="hero-input">
-            <HeroInput
-              value={requirement}
-              onChange={handleRequirementChange}
-              onSubmit={handleGenerate}
-              onTemplateClick={() => setTemplatePickerOpen(true)}
-              pdfFile={pdfFile}
-              onPdfChange={setPdfFile}
-              interactiveMode={interactiveMode}
-              onInteractiveModeChange={handleInteractiveModeChange}
-              webSearch={webSearch}
-              onWebSearchChange={handleWebSearchChange}
-              canSubmit={canGenerate}
-              onSettingsOpen={() => {
-                setSettingsSection('providers');
-                setSettingsOpen(true);
-              }}
-              selectedTeacherId={selectedTeacherId}
-              selectedStudentIds={selectedStudentIds}
-              onTeacherChange={setSelectedTeacherId}
-              onStudentsChange={setSelectedStudentIds}
-            />
-          </div>
-
-          {/* ── Classroom generation progress (multi-job) ── */}
-          <AnimatePresence>
-            {Object.values(activeJobs).map((job) => (
-              <motion.div
-                key={job.jobId}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="w-full max-w-2xl mx-auto"
-              >
-                <button
-                  type="button"
-                  onClick={() => router.push(`/generation-progress?jobId=${job.jobId}`)}
-                  className="w-full text-left rounded-2xl border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 shadow-lg p-5 hover:shadow-xl hover:border-sky-300 dark:hover:border-sky-700 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex-shrink-0">
-                      {job.phase === 'reviewing' ? (
-                        <div className="h-9 w-9 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              {/* ── Classroom generation progress (multi-job) ── */}
+              <AnimatePresence>
+                {Object.values(activeJobs).map((job) => (
+                  <motion.div
+                    key={job.jobId}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="mt-4 w-full"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/generation-progress?jobId=${job.jobId}`)}
+                      className="w-full cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 text-left transition-colors hover:border-sky-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-700"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex-shrink-0">
+                          {job.phase === 'reviewing' ? (
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+                              <svg
+                                className="h-5 w-5 text-emerald-600"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            </div>
+                          ) : (
+                            <div className="h-9 w-9 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                            {job.topicSummary || job.topic}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {job.phase === 'reviewing'
+                              ? `大纲已生成 · ${job.outlinesMeta?.totalScenes ?? job.outlines?.length ?? 0} 个场景 — 点击审阅`
+                              : job.phase === 'submitting'
+                                ? '正在提交...'
+                                : job.phase === 'generating_outline'
+                                  ? '正在生成大纲...'
+                                  : job.phase === 'generating_slides'
+                                    ? '正在生成幻灯片...'
+                                    : ''}
+                          </p>
+                        </div>
+                        <div className="flex flex-shrink-0 items-center gap-2">
+                          <span className="text-base font-semibold tabular-nums text-sky-600 dark:text-sky-400">
+                            {job.progress}%
+                          </span>
                           <svg
-                            className="h-5 w-5 text-green-600"
+                            className="h-4 w-4 text-slate-400"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -851,173 +813,108 @@ function HomeApp() {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M5 13l4 4L19 7"
+                              d="M9 5l7 7-7 7"
                             />
                           </svg>
                         </div>
-                      ) : (
-                        <>
-                          <div className="h-9 w-9 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
-                          <Sparkles className="absolute inset-0 m-auto h-4 w-4 text-sky-500" />
-                        </>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-sky-700 dark:text-sky-300 truncate">
-                        {job.topicSummary || job.topic}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {job.phase === 'reviewing'
-                          ? `大纲已生成 · ${job.outlinesMeta?.totalScenes ?? job.outlines?.length ?? 0} 个场景 — 点击审阅`
-                          : job.phase === 'submitting'
-                            ? '正在提交...'
-                            : job.phase === 'generating_outline'
-                              ? '正在生成大纲...'
-                              : job.phase === 'generating_slides'
-                                ? '正在生成幻灯片...'
-                                : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-lg font-bold text-sky-600 tabular-nums">
-                        {job.progress}%
-                      </span>
-                      <svg
-                        className="h-4 w-4 text-sky-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
+                      </div>
+                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                        <motion.div
+                          className="h-full rounded-full bg-sky-500"
+                          animate={{ width: `${job.progress}%` }}
+                          transition={{ duration: 0.5 }}
                         />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="mt-3 h-1.5 rounded-full bg-sky-100 dark:bg-sky-900 overflow-hidden">
-                    <motion.div
-                      className={`h-full rounded-full ${
-                        job.phase === 'generating_outline' || job.phase === 'generating_slides'
-                          ? 'bg-gradient-to-r from-sky-400 via-sky-300 to-sky-400 progress-bar-animated'
-                          : 'bg-sky-500'
-                      }`}
-                      animate={{ width: `${job.progress}%` }}
-                      transition={{ duration: 0.5 }}
-                    />
-                  </div>
-                </button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+                      </div>
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
-          {/* 个性化计划预览：不抢占知识点讲解主入口，只承接已有学习记录。 */}
-          <LearningPlanPreview />
+              {/* 错误提示 */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-          {/* 三大工作区入口 */}
-          <div data-tour-step="workspace-portals">
-            <SkyWorkspacePortals />
+              {/* 导入按钮（无课堂时） */}
+              {classrooms.length === 0 && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={triggerFileSelect}
+                    disabled={importing}
+                    className="text-sm text-slate-400 transition-colors hover:text-sky-600 dark:hover:text-sky-400"
+                  >
+                    或导入已有的课堂包（.zip）
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 右列：辅助区 */}
+            <aside className="flex min-w-0 flex-col gap-6">
+              <ContinueLearning
+                classrooms={classrooms}
+                thumbnails={thumbnails}
+                formatDate={formatDate}
+              />
+
+              <div data-tour-step="workspace-portals">
+                <SkyWorkspacePortals />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(HOME_TOUR_SEEN_KEY);
+                    window.location.reload();
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+                className="self-start text-xs text-slate-400/70 transition-colors hover:text-slate-500 dark:hover:text-slate-400"
+              >
+                重新播放引导
+              </button>
+            </aside>
           </div>
 
-          {/* 精选推荐 + 趣味内容 */}
-          <FeaturedSection />
-
-          {/* 错误提示 */}
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="px-4 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm"
-              >
-                {error}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div data-tour-step="classroom-grid">
-            {/* 导入按钮（无课堂时） */}
-            {classrooms.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="text-center space-y-2"
-              >
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  第一堂课，从你刚学会的那个点开始。
-                </p>
-                <button
-                  onClick={triggerFileSelect}
-                  disabled={importing}
-                  className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                >
-                  <span>导入已有课堂</span>
-                </button>
-              </motion.div>
-            )}
-
-            {/* 最近讲解 */}
-            {classrooms.length > 0 && (
-              <section>
-                <ClassroomGrid
-                  classrooms={classrooms}
-                  thumbnails={thumbnails}
-                  formatDate={formatDate}
-                  onDelete={handleDelete}
-                  onRename={handleRename}
-                />
-              </section>
-            )}
+          {/* 不知道怎么用？给一个"点一下就能生成"的真实示例，兼顾价值导入 */}
+          <div className="mt-10">
+            <GenerationExamples onFill={handleRequirementChange} />
           </div>
+
+          {/* 每日内容条：一句、趣味知识、小贴士，给首屏添一点人气 */}
+          <div className="mt-8">
+            <DailyStrip />
+          </div>
+
+          {/* 第二屏：完整的课堂管理（搜索 / 视图切换 / 重命名 / 删除） */}
+          {classrooms.length > 0 && (
+            <section
+              id="classroom-grid"
+              data-tour-step="classroom-grid"
+              className="mt-14 scroll-mt-24"
+            >
+              <ClassroomGrid
+                classrooms={classrooms}
+                thumbnails={thumbnails}
+                formatDate={formatDate}
+                onDelete={handleDelete}
+                onRename={handleRename}
+              />
+            </section>
+          )}
         </div>
       </main>
-
-      {/* 装饰粒子 */}
-      <FloatingParticles />
-
-      {/* 底部 */}
-      <footer className="relative z-10 py-10 text-center">
-        {/* 分隔线 */}
-        <div className="max-w-xs mx-auto mb-6 flex items-center gap-3">
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-slate-200 dark:to-slate-700" />
-          <div className="w-1.5 h-1.5 rounded-full bg-sky-400/50" />
-          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-slate-200 dark:to-slate-700" />
-        </div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="space-y-2"
-        >
-          <p className="text-sm font-medium bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 bg-clip-text text-transparent">
-            智眸无界
-          </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            AI 驱动的互动课堂 · 让学习更有趣
-          </p>
-          <p className="text-[11px] text-slate-300 dark:text-slate-600">
-            &copy; 2026 Sky Classroom. All rights reserved.
-          </p>
-        </motion.div>
-        <button
-          type="button"
-          onClick={() => {
-            try {
-              localStorage.removeItem(HOME_TOUR_SEEN_KEY);
-              window.location.reload();
-            } catch {
-              /* ignore */
-            }
-          }}
-          className="mt-6 text-[10px] text-slate-400/50 transition-colors hover:text-slate-500 dark:hover:text-slate-400"
-        >
-          重新播放引导
-        </button>
-      </footer>
     </div>
   );
 }

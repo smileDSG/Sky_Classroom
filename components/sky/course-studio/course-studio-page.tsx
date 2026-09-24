@@ -253,19 +253,19 @@ const RESOURCE_META: Record<string, { label: string; icon: LucideIcon; className
     label: '讲义',
     icon: BookOpen,
     className:
-      'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-300/20 dark:bg-sky-300/10 dark:text-sky-100',
+      'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/10 dark:text-violet-100',
   },
   mind_map: {
     label: '导图',
     icon: Map,
     className:
-      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-100',
+      'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/10 dark:text-violet-100',
   },
   self_check: {
     label: '自查清单',
     icon: Clipboard,
     className:
-      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-100',
+      'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/10 dark:text-violet-100',
   },
   learning_path: {
     label: '学习路径',
@@ -855,35 +855,32 @@ export function CourseStudioPage() {
 
   return (
     <SkyAppShell>
-      <div className="mx-auto max-w-6xl space-y-5 pb-24 sm:pb-10">
-        <section data-tour-step="page-header" className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70 sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className=" space-y-6 px-4 pt-6 pb-12 sm:px-6">
+        <div data-tour-step="page-header" className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300">
+              <Layers className="h-5 w-5" />
+            </div>
             <div className="min-w-0">
-              <Badge
-                variant="outline"
-                className="h-7 rounded-full px-3 text-cyan-700 dark:text-cyan-100"
-              >
+              <h1 className="text-2xl font-bold tracking-tight text-violet-900 dark:text-violet-100">
                 学习包工坊
-              </Badge>
-              <h1 className="mt-3 text-3xl font-semibold leading-tight text-slate-950 dark:text-white sm:text-4xl">
-                这次想生成什么样的学习包？
               </h1>
-              <p className="mt-2 max-w-2xl text-[15px] leading-7 text-slate-600 dark:text-slate-300">
-                生成包含讲义、导图、自查清单和学习路径的学习包，走完「学→查→练→复盘」完整闭环。
+              <p className="mt-1 line-clamp-1 text-sm text-slate-500 dark:text-slate-400">
+                生成讲义、导图、自查清单和学习路径，走完「学→查→练→复盘」完整闭环。
               </p>
             </div>
-            <Badge
-              variant="outline"
-              className="h-8 shrink-0 rounded-full px-3 text-slate-600 dark:text-slate-300"
-            >
-              {contextLoading
-                ? '正在读取学习情况'
-                : systemProfileReady
-                  ? '已准备好'
-                  : '补一句即可生成'}
-            </Badge>
           </div>
-        </section>
+          <Badge
+            variant="outline"
+            className="h-7 shrink-0 rounded-full px-3 text-slate-600 dark:text-slate-300"
+          >
+            {contextLoading
+              ? '正在读取学习情况'
+              : systemProfileReady
+                ? '已准备好'
+                : '补一句即可生成'}
+          </Badge>
+        </div>
 
         {error && (
           <div className="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-300/25 dark:bg-rose-300/10 dark:text-rose-100 sm:flex-row sm:items-center sm:justify-between">
@@ -917,7 +914,14 @@ export function CourseStudioPage() {
           </div>
         )}
 
-        <section data-tour-step="page-primary" className="rounded-2xl border border-cyan-200/70 bg-cyan-50/60 p-4 shadow-sm dark:border-cyan-300/20 dark:bg-cyan-300/10 sm:p-5">
+        <section
+          data-tour-step="page-primary"
+          className="rounded-2xl border border-violet-200/70 bg-violet-50/60 p-4 shadow-sm dark:border-violet-300/20 dark:bg-violet-300/10 sm:p-5"
+        >
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
+            <Layers className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
+            这次想生成什么样的学习包？
+          </div>
           <Textarea
             id="course-studio-intent"
             value={supplement}
@@ -951,8 +955,8 @@ export function CourseStudioPage() {
             </Button>
           </div>
           {typeAdvice && (
-            <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200/60 bg-amber-50/60 px-3.5 py-2.5 text-sm leading-6 text-slate-700 dark:border-amber-500/25 dark:bg-amber-500/[0.07] dark:text-amber-100">
-              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-violet-200/60 bg-violet-50/60 px-3.5 py-2.5 text-sm leading-6 text-slate-700 dark:border-violet-500/25 dark:bg-violet-500/[0.07] dark:text-violet-100">
+              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
               <span>{typeAdvice}</span>
             </div>
           )}
@@ -997,7 +1001,7 @@ export function CourseStudioPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
-                <BrainCircuit className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-100" />
+                <BrainCircuit className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-100" />
                 <h2 className="text-sm font-semibold text-slate-950 dark:text-white">参考信息</h2>
               </div>
               <Badge
@@ -1005,19 +1009,19 @@ export function CourseStudioPage() {
                 className={cn(
                   'h-7 shrink-0 rounded-full px-3',
                   systemProfileReady
-                    ? 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-300/30 dark:bg-cyan-300/10 dark:text-cyan-100'
+                    ? 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/30 dark:bg-violet-300/10 dark:text-violet-100'
                     : 'text-slate-500 dark:text-slate-300',
                 )}
               >
                 {contextLoading ? '读取中' : systemProfileReady ? '已自动应用' : '待补充'}
               </Badge>
             </div>
-            <div className="mb-4 flex gap-2 rounded-xl bg-cyan-50 px-3 py-3 text-xs leading-5 text-cyan-800 dark:bg-cyan-300/10 dark:text-cyan-100">
+            <div className="mb-4 flex gap-2 rounded-xl bg-violet-50 px-3 py-3 text-xs leading-5 text-violet-800 dark:bg-violet-300/10 dark:text-violet-100">
               <Info className="mt-0.5 h-4 w-4 shrink-0" />
               <span>这些内容会帮助系统了解你的学习情况，不需要每次生成都填写。</span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
+              <div className=" space-y-2">
                 <Label htmlFor="major">专业背景</Label>
                 <Input
                   id="major"
@@ -1027,7 +1031,7 @@ export function CourseStudioPage() {
                   className="min-h-11"
                 />
               </div>
-              <div className="space-y-2">
+              <div className=" space-y-2">
                 <Label htmlFor="course-focus">课程重点</Label>
                 <Input
                   id="course-focus"
@@ -1037,7 +1041,7 @@ export function CourseStudioPage() {
                   className="min-h-11"
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
+              <div className=" space-y-2 sm:col-span-2">
                 <Label htmlFor="goal">学习目标</Label>
                 <Textarea
                   id="goal"
@@ -1047,7 +1051,7 @@ export function CourseStudioPage() {
                   className="min-h-20 resize-none text-sm leading-6"
                 />
               </div>
-              <div className="space-y-2">
+              <div className=" space-y-2">
                 <Label htmlFor="weak-points">薄弱点</Label>
                 <Input
                   id="weak-points"
@@ -1074,7 +1078,7 @@ export function CourseStudioPage() {
                   </div>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className=" space-y-2">
                 <Label htmlFor="study-time">学习节奏</Label>
                 <Input
                   id="study-time"
@@ -1084,7 +1088,7 @@ export function CourseStudioPage() {
                   className="min-h-11"
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
+              <div className=" space-y-2 sm:col-span-2">
                 <Label htmlFor="history">学习记录摘要</Label>
                 <Textarea
                   id="history"
@@ -1094,7 +1098,7 @@ export function CourseStudioPage() {
                   className="min-h-20 resize-none text-sm leading-6"
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
+              <div className=" space-y-2 sm:col-span-2">
                 <Label htmlFor="preference-text">资料偏好</Label>
                 <Input
                   id="preference-text"
@@ -1112,7 +1116,7 @@ export function CourseStudioPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-                <Search className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
+                <Search className="h-4 w-4 text-violet-600 dark:text-violet-100" />
                 {loading ? '正在生成学习资料' : '生成流程'}
               </div>
               <Badge variant="outline" className="h-7 rounded-full px-3">
@@ -1130,11 +1134,11 @@ export function CourseStudioPage() {
         )}
 
         {result && (
-          <section className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 shadow-sm dark:border-sky-300/20 dark:bg-sky-300/10 sm:p-5">
+          <section className="rounded-2xl border border-violet-200 bg-violet-50/70 p-4 shadow-sm dark:border-violet-300/20 dark:bg-violet-300/10 sm:p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-                  <Play className="h-4 w-4 text-sky-600 dark:text-sky-200" />
+                  <Play className="h-4 w-4 text-violet-600 dark:text-violet-200" />
                   课程已经准备好，下一步做什么？
                 </div>
                 <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
@@ -1156,7 +1160,7 @@ export function CourseStudioPage() {
                   type="button"
                   variant="outline"
                   onClick={() => router.push('/generation-history')}
-                  className="min-h-10 border-sky-200 bg-white/80 dark:border-sky-300/30 dark:bg-slate-950/40"
+                  className="min-h-10 border-violet-200 bg-white/80 dark:border-violet-300/30 dark:bg-slate-950/40"
                 >
                   <History className="h-4 w-4" />
                   我的生成记录
@@ -1165,7 +1169,7 @@ export function CourseStudioPage() {
                   type="button"
                   onClick={handleStartClassroom}
                   disabled={nextAction !== 'idle'}
-                  className="min-h-10 bg-sky-600 text-white hover:bg-sky-700"
+                  className="min-h-10 bg-violet-600 text-white hover:bg-violet-700"
                 >
                   <Play className="h-4 w-4" />
                   {nextAction === 'classroom' ? '正在启动课堂' : '进入互动课堂'}
@@ -1175,7 +1179,7 @@ export function CourseStudioPage() {
                   variant="outline"
                   onClick={handleCreateLearningPlan}
                   disabled={nextAction !== 'idle'}
-                  className="min-h-10 border-sky-200 bg-white/80 dark:border-sky-300/30 dark:bg-slate-950/40"
+                  className="min-h-10 border-violet-200 bg-white/80 dark:border-violet-300/30 dark:bg-slate-950/40"
                 >
                   <BrainCircuit className="h-4 w-4" />
                   {nextAction === 'plan' ? '正在生成任务' : '生成学习任务'}
@@ -1195,7 +1199,7 @@ export function CourseStudioPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
+                  <Layers className="h-4 w-4 text-violet-600 dark:text-violet-100" />
                   <h2 className="text-sm font-semibold text-slate-950 dark:text-white">
                     已生成 {result.resources.length} 份资料
                   </h2>
@@ -1262,7 +1266,7 @@ export function CourseStudioPage() {
                     className={cn(
                       'flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors',
                       active
-                        ? 'border-cyan-200 bg-white text-cyan-700 shadow-sm dark:border-cyan-300/30 dark:bg-cyan-300/10 dark:text-cyan-100'
+                        ? 'border-violet-200 bg-white text-violet-700 shadow-sm dark:border-violet-300/30 dark:bg-violet-300/10 dark:text-violet-100'
                         : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-white dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-950/70',
                     )}
                   >
@@ -1291,13 +1295,13 @@ export function CourseStudioPage() {
                       生成后显示学习情况摘要。
                     </p>
                   )}
-                  <div className="mt-4 space-y-2">
+                  <div className=" mt-4 space-y-2">
                     {evidenceItems.map((item) => (
                       <div
                         key={item}
                         className="flex gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600 dark:bg-slate-900/60 dark:text-slate-300"
                       >
-                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-500 dark:bg-cyan-300" />
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500 dark:bg-violet-300" />
                         <span>{item}</span>
                       </div>
                     ))}
@@ -1310,7 +1314,7 @@ export function CourseStudioPage() {
                   <Progress value={progress} className="h-2" />
                   <StageCards stages={stages} />
                   {result.agentTrace.length > 0 && (
-                    <div className="mt-4 space-y-2">
+                    <div className=" mt-4 space-y-2">
                       {result.agentTrace.map((trace) => (
                         <div
                           key={`${trace.agent}-${trace.output}`}
@@ -1329,11 +1333,11 @@ export function CourseStudioPage() {
 
               {activeDetail === 'trust' && (
                 <>
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-300/20 dark:bg-emerald-300/10">
-                    <div className="text-xs font-medium text-emerald-700 dark:text-emerald-100">
+                  <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 dark:border-violet-300/20 dark:bg-violet-300/10">
+                    <div className="text-xs font-medium text-violet-700 dark:text-violet-100">
                       {safety?.riskLevel ? `风险等级：${safety.riskLevel}` : '等待审核'}
                     </div>
-                    <p className="mt-1 text-xs leading-5 text-emerald-700/80 dark:text-emerald-100/80">
+                    <p className="mt-1 text-xs leading-5 text-violet-700/80 dark:text-violet-100/80">
                       {safety?.message ?? '生成时会检查隐私、敏感内容和学术诚信风险。'}
                     </p>
                   </div>
@@ -1361,9 +1365,9 @@ export function CourseStudioPage() {
               {activeDetail === 'follow' && (
                 <>
                   <div className="grid gap-4 xl:grid-cols-2">
-                    <div className="space-y-3">
+                    <div className=" space-y-3">
                       <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-                        <Route className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
+                        <Route className="h-4 w-4 text-violet-600 dark:text-violet-100" />
                         学习路径
                       </div>
                       {result.learningPath.map((node, index) => (
@@ -1372,7 +1376,7 @@ export function CourseStudioPage() {
                           className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700/40 dark:bg-slate-900/60"
                         >
                           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-600 text-xs text-white dark:bg-cyan-300 dark:text-slate-950">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-xs text-white dark:bg-violet-300 dark:text-slate-950">
                               {index + 1}
                             </span>
                             {node.goal}
@@ -1383,9 +1387,9 @@ export function CourseStudioPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="space-y-2">
+                    <div className=" space-y-2">
                       <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-                        <Play className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
+                        <Play className="h-4 w-4 text-violet-600 dark:text-violet-100" />
                         继续学习
                       </div>
                       <NextAction
@@ -1400,7 +1404,7 @@ export function CourseStudioPage() {
                       />
                     </div>
                   </div>
-                  <div className="mt-4 space-y-4">
+                  <div className=" mt-4 space-y-4">
                     <CourseStudioP1EvidencePanel result={result} userId={COURSE_STUDIO_USER_ID} />
                     <CourseStudioP2LongTermPanel p2={result.p2Enhancements} />
                   </div>
@@ -1434,8 +1438,8 @@ function ResourceTypePill({
       className={cn(
         'flex h-11 w-full items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors',
         selected
-          ? 'border-cyan-300 bg-white text-cyan-800 shadow-sm dark:border-cyan-300/40 dark:bg-slate-950/70 dark:text-cyan-50'
-          : 'border-slate-200 bg-white/70 text-slate-600 hover:border-cyan-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300',
+          ? 'border-violet-300 bg-white text-violet-800 shadow-sm dark:border-violet-300/40 dark:bg-slate-950/70 dark:text-violet-50'
+          : 'border-slate-200 bg-white/70 text-slate-600 hover:border-violet-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300',
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -1457,9 +1461,9 @@ function StageCards({ stages }: { stages: StageItem[] }) {
               {stage.label}
             </span>
             {stage.status === 'running' ? (
-              <Loader2 className="h-4 w-4 animate-spin text-cyan-600 dark:text-cyan-100" />
+              <Loader2 className="h-4 w-4 animate-spin text-violet-600 dark:text-violet-100" />
             ) : stage.status === 'completed' ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <CheckCircle2 className="h-4 w-4 text-violet-500" />
             ) : stage.status === 'failed' ? (
               <AlertTriangle className="h-4 w-4 text-rose-500" />
             ) : (
@@ -1500,8 +1504,8 @@ function FilterButton({
       className={cn(
         'inline-flex min-h-9 shrink-0 items-center rounded-full border px-3 text-xs font-semibold transition-colors',
         active
-          ? 'border-cyan-300 bg-cyan-50 text-cyan-700 dark:border-cyan-300/40 dark:bg-cyan-300/10 dark:text-cyan-100'
-          : 'border-slate-200 bg-white text-slate-500 hover:border-cyan-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300',
+          ? 'border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-300/40 dark:bg-violet-300/10 dark:text-violet-100'
+          : 'border-slate-200 bg-white text-slate-500 hover:border-violet-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300',
       )}
     >
       {children}
@@ -1648,7 +1652,7 @@ function NextAction({
   return (
     <Link
       href={href}
-      className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:border-cyan-300/30 dark:hover:bg-cyan-300/10 dark:hover:text-cyan-100"
+      className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:border-violet-300/30 dark:hover:bg-violet-300/10 dark:hover:text-violet-100"
     >
       <span className="flex items-center gap-2">
         <Icon className="h-4 w-4" />

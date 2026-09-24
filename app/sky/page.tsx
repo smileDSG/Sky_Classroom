@@ -5,8 +5,8 @@ import Link from 'next/link';
 import {
   ArrowRight,
   BookOpenCheck,
+  CalendarRange,
   Camera,
-  Presentation,
   Route,
   ShieldCheck,
   Star,
@@ -18,11 +18,7 @@ import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-str
 import { LearningProfilePrompt } from '@/components/sky/dashboard/learning-profile-prompt';
 import { PageTour } from '@/components/sky/tour/page-tour';
 import { TOUR_SEEN_KEY } from '@/lib/sky/tour';
-import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
-import {
-  LearningPlanPanel,
-  type LearningPlanPanelData,
-} from '@/components/sky/learning/learning-plan-panel';
+import type { LearningPlanPanelData } from '@/components/sky/learning/learning-plan-panel';
 import { useAuth } from '@/components/auth/auth-provider';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
@@ -132,10 +128,10 @@ function ContinueLearningLinks({
           </p>
         </div>
         <Link
-          href="/sky/learning/stats"
+          href="/sky/learning/profile-dashboard"
           className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-sky-700 transition-colors hover:text-sky-800 dark:text-sky-200 dark:hover:text-sky-100"
         >
-          查看学习统计
+          查看学习记录
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
@@ -164,6 +160,66 @@ function ContinueLearningLinks({
           );
         })}
       </div>
+    </section>
+  );
+}
+
+function TodayPlanSummary({
+  data,
+  error,
+  loading,
+}: {
+  data: LearningPlanPanelData | null;
+  error?: string;
+  loading?: boolean;
+}) {
+  const summary = data?.view?.summary ?? null;
+
+  if (loading && !data) {
+    return (
+      <div
+        data-tour-step="learning-plan"
+        className="min-h-16 animate-pulse rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-sky-100/10 dark:bg-[#0a1524]/90"
+      />
+    );
+  }
+
+  const hasPlan = Boolean(data?.plan && data?.view);
+  const description = error
+    ? '今日安排暂时加载失败，稍后再试。'
+    : hasPlan
+      ? `今天安排 ${summary?.totalTasks ?? 0} 项任务 · 约 ${
+          summary?.plannedMinutes ?? 0
+        } 分钟 · 已完成 ${summary?.completionRate ?? 0}%`
+      : '安排一份个人计划，系统会按你的情况、可用时间和休息日排好每天的任务。';
+
+  return (
+    <section
+      data-tour-step="learning-plan"
+      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/90 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-sky-100/10 dark:bg-[#0a1524]/90"
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200">
+          <CalendarRange className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-slate-950 dark:text-white">
+            {hasPlan ? '今日安排' : '还没有学习计划'}
+          </div>
+          <p className="mt-0.5 text-sm leading-6 text-slate-500 dark:text-slate-400">
+            {description}
+          </p>
+        </div>
+      </div>
+      {!error && (
+        <Link
+          href={hasPlan ? '/sky/learning/today' : '/sky/learning/path'}
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700 dark:bg-sky-300 dark:text-slate-950 dark:hover:bg-sky-200"
+        >
+          {hasPlan ? '查看完整计划' : '开始安排学习路线'}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      )}
     </section>
   );
 }
@@ -246,10 +302,12 @@ export default function SkyDashboardPage() {
   const [personalization, setPersonalization] = useState<PersonalizationContext | null>(null);
   const [learningPlanData, setLearningPlanData] = useState<LearningPlanPanelData | null>(null);
   const [learningPlanError, setLearningPlanError] = useState<string | null>(null);
+  const [planLoading, setPlanLoading] = useState(true);
   // 首帧留空 → 服务端与客户端首屏一致; 挂载后再按访问者本地时间填, 避免 #418。
   const [greetingHour, setGreetingHour] = useState<number | null>(null);
   useEffect(() => setGreetingHour(new Date().getHours()), []);
   const greeting = greetingHour === null ? '' : getGreeting(greetingHour);
+  const greetingPrefix = greeting ? `${greeting}，` : '';
 
   useEffect(() => {
     syncMistakesFromQuizzes();
@@ -266,6 +324,7 @@ export default function SkyDashboardPage() {
   }, [user]);
 
   const loadLearningPlan = useCallback(async (signal?: AbortSignal) => {
+    setPlanLoading(true);
     try {
       const response = await fetch('/api/sky/learning-plan?view=today', {
         credentials: 'include',
@@ -280,6 +339,8 @@ export default function SkyDashboardPage() {
     } catch (error) {
       if (signal?.aborted) return;
       setLearningPlanError(error instanceof Error ? error.message : '个人学习计划加载失败');
+    } finally {
+      if (!signal?.aborted) setPlanLoading(false);
     }
   }, []);
 
@@ -314,80 +375,65 @@ export default function SkyDashboardPage() {
   const hasData = mistakes.length > 0;
 
   return (
-    <SkyAppShell section="learning">
-      <div className="mx-auto max-w-6xl space-y-6 pb-8">
-        <SkySectionNav section="learning" />
-
+    <SkyAppShell section="learning" fullBleed>
+      <div className=" px-4 pt-6 pb-12 sm:px-6">
         <PageTour id="onboarding" />
 
-        <Link
-          href="/classroom/new"
-          data-tour-step="generate-classroom"
-          className="group flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-colors hover:border-sky-300 dark:border-white/10 dark:bg-slate-900/70 dark:hover:border-sky-200/30"
+        <header
+          data-tour-step="page-header"
+          className="mb-6 flex items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white">
-              <Presentation className="h-5 w-5" />
-            </span>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300">
+              <BookOpenCheck className="h-5 w-5" />
+            </div>
             <div>
-              <span className="block text-sm font-semibold text-slate-950 dark:text-white">
-                生成互动课堂
-              </span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
-                输入一个知识点，AI 老师 + 同学即刻开讲
-              </span>
+              <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
+                学习总览
+              </h1>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {hasData
+                  ? `${greetingPrefix}先完成今天最重要的一件事，其余信息在需要时再展开。`
+                  : `${greetingPrefix}从一个小任务开始，系统会逐步建立你的学习节奏。`}
+              </p>
             </div>
           </div>
-          <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-
-        <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 dark:border-white/10 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-2 text-xs font-semibold text-sky-700 dark:text-sky-200">
-              <span className="h-2 w-2 rounded-full bg-sky-500" aria-hidden="true" />
-              学习总览
-            </div>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white md:text-3xl">
-              {greeting}
-            </h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-              {hasData
-                ? '先完成今天最重要的一件事，其余信息在需要时再展开。'
-                : '从一个小任务开始，系统会逐步建立你的学习节奏。'}
-            </p>
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
+            <Link
+              href="/sky/learning/profile-dashboard"
+              data-tour-step="profile-link"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:border-sky-200/30 dark:hover:text-sky-100"
+            >
+              查看完整学习记录
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-          <Link
-            href="/sky/learning/profile-dashboard"
-            data-tour-step="profile-link"
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 transition-colors hover:border-sky-200 hover:text-sky-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:border-sky-200/30 dark:hover:text-sky-100"
-          >
-            查看完整学习记录
-            <ArrowRight className="h-4 w-4" />
-          </Link>
         </header>
 
-        <LearningProfilePrompt status={user?.onboardingStatus} />
+        <div className=" space-y-6">
+          <LearningProfilePrompt status={user?.onboardingStatus} />
 
-        <TodayFocusPanel recommendation={personalization?.recommendation ?? null} />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <TodayFocusPanel recommendation={personalization?.recommendation ?? null} />
+            <div data-tour-step="mistakes" className="h-full">
+              <MistakeReviewStrip className="h-full" />
+            </div>
+          </div>
 
-        <div data-tour-step="mistakes">
-          <MistakeReviewStrip />
+          <section id="learning-plan" data-tour-step="learning-plan" className="scroll-mt-5">
+            <TodayPlanSummary
+              data={learningPlanData}
+              error={learningPlanError ?? undefined}
+              loading={planLoading}
+            />
+          </section>
+
+          {hasData ? (
+            <ContinueLearningLinks topics={routeTopics} mistakeCount={mistakes.length} />
+          ) : (
+            <DashboardEmptyState />
+          )}
         </div>
-
-        <section id="learning-plan" data-tour-step="learning-plan" className="scroll-mt-5">
-          <LearningPlanPanel
-            initialData={learningPlanData}
-            error={learningPlanError ?? undefined}
-            onPlanChanged={() => loadLearningPlan()}
-            compact
-          />
-        </section>
-
-        {hasData ? (
-          <ContinueLearningLinks topics={routeTopics} mistakeCount={mistakes.length} />
-        ) : (
-          <DashboardEmptyState />
-        )}
       </div>
 
       <footer className="pb-10 text-center">

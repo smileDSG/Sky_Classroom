@@ -76,12 +76,12 @@ async function postJson<T>(href: string, body: unknown): Promise<T> {
 
 function statusTone(status: string): string {
   if (status === 'pass' || status === 'effective') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-100';
+    return 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-300/20 dark:bg-sky-300/10 dark:text-sky-100';
   }
   if (status === 'fail' || status === 'mismatch') {
     return 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-300/20 dark:bg-rose-300/10 dark:text-rose-100';
   }
-  return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-100';
+  return 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-300/20 dark:bg-sky-300/10 dark:text-sky-100';
 }
 
 export function CourseStudioP1EvidencePanel({
@@ -188,7 +188,7 @@ export function CourseStudioP1EvidencePanel({
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
+          <ShieldCheck className="h-4 w-4 text-sky-600 dark:text-sky-100" />
           <h2 className="text-sm font-semibold text-slate-950 dark:text-white">P1 Evidence</h2>
         </div>
         {message && (

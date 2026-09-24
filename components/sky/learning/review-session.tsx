@@ -276,11 +276,11 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400">总题数</p>
             </div>
-            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 p-3">
-              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            <div className="rounded-xl bg-sky-50 dark:bg-sky-900/20 p-3">
+              <p className="text-2xl font-bold text-sky-600 dark:text-sky-400">
                 {summaryStats.correctCount}
               </p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400">已掌握</p>
+              <p className="text-xs text-sky-600 dark:text-sky-400">已掌握</p>
             </div>
             <div className="rounded-xl bg-red-50 dark:bg-red-900/20 p-3">
               <p className="text-2xl font-bold text-red-500 dark:text-red-400">
@@ -294,15 +294,15 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
             用时 {formatDuration(summaryStats.duration)}
           </p>
 
-          <div className="mt-5 rounded-2xl border border-cyan-200 bg-gradient-to-br from-cyan-50 via-sky-50 to-indigo-50 p-4 text-left dark:border-cyan-200/15 dark:from-cyan-950/40 dark:via-sky-950/35 dark:to-indigo-950/35">
+          <div className="mt-5 rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 via-sky-50 to-blue-50 p-4 text-left dark:border-sky-200/15 dark:from-sky-950/40 dark:via-sky-950/35 dark:to-blue-950/35">
             <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
-              <BrainCircuit className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+              <BrainCircuit className="h-4 w-4 text-sky-600 dark:text-sky-300" />
               学习情况已处理本轮复习
             </div>
 
             {profileSummary.pendingCount > 0 && (
               <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-xs text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-600" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-600" />
                 还有 {profileSummary.pendingCount} 道题正在更新掌握情况…
               </div>
             )}
@@ -325,7 +325,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
                         <span
                           className={`shrink-0 text-xs font-bold ${
                             improved
-                              ? 'text-emerald-600 dark:text-emerald-300'
+                              ? 'text-sky-600 dark:text-sky-300'
                               : 'text-rose-600 dark:text-rose-300'
                           }`}
                         >
@@ -345,7 +345,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
             )}
 
             {profileSummary.latestResult && (
-              <div className="mt-3 rounded-xl bg-slate-950 px-3 py-3 text-white dark:bg-cyan-200 dark:text-slate-950">
+              <div className="mt-3 rounded-xl bg-slate-950 px-3 py-3 text-white dark:bg-sky-200 dark:text-slate-950">
                 <div className="text-[10px] font-semibold opacity-65">重新计算后的下一步</div>
                 <div className="mt-1 text-xs font-bold">
                   {profileSummary.latestResult.profileUpdate.learnerDecision.summary}
@@ -368,7 +368,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
             )}
 
             {profileSummary.failedCount > 0 && (
-              <div className="mt-3 flex items-start gap-2 text-[10px] leading-relaxed text-amber-700 dark:text-amber-300">
+              <div className="mt-3 flex items-start gap-2 text-[10px] leading-relaxed text-sky-700 dark:text-sky-300">
                 <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 {profileSummary.failedCount}{' '}
                 道题的学习情况暂时没有更新；本地复习进度已保留，可稍后再复习同步。
@@ -386,7 +386,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
             {summaryStats.wrongCount > 0 && (
               <button
                 onClick={handleRetryFromSummary}
-                className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-amber-500/25 transition-all hover:shadow-xl"
+                className="flex-1 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-sky-500/25 transition-all hover:shadow-xl"
               >
                 再刷错题 ({summaryStats.wrongCount})
               </button>
@@ -416,7 +416,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
         </button>
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">复习模式</span>
-          <span className="rounded-full bg-violet-100 dark:bg-violet-900/30 px-2.5 py-0.5 text-xs font-medium text-violet-600 dark:text-violet-400">
+          <span className="rounded-full bg-sky-100 dark:bg-sky-900/30 px-2.5 py-0.5 text-xs font-medium text-sky-600 dark:text-sky-400">
             {currentIndex + 1}/{items.length}
           </span>
         </div>
@@ -426,7 +426,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
       {/* Progress bar */}
       <div className="h-1 bg-slate-200 dark:bg-slate-700">
         <motion.div
-          className="h-full bg-gradient-to-r from-violet-500 to-indigo-500"
+          className="h-full bg-gradient-to-r from-sky-500 to-blue-500"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -448,7 +448,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
                 <div
                   className={`rounded-xl p-5 text-center ${
                     lastResult
-                      ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/30'
+                      ? 'bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-700/30'
                       : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30'
                   }`}
                 >
@@ -463,7 +463,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
                   <p
                     className={`text-lg font-bold ${
                       lastResult
-                        ? 'text-emerald-700 dark:text-emerald-300'
+                        ? 'text-sky-700 dark:text-sky-300'
                         : 'text-red-600 dark:text-red-400'
                     }`}
                   >
@@ -478,14 +478,14 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
                     <div className="mx-auto mt-3 max-w-sm rounded-xl border border-white/80 bg-white/75 px-3 py-2 text-left dark:border-white/10 dark:bg-white/[0.06]">
                       {lastReviewFeedback.syncState === 'pending' && (
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                          <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-600" />
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-600" />
                           正在保存这次复习结果…
                         </div>
                       )}
                       {lastReviewFeedback.syncState === 'done' &&
                         lastReviewFeedback.reviewResult && (
                           <div className="flex items-start gap-2">
-                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-600 dark:text-sky-300" />
                             <div>
                               <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
                                 学习情况已更新
@@ -512,7 +512,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
                           </div>
                         )}
                       {lastReviewFeedback.syncState === 'failed' && (
-                        <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300">
+                        <div className="flex items-start gap-2 text-xs text-sky-700 dark:text-sky-300">
                           <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                           本地进度已更新，但学习情况暂时没有同步。
                         </div>

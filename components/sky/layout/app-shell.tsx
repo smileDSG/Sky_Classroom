@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useTheme } from '@/lib/hooks/use-theme';
-import { motion } from 'motion/react';
 import { HeaderControls } from '@/components/sky/home/header-controls';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { SkySidebar } from './sidebar-nav';
+import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial-canvas';
 import { BackgroundTasksIndicator } from './background-tasks-indicator';
 import { useOptionalAuth } from '@/components/auth/auth-provider';
 import { useStudyTimer } from '@/lib/hooks/use-study-timer';
@@ -50,39 +50,32 @@ function AtmosphericBackground() {
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-      {/* Base tone */}
+      {/* Base tone — bright daylight wash, one clean gradient (no halo stacking) */}
       <div
         className="absolute inset-0"
         style={{
           background: isDark
-            ? 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)'
-            : '#FAFBFC',
+            ? 'linear-gradient(165deg, #0b1222 0%, #101a30 55%, #0b1423 100%)'
+            : 'linear-gradient(180deg, #f2f8ff 0%, #f7fbfe 55%, #f1f7fd 100%)',
         }}
       />
 
-      {/* Soft watercolor washes */}
+      {/* Light starfield only as a faint brand accent — no nebula, no grid, no parallax */}
+      <div className="absolute inset-0">
+        <CelestialCanvas
+          starCount={isDark ? 40 : 26}
+          parallax={false}
+          nebula={false}
+          grid={false}
+        />
+      </div>
+
+      {/* Single soft ambient highlight, kept subtle & light-mode centric */}
       {isDark ? (
-        <>
-          <div className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] bg-sky-900/20 rounded-full blur-[120px]" />
-          <div className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] bg-blue-900/15 rounded-full blur-[100px]" />
-          <div className="absolute top-1/3 left-1/2 w-[400px] h-[400px] bg-indigo-900/10 rounded-full blur-[80px]" />
-        </>
+        <div className="absolute -top-24 right-0 h-[420px] w-[420px] rounded-full bg-sky-500/[0.06] blur-[90px]" />
       ) : (
-        <>
-          <div className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] bg-sky-100/40 rounded-full blur-[120px]" />
-          <div className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-[100px]" />
-          <div className="absolute top-1/3 left-1/2 w-[400px] h-[400px] bg-indigo-50/30 rounded-full blur-[80px]" />
-        </>
+        <div className="absolute -top-24 right-0 h-[420px] w-[420px] rounded-full bg-sky-400/[0.10] blur-[90px]" />
       )}
-
-      {/* Subtle grain texture overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          opacity: isDark ? 0.03 : 0.015,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-      />
     </div>
   );
 }
@@ -163,14 +156,6 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
               : 'bg-transparent'
           }`}
         >
-          {scrolled && (
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              className="absolute inset-x-0 top-0 h-px origin-left bg-gradient-to-r from-transparent via-sky-400/40 to-transparent"
-            />
-          )}
-
           <div className="flex min-w-0 items-center gap-3">
             <span className="h-8 w-1 rounded-full bg-sky-500" aria-hidden="true" />
             <div className="min-w-0">
@@ -211,7 +196,7 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
         <main
           data-sky-desktop-main
           className={
-            fullBleed ? 'min-w-0 flex-1' : 'min-w-0 flex-1 px-4 py-5 md:px-6 md:py-7 xl:px-8'
+            fullBleed ? 'min-w-0 flex-1' : 'min-w-0 flex-1 px-4 py-5 md:px-5 md:py-7'
           }
         >
           {children}

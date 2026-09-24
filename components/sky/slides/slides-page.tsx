@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
@@ -15,6 +16,7 @@ import {
   Image as ImageIcon,
   Users,
   CheckCircle2,
+  Target,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PageTour } from '@/components/sky/tour/page-tour';
@@ -836,83 +838,40 @@ function SlidesPageContent({
   }, [totalPages]);
 
   return (
-    <div
-      className="slides-workspace relative flex h-[calc(100dvh-4rem)] min-h-0 w-full flex-col overflow-hidden"
-      style={{
-        background:
-          'linear-gradient(180deg, var(--celestial-void) 0%, var(--celestial-horizon) 100%)',
-      }}
-    >
-      {/* Top bar */}
+    <div className="slides-workspace relative flex h-[calc(100dvh-4rem)] min-h-0 w-full flex-col overflow-hidden">
+      {/* Shared page header — matches solve family (gradient title + subtitle, right action) */}
       <header
         data-tour-step="page-header"
-        className="slides-workspace-header relative z-10 flex h-14 flex-shrink-0 items-center border-b border-[var(--celestial-haze)]/20 px-5"
-        style={{ background: 'var(--celestial-surface)' }}
+        className="z-10 w-full flex-shrink-0 px-4 pt-6 sm:px-6"
       >
-        {/* Left: brand */}
-        <div className="flex flex-shrink-0 items-center gap-2.5">
-          <div className="flex items-center gap-2">
-            <div
-              className="slides-workspace-mark flex h-7 w-7 items-center justify-center rounded-lg text-[var(--celestial-starlight)]"
-              style={{
-                background: 'linear-gradient(135deg, rgba(139,92,246,0.35), rgba(56,189,248,0.25))',
-                boxShadow:
-                  '0 0 10px rgba(139,92,246,0.25), inset 0 0 0 1px var(--celestial-border)',
-              }}
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"
-                />
-              </svg>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-[var(--celestial-starlight)]/90">
-                深空工坊
-              </span>
-              <span className="text-[9px] font-mono tracking-widest text-[var(--celestial-starlight)]/25">
-                CELESTIAL ATELIER
-              </span>
-            </div>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-sky-900 dark:text-sky-100">
+              AI 智能课件生成
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              输入主题，AI 自动编排大纲、设计排版并生成精美课件
+            </p>
           </div>
-        </div>
-
-        {/* Center: file name or empty */}
-        <div className="flex flex-1 items-center justify-center">
-          {previewImages && generatedPptx?.fileName && (
-            <span className="max-w-xs truncate text-sm text-[var(--celestial-starlight)]/40">
-              {generatedPptx.fileName}
-            </span>
-          )}
-        </div>
-
-        {/* Right: status only */}
-        <div className="flex flex-shrink-0 items-center gap-2">
-          {status && (
-            <span
-              className={`text-xs font-medium ${
-                status.includes('失败') || status.includes('错误')
-                  ? 'text-red-500'
-                  : 'text-[var(--celestial-starlight)]/30'
-              }`}
-            >
-              {status}
-            </span>
-          )}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="hidden shrink-0 gap-2 sm:inline-flex"
+          >
+            <Link href="/sky/learning/path">
+              <Target className="h-4 w-4" /> 我的薄弱点
+            </Link>
+          </Button>
         </div>
       </header>
 
       {/* Main content */}
-      <div className="relative z-10 flex flex-1 overflow-hidden">
-        <main data-tour-step="page-primary" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
+        <main
+          data-tour-step="page-primary"
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
           <div className="relative min-h-0 flex-1 flex flex-col">
             <AnimatePresence mode="wait">
               {showSmartCover && draftDNA ? (

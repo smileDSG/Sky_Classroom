@@ -42,12 +42,12 @@ const STATUS_META: Record<LearningTask['status'], { label: string; className: st
   'in-progress': {
     label: '进行中',
     className:
-      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-200/20 dark:bg-amber-300/10 dark:text-amber-100',
+      'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-200/20 dark:bg-sky-300/10 dark:text-sky-100',
   },
   completed: {
     label: '已完成',
     className:
-      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-200/20 dark:bg-emerald-300/10 dark:text-emerald-100',
+      'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-200/20 dark:bg-sky-300/10 dark:text-sky-100',
   },
   skipped: {
     label: '已跳过',
@@ -334,7 +334,7 @@ export function LearningPlanPanel({
               className={cn(
                 'min-h-10 rounded-none border-b-2 border-transparent px-1 text-xs font-semibold transition-colors sm:text-sm',
                 activeView === option.kind
-                  ? 'border-emerald-500 text-slate-950 dark:border-emerald-300 dark:text-white'
+                  ? 'border-sky-500 text-slate-950 dark:border-sky-300 dark:text-white'
                   : 'text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white',
               )}
             >
@@ -350,11 +350,11 @@ export function LearningPlanPanel({
           正在加载计划投影…
         </div>
       ) : !plan || !view ? (
-        <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600 dark:border-cyan-100/15 dark:bg-white/[0.04] dark:text-slate-300">
+        <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600 dark:border-sky-100/15 dark:bg-white/[0.04] dark:text-slate-300">
           还没有学习计划。先生成一份个人安排，我们会结合你的情况、可用时间和休息日排好每天的任务。
           <Link
             href="/sky/learning/path"
-            className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 font-semibold text-white dark:bg-emerald-300 dark:text-slate-950"
+            className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 font-semibold text-white dark:bg-sky-300 dark:text-slate-950"
           >
             开始安排学习路线
             <ArrowRight className="h-4 w-4" />
@@ -406,13 +406,13 @@ export function LearningPlanPanel({
                 {view.weeklyTargets.map((target) => (
                   <div
                     key={target.weekStart}
-                    className="border-l-2 border-cyan-400/60 px-3 py-2 dark:border-cyan-300/60"
+                    className="border-l-2 border-sky-400/60 px-3 py-2 dark:border-sky-300/60"
                   >
                     <div className="flex items-center justify-between gap-2 text-xs">
                       <span className="font-semibold text-slate-800 dark:text-slate-100">
                         {formatDate(target.weekStart)}起
                       </span>
-                      <span className="text-cyan-700 dark:text-cyan-200">
+                      <span className="text-sky-700 dark:text-sky-200">
                         {target.plannedMinutes} 分钟
                       </span>
                     </div>
@@ -452,7 +452,7 @@ export function LearningPlanPanel({
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           {!compact && (
-                            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-200">
+                            <span className="text-xs font-semibold text-sky-700 dark:text-sky-200">
                               {formatDate(task.scheduledDate)}
                             </span>
                           )}
@@ -465,7 +465,7 @@ export function LearningPlanPanel({
                             {status.label}
                           </span>
                           {!compact && task.pathNodeId && (
-                            <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[11px] font-medium text-cyan-700 dark:border-cyan-100/15 dark:bg-cyan-300/[0.08] dark:text-cyan-100">
+                            <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700 dark:border-sky-100/15 dark:bg-sky-300/[0.08] dark:text-sky-100">
                               按你的学习路线
                             </span>
                           )}
@@ -477,7 +477,7 @@ export function LearningPlanPanel({
                           {taskMeta.description}
                         </p>
                         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                          <span className="font-semibold text-emerald-700 dark:text-emerald-200">
+                          <span className="font-semibold text-sky-700 dark:text-sky-200">
                             今天用：{taskMeta.tool}
                           </span>
                           <span>{taskMeta.toolDescription}</span>
@@ -489,8 +489,8 @@ export function LearningPlanPanel({
                             {taskReason(task)}
                           </p>
                         ) : (
-                          <div className="mt-3 border-l-2 border-amber-300/80 pl-3 dark:border-amber-200/60">
-                            <p className="text-xs font-semibold text-amber-800 dark:text-amber-100">
+                          <div className="mt-3 border-l-2 border-sky-300/80 pl-3 dark:border-sky-200/60">
+                            <p className="text-xs font-semibold text-sky-800 dark:text-sky-100">
                               为什么需要做？
                             </p>
                             <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
@@ -510,7 +510,7 @@ export function LearningPlanPanel({
                           'inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors',
                           task.status === 'completed'
                             ? 'border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]'
-                            : 'bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 dark:bg-emerald-300 dark:text-slate-950 dark:hover:bg-emerald-200',
+                            : 'bg-sky-500 text-white shadow-sm hover:bg-sky-600 dark:bg-sky-300 dark:text-slate-950 dark:hover:bg-sky-200',
                         )}
                       >
                         {task.status === 'completed' ? (
@@ -572,7 +572,7 @@ export function LearningPlanPanel({
                 </Button>
               </div>
               {notice && (
-                <div className="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-200">
+                <div className="mt-2 text-xs font-medium text-sky-700 dark:text-sky-200">
                   {notice}
                 </div>
               )}

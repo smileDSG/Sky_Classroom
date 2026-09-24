@@ -57,13 +57,6 @@ export const PAGE_TOURS: Record<string, PageTourConfig> = {
       step('page-primary', '完善档案', '填写目标和薄弱点，建议才会更贴近你的实际情况。'),
     ],
   },
-  'learning-stats': {
-    seenKey: 'tour:learning-stats',
-    steps: [
-      step('feature-header', '学习统计', '可视化展示学习时长、正确率等关键数据。'),
-      step('feature-content', '查看趋势', '通过图表了解自己的学习节奏和进步情况。'),
-    ],
-  },
   'resources-overview': {
     seenKey: 'tour:resources-overview',
     steps: [

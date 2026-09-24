@@ -5,12 +5,12 @@ import { useMemo } from 'react';
 const COLORS = [
   'bg-sky-400/30',
   'bg-blue-400/25',
-  'bg-indigo-400/20',
-  'bg-cyan-400/25',
-  'bg-violet-400/20',
+  'bg-blue-400/20',
+  'bg-sky-400/25',
+  'bg-sky-400/20',
   'bg-sky-300/25',
   'bg-blue-300/20',
-  'bg-indigo-300/25',
+  'bg-blue-300/25',
 ];
 
 export function FloatingParticles() {

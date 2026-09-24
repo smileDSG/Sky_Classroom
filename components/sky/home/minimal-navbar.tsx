@@ -19,7 +19,7 @@ export function MinimalNavbar({ userSection }: { userSection: React.ReactNode })
           className="flex items-center gap-3"
         >
           <img src="/logo-icon.svg" alt="智眸无界" className="w-10 h-10" />
-          <span className="text-lg font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent hidden sm:block">
+          <span className="text-lg font-bold text-slate-900 dark:text-white hidden sm:block">
             智眸无界
           </span>
         </motion.div>

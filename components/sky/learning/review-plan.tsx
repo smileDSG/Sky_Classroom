@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { AlertTriangle, Bell, Brain, CalendarDays, GraduationCap, PlayCircle, Star } from 'lucide-react';
 import { EBBINGHAUS_INTERVALS } from '@/lib/storage/dao/mistakes';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import {
@@ -14,14 +15,20 @@ import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import type { MistakeCause } from '@/lib/solve/types';
 import { ReviewSession } from './review-session';
+import {
+  BookDoodle,
+  GraphPaperBg,
+  MountainDoodle,
+  SunDoodle,
+} from '@/components/sky/pattern/sky-doodles';
 
 const INTERVAL_META: Record<number, { label: string; color: string }> = {
   1: { label: '1天后', color: '#EF4444' },
-  2: { label: '2天后', color: '#F97316' },
-  4: { label: '4天后', color: '#F59E0B' },
-  7: { label: '7天后', color: '#10B981' },
+  2: { label: '2天后', color: '#0EA5E9' },
+  4: { label: '4天后', color: '#0EA5E9' },
+  7: { label: '7天后', color: '#3B82F6' },
   15: { label: '15天后', color: '#3B82F6' },
-  30: { label: '30天后', color: '#8B5CF6' },
+  30: { label: '30天后', color: '#0EA5E9' },
 };
 
 const CURVE_POINTS = EBBINGHAUS_INTERVALS.map((day) => {
@@ -34,6 +41,18 @@ const SVG_TEXT_SM = { fontSize: '9px', fontFamily: 'system-ui, sans-serif' };
 const SVG_TEXT_XS = { fontSize: '8px', fontFamily: 'system-ui, sans-serif' };
 
 type DataSource = 'api' | 'local';
+
+function slotMasteryStars(level: number) {
+  const count = Math.max(0, Math.min(level, 6));
+  if (count === 0) return <span>—</span>;
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-label={`掌握 ${count} 级`}>
+      {Array.from({ length: count }).map((_, i) => (
+        <Star key={i} className="h-3 w-3 fill-sky-400 text-sky-400" />
+      ))}
+    </span>
+  );
+}
 
 interface ReviewPlanProps {
   autoStart?: boolean;
@@ -222,14 +241,24 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
 
   if (!hasData) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl bg-white py-16 shadow-sm dark:bg-slate-800">
-        <div className="text-5xl">🧠</div>
+      <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-xl bg-white py-16 shadow-sm dark:bg-slate-800">
+        <GraphPaperBg className="opacity-50" />
+        <div className="pointer-events-none absolute bottom-5 right-8 hidden select-none text-sky-500/35 dark:text-sky-200/25 md:flex md:items-end md:gap-2.5" aria-hidden="true">
+          <SunDoodle className="h-8 w-8 -rotate-12" />
+          <BookDoodle className="h-10 w-12 translate-y-1" />
+        </div>
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-500/10">
+          <Brain className="h-8 w-8 text-sky-500" />
+        </div>
         <h3 className="mt-4 text-base font-semibold text-gray-700 dark:text-slate-200">
           还没有复习数据
         </h3>
         <p className="mt-2 text-sm text-gray-400 dark:text-slate-400">
           完成搜题批改后，错题会自动纳入复习计划
         </p>
+        <div className="pointer-events-none absolute left-8 top-6 hidden select-none text-sky-500/30 dark:text-sky-200/20 md:block" aria-hidden="true">
+          <MountainDoodle className="h-9 w-11 rotate-6" />
+        </div>
       </div>
     );
   }
@@ -249,8 +278,8 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
       {sessionItems && <ReviewSession items={sessionItems} onClose={closeSession} />}
       {/* ── 1. Forgetting Curve ── */}
       <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
-        <h3 className="mb-1 text-sm font-semibold text-gray-700 dark:text-slate-200">
-          📉 艾宾浩斯遗忘曲线
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-200">
+          <Brain className="h-4 w-4 text-[#4A90D9]" /> 艾宾浩斯遗忘曲线
         </h3>
         <p className="mb-3 text-[11px] text-gray-400 dark:text-slate-400">
           每完成一次复习，间隔自动延长：{EBBINGHAUS_INTERVALS.map((d) => `${d}d`).join(' → ')}
@@ -374,7 +403,7 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
         >
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-slate-700">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#4A90D9] to-[#10B981] transition-all duration-700"
+              className="h-full rounded-full bg-gradient-to-r from-[#4A90D9] to-[#0EA5E9] transition-all duration-700"
               style={{ width: `${progress?.percentComplete ?? 0}%` }}
             />
           </div>
@@ -382,19 +411,19 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
         <StatCard
           label="今日待复习"
           value={schedule?.today?.count ?? 0}
-          color="#F59E0B"
+          color="#0EA5E9"
           suffix="题"
         >
           {schedule && schedule.overdue > 0 && (
-            <div className="mt-2 text-[11px] text-red-400 dark:text-red-300">
-              ⚠️ {schedule.overdue} 题已逾期
+            <div className="mt-2 flex items-center gap-1 text-[11px] text-red-400 dark:text-red-300">
+              <AlertTriangle className="h-3 w-3" /> {schedule.overdue} 题已逾期
             </div>
           )}
         </StatCard>
         <StatCard
           label="未来7天计划"
           value={schedule?.upcoming?.reduce((s, d) => s + d.count, 0) ?? 0}
-          color="#10B981"
+          color="#3B82F6"
           suffix="题"
           footer={<>{schedule?.upcoming?.length ?? 0} 个复习日</>}
         />
@@ -403,34 +432,46 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
       {/* ── 3. Today's review list ── */}
       {urgentItems.length > 0 && (
         <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-slate-200 flex items-center gap-2">
-            <span>🔔 今日待复习</span>
+          <div className="mb-3 flex items-center gap-2">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-200">
+              <Bell className="h-4 w-4 text-sky-500" /> 今日待复习
+            </h3>
             <span
               key="badge"
-              className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+              className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-medium text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
             >
               {urgentItems.length} 题
             </span>
             <button
               onClick={() => startSession(urgentRecords)}
-              className="ml-auto flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+              className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-md transition-all hover:from-sky-600 hover:to-blue-700 hover:shadow-lg hover:-translate-y-0.5"
             >
-              🎯 全部沉浸复习
+              <PlayCircle className="h-3.5 w-3.5" /> 全部沉浸复习
             </button>
-          </h3>
+          </div>
           <div className="space-y-2">
             {urgentItems.map((item, idx) => (
               <div
                 key={`${item.id}-${idx}`}
-                className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-3 dark:border-amber-900/50 dark:bg-amber-900/20"
+                className={`rounded-lg border border-l-4 bg-white p-3 shadow-sm dark:bg-slate-800 ${
+                  item.nextReview !== undefined && item.nextReview < Date.now()
+                    ? 'border-l-red-400'
+                    : 'border-l-blue-400'
+                }`}
               >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-800 dark:text-slate-100 line-clamp-1">
+                <div className="min-w-0">
+                  <p className="line-clamp-1 text-sm font-medium text-gray-800 dark:text-slate-100">
                     {item.problemText}
                   </p>
-                  <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-400">
+                  <p className="mt-1 flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-slate-400">
+                    <GraduationCap className="h-3 w-3" />
                     复习 {item.reviewCount} 次 · 掌握情况{' '}
-                    {'⭐'.repeat(Math.min(item.masteryLevel, 6)) || '—'}
+                    {slotMasteryStars(item.masteryLevel)}
+                    {item.nextReview !== undefined && item.nextReview < Date.now() && (
+                      <span className="inline-flex items-center gap-0.5 text-red-400 dark:text-red-300">
+                        <AlertTriangle className="h-3 w-3" /> 已逾期
+                      </span>
+                    )}
                   </p>
                   {/* Expanded review mode */}
                   {reviewingId === item.id && (
@@ -443,7 +484,7 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
                         <p className="text-xs text-red-500 dark:text-red-400 mt-2">
                           我的答案：{item.userAnswer}
                         </p>
-                        <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                        <p className="text-xs text-sky-600 dark:text-sky-400">
                           正确答案：{item.correctAnswer}
                         </p>
                       </div>
@@ -462,7 +503,7 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
                             }
                             loadData();
                           }}
-                          className="flex-1 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-600 transition-colors"
+                          className="flex-1 rounded-lg bg-sky-500 px-3 py-2 text-xs font-medium text-white hover:bg-sky-600 transition-colors"
                         >
                           答对了 ✓
                         </button>
@@ -488,19 +529,19 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
                   )}
                 </div>
                 {reviewingId !== item.id && (
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-800 dark:text-amber-200">
+                  <div className="mt-2 flex shrink-0 items-center gap-1.5 border-t border-slate-100 pt-2 dark:border-slate-700/60">
+                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-800 dark:text-sky-200">
                       第{item.reviewCount + 1}次
                     </span>
                     <button
                       onClick={() => setReviewingId(item.id)}
-                      className="rounded-lg bg-[#10B981] px-3 py-1.5 text-xs font-medium text-white hover:bg-green-600 transition-colors"
+                      className="rounded-lg bg-[#0EA5E9] px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-600 transition-colors"
                     >
                       快速复习
                     </button>
                     <button
                       onClick={() => startSession([entryToRecord(item)])}
-                      className="rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:from-violet-700 hover:to-indigo-700 transition-colors"
+                      className="rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:from-sky-600 hover:to-blue-700 transition-colors"
                     >
                       沉浸
                     </button>
@@ -515,14 +556,20 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
       {/* ── 4. Upcoming schedule ── */}
       {schedule?.upcoming && schedule.upcoming.length > 0 && (
         <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-slate-200">
-            📅 未来复习计划
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-200">
+            <CalendarDays className="h-4 w-4 text-[#4A90D9]" /> 未来复习计划
           </h3>
-          <div className="divide-y divide-gray-50 dark:divide-slate-700">
+          <div className="space-y-1.5">
             {schedule.upcoming.map((day) => (
-              <div key={day.date} className="flex items-center justify-between px-3 py-2.5">
+              <div
+                key={day.date}
+                className="flex items-center justify-between rounded-lg bg-gray-50/80 px-3 py-2.5 dark:bg-slate-700/40"
+              >
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-700 dark:text-slate-200 w-12">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#E8F4FD] text-[11px] font-bold text-[#4A90D9] dark:bg-blue-900/40 dark:text-blue-300">
+                    {day.dayLabel.replace(/[^0-9]/g, '') || day.dayLabel.slice(0, 1)}
+                  </span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-slate-200">
                     {day.dayLabel}
                   </span>
                   <span className="text-[11px] text-gray-400 dark:text-slate-400">{day.date}</span>
@@ -538,8 +585,8 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
 
       {/* ── 5. Interval guide ── */}
       <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
-        <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-slate-200">
-          📖 复习间隔说明
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-200">
+          <GraduationCap className="h-4 w-4 text-[#4A90D9]" /> 复习间隔说明
         </h3>
         <div className="grid grid-cols-3 gap-3">
           {EBBINGHAUS_INTERVALS.map((day, i) => (

@@ -10,30 +10,66 @@
 // - 人物就停在右下角;透明背景,不挡页面。headless 无法读 GL 像素,所以用 data-vrm-ready
 //   / data-vrm-error 暴露加载结果,便于功能校验。
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { PetKindSwitch } from '@/components/sky/pet/pet-kind-switch';
 
 type PetStatus = 'loading' | 'ready' | 'error';
 
 // 容器(包裹框)基准尺寸 —— size 是它的等比倍数, 与 Live2D 猫共用同一个系数, 保证三只等比。
 const STAGE_W = 320;
 const STAGE_H = 420;
+// 角色脚下为模式切换条预留的高度。舞台整体加高后相机相应后移(见 resize),
+// 模型在屏幕上的像素大小不变 —— 加高的部分变成脚下一段透明区, 切换条停在那里,
+// 且因为嵌在舞台内部, 人物被拖动时切换条一起走。
+const FOOT_UI_H = 72;
+// 脚底到舞台底边的目标间距(px): 切换条高约 34px + 底边距 6px + 视觉空隙。
+// 实测模型的剪影脚底比理论脚线(按身高归一)低约 5px, 目标值留足余量。
+const FOOT_CLEAR_PX = 50;
+// 原相机距离: 舞台加高时以此为基准反推新的距离
+const CAM_DIST = 3.4;
+// 舞台(人物 + 脚下切换条)最大高度占窗口的比例 —— 控制人物不会在窄窗口里占满整屏。
+// 原 0.28 会把人压得太小(人物只在角落一点点), 放宽到 0.5 让模型明显更大、更可观;
+// 仍留上限, 避免小窗下人物顶破屏幕。
+const PET_MAX_STAGE_H_FRAC = 0.5;
+// 人物默认停靠窗口右下角(right); 传 'left' 则停左下角 —— 与主题猫各占一边、互不重叠。
+type DockSide = 'left' | 'right';
 
 export function VrmPet({
   modelPath = '/vrm/pet',
   visible = true,
   size = 1,
+  dockedPosition = 'right',
   onStatusChange,
 }: {
   modelPath?: string;
   visible?: boolean;
   /** 包裹框尺寸倍数。相机 FOV 与机位固定, 所以框等比缩 → 人也等比缩(画布由 ResizeObserver 跟随) */
   size?: number;
+  /** 停靠在窗口左下角('left')还是右下角('right')。默认右下角(和猫一致); 拆开后人在左下、猫在右下 */
+  dockedPosition?: DockSide;
   onStatusChange?: (status: PetStatus, errorMsg?: string) => void;
 }) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // 是否还能跑(component 卸载/重建时置位,避免 setState on unmounted / 内存泄漏)
   const aliveRef = useRef(true);
+
+  // 小窗口下与 Live2D 猫一样收尺寸: 舞台高(含脚区)压到窗口 45% 以内。
+  // 基准尺寸(0.6 倍)在大窗口远小于该上限, 行为不变; 窗口拉大/缩小时跟随重算。
+  const [effSize, setEffSize] = useState<number | null>(null);
+  useEffect(() => {
+    const calc = () => {
+      const cap = (window.innerHeight * PET_MAX_STAGE_H_FRAC) / (STAGE_H + FOOT_UI_H);
+      setEffSize(Math.min(size, cap));
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
+  }, [size]);
+
+  // resize(相机取景)在初始化 effect 里定义一次, 通过 ref 读最新生效尺寸
+  const sizeRef = useRef(size);
+  sizeRef.current = effSize ?? size;
 
   useEffect(() => {
     aliveRef.current = true;
@@ -55,10 +91,7 @@ export function VrmPet({
         // three 的命名空间即完整模块(Scene/WebGLRenderer/Box3 等都是具名导出),直接拿来用
         const THREE = await import('three');
         const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
-        const {
-          VRMLoaderPlugin,
-          VRMUtils,
-        } = await import('@pixiv/three-vrm');
+        const { VRMLoaderPlugin, VRMUtils } = await import('@pixiv/three-vrm');
 
         if (cleanupFn.cancel) return;
 
@@ -164,7 +197,13 @@ export function VrmPet({
         const blinkName = (() => {
           try {
             const s = vrm.expressionManager;
-            const arr = s ? (s as unknown as { expressions?: { name?: string; presetName?: string; expressionName?: string }[] }).expressions : undefined;
+            const arr = s
+              ? (
+                  s as unknown as {
+                    expressions?: { name?: string; presetName?: string; expressionName?: string }[];
+                  }
+                ).expressions
+              : undefined;
             const exprs = (arr || []).map((e) => ({
               name: e?.name ?? '',
               preset: e?.presetName ?? '',
@@ -174,7 +213,7 @@ export function VrmPet({
               (x) =>
                 /^blink$/i.test(x.preset) ||
                 /^blink$/i.test(x.exprName) ||
-                (/blink$/i.test(x.name) && !/blink_[lr]$/i.test(x.name))
+                (/blink$/i.test(x.name) && !/blink_[lr]$/i.test(x.name)),
             );
             const resolved = hit ? hit.exprName || hit.preset || 'blink' : 'blink';
             stage.setAttribute(
@@ -184,7 +223,7 @@ export function VrmPet({
                 sample: exprs.slice(0, 6).map((x) => x.name || x.preset),
                 blinkResolved: resolved,
                 head: !!headBone,
-              })
+              }),
             );
             return resolved;
           } catch {
@@ -201,8 +240,24 @@ export function VrmPet({
           canvas.width = Math.round(cssW * dpr);
           canvas.height = Math.round(cssH * dpr);
           camera.aspect = cssW / cssH;
-          camera.position.set(0, centerY, 3.4);
-          camera.lookAt(0, centerY, 0);
+          // 舞台含脚下区后整体变高: 相机按比例后移, 让模型占的屏幕像素数与原来一致
+          // (否则加高多少模型就放大多少)。FOV 固定 30°, 垂直视野随距离线性伸缩。
+          const pxPerUnit =
+            (STAGE_H * sizeRef.current) /
+            (2 * CAM_DIST * Math.tan(THREE.MathUtils.degToRad(30) / 2));
+          camera.position.set(
+            0,
+            centerY,
+            cssH / (2 * Math.tan(THREE.MathUtils.degToRad(30) / 2) * pxPerUnit),
+          );
+          // 取景点略低于人物中心, 让模型在舞台里整体上移 —— 脚底空出切换条的位置。
+          // 位移量与像素一一对应(pxPerUnit), 不会随舞台尺寸变化而失配。
+          const modelPx = targetHeight * pxPerUnit;
+          const tiltPx = Math.max(0, FOOT_CLEAR_PX - (cssH - modelPx) / 2);
+          camera.lookAt(0, centerY - tiltPx / pxPerUnit, 0);
+          // 首帧渲染前相机矩阵还没被 renderer 刷新, 这里手动同步, 否则下面的
+          // 轮廓投影会按「原点相机」算, 剪影错位 → 问候气泡也跟着偏。
+          camera.updateMatrixWorld();
           camera.updateProjectionMatrix();
 
           // 轮廓投影: 相机按固定 FOV/机位取景, 人只占盒子中间一条 —— 盒子左右各留一大片空白。
@@ -217,12 +272,15 @@ export function VrmPet({
             // 开了之后 three 会逐顶点走 applyBoneTransform, 量到的才是当前姿势的真实轮廓。
             const wb = new THREE.Box3().setFromObject(vrm.scene, true);
             const v = new THREE.Vector3();
-            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            let minX = Infinity,
+              maxX = -Infinity,
+              minY = Infinity,
+              maxY = -Infinity;
             for (let i = 0; i < 8; i++) {
               v.set(
                 i & 1 ? wb.max.x : wb.min.x,
                 i & 2 ? wb.max.y : wb.min.y,
-                i & 4 ? wb.max.z : wb.min.z
+                i & 4 ? wb.max.z : wb.min.z,
               );
               v.project(camera);
               const px = (v.x * 0.5 + 0.5) * cssW;
@@ -239,7 +297,7 @@ export function VrmPet({
                 right: Math.round(maxX),
                 top: Math.round(minY),
                 bottom: Math.round(maxY),
-              })
+              }),
             );
           } catch {
             /* 投影失败就退回整框定位 */
@@ -293,7 +351,7 @@ export function VrmPet({
                   // 实际套在手腕骨上的内扣角度(应为 +0.25 / -0.25), 供探针校验
                   handInwardL: lh ? +lh.rotation.y.toFixed(2) : null,
                   handInwardR: rh ? +rh.rotation.y.toFixed(2) : null,
-                })
+                }),
               );
             }
           } catch {
@@ -344,21 +402,34 @@ export function VrmPet({
         onStatusChange?.('ready');
 
         // 拖动: 与 Live2D 猫一致 —— document 指针事件委托,位移 <6px 视为点击(交给外层)
-        let sx = 0, sy = 0, sl = 0, st = 0;
+        let sx = 0,
+          sy = 0,
+          sl = 0,
+          st = 0;
         let dragging = false;
         const isInStage = (e: PointerEvent) =>
-          !!stage && !!e.target && (e.target as Node).nodeType === 1 && stage.contains(e.target as Node);
+          !!stage &&
+          !!e.target &&
+          (e.target as Node).nodeType === 1 &&
+          stage.contains(e.target as Node) &&
+          // 脚下切换条上的按下不算拖动, 否则点「猫/人」会把人物拖走
+          !(e.target as Element).closest?.('[data-pet-ui]');
         const onDown = (e: PointerEvent) => {
           if (e.button !== 0 || !isInStage(e)) return;
           const r = stage.getBoundingClientRect();
-          sx = e.clientX; sy = e.clientY; sl = r.left; st = r.top; dragging = true;
+          sx = e.clientX;
+          sy = e.clientY;
+          sl = r.left;
+          st = r.top;
+          dragging = true;
           stage.style.userSelect = 'none';
           window.addEventListener('pointermove', onMove);
           window.addEventListener('pointerup', onUp);
         };
         const onMove = (e: PointerEvent) => {
           if (!dragging) return;
-          const dx = e.clientX - sx, dy = e.clientY - sy;
+          const dx = e.clientX - sx,
+            dy = e.clientY - sy;
           stage.style.right = 'auto';
           stage.style.bottom = 'auto';
           stage.style.left = `${Math.max(0, sl + dx)}px`;
@@ -382,10 +453,14 @@ export function VrmPet({
           window.removeEventListener('pointerup', onUp);
           try {
             (vrm as unknown as { dispose?: () => void }).dispose?.();
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
           try {
             renderer.dispose();
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
         };
         (stage as unknown as { __dispose?: () => void }).__dispose = stop;
       } catch (err) {
@@ -413,23 +488,28 @@ export function VrmPet({
   }, [visible]);
 
   // 画布要能接住指针才能拖动;整个组件返回 null 不好,故返回一个固定容器
+  const s = effSize ?? size;
+  // 拆开两个模型后: 猫停右下, 人来左下 —— 各自固定, 不再挤在同一个角落。
+  // 用 CSS 把它锚到对应角落(auto 掉对侧), 其余逻辑(拖动切 left/top)照旧。
+  const isLeft = dockedPosition === 'left';
   return (
     <div
-      // eslint-disable-next-line react/no-unknown-property
       id="vrm-pet-stage"
       ref={stageRef}
       aria-hidden
       className="fixed z-[9996] pointer-events-auto"
       style={{
-        right: 24,
+        ...(isLeft ? { left: 24, right: 'auto' } : { right: 24 }),
         bottom: 24,
-        width: Math.round(STAGE_W * size),
-        height: Math.round(STAGE_H * size),
+        width: Math.round(STAGE_W * s),
+        height: Math.round((STAGE_H + FOOT_UI_H) * s),
         // 纯装饰,不响应多余的指针;拖动/点击由上面的委托处理
         touchAction: 'none',
       }}
     >
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+      {/* 模式切换条停在人物脚底; 嵌在舞台里, 拖动人物时一起走。visible=false 时不显示 */}
+      {visible && <PetKindSwitch className="absolute bottom-1.5 left-1/2 z-10 -translate-x-1/2" />}
     </div>
   );
 }

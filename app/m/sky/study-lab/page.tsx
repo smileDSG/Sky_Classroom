@@ -101,12 +101,6 @@ const toolEntries: Array<{
     icon: Network,
   },
   {
-    label: '学习统计',
-    desc: '趋势与掌握情况',
-    href: '/m/sky/learning/stats',
-    icon: BarChart3,
-  },
-  {
     label: '学习分析',
     desc: '学习情况和建议',
     href: '/m/sky/learning/profile',

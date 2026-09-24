@@ -2,6 +2,19 @@
 
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import {
+  AlertTriangle,
+  BookOpen,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Eye,
+  Lightbulb,
+  Lock,
+  RotateCcw,
+  X,
+  XCircle,
+} from 'lucide-react';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import { EBBINGHAUS_INTERVALS } from '@/lib/storage/dao/mistakes';
 import { MathRenderer } from '@/components/sky/solve/math-renderer';
@@ -84,7 +97,7 @@ export function ReviewCard({
           {/* Problem */}
           <div className="rounded-xl border border-slate-200/60 dark:border-slate-700/40 bg-white/80 dark:bg-slate-800/60 p-5">
             <div className="flex items-center gap-2 mb-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-500/15 text-xs font-bold text-violet-500">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-500/15 text-xs font-bold text-sky-600 dark:text-sky-300">
                 Q
               </span>
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">题目</span>
@@ -97,8 +110,8 @@ export function ReviewCard({
           {/* Blurred answer area */}
           <div className="relative rounded-xl border border-slate-200/60 dark:border-slate-700/40 bg-white/80 dark:bg-slate-800/60 p-5 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/15 text-xs">
-                🔒
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-500/15">
+                <Lock className="h-3.5 w-3.5 text-sky-500" />
               </span>
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 答案区域
@@ -127,15 +140,15 @@ export function ReviewCard({
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="rounded-xl border border-amber-200/60 dark:border-amber-700/30 bg-amber-50/80 dark:bg-amber-900/20 p-4"
+              className="rounded-xl border border-sky-200/60 dark:border-sky-700/30 bg-sky-50/80 dark:bg-sky-900/20 p-4"
             >
               <div className="flex items-start gap-2">
-                <span className="text-sm mt-0.5">💡</span>
+                <Lightbulb className="h-4 w-4 mt-0.5 shrink-0 text-sky-500" />
                 <div>
-                  <p className="text-xs font-medium text-amber-700 dark:text-amber-300 mb-1">
+                  <p className="text-xs font-medium text-sky-700 dark:text-sky-300 mb-1">
                     提示 {hintsUsed}/{item.hints?.length ?? 0}
                   </p>
-                  <p className="text-sm text-amber-800 dark:text-amber-200">{currentHint}</p>
+                  <p className="text-sm text-sky-800 dark:text-sky-200">{currentHint}</p>
                 </div>
               </div>
             </motion.div>
@@ -160,16 +173,16 @@ export function ReviewCard({
             {item.hints && item.hints.length > 0 && hintsUsed < item.hints.length && (
               <button
                 onClick={onHint}
-                className="flex items-center gap-1.5 rounded-xl border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/20 px-4 py-2.5 text-sm font-medium text-amber-700 dark:text-amber-300 transition-all hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:-translate-y-0.5"
+                className="flex items-center gap-1.5 rounded-xl border border-sky-200 dark:border-sky-700/40 bg-sky-50 dark:bg-sky-900/20 px-4 py-2.5 text-sm font-medium text-sky-700 dark:text-sky-300 transition-all hover:bg-sky-100 dark:hover:bg-sky-900/40 hover:-translate-y-0.5"
               >
-                💡 提示
+                <Lightbulb className="h-4 w-4" /> 提示
               </button>
             )}
             <button
               onClick={handleReveal}
-              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/25 transition-all hover:shadow-xl hover:-translate-y-0.5"
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-sky-500/25 transition-all hover:from-sky-600 hover:to-blue-700 hover:shadow-xl hover:-translate-y-0.5"
             >
-              👁 查看答案
+              <Eye className="h-4 w-4" /> 查看答案
             </button>
           </div>
         </motion.div>
@@ -195,8 +208,8 @@ export function ReviewCard({
           {/* Answer comparison */}
           <div className="rounded-xl border border-slate-200/60 dark:border-slate-700/40 bg-white/80 dark:bg-slate-800/60 p-4 space-y-3">
             <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-red-500/15 text-xs">
-                ❌
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-red-500/15">
+                <X className="h-3.5 w-3.5 text-red-500" />
               </span>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">我的原答案</p>
@@ -207,12 +220,12 @@ export function ReviewCard({
             </div>
             <div className="h-px bg-slate-100 dark:bg-slate-700" />
             <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-xs">
-                ✅
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-500/15">
+                <Check className="h-3.5 w-3.5 text-sky-500" />
               </span>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">正确答案</p>
-                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                <p className="text-sm font-medium text-sky-600 dark:text-sky-400">
                   <MathRenderer content={item.correctAnswer} />
                 </p>
               </div>
@@ -227,7 +240,7 @@ export function ReviewCard({
                 className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/30"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">📖</span>
+                  <BookOpen className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                     解题过程
                   </span>
@@ -240,7 +253,7 @@ export function ReviewCard({
                   transition={{ duration: 0.2 }}
                   className="text-slate-400"
                 >
-                  ▼
+                  <ChevronDown className="h-4 w-4" />
                 </motion.span>
               </button>
               <AnimatePresence>
@@ -278,14 +291,14 @@ export function ReviewCard({
 
           {/* Error explanation */}
           {(item.errorExplanation || CAUSE_LABELS[item.cause]) && (
-            <div className="rounded-xl border border-orange-200/60 dark:border-orange-700/30 bg-orange-50/80 dark:bg-orange-900/15 p-4">
+            <div className="rounded-xl border border-sky-200/60 dark:border-sky-700/30 bg-sky-50/80 dark:bg-sky-900/15 p-4">
               <div className="flex items-start gap-2">
-                <span className="text-sm mt-0.5">⚠️</span>
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-sky-500" />
                 <div>
-                  <p className="text-xs font-medium text-orange-700 dark:text-orange-300 mb-1">
+                  <p className="text-xs font-medium text-sky-700 dark:text-sky-300 mb-1">
                     错因分析
                   </p>
-                  <div className="text-sm text-orange-800 dark:text-orange-200">
+                  <div className="text-sm text-sky-800 dark:text-sky-200">
                     <MathRenderer content={item.errorExplanation || CAUSE_LABELS[item.cause]} />
                   </div>
                 </div>
@@ -301,7 +314,7 @@ export function ReviewCard({
                   key={i}
                   className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-700/30 px-2.5 py-0.5 text-xs text-blue-600 dark:text-blue-400"
                 >
-                  🔗 {kp}
+                  {kp}
                 </span>
               ))}
             </div>
@@ -311,21 +324,21 @@ export function ReviewCard({
           <div className="flex gap-3">
             <button
               onClick={() => handleResult(true)}
-              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98]"
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-sky-500/25 transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98]"
             >
-              ✅ 掌握了
+              <CheckCircle2 className="h-4 w-4" /> 掌握了
             </button>
             <button
               onClick={() => handleResult(false)}
               className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-red-500/25 transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98]"
             >
-              ❌ 还是错
+              <XCircle className="h-4 w-4" /> 还是错
             </button>
             <button
               onClick={handleRetry}
               className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-50 dark:hover:bg-slate-700 hover:-translate-y-0.5"
             >
-              🔄 再想想
+              <RotateCcw className="h-4 w-4" /> 再想想
             </button>
           </div>
         </motion.div>

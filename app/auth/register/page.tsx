@@ -48,7 +48,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register({ email: email || undefined, username, password });
-      router.push('/sky/onboarding');
+      router.push('/');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败，请稍后重试');
@@ -58,7 +58,7 @@ export default function RegisterPage() {
   };
 
   useEffect(() => {
-    if (!isGuest) router.push('/sky/onboarding');
+    if (!isGuest) router.push('/');
   }, [isGuest, router]);
 
   return (

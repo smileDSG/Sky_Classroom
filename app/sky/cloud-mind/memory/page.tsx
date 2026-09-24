@@ -111,7 +111,7 @@ export default function CloudMindMemoryPage() {
 
 function CloudMindMemoryFallback() {
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-[var(--memory-void)] text-[var(--memory-text)]">
+    <div className="min-h-[calc(100dvh-4rem)] text-[var(--memory-text)]">
       <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-5xl items-center justify-center px-4">
         <div className="flex items-center gap-3 rounded-2xl border border-[var(--memory-border)] bg-[var(--memory-surface)] px-5 py-4 text-sm text-[var(--memory-muted)]">
           <Loader2 className="h-4 w-4 animate-spin text-[var(--memory-primary)]" />
@@ -781,20 +781,22 @@ function CloudMindMemoryContent() {
     .find((item) => item.decision)?.decision;
 
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-slate-50/70 dark:bg-slate-950/50">
-      <div className="mx-auto max-w-6xl px-4 pb-12 pt-5 sm:px-6 lg:pt-6">
+    <div className="min-h-[calc(100dvh-4rem)]">
+      <div className="mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6">
         {/* Page heading */}
         <motion.div
           data-tour-step="page-header"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-5 flex items-start gap-3"
+          className="mb-6 flex items-center gap-3"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300">
             <Brain className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">记忆卡片</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-violet-900 dark:text-violet-100">
+              记忆卡片
+            </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               用主动回忆巩固知识点，复习结果会同步到学习画像。
             </p>
@@ -1014,7 +1016,7 @@ function CloudMindMemoryContent() {
             <button
               onClick={() => handleGenerate()}
               disabled={loading || !content.trim()}
-              className="inline-flex min-h-10 items-center gap-2 rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-sky-500 dark:hover:bg-sky-400"
+              className="inline-flex min-h-10 items-center gap-2 rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-violet-500 dark:hover:bg-violet-400"
               style={{
                 color: 'white',
               }}
@@ -1635,7 +1637,7 @@ function MemoryPersonalizationPanel({
           className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left sm:px-5"
         >
           <span className="flex min-w-0 items-center gap-2">
-            <Brain className="h-4 w-4 shrink-0 text-sky-600 dark:text-sky-300" />
+            <Brain className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
             <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               本次复习安排
             </span>
@@ -1651,16 +1653,24 @@ function MemoryPersonalizationPanel({
               </span>
             )}
             {dueReviews.length > 0 && !isReviewing && (
-              <button
-                type="button"
+              <span
+                role="button"
+                tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation();
                   onStartDueReview();
                 }}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-sky-700"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    onStartDueReview();
+                  }
+                }}
+                className="inline-flex shrink-0 cursor-pointer select-none items-center gap-1.5 rounded-md bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-violet-700"
               >
                 <CalendarClock className="h-3.5 w-3.5" /> 立即复习 {dueReviews.length} 张
-              </button>
+              </span>
             )}
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-[var(--memory-muted)] transition-transform ${planOpen ? 'rotate-180' : ''}`}
@@ -1675,7 +1685,7 @@ function MemoryPersonalizationPanel({
         </p>
         <div className="grid gap-3 px-4 pb-4 sm:px-5 lg:grid-cols-[1.1fr_1fr]">
           <div className="rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-            <div className="flex items-center gap-2 text-xs font-semibold text-sky-700 dark:text-sky-300">
+            <div className="flex items-center gap-2 text-xs font-semibold text-violet-700 dark:text-violet-300">
               <Target className="h-4 w-4" /> 当前复习主题
             </div>
             <div className="mt-2 text-lg font-semibold text-[var(--memory-text)]">{targetTopic}</div>
@@ -1686,7 +1696,7 @@ function MemoryPersonalizationPanel({
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                 <div
-                  className="h-full rounded-full bg-sky-500"
+                  className="h-full rounded-full bg-violet-500"
                   style={{ width: `${Math.max(4, Math.min(100, mastery ?? 4))}%` }}
                 />
               </div>
@@ -1753,7 +1763,7 @@ function MemoryPersonalizationPanel({
 
         <div className="mt-4 flex flex-col gap-3 border-t border-slate-200 pt-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-2 text-xs leading-5 text-[var(--memory-muted)]">
-            <Route className="mt-0.5 h-4 w-4 shrink-0 text-sky-600 dark:text-sky-300" />
+            <Route className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
             <span>完成后：记忆反馈 → 更新熟练度和全局知识状态 → 计算下次复习与下一工具。</span>
           </div>
         </div>
@@ -1790,7 +1800,7 @@ function MemoryCardFeedbackPanel({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-2">
-          <TrendingUp className="mt-0.5 h-4 w-4 text-sky-700 dark:text-sky-300" />
+          <TrendingUp className="mt-0.5 h-4 w-4 text-violet-700 dark:text-violet-300" />
           <div>
             <div className="text-sm font-semibold text-[var(--memory-text)]">本张卡已进入画像</div>
             <div className="mt-1 text-xs text-[var(--memory-muted)]">
@@ -1822,7 +1832,7 @@ function MemoryCardFeedbackPanel({
         >
           <div className="text-[10px] text-[var(--memory-muted)]">记忆熟练度</div>
           <div className="mt-1 text-sm font-semibold text-[var(--memory-text)]">
-            {feedback.masteryBefore}% <span className="text-sky-600 dark:text-sky-300">→</span>{' '}
+            {feedback.masteryBefore}% <span className="text-violet-600 dark:text-violet-300">→</span>{' '}
             {feedback.masteryAfter}%
           </div>
         </div>
@@ -1933,7 +1943,7 @@ function MemorySessionSummary({
 const causeColors: Record<MistakeCause, string> = {
   'concept-unclear': 'bg-purple-900/30 text-purple-300 border border-purple-500/20',
   'calculation-error': 'bg-orange-900/30 text-orange-300 border border-orange-500/20',
-  misreading: 'bg-sky-900/30 text-sky-300 border border-sky-500/20',
+  misreading: 'bg-violet-900/30 text-violet-300 border border-violet-500/20',
   'method-wrong': 'bg-red-900/30 text-red-300 border border-red-500/20',
   careless: 'bg-yellow-900/30 text-yellow-300 border border-yellow-500/20',
   'format-error': 'bg-slate-700/30 text-slate-300 border border-slate-500/20',

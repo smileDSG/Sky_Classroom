@@ -1,0 +1,715 @@
+{
+  "id": "res_AYFr0lIrkv7i",
+  "userId": "admin-default",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "学习资料已生成完成",
+  "createdAt": "2026-09-17T09:48:04.203Z",
+  "updatedAt": "2026-09-17T09:48:21.879Z",
+  "input": "我的专业背景：高中数学·导数\n当前课程：《人工智能导论》，重点章节：因式分解\n学习目标：两周内掌握机器学习，重点攻克过拟合和模型评估\n需要加强的内容：深度学习\n学习历史：近期练习正确率约 5600%；8 条内容已到复习时间；学习路径：个性化学习路径 · 均衡提升\n补充需求：因式分解\n\n资源偏好：图解、代码案例、分层练习；希望生成：讲义、导图、自查清单、学习路径\n学习节奏：每天 45 分钟",
+  "inputPreview": "我的专业背景：高中数学·导数 当前课程：《人工智能导论》，重点章节：因式分解 学习目标：两周内掌握机器学习，重点攻克过拟合和模型评估 需要加强的内容：深度学习 学习历史：近期练习正确率约 5600%；8 条内容已到复习时间；学习路径：个性化学习路径 · 均衡提升 补充需求：因式分解 资源偏好：图解、代码案例、分层练习；希望生成：讲义、导图、自查清单、学习路径 学习节奏：每天 45 分钟",
+  "resourceTypes": [
+    "markdown_lecture",
+    "mind_map",
+    "self_check",
+    "learning_path"
+  ],
+  "startedAt": "2026-09-17T09:48:04.225Z",
+  "completedAt": "2026-09-17T09:48:21.877Z",
+  "result": {
+    "demoId": "software-cup-ai-intro-demo-001",
+    "jobId": "software-cup-1789638501874",
+    "status": "completed",
+    "progress": 100,
+    "courseId": "ai-intro-2026",
+    "generatedAt": "2026-09-17T09:48:21.874Z",
+    "studentProfile": {
+      "userId": "software-cup-demo-student",
+      "sourceInput": "我的专业背景：高中数学·导数\n当前课程：《人工智能导论》，重点章节：因式分解\n学习目标：两周内掌握机器学习，重点攻克过拟合和模型评估\n需要加强的内容：深度学习\n学习历史：近期练习正确率约 5600%；8 条内容已到复习时间；学习路径：个性化学习路径 · 均衡提升\n补充需求：因式分解\n\n资源偏好：图解、代码案例、分层练习；希望生成：讲义、导图、自查清单、学习路径\n学习节奏：每天 45 分钟",
+      "profileVersion": "v0.1.0",
+      "lastUpdated": "2026-09-17T09:48:04.255Z",
+      "dimensions": {
+        "majorBackground": {
+          "value": "高中数学·导数",
+          "confidence": 0.9,
+          "evidence": [
+            "我想继续补强高中数学·导数"
+          ]
+        },
+        "learningGoal": {
+          "value": "两周内掌握机器学习，重点攻克过拟合和模型评估",
+          "confidence": 0.9,
+          "evidence": [
+            "两周内补机器学习，过拟合和模型评估总是搞不懂"
+          ]
+        },
+        "knowledgeBase": {
+          "strongPoints": [
+            "线性回归",
+            "决策树"
+          ],
+          "weakPoints": [
+            "深度学习"
+          ],
+          "confidence": 0.9,
+          "evidence": [
+            "学过线性回归和决策树，还没学深度学习"
+          ]
+        },
+        "cognitiveStyle": {
+          "value": "具象化理解",
+          "confidence": 0.7,
+          "evidence": [
+            "图解"
+          ]
+        },
+        "errorPatternPreference": {
+          "value": [
+            "概念边界混淆",
+            "评价指标选择不稳",
+            "公式与代码连接弱"
+          ],
+          "confidence": 0.78,
+          "evidence": [
+            "由薄弱点和资源偏好综合推断"
+          ]
+        },
+        "resourcePreference": {
+          "value": [
+            "代码案例",
+            "图解",
+            "练习题"
+          ],
+          "confidence": 0.9,
+          "evidence": [
+            "先用代码案例、图解讲清楚，再给我一组基础练习"
+          ]
+        },
+        "learningPace": {
+          "value": "时间紧迫，两周内完成",
+          "confidence": 0.9,
+          "evidence": [
+            "两周内"
+          ]
+        },
+        "currentLearningState": {
+          "value": "自评基础：刚开始接触",
+          "confidence": 0.6,
+          "evidence": [
+            "identity=learner;stages=undergraduate;domains=artificial-intelligence;goals=培养职业能力,巩固基础;needs=identify-gaps"
+          ]
+        }
+      },
+      "updatePolicy": {
+        "quizAccuracyBelow60": "降低难度并补充前置知识",
+        "codeErrorsRepeated": "推送分步调试提示和最小可运行案例",
+        "resourceFeedbackTooHard": "插入图解讲义和基础题",
+        "masteryAbove85": "推送拓展阅读和项目任务"
+      }
+    },
+    "safety": {
+      "passed": true,
+      "riskLevel": "low",
+      "categories": [
+        "learning_request"
+      ],
+      "action": "allow",
+      "message": "输入符合学习辅导场景，可进入画像构建和资源生成。"
+    },
+    "courseHits": [
+      {
+        "document": {
+          "id": "data-course-knowledge-ai-intro-chapters-01-ai-overview-md",
+          "courseId": "ai-intro-2026",
+          "title": "第 1 章 人工智能概述",
+          "kind": "chapter",
+          "file": "data/course-knowledge/ai-intro/chapters/01-ai-overview.md",
+          "tags": [
+            "人工智能",
+            "机器学习",
+            "深度学习",
+            "大语言模型",
+            "智能体",
+            "可信AI"
+          ]
+        },
+        "score": 84.2,
+        "snippet": "# 第 1 章 人工智能概述 ## 学习目标 - 解释人工智能、机器学习、深度学习、大模型和智能体的关系。 - 了解人工智能的发展脉络和典型应用场景。 - 能够判断一个问题是否适合使用 AI 方法解决。 ## 核心讲义 人工智能（Artificial Intelligence, AI）研究如何让机器表现出与“感知、推理、学习、决策、创造”相关的智能行为。它不是单一算法，而是一组方法和系统设计思想。早期 AI"
+      },
+      {
+        "document": {
+          "id": "ai-intro-assessment-rubric",
+          "courseId": "ai-intro-2026",
+          "title": "《人工智能导论》学习效果评估与项目评分 Rubric",
+          "kind": "rubric",
+          "file": "data/course-knowledge/ai-intro/assessment-rubric.md",
+          "tags": []
+        },
+        "score": 71,
+        "snippet": "# 《人工智能导论》学习效果评估与项目评分 Rubric ## 一、章节掌握度评估 | 等级 | 掌握度范围 | 表现描述 | 系统动作 | | --- | --- | --- | --- | | 未掌握 | 0-39 | 概念混淆，无法完成基础题 | 推送概念讲义、图解视频、低难度题 | | 初步掌握 | 40-59 | 能记住定义，但迁移应用弱 | 推送对比表、案例题、前置知识复习 | | 基本掌握 | 60-7"
+      },
+      {
+        "document": {
+          "id": "ai-intro-syllabus",
+          "courseId": "ai-intro-2026",
+          "title": "《人工智能导论》课程大纲",
+          "kind": "syllabus",
+          "file": "data/course-knowledge/ai-intro/syllabus.md",
+          "tags": []
+        },
+        "score": 62,
+        "snippet": "的基础直觉。 - 了解数据结构中的图、树、队列、栈等基本结构。 ## 三、课程目标 完成课程后，学生应能够： 1. 解释人工智能、机器学习、深度学习、大模型、智能体等概念之间的关系。 2. 使用状态、动作、目标测试和代价函数描述搜索问题。 3. 理解知识表示与推理的基本思路，能够区分符号推理和数据驱动学习。 4. 解释监督学习、过拟合、泛化、训练集/验证集/测试集、评价指标等核心概念。 5. 阅读基础神经网络"
+      },
+      {
+        "document": {
+          "id": "ai-intro-readings",
+          "courseId": "ai-intro-2026",
+          "title": "《人工智能导论》拓展阅读材料",
+          "kind": "reading",
+          "file": "data/course-knowledge/ai-intro/readings.md",
+          "tags": []
+        },
+        "score": 62,
+        "snippet": "M 等模型背后的数学直觉。 - 适合推送对象： - 数学基础较弱但希望补原理的学生。 - 准备继续学习机器学习理论课程的学生。 ## 2. 深度学习与 PyTorch 实践 ### 动手学深度学习 - 作者：Aston Zhang, Zachary C. Lipton, Mu Li, Alexander J. Smola - 来源：https://zh.d2l.ai - 建议关联章节：第 6 章神经网"
+      },
+      {
+        "document": {
+          "id": "data-course-knowledge-ai-intro-media-scripts-chapter-01-animation-md",
+          "courseId": "ai-intro-2026",
+          "title": "动画脚本：AI、机器学习、深度学习、大模型与智能体的关系",
+          "kind": "media_script",
+          "file": "data/course-knowledge/ai-intro/media-scripts/chapter-01-animation.md",
+          "tags": []
+        },
+        "score": 54,
+        "snippet": "# 动画脚本：AI、机器学习、深度学习、大模型与智能体的关系 ## 目标 用 90 秒动画帮助学生建立 AI 概念层级，避免“AI 等于大模型”的误区。 ## 分镜 | 镜头 | 时长 | 画面 | 旁白 | | --- | --- | --- | --- | | 1 | 8s | 屏幕中央出现“人工智能 AI”大圆，周围浮现感知、推理、学习、决策 | 人工智能研究如何让机器表现出智能行为，它不是单一算法。"
+      },
+      {
+        "document": {
+          "id": "data-course-knowledge-ai-intro-chapters-06-neural-networks-md",
+          "courseId": "ai-intro-2026",
+          "title": "第 6 章 神经网络与深度学习",
+          "kind": "chapter",
+          "file": "data/course-knowledge/ai-intro/chapters/06-neural-networks.md",
+          "tags": [
+            "神经网络",
+            "前向传播",
+            "反向传播",
+            "梯度下降",
+            "CNN",
+            "Dropout"
+          ]
+        },
+        "score": 40.2,
+        "snippet": "# 第 6 章 神经网络与深度学习 ## 学习目标 - 理解神经元、层、激活函数、损失函数和参数更新的基本含义。 - 了解前向传播、反向传播和梯度下降的训练闭环。 - 理解 CNN 为什么适合图像任务，并能完成一个简单图像分类实验。 ## 核心讲义 神经网络由大量可学习参数组成，通过层与层之间的变换把输入映射为输出。最基础的神经元会对输入特征加权求和，再经过激活函数产生输出。多层感知机（Multilayer"
+      }
+    ],
+    "agentTrace": [
+      {
+        "agent": "ProfileAgent",
+        "status": "completed",
+        "output": "从自然语言输入抽取专业背景、目标、薄弱点、节奏和资源偏好，当前重点为 深度学习。",
+        "progress": 18
+      },
+      {
+        "agent": "CourseUnderstandingAgent",
+        "status": "completed",
+        "output": "检索《人工智能导论》知识库，命中 6 个章节或案例来源。",
+        "progress": 34
+      },
+      {
+        "agent": "ResourcePlannerAgent",
+        "status": "completed",
+        "output": "依据画像选择资源组合：markdown_lecture, mind_map, self_check, learning_path。",
+        "progress": 52
+      },
+      {
+        "agent": "ContentAgentGroup",
+        "status": "completed",
+        "output": "生成 4 类学习材料，并为每张资源卡补充个性化理由。",
+        "progress": 74
+      },
+      {
+        "agent": "TrustReviewAgent",
+        "status": "completed",
+        "output": "检查来源引用、敏感内容和过度确定性表述，输出置信度与复核建议。",
+        "progress": 88
+      },
+      {
+        "agent": "LearningPathAgent",
+        "status": "completed",
+        "output": "按「时间紧迫，两周内完成」规划学习顺序，并将资源接入学习路径。",
+        "progress": 100
+      }
+    ],
+    "resources": [
+      {
+        "id": "res-lecture-overfitting-rag",
+        "type": "markdown_lecture",
+        "title": "深度学习 个性化讲义：从过拟合到可信 AI",
+        "personalizationReason": "学生目标是两周内掌握机器学习并攻克过拟合与模型评估，同时需要加强深度学习。本讲义先用训练集/测试集解释泛化，再用 RAG 解释来源检索，最后统一到可信 AI 评价，匹配其具象化理解风格和代码案例偏好。",
+        "sourceCitations": [
+          "chapters/04-machine-learning-basics.md",
+          "chapters/10-large-models-and-agents.md",
+          "data/course-knowledge/ai-intro/chapters/01-ai-overview.md",
+          "data/course-knowledge/ai-intro/assessment-rubric.md",
+          "data/course-knowledge/ai-intro/syllabus.md",
+          "data/course-knowledge/ai-intro/readings.md",
+          "data/course-knowledge/ai-intro/media-scripts/chapter-01-animation.md",
+          "data/course-knowledge/ai-intro/chapters/06-neural-networks.md"
+        ],
+        "contentPreview": "先用训练集/测试集解释泛化，再用 RAG 解释为什么课程问答助手需要检索来源，最后把二者统一到可信 AI 评价中。",
+        "trust": {
+          "confidence": 0.9,
+          "status": "verified_with_llm"
+        },
+        "content": "# 深度学习 个性化讲义：从过拟合到可信 AI\n\n> 适用对象：刚开始接触机器学习、希望在两周内掌握核心概念并攻克过拟合与模型评估的学习者。\n> 学习节奏建议：每天 45 分钟，先读讲义，再对照导图与自查清单。\n\n## 1. 先建立全局地图：AI、ML、DL 的关系\n\n人工智能（AI）研究如何让机器表现出与“感知、推理、学习、决策、创造”相关的智能行为，它不是单一算法，而是一组方法和系统设计思想。机器学习（ML）是 AI 的重要分支，关注如何让模型从数据中自动改进。深度学习（DL）是机器学习的一类方法，使用多层神经网络学习复杂表示。\n\n常见误区：认为 AI 等于深度学习。深度学习只是 AI 的一种技术路线。\n\n## 2. 过拟合：模型“背答案”而不是“学规律”\n\n### 2.1 用训练集/测试集解释泛化\n\n课程大纲要求解释监督学习、过拟合、泛化、训练集/验证集/测试集、评价指标等核心概念。\n\n- 训练集：模型用来学习参数的数据。\n- 验证集：用来调整超参数、判断是否过拟合的数据。\n- 测试集：最后评估泛化能力的数据，不能用来调参。\n\n如果模型在训练集上表现很好，但在验证集或测试集上明显变差，就是过拟合的典型信号。\n\n### 2.2 深度学习中的过拟合与正则化\n\n神经网络训练时，模型先进行前向传播，得到预测结果；然后使用损失函数度量预测与真实标签之间的差距；接着通过反向传播计算损失对参数的梯度；最后使用优化算法更新参数。这个循环会重复多轮，直到模型在验证集上达到较好表现或出现过拟合趋势。\n\n训练过程需要关注学习率、批大小、初始化、正则化、Dropout、数据增强和早停等策略。深度学习并不等于“把网络堆得越深越好”。\n\n常见误区：只关注准确率，不看训练曲线和错误样本。\n\n## 3. 模型评估：不要只看一个数字\n\n《人工智能导论》学习效果评估与项目评分 Rubric 给出了知识维度评价，包括概念理解、算法流程、工程实践、迁移应用、安全可信、学习行为。对应到模型评估，可以这样自查：\n\n- 概念理解：能否说清训练集、验证集、测试集的区别？\n- 算法流程：能否解释前向传播、损失函数、反向传播、参数更新的顺序？\n- 工程实践：能否运行一个最小代码案例，观察训练损失和验证准确率？\n- 迁移应用：能否把过拟合判断迁移到新数据集？\n- 安全可信：能否识别模型输出中的幻觉、偏见和来源缺失？\n\n## 4. 用 RAG 理解“为什么要检索来源”\n\n大语言模型（LLM）通常基于 Transformer 架构，通过大规模文本训练获得语言理解、生成和推理能力。但大模型能力强，仍可能产生幻觉和偏见。\n\nRAG（检索增强生成）的思路是：先检索课程知识库，再让模型基于检索到的内容生成回答。这样做的价值是：\n\n- 回答有来源可查，降低幻觉风险。\n- 课程问答助手可以引用讲义、题库和参考资料。\n- 评价方式包括回答准确率、来源引用完整性和学生反馈。\n\n一个 AI 系统通常包含四类要素：任务目标、数据或知识来源、模型或推理机制、评价与安全约束。以“课程问答助手”为例，任务目标是帮助学生理解课程内容；知识来源是课程讲义、题库和参考资料；模型机制可以是 RAG 加 LLM；评价方式包括回答准确率、来源引用完整性和学生反馈；安全约束包括防止编造来源、避免代写作业和保护隐私。\n\n## 5. 把过拟合与 RAG 统一到可信 AI 评价\n\n| 维度 | 过拟合视角 | RAG 视角 |\n| --- | --- | --- |\n| 数据 | 训练集/验证集/测试集划分 | 检索来源是否可靠 |\n| 模型 | 是否在验证集上泛化 | 是否基于检索内容生成 |\n| 评价 | 准确率、损失曲线、混淆矩阵 | 来源引用完整性、学生反馈 |\n| 安全 | 错误样本分析 | 防幻觉、低置信度、隐私和学术诚信说明 |\n\n课程学习中要同时关注“能做什么”和“凭什么可信”。\n\n## 6. 两周 45 分钟/天 学习建议\n\n- 第 1-3 天：读本讲义第 1-2 节，画 AI/ML/DL 层级图。\n- 第 4-6 天：读第 3 节，完成一个最小训练/验证划分代码案例。\n- 第 7-9 天：读第 4 节，理解 RAG 流程，画出“检索→生成→审核”闭环。\n- 第 10-12 天：读第 5 节，做自查清单，整理错题。\n- 第 13-14 天：复盘学习路径，准备一个小型项目说明。\n\n## 7. 来源引用\n\n- 第 1 章 人工智能概述：AI/ML/DL/LLM/Agent 关系、四类要素、常见误区。\n- 《人工智能导论》课程大纲：课程目标、先修要求、章节安排。\n- 第 6 章 神经网络与深度学习：前向传播、反向传播、正则化、Dropout、早停。\n- 《人工智能导论》学习效果评估与项目评分 Rubric：知识维度评价、个性化调整规则。",
+        "downloadFileName": "深度学习-个性化讲义.md",
+        "generationSource": "llm_rag",
+        "qualityReview": {
+          "resourceId": "res-lecture-overfitting-rag",
+          "citationCoverage": "pass",
+          "difficultyFit": "pass",
+          "personalizationFit": "pass",
+          "confidence": 1,
+          "issues": [],
+          "suggestions": [
+            "Keep profile-fit notes visible for each resource."
+          ]
+        }
+      },
+      {
+        "id": "res-mindmap",
+        "type": "mind_map",
+        "title": "深度学习 知识结构导图",
+        "format": "mermaid",
+        "content": "# 深度学习 知识结构导图\n\n```mermaid\nmindmap\n  root((深度学习))\n    AI 全局认知\n      AI 定义\n      发展脉络\n      任务类型\n      AI/ML/DL/LLM/Agent 关系\n    机器学习基础\n      数据集\n      特征\n      训练\n      泛化\n      过拟合\n      评价指标\n    神经网络与深度学习\n      神经元\n      层\n      激活函数\n      损失函数\n      前向传播\n      反向传播\n      梯度下降\n      CNN\n      Dropout\n    模型评估\n      训练集/验证集/测试集\n      准确率\n      损失曲线\n      混淆矩阵\n      错误样本分析\n    可信 AI\n      幻觉\n      偏见\n      隐私\n      来源引用\n      RAG\n      智能体\n```\n\n## 使用说明\n\n- 先看根节点，确认“深度学习”在 AI 中的位置。\n- 再看“机器学习基础”分支，重点标记过拟合与评价指标。\n- 最后看“可信 AI”分支，把 RAG 和来源引用与模型评估联系起来。\n\n## 来源引用\n\n- 第 1 章 人工智能概述：AI/ML/DL/LLM/Agent 关系。\n- 《人工智能导论》课程大纲：章节安排与课程目标。\n- 第 6 章 神经网络与深度学习：训练闭环与常见误区。\n- 《人工智能导论》学习效果评估与项目评分 Rubric：知识维度评价。",
+        "sourceCitations": [
+          "knowledge-graph.json",
+          "data/course-knowledge/ai-intro/chapters/01-ai-overview.md",
+          "data/course-knowledge/ai-intro/assessment-rubric.md",
+          "data/course-knowledge/ai-intro/syllabus.md",
+          "data/course-knowledge/ai-intro/readings.md",
+          "data/course-knowledge/ai-intro/media-scripts/chapter-01-animation.md",
+          "data/course-knowledge/ai-intro/chapters/06-neural-networks.md"
+        ],
+        "trust": {
+          "confidence": 0.86,
+          "status": "verified_with_llm"
+        },
+        "personalizationReason": "学生偏好图解和具象化理解，导图把 AI/ML/DL、过拟合、模型评估、可信 AI 放在一张图中，便于每天 45 分钟快速定位薄弱点。",
+        "contentPreview": "围绕 深度学习 组织内容，匹配当前学习目标「两周内掌握机器学习，重点攻克过拟合和模型评估」，并保留课程来源引用。",
+        "downloadFileName": "深度学习-知识结构导图.md",
+        "generationSource": "llm_rag",
+        "qualityReview": {
+          "resourceId": "res-mindmap",
+          "citationCoverage": "pass",
+          "difficultyFit": "pass",
+          "personalizationFit": "pass",
+          "confidence": 1,
+          "issues": [],
+          "suggestions": [
+            "Keep profile-fit notes visible for each resource."
+          ]
+        }
+      },
+      {
+        "id": "res-self-check",
+        "type": "self_check",
+        "title": "深度学习 薄弱点自查清单",
+        "personalizationReason": "学生需要加强深度学习，且近期练习正确率异常、有 8 条内容到复习时间。自查清单按过拟合、模型评估、RAG 分层，帮助快速定位薄弱点并安排复习。",
+        "sourceCitations": [
+          "chapters/04-machine-learning-basics.md",
+          "chapters/10-large-models-and-agents.md",
+          "data/course-knowledge/ai-intro/chapters/01-ai-overview.md",
+          "data/course-knowledge/ai-intro/assessment-rubric.md",
+          "data/course-knowledge/ai-intro/syllabus.md",
+          "data/course-knowledge/ai-intro/readings.md",
+          "data/course-knowledge/ai-intro/media-scripts/chapter-01-animation.md",
+          "data/course-knowledge/ai-intro/chapters/06-neural-networks.md"
+        ],
+        "contentPreview": "按过拟合、模型评估、RAG 给出“能做到/还不行”判定式自查项和常见错因对照，仅用于自查、不替代正式答题。",
+        "trust": {
+          "confidence": 0.89,
+          "status": "verified_with_llm"
+        },
+        "content": "# 深度学习 薄弱点自查清单\n\n> 用途：仅用于自查，不替代正式答题。每天 45 分钟学习后，用 5 分钟勾选。\n\n## A. 过拟合\n\n| 自查项 | 能做到 | 还不行 | 常见错因 |\n| --- | --- | --- | --- |\n| 我能说清训练集、验证集、测试集的区别 |  |  | 把测试集当验证集调参 |\n| 我能判断模型是否过拟合 |  |  | 只看训练准确率，不看验证集 |\n| 我能说出至少两种缓解过拟合的方法 |  |  | 只记 Dropout，忘了正则化、早停、数据增强 |\n| 我能解释“深度学习不等于把网络堆得越深越好” |  |  | 认为层数越多越好 |\n\n## B. 模型评估\n\n| 自查项 | 能做到 | 还不行 | 常见错因 |\n| --- | --- | --- | --- |\n| 我能解释前向传播、损失函数、反向传播、参数更新的顺序 |  |  | 把反向传播说成“反向运行网络” |\n| 我能看懂训练损失和验证准确率曲线 |  |  | 只关注准确率，不看训练曲线 |\n| 我能用混淆矩阵分析错误样本 |  |  | 忽略错误样本分析 |\n| 我能区分概念理解、算法流程、工程实践、迁移应用、安全可信五个评价维度 |  |  | 只关注概念题 |\n\n## C. RAG 与可信 AI\n\n| 自查项 | 能做到 | 还不行 | 常见错因 |\n| --- | --- | --- | --- |\n| 我能解释为什么课程问答助手需要检索来源 |  |  | 认为模型记忆足够 |\n| 我能说出 RAG 的基本流程：检索→生成→审核 |  |  | 混淆 RAG 和普通生成 |\n| 我能识别幻觉、偏见、隐私和学术诚信风险 |  |  | 忽略安全约束 |\n| 我知道生成内容必须有来源、能核验、可复核 |  |  | 直接复制模型输出 |\n\n## D. 个性化调整建议\n\n根据《人工智能导论》学习效果评估与项目评分 Rubric：\n\n- 如果概念题正确率低于 60%，优先推送图解讲义和术语辨析题。\n- 如果代码题错误集中在环境或语法，优先推送可运行最小案例和调试提示。\n- 如果算法题能做但解释不清，推送流程图和“讲给同学听”式复述任务。\n- 如果项目输出缺少来源，强制进入“补充来源与引用”任务。\n\n## 来源引用\n\n- 第 6 章 神经网络与深度学习：训练闭环、正则化、常见误区。\n- 《人工智能导论》学习效果评估与项目评分 Rubric：知识维度评价与个性化调整规则。\n- 第 1 章 人工智能概述：RAG、可信 AI、四类要素。",
+        "downloadFileName": "深度学习-薄弱点自查清单.md",
+        "generationSource": "llm_rag",
+        "qualityReview": {
+          "resourceId": "res-self-check",
+          "citationCoverage": "pass",
+          "difficultyFit": "pass",
+          "personalizationFit": "pass",
+          "confidence": 1,
+          "issues": [],
+          "suggestions": [
+            "Keep profile-fit notes visible for each resource."
+          ]
+        }
+      },
+      {
+        "id": "res-learning-path",
+        "type": "learning_path",
+        "title": "深度学习 学习路径与跳转指引",
+        "personalizationReason": "学生时间紧迫、每天 45 分钟，路径按“学→查→练→复盘”四阶段组织，并跳转到讲义、导图、自查清单、出题引擎、错题画像，匹配均衡提升的个性化学习路径。",
+        "sourceCitations": [
+          "chapters/04-machine-learning-basics.md",
+          "chapters/10-large-models-and-agents.md",
+          "data/course-knowledge/ai-intro/chapters/01-ai-overview.md",
+          "data/course-knowledge/ai-intro/assessment-rubric.md",
+          "data/course-knowledge/ai-intro/syllabus.md",
+          "data/course-knowledge/ai-intro/readings.md",
+          "data/course-knowledge/ai-intro/media-scripts/chapter-01-animation.md",
+          "data/course-knowledge/ai-intro/chapters/06-neural-networks.md"
+        ],
+        "contentPreview": "按“学→查→练→复盘”四阶段组织：先讲义+导图，再自查清单，练跳转出题引擎、复盘跳转错题画像与学习计划。",
+        "trust": {
+          "confidence": 0.92,
+          "status": "verified_with_llm"
+        },
+        "content": "# 深度学习 学习路径与跳转指引\n\n> 目标：两周内掌握机器学习，重点攻克过拟合和模型评估，同时加强深度学习。\n> 节奏：每天 45 分钟。\n\n## 阶段一：学（第 1-4 天）\n\n- 第 1 天：读《深度学习 个性化讲义》第 1 节，建立 AI/ML/DL 全局地图。\n- 第 2 天：读第 2 节，理解过拟合与训练集/验证集/测试集。\n- 第 3 天：读第 3 节，理解模型评估维度。\n- 第 4 天：读第 4 节，理解 RAG 与来源引用。\n\n跳转：\n- 讲义：res-lecture-overfitting-rag\n- 导图：res-mindmap\n\n## 阶段二：查（第 5-7 天）\n\n- 每天用《深度学习 薄弱点自查清单》勾选 A、B、C 三部分。\n- 对“还不行”的项，回到讲义对应小节。\n- 重点关注：过拟合判断、训练曲线、混淆矩阵、RAG 流程。\n\n跳转：\n- 自查清单：res-self-check\n\n## 阶段三：练（第 8-11 天）\n\n- 练习跳转：出题引擎，选择“过拟合”“模型评估”“深度学习”标签。\n- 代码案例：运行一个最小训练/验证划分案例，观察训练损失和验证准确率。\n- 图解任务：画出前向传播→损失函数→反向传播→参数更新闭环。\n\n跳转：\n- 出题引擎（按知识点标签：过拟合、模型评估、神经网络）\n- 代码案例库（MNIST 手写数字识别、MLP 基线、小型 CNN）\n\n## 阶段四：复盘（第 12-14 天）\n\n- 复盘跳转：错题画像与学习计划。\n- 检查 8 条到复习时间的内容，优先复习过拟合与模型评估。\n- 整理一份小型项目说明：问题定义、知识来源、系统流程、评估分析、可信安全。\n\n跳转：\n- 错题画像\n- 学习计划\n- 项目评分 Rubric\n\n## 每日 45 分钟模板\n\n| 时间 | 任务 |\n| --- | --- |\n| 10 分钟 | 读讲义或导图 |\n| 15 分钟 | 代码案例或图解任务 |\n| 10 分钟 | 分层练习 |\n| 5 分钟 | 自查清单勾选 |\n| 5 分钟 | 错题回看 |\n\n## 来源引用\n\n- 《人工智能导论》课程大纲：课程目标与章节安排。\n- 第 6 章 神经网络与深度学习：训练闭环与实操案例。\n- 《人工智能导论》学习效果评估与项目评分 Rubric：个性化调整规则与项目评分标准。\n- 第 1 章 人工智能概述：AI 学习闭环示例。",
+        "downloadFileName": "深度学习-学习路径与跳转指引.md",
+        "generationSource": "llm_rag",
+        "qualityReview": {
+          "resourceId": "res-learning-path",
+          "citationCoverage": "pass",
+          "difficultyFit": "pass",
+          "personalizationFit": "pass",
+          "confidence": 1,
+          "issues": [],
+          "suggestions": [
+            "Keep profile-fit notes visible for each resource."
+          ]
+        }
+      }
+    ],
+    "learningPath": [
+      {
+        "dayRange": "第 1 步 · 学",
+        "goal": "建立 深度学习 的概念框架",
+        "resources": [
+          "res-lecture-overfitting-rag",
+          "res-mindmap"
+        ],
+        "reason": "先补齐概念边界，降低后续自查和练习的理解成本。"
+      },
+      {
+        "dayRange": "第 2 步 · 查",
+        "goal": "逐条自查薄弱点",
+        "resources": [
+          "res-self-check"
+        ],
+        "reason": "用自查清单判断哪些点“能做到”、哪些“还不行”，为出题练习确定主题。"
+      },
+      {
+        "dayRange": "第 3 步 · 练",
+        "goal": "跳转出题引擎针对性练习",
+        "resources": [],
+        "reason": "打开平台出题引擎，把自查后仍薄弱的点作为主题完成练习，包内不埋题。"
+      },
+      {
+        "dayRange": "第 4 步 · 复盘",
+        "goal": "跳转错题复盘并更新学习顺序",
+        "resources": [],
+        "reason": "练习后回到错题画像与学习计划，把新错因回写并调整后续安排。"
+      }
+    ],
+    "reviewResult": {
+      "passed": true,
+      "confidence": 0.89,
+      "issues": [
+        "学生补充需求“因式分解”与《人工智能导论》课程证据无直接关联，检索到的证据未覆盖因式分解，因此资源中未生成因式分解内容。",
+        "学生练习正确率“约 5600%”明显异常，可能是数据录入错误，资源中未将其作为事实依据。",
+        "资源槽位中引用的 chapters/04-machine-learning-basics.md 和 chapters/10-large-models-and-agents.md 未在检索证据中直接出现，已用已检索到的第 1 章、第 6 章、课程大纲和 Rubric 替代。",
+        "深度学习部分证据来自第 6 章，但该来源 score 为 40.2，相对较低，建议结合更多课程材料复核。"
+      ],
+      "suggestions": [
+        "后续接入真实模型时应保留来源片段和人工复核入口。",
+        "保留来源片段、置信度和人工复核入口",
+        "Keep profile-fit notes visible for each resource.",
+        "若需覆盖“因式分解”，建议补充数学先修知识库或单独生成数学基础资源。",
+        "建议核对学习历史中的正确率数据，修正异常值后再用于个性化推荐。",
+        "两周内掌握机器学习目标较大，建议按每天 45 分钟拆分为“概念→代码→评估→复盘”微任务，并优先保证过拟合与模型评估。",
+        "可增加一个可运行的最小代码案例，用于观察训练损失和验证准确率，帮助学生具象化理解过拟合。",
+        "建议在后续资源中补充混淆矩阵、精确率、召回率等评价指标的图解，以强化模型评估。"
+      ],
+      "resourceChecks": [
+        {
+          "resourceId": "res-lecture-overfitting-rag",
+          "citationCoverage": "pass",
+          "difficultyFit": "pass",
+          "personalizationFit": "pass",
+          "confidence": 1,
+          "issues": [],
+          "suggestions": [
+            "Keep profile-fit notes visible for each resource."
+          ]
+        },
+        {
+          "resourceId": "res-mindmap",
+          "citationCoverage": "pass",
+          "difficultyFit": "pass",
+          "personalizationFit": "pass",
+          "confidence": 1,
+          "issues": [],
+          "suggestions": [
+            "Keep profile-fit notes visible for each resource."
+          ]
+        },
+        {
+          "resourceId": "res-self-check",
+          "citationCoverage": "pass",
+          "difficultyFit": "pass",
+          "personalizationFit": "pass",
+          "confidence": 1,
+          "issues": [],
+          "suggestions": [
+            "Keep profile-fit notes visible for each resource."
+          ]
+        },
+        {
+          "resourceId": "res-learning-path",
+          "citationCoverage": "pass",
+          "difficultyFit": "pass",
+          "personalizationFit": "pass",
+          "confidence": 1,
+          "issues": [],
+          "suggestions": [
+            "Keep profile-fit notes visible for each resource."
+          ]
+        }
+      ]
+    },
+    "generationMode": "llm_rag",
+    "llmGeneration": {
+      "used": true,
+      "model": "deepseek:deepseek-v4-flash"
+    },
+    "p2Enhancements": {
+      "videoHandoff": {
+        "status": "ready_for_generation",
+        "providerHint": "script_to_video",
+        "aspectRatio": "16:9",
+        "styleGuide": "Bright classroom explainer, diagram first, no stock footage, concise labels.",
+        "scenes": [
+          {
+            "sceneId": "scene-1",
+            "title": "深度学习 visual explanation",
+            "narration": "Explain 深度学习 with one concrete example, then connect it to the learner's current goal.",
+            "visualPrompt": "Clean educational animation about 深度学习, with labeled steps, minimal text, and clear contrast.",
+            "durationSeconds": 18
+          },
+          {
+            "sceneId": "scene-2",
+            "title": "Practice transition",
+            "narration": "Show how the concept turns into a short practice task.",
+            "visualPrompt": "Split screen with concept diagram on the left and practice checklist on the right.",
+            "durationSeconds": 12
+          },
+          {
+            "sceneId": "scene-3",
+            "title": "Practice transition",
+            "narration": "Show how the concept turns into a short practice task.",
+            "visualPrompt": "Split screen with concept diagram on the left and practice checklist on the right.",
+            "durationSeconds": 12
+          }
+        ]
+      },
+      "weeklyPlan": [
+        {
+          "weekIndex": 1,
+          "theme": "Stabilize 深度学习",
+          "goals": [
+            "建立 深度学习 的概念框架",
+            "Finish targeted review and short quiz"
+          ],
+          "resourceIds": [
+            "res-lecture-overfitting-rag",
+            "res-mindmap"
+          ],
+          "reviewItems": [
+            "深度学习",
+            "线性回归"
+          ],
+          "estimatedMinutes": 180
+        },
+        {
+          "weekIndex": 2,
+          "theme": "Stabilize 深度学习",
+          "goals": [
+            "逐条自查薄弱点",
+            "Finish targeted review and short quiz"
+          ],
+          "resourceIds": [
+            "res-lecture-overfitting-rag",
+            "res-mindmap"
+          ],
+          "reviewItems": [
+            "深度学习",
+            "线性回归",
+            "决策树"
+          ],
+          "estimatedMinutes": 210
+        },
+        {
+          "weekIndex": 3,
+          "theme": "Apply 深度学习",
+          "goals": [
+            "跳转出题引擎针对性练习",
+            "Build or explain one applied artifact"
+          ],
+          "resourceIds": [
+            "res-lecture-overfitting-rag",
+            "res-mindmap"
+          ],
+          "reviewItems": [
+            "深度学习",
+            "线性回归",
+            "决策树"
+          ],
+          "estimatedMinutes": 240
+        },
+        {
+          "weekIndex": 4,
+          "theme": "Apply 深度学习",
+          "goals": [
+            "跳转错题复盘并更新学习顺序",
+            "Build or explain one applied artifact"
+          ],
+          "resourceIds": [
+            "res-lecture-overfitting-rag",
+            "res-mindmap"
+          ],
+          "reviewItems": [
+            "深度学习",
+            "线性回归",
+            "决策树"
+          ],
+          "estimatedMinutes": 270
+        }
+      ],
+      "spacedReviews": [
+        {
+          "knowledgePoint": "深度学习",
+          "dueInDays": 1,
+          "intervalDays": 1,
+          "priority": "high",
+          "reason": "Weak point from the current learning profile needs near-term retrieval practice."
+        },
+        {
+          "knowledgePoint": "线性回归",
+          "dueInDays": 5,
+          "intervalDays": 7,
+          "priority": "low",
+          "reason": "Strong point should be refreshed at a lower cadence to prevent forgetting."
+        },
+        {
+          "knowledgePoint": "决策树",
+          "dueInDays": 7,
+          "intervalDays": 7,
+          "priority": "low",
+          "reason": "Strong point should be refreshed at a lower cadence to prevent forgetting."
+        }
+      ],
+      "masteryEstimates": [
+        {
+          "knowledgePoint": "深度学习",
+          "mastery": 46,
+          "stability": 0.35,
+          "nextReviewInDays": 1,
+          "confidence": 0.78,
+          "evidence": [
+            "current profile weak point",
+            "学过线性回归和决策树，还没学深度学习"
+          ]
+        },
+        {
+          "knowledgePoint": "线性回归",
+          "mastery": 78,
+          "stability": 0.68,
+          "nextReviewInDays": 7,
+          "confidence": 0.72,
+          "evidence": [
+            "current profile strong point"
+          ]
+        },
+        {
+          "knowledgePoint": "决策树",
+          "mastery": 81,
+          "stability": 0.7200000000000001,
+          "nextReviewInDays": 10,
+          "confidence": 0.72,
+          "evidence": [
+            "current profile strong point"
+          ]
+        }
+      ],
+      "classGroupProfile": {
+        "classId": "ai-intro-demo-class",
+        "learnerCount": 3,
+        "weakPointTrends": [
+          {
+            "knowledgePoint": "深度学习",
+            "affectedLearners": 3,
+            "averageMastery": 40
+          }
+        ],
+        "resourcePreferenceTrends": [
+          {
+            "preference": "代码案例",
+            "learnerCount": 3
+          },
+          {
+            "preference": "练习题",
+            "learnerCount": 3
+          },
+          {
+            "preference": "图解",
+            "learnerCount": 3
+          },
+          {
+            "preference": "project tasks",
+            "learnerCount": 1
+          }
+        ],
+        "tierRecommendations": [
+          {
+            "tier": "support",
+            "learnerCount": 2,
+            "focus": "深度学习",
+            "suggestedResources": [
+              "res-lecture-overfitting-rag",
+              "res-mindmap",
+              "res-self-check"
+            ]
+          },
+          {
+            "tier": "core",
+            "learnerCount": 2,
+            "focus": "complete the planned course path",
+            "suggestedResources": [
+              "res-lecture-overfitting-rag",
+              "res-mindmap"
+            ]
+          },
+          {
+            "tier": "extension",
+            "learnerCount": 1,
+            "focus": "project practice and peer explanation",
+            "suggestedResources": [
+              "res-mindmap",
+              "res-self-check"
+            ]
+          }
+        ],
+        "teacherActions": [
+          "Run a small-group review for 深度学习.",
+          "Assign code or diagram resources based on the dominant class preference.",
+          "Use weekly mastery estimates to regroup learners after the next quiz."
+        ]
+      }
+    }
+  }
+}

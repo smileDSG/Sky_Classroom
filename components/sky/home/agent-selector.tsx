@@ -24,7 +24,7 @@ export const TEACHER_OPTIONS = [
     role: 'assistant',
     description: '永远戴着墨镜的潮流少年',
     avatar: '/avatars/assistant-new.jpg',
-    color: '#6366f1',
+    color: '#3b82f6',
   },
 ];
 
@@ -47,7 +47,7 @@ export const STUDENT_OPTIONS = [
     personaType: 'analytical',
     description: '开学已疯，但还在坚持学习',
     avatar: '/avatars/student-meme-new.jpg',
-    color: '#4ECDC4',
+    color: '#0ea5e9',
   },
   {
     id: 'default-5',
@@ -57,7 +57,7 @@ export const STUDENT_OPTIONS = [
     personaType: 'creative',
     description: '勤奋读书的小老鼠，梦想成为富婆',
     avatar: '/avatars/student-reader-new.jpg',
-    color: '#D2691E',
+    color: '#0ea5e9',
   },
   {
     id: 'default-6',
@@ -67,7 +67,7 @@ export const STUDENT_OPTIONS = [
     personaType: 'note-taker',
     description: '戴眼镜的可爱男孩，手里总是拿着小花',
     avatar: '/avatars/student-glasses-new.jpg',
-    color: '#FFB6C1',
+    color: '#bae6fd',
   },
   {
     id: 'default-7',
@@ -209,7 +209,7 @@ export function AgentSelector({
             {/* 头部 */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700/50">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-violet-500 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-blue-500 flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <span className="font-medium text-slate-800 dark:text-slate-200">配置课堂角色</span>
@@ -274,7 +274,7 @@ export function AgentSelector({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-violet-500" />
+                    <Users className="w-4 h-4 text-sky-500" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       选择同学
                     </span>
@@ -294,7 +294,7 @@ export function AgentSelector({
                           'flex items-center gap-3 p-3 rounded-xl transition-all',
                           'border-2 relative',
                           isSelected
-                            ? 'border-violet-400 bg-violet-50 dark:bg-violet-900/20'
+                            ? 'border-sky-400 bg-sky-50 dark:bg-sky-900/20'
                             : 'border-transparent bg-slate-50 dark:bg-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-700/50',
                         )}
                       >
@@ -322,7 +322,7 @@ export function AgentSelector({
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            className="absolute top-2 right-2 w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center"
+                            className="absolute top-2 right-2 w-5 h-5 rounded-full bg-sky-500 flex items-center justify-center"
                           >
                             <svg
                               className="w-3 h-3 text-white"
@@ -346,7 +346,7 @@ export function AgentSelector({
               </div>
 
               {/* 提示 */}
-              <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-sm">
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 text-sm">
                 <Bot className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>选择不同性格的同学让课堂更有趣！每个角色都有独特的表情包风格。</span>
               </div>

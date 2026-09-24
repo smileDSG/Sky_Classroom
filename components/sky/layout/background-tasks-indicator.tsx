@@ -15,7 +15,6 @@ import {
   Presentation,
   FileQuestion,
   PenTool,
-  Languages,
   Brain,
 } from 'lucide-react';
 import { useTaskStore, type BackgroundTask, type TaskType } from '@/lib/store/use-task-store';
@@ -26,7 +25,6 @@ const TASK_ICONS: Record<TaskType, React.ComponentType<{ className?: string }>> 
   pptx: Presentation,
   quiz: FileQuestion,
   write: PenTool,
-  translate: Languages,
   memory: Brain,
   teaching: Brain,
   general: Zap,
@@ -38,7 +36,6 @@ const TASK_COLORS: Record<TaskType, string> = {
   pptx: 'text-cyan-500',
   quiz: 'text-amber-500',
   write: 'text-emerald-500',
-  translate: 'text-indigo-500',
   memory: 'text-rose-500',
   teaching: 'text-purple-500',
   general: 'text-sky-500',
@@ -50,7 +47,6 @@ const TASK_ROUTES: Record<TaskType, string> = {
   pptx: '/sky/cloud-mind',
   quiz: '/sky/cloud-mind/quiz',
   write: '/sky/cloud-mind',
-  translate: '/sky/cloud-mind',
   memory: '/sky/cloud-mind/memory',
   teaching: '/sky/teaching',
   general: '/sky/cloud-mind',

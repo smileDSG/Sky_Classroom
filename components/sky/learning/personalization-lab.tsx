@@ -104,10 +104,10 @@ function Metric({ label, value, help, color }: MetricProps) {
 
 function DecisionPanel({ decision }: { decision: PersonalizationLabDecision }) {
   return (
-    <section className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.07] p-5 shadow-[0_0_32px_rgba(34,211,238,0.08)]">
+    <section className="rounded-2xl border border-sky-300/20 bg-sky-300/[0.07] p-5 shadow-[0_0_32px_rgba(56,189,248,0.08)]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-200/70">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-sky-200/70">
             当前决策
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-white">
@@ -115,9 +115,9 @@ function DecisionPanel({ decision }: { decision: PersonalizationLabDecision }) {
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">{decision.summary}</p>
         </div>
-        <div className="rounded-xl border border-cyan-200/20 bg-cyan-100/10 px-3 py-2 text-right">
-          <div className="text-xs text-cyan-100/60">目标知识点</div>
-          <div className="mt-1 font-medium text-cyan-50">{decision.topic}</div>
+        <div className="rounded-xl border border-sky-200/20 bg-sky-100/10 px-3 py-2 text-right">
+          <div className="text-xs text-sky-100/60">目标知识点</div>
+          <div className="mt-1 font-medium text-sky-50">{decision.topic}</div>
         </div>
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -138,7 +138,7 @@ function DecisionPanel({ decision }: { decision: PersonalizationLabDecision }) {
         {decision.reasonCodes.map((code) => (
           <span
             key={code}
-            className="rounded-full border border-cyan-200/20 bg-cyan-100/10 px-3 py-1 text-xs text-cyan-100"
+            className="rounded-full border border-sky-200/20 bg-sky-100/10 px-3 py-1 text-xs text-sky-100"
           >
             {reasonLabels[code] ?? code}
           </span>
@@ -219,27 +219,22 @@ export function PersonalizationLab() {
   }, [state]);
 
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-[#07131b] text-white">
-      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:py-12">
-        <header className="flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <div className="flex items-start gap-4">
-              <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-cyan-200">
-                <FlaskConical className="size-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-cyan-200/70">Personalization V1</p>
-                <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
-                  学习情况实验室
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
-                  用模拟学习记录观察：掌握情况、判断把握和记忆情况如何影响下一步安排。
-                </p>
-              </div>
+    <div className="min-h-[calc(100dvh-4rem)] text-white">
+      <div className=" px-4 pt-6 pb-12 sm:px-6">
+        <header className="mb-6 flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-300/10 text-sky-200">
+              <FlaskConical className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight text-white">学习情况实验室</h1>
+              <p className="mt-1 line-clamp-1 text-sm text-slate-400">
+                用模拟学习记录观察：掌握情况、判断把握和记忆情况如何影响下一步安排。
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span className="size-2 rounded-full bg-emerald-400" />
+          <div className="flex shrink-0 items-center gap-2 text-xs text-slate-500">
+            <span className="size-2 rounded-full bg-sky-400" />
             演示状态仅保存在当前服务进程
           </div>
         </header>
@@ -247,7 +242,7 @@ export function PersonalizationLab() {
         {error && (
           <div
             role="alert"
-            className="mt-8 flex items-center gap-3 rounded-xl border border-rose-300/20 bg-rose-300/10 px-4 py-3 text-sm text-rose-100"
+            className="flex items-center gap-3 rounded-xl border border-rose-300/20 bg-rose-300/10 px-4 py-3 text-sm text-rose-100"
           >
             <CircleAlert className="size-4 shrink-0" />
             {error}
@@ -255,14 +250,14 @@ export function PersonalizationLab() {
         )}
 
         {state && knowledgeState && decision ? (
-          <div className="mt-10 space-y-6">
+          <div className=" space-y-6">
             <section className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
                   当前观测对象
                 </p>
                 <h2 className="mt-2 flex items-center gap-2 text-2xl font-semibold">
-                  <Target className="size-5 text-cyan-300" />
+                  <Target className="size-5 text-sky-300" />
                   {knowledgeState.displayName}
                 </h2>
               </div>
@@ -274,19 +269,19 @@ export function PersonalizationLab() {
                 label="掌握情况"
                 value={knowledgeState.mastery}
                 help="系统估计用户能否独立完成该知识点。"
-                color="#22d3ee"
+                color="#38bdf8"
               />
               <Metric
                 label="判断把握"
                 value={knowledgeState.confidence}
                 help="学习记录越多，系统越能判断你的情况。"
-                color="#a78bfa"
+                color="#38bdf8"
               />
               <Metric
                 label="当前记忆度"
                 value={knowledgeState.retention}
                 help="结合距离上次学习的时间估计当前记忆状态。"
-                color="#34d399"
+                color="#38bdf8"
               />
             </section>
 
@@ -295,7 +290,7 @@ export function PersonalizationLab() {
             {shadowReport && (
               <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
                 <div className="flex items-start gap-3">
-                  <BarChart3 className="mt-0.5 size-5 text-violet-300" />
+                  <BarChart3 className="mt-0.5 size-5 text-sky-300" />
                   <div>
                     <h2 className="text-lg font-semibold">真实数据影子评估</h2>
                     <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3 lg:grid-cols-6">
@@ -356,12 +351,12 @@ export function PersonalizationLab() {
                     <h2 className="text-lg font-semibold">模拟学习记录</h2>
                     <p className="mt-1 text-sm text-slate-500">每次操作都会更新学习情况和推荐。</p>
                   </div>
-                  <BrainCircuit className="size-5 text-cyan-300" />
+                  <BrainCircuit className="size-5 text-sky-300" />
                 </div>
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <Button
                     variant="outline"
-                    className="justify-start border-emerald-300/20 bg-emerald-300/[0.06] text-emerald-100 hover:bg-emerald-300/10"
+                    className="justify-start border-sky-300/20 bg-sky-300/[0.06] text-sky-100 hover:bg-sky-300/10"
                     disabled={busyEvent !== null}
                     onClick={() => void sendEvent('answer-correct')}
                   >
@@ -379,7 +374,7 @@ export function PersonalizationLab() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="justify-start border-cyan-300/20 bg-cyan-300/[0.06] text-cyan-100 hover:bg-cyan-300/10"
+                    className="justify-start border-sky-300/20 bg-sky-300/[0.06] text-sky-100 hover:bg-sky-300/10"
                     disabled={busyEvent !== null}
                     onClick={() => void sendEvent('review-success')}
                   >
@@ -388,7 +383,7 @@ export function PersonalizationLab() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="justify-start border-amber-300/20 bg-amber-300/[0.06] text-amber-100 hover:bg-amber-300/10"
+                    className="justify-start border-sky-300/20 bg-sky-300/[0.06] text-sky-100 hover:bg-sky-300/10"
                     disabled={busyEvent !== null}
                     onClick={() => void sendEvent('review-failure')}
                   >

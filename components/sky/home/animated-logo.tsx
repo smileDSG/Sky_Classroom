@@ -85,9 +85,9 @@ export function FeatureHighlights() {
       icon: Wand2,
       title: '云端智囊',
       desc: 'AI 工具集，拍照搜题、幻灯片讲解',
-      color: 'from-violet-500 to-purple-600',
-      bgColor: 'bg-violet-50 dark:bg-violet-900/20',
-      iconColor: 'text-violet-500',
+      color: 'from-sky-500 to-blue-600',
+      bgColor: 'bg-sky-50 dark:bg-sky-900/20',
+      iconColor: 'text-sky-500',
       href: '/sky/cloud-mind',
     },
     {

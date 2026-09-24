@@ -45,7 +45,7 @@ const WORKSPACE_ENTRIES = [
   {
     label: '授课历史',
     detail: '继续查看已经生成的课堂和讲解记录。',
-    href: '/sky/teaching/history',
+    href: '/sky/teaching?view=history',
     icon: Clock,
     tone: 'rose',
   },
@@ -68,7 +68,7 @@ export function TeacherWorkspacePage({
 }: TeacherWorkspacePageProps) {
   return (
     <SkyAppShell>
-      <div className="mx-auto max-w-6xl space-y-5 pb-8">
+      <div className=" space-y-5 pb-8">
         <SkySectionNav section="teaching" />
 
         <section

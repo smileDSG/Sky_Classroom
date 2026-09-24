@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
 import Script from 'next/script';
 import localFont from 'next/font/local';
 import { GeistSans } from 'geist/font/sans';
@@ -13,7 +12,6 @@ import { AccessCodeGuard } from '@/components/access-code-guard';
 import { SkyClassroomEntry } from '@/components/sky-classroom-entry';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { ServiceWorkerReset } from '@/components/service-worker-reset';
-import { OnboardingGate } from '@/components/auth/onboarding-gate';
 import { DeferredGlobalServices } from '@/components/deferred-global-services';
 
 // 商用自愈守卫: 每次部署, Next 会给 `_next/static/chunks/*.js` 换新的内容哈希名字(且
@@ -90,12 +88,13 @@ export default function RootLayout({
         className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <Script id="sky-stale-build-guard" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: STALE_GUARD }} />
+        <Script
+          id="sky-stale-build-guard"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: STALE_GUARD }}
+        />
         <ThemeProvider>
           <AuthProvider>
-            <Suspense fallback={null}>
-              <OnboardingGate />
-            </Suspense>
             <ServerProvidersInit />
             <ServiceWorkerReset />
             <SkyClassroomEntry />

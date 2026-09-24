@@ -52,21 +52,18 @@ export function TeachingPage({
   }, []);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      {/* Header — hero-style title bar */}
-      <div
-        className="rounded-2xl border bg-gradient-to-br from-[var(--teaching-surface)] to-[var(--teaching-surface-elevated)] p-5 shadow-sm backdrop-blur-sm flex items-center justify-between gap-4"
-        style={{ borderColor: 'var(--teaching-border)' }}
-      >
+    <div className=" space-y-6">
+      {/* Page header */}
+      <div data-tour-step="page-header" className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/15 via-violet-500/10 to-slate-200/50 dark:from-indigo-400/20 dark:via-violet-400/10 dark:to-slate-800/50 border border-indigo-500/20 dark:border-indigo-400/20 shadow-[0_0_20px_-4px_var(--teaching-glow)]">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[var(--teaching-border)] bg-[var(--teaching-primary)]/15 shadow-[0_0_16px_var(--teaching-glow)]">
             <GraduationCap className="h-7 w-7 text-[var(--teaching-primary)]" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-[var(--teaching-text)]">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--teaching-text)]">
               星际讲堂
-            </h2>
-            <p className="text-sm text-[var(--teaching-muted)] mt-0.5">
+            </h1>
+            <p className="mt-0.5 text-sm text-[var(--teaching-muted)]">
               AI 导师为你规划教案，逐段讲解知识点
             </p>
           </div>

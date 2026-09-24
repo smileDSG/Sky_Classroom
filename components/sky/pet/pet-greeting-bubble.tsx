@@ -37,13 +37,15 @@ export function pickGreeting(date: Date = new Date()): string {
 export function PetGreetingBubble({
   anchorId,
   showMs = 6000,
+  text: customText,
 }: {
   /** 宠物舞台的元素 id: 猫是 oml2d-stage, VRM 人物是 vrm-pet-stage */
   anchorId: string;
   showMs?: number;
+  /** 覆盖默认问候语: 传入后气泡显示该内容而非时段寒暄(如学习提醒)。为空/undefined 时用 pickGreeting */
+  text?: string;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [text, setText] = useState('');
   const [visible, setVisible] = useState(false);
 
   // 等宠物舞台真的出现再问好, 并跟着它走。
@@ -63,7 +65,6 @@ export function PetGreetingBubble({
       if (anchor) {
         if (!armed) {
           armed = true;
-          setText(pickGreeting());
           setVisible(true);
           hideTimer = setTimeout(() => {
             setVisible(false);
@@ -83,9 +84,17 @@ export function PetGreetingBubble({
           const sil = anchor.getAttribute('data-silhouette');
           if (sil) {
             try {
-              const s = JSON.parse(sil) as { left: number; right: number; top: number; bottom: number };
+              const s = JSON.parse(sil) as {
+                left: number;
+                right: number;
+                top: number;
+                bottom: number;
+              };
               const nums = [s.left, s.right, s.top, s.bottom];
-              if (nums.every((n) => typeof n === 'number' && Number.isFinite(n)) && s.right > s.left) {
+              if (
+                nums.every((n) => typeof n === 'number' && Number.isFinite(n)) &&
+                s.right > s.left
+              ) {
                 left = r.left + s.left;
                 right = r.left + s.right;
                 top = r.top + s.top;
@@ -114,7 +123,11 @@ export function PetGreetingBubble({
     };
   }, [anchorId, showMs]);
 
-  if (!visible || !text) return null;
+  if (!visible) return null;
+
+  // 优先显示传入的自定义内容(学习提醒); 没有就用时段问候作为兜底 ——
+  // customText 异步到位后此处自动重算, 无需额外 effect
+  const displayText = customText && customText.trim() ? customText : pickGreeting();
 
   return (
     <div
@@ -126,7 +139,7 @@ export function PetGreetingBubble({
       className="pointer-events-none fixed z-[9999] max-w-[240px] rounded-2xl border border-slate-200 bg-white/95 px-3.5 py-2.5 text-xs leading-relaxed text-slate-700 shadow-xl dark:border-slate-600 dark:bg-slate-800/95 dark:text-slate-200"
       style={{ left: 8, top: 120 }}
     >
-      {text}
+      {displayText}
     </div>
   );
 }

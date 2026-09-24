@@ -91,7 +91,7 @@ export function generateSuggestions(mistakes: MistakeRecord[], stats: QuickStats
     suggestions.push({
       icon: '🔥',
       text: `连续打卡 ${stats.streakDays} 天了，再坚持 ${remaining} 天解锁${name}徽章！`,
-      action: { label: '查看详情', href: '/sky/learning/stats' },
+      action: { label: '查看详情', href: '/sky/learning/profile-dashboard' },
     });
   }
 
@@ -128,7 +128,7 @@ export function generateSuggestions(mistakes: MistakeRecord[], stats: QuickStats
     suggestions.push({
       icon: '💡',
       text: `今天搜了 ${todayMistakes.length} 道题，记得休息一下，劳逸结合效果更好`,
-      action: { label: '学习统计', href: '/sky/learning/stats' },
+      action: { label: '学习记录', href: '/sky/learning/profile-dashboard' },
     });
   }
 

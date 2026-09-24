@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  BarChart3,
   BookOpenCheck,
   Brain,
   CalendarClock,
@@ -43,7 +42,7 @@ export const SECTION_META: Record<SkySection, { label: string; description: stri
     description: '今天学什么、为什么学、下一步怎么走',
   },
   resources: {
-    label: '学习资源',
+    label: '云端智囊',
     description: '题目、讲解、复习和课程材料',
   },
   teaching: {
@@ -55,14 +54,14 @@ export const SECTION_META: Record<SkySection, { label: string; description: stri
 export const SECTION_GROUPS: Record<SkySection, SectionNavGroup[]> = {
   learning: [
     {
-      label: '开始学习',
+      label: '今日开始',
       items: [
         { label: '学习总览', href: '/sky', icon: BookOpenCheck, exact: true },
         { label: '今日计划', href: '/sky/learning/today', icon: CalendarClock },
       ],
     },
     {
-      label: '学习进度',
+      label: '学情追踪',
       items: [
         { label: '学习路径', href: '/sky/learning/path', icon: Route },
         { label: '错题本', href: '/sky/learning/mistakes', icon: NotebookPen },
@@ -70,17 +69,16 @@ export const SECTION_GROUPS: Record<SkySection, SectionNavGroup[]> = {
       ],
     },
     {
-      label: '复盘反馈',
+      label: '复盘与总结',
       items: [
         { label: '学习分析', href: '/sky/learning/profile', icon: ShieldCheck },
-        { label: '学习统计', href: '/sky/learning/stats', icon: BarChart3 },
         { label: '学习记录', href: '/sky/learning/profile-dashboard', icon: History },
       ],
     },
   ],
   resources: [
     {
-      label: '开始使用',
+      label: '解题与出题',
       items: [
         { label: '资源总览', href: '/sky/cloud-mind', icon: LibraryBig, exact: true },
         { label: '拍题解析', href: '/sky/cloud-mind/solve', icon: Camera },
@@ -88,7 +86,7 @@ export const SECTION_GROUPS: Record<SkySection, SectionNavGroup[]> = {
       ],
     },
     {
-      label: '记忆与讲解',
+      label: '记忆与问答',
       items: [
         { label: '记忆复习', href: '/sky/cloud-mind/memory', icon: Brain },
         { label: '学习问答', href: '/sky/assistant', icon: Sparkles },
@@ -104,21 +102,15 @@ export const SECTION_GROUPS: Record<SkySection, SectionNavGroup[]> = {
   ],
   teaching: [
     {
-      label: '课程准备',
-      items: [
-        { label: '备课总览', href: '/sky/teaching', icon: FolderKanban, exact: true },
-      ],
+      label: '开始备课',
+      items: [{ label: '备课总览', href: '/sky/teaching', icon: FolderKanban, exact: true }],
     },
     {
-      label: '教学材料',
+      label: '教学设计',
       items: [
         { label: '课程资源', href: '/sky/teaching/resources', icon: LibraryBig },
         { label: '课件设计', href: '/sky/teaching/slides', icon: Presentation },
       ],
-    },
-    {
-      label: '课堂沉淀',
-      items: [{ label: '授课记录', href: '/sky/teaching/history', icon: History }],
     },
     {
       label: '智能授课',

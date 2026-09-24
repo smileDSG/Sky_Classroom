@@ -108,7 +108,7 @@ export function AssistantSettings({ mode, onModeChange, onThemeChange }: Assista
   return (
     <div className="flex-1 overflow-y-auto p-5 space-y-6">
       {/* Persona Mode */}
-      <Section icon={<Sparkles className="h-4 w-4 text-sky-500" />} title="助手人格">
+      <Section icon={<Sparkles className="h-4 w-4 text-rose-500" />} title="助手人格">
         <div className="grid grid-cols-2 gap-3">
           <ModeCard
             isActive={mode === 'anime'}
@@ -128,7 +128,7 @@ export function AssistantSettings({ mode, onModeChange, onThemeChange }: Assista
       </Section>
 
       {/* Theme Color */}
-      <Section icon={<Palette className="h-4 w-4 text-violet-500" />} title="主题色">
+      <Section icon={<Palette className="h-4 w-4 text-rose-500" />} title="主题色">
         <div className="flex gap-3">
           {THEME_COLORS.map((theme) => (
             <button
@@ -157,7 +157,7 @@ export function AssistantSettings({ mode, onModeChange, onThemeChange }: Assista
       </Section>
 
       {/* Font Size */}
-      <Section icon={<Type className="h-4 w-4 text-emerald-500" />} title="对话字号">
+      <Section icon={<Type className="h-4 w-4 text-rose-500" />} title="对话字号">
         <div className="flex gap-2">
           {FONT_SIZES.map((size) => (
             <button
@@ -165,14 +165,14 @@ export function AssistantSettings({ mode, onModeChange, onThemeChange }: Assista
               onClick={() => handleFontSizeChange(size.id)}
               className={`flex-1 flex flex-col items-center gap-1 rounded-xl border p-3 transition-all ${
                 selectedFontSize === size.id
-                  ? 'border-sky-400 bg-sky-50 dark:bg-sky-900/30 dark:border-sky-600'
-                  : 'border-slate-200 dark:border-slate-600 hover:border-sky-200'
+                  ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/30 dark:border-rose-600'
+                  : 'border-slate-200 dark:border-slate-600 hover:border-rose-200'
               }`}
             >
               <span
                 className={`${size.sample} font-medium ${
                   selectedFontSize === size.id
-                    ? 'text-sky-700 dark:text-sky-300'
+                    ? 'text-rose-700 dark:text-rose-300'
                     : 'text-slate-700 dark:text-slate-200'
                 }`}
               >
@@ -278,15 +278,15 @@ function ModeCard({
       onClick={onClick}
       className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${
         isActive
-          ? 'border-sky-400 bg-sky-50 dark:bg-sky-900/30 dark:border-sky-600'
-          : 'border-slate-200 dark:border-slate-600 hover:border-sky-200'
+          ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/30 dark:border-rose-600'
+          : 'border-slate-200 dark:border-slate-600 hover:border-rose-200'
       }`}
     >
       <span className="text-2xl">{emoji}</span>
       <div>
         <p
           className={`text-sm font-semibold ${
-            isActive ? 'text-sky-700 dark:text-sky-300' : 'text-slate-700 dark:text-slate-200'
+            isActive ? 'text-rose-700 dark:text-rose-300' : 'text-slate-700 dark:text-slate-200'
           }`}
         >
           {label}

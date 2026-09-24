@@ -23,13 +23,13 @@ export function PanelShell({
   return (
     <section
       className={cn(
-        'rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-cyan-100/10 dark:bg-[#081423]/95 dark:shadow-none',
+        'rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-sky-100/10 dark:bg-[#081423]/95 dark:shadow-none',
         className,
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-200/20 dark:bg-emerald-300/10 dark:text-emerald-100">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 text-sky-600 dark:border-sky-300/20 dark:bg-sky-300/10 dark:text-sky-100">
             <Icon className="h-4 w-4" />
           </span>
           <div className="min-w-0">
@@ -46,7 +46,7 @@ export function PanelShell({
         {action}
       </div>
       {error && (
-        <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-700 dark:border-amber-200/20 dark:bg-amber-300/10 dark:text-amber-100">
+        <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-700 dark:border-red-200/20 dark:bg-red-300/10 dark:text-red-100">
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           {error}
         </div>

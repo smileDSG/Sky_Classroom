@@ -305,7 +305,7 @@ function RegisterForm({ onToggle }: { onToggle: () => void }) {
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   useEffect(() => {
-    if (!isGuest) router.push(redirect || '/sky/onboarding');
+    if (!isGuest) router.push(redirect || '/');
   }, [isGuest, router, redirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -324,7 +324,7 @@ function RegisterForm({ onToggle }: { onToggle: () => void }) {
     setLoading(true);
     try {
       await register({ email: email || undefined, username, password });
-      router.push(redirect || '/sky/onboarding');
+      router.push(redirect || '/');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败，请稍后重试');

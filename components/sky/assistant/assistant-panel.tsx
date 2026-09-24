@@ -84,11 +84,11 @@ function loadMode(): KagamiMode {
 }
 
 const THEME_MAP: Record<string, string> = {
-  sky: '#0ea5e9',
-  violet: '#8B5CF6',
-  emerald: '#10b981',
+  sky: '#f43f5e',
+  violet: '#f43f5e',
+  emerald: '#f43f5e',
   rose: '#f43f5e',
-  amber: '#f59e0b',
+  amber: '#f43f5e',
 };
 
 function loadTheme(): string {
@@ -851,8 +851,8 @@ export function AssistantPanel({
             }}
             className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
               mode === 'anime'
-                ? 'bg-pink-100 text-pink-600 hover:bg-pink-200 dark:bg-pink-950/30 dark:text-pink-300 dark:hover:bg-pink-900/40'
-                : 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-900/40'
+                ? 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-900/40'
+                : 'bg-pink-100 text-pink-600 hover:bg-pink-200 dark:bg-pink-950/30 dark:text-pink-300 dark:hover:bg-pink-900/40'
             }`}
             title={mode === 'anime' ? '当前：二次元版' : '当前：常规版'}
           >
@@ -1044,8 +1044,8 @@ export function AssistantPanel({
                     className={`max-w-[82%] space-y-2 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}
                   >
                     {msg.role === 'assistant' && msg.personalization && (
-                      <div className="rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 to-cyan-50 p-3 shadow-sm dark:border-violet-200/15 dark:from-violet-950/35 dark:to-cyan-950/30 dark:shadow-none">
-                        <div className="flex items-center gap-2 text-[11px] font-bold text-violet-700 dark:text-violet-200">
+                      <div className="rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 to-pink-50 p-3 shadow-sm dark:border-rose-200/15 dark:from-rose-950/35 dark:to-pink-950/30 dark:shadow-none">
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-rose-700 dark:text-rose-200">
                           <BrainCircuit className="h-3.5 w-3.5" />
                           学习情况让本回答发生了这些变化
                         </div>
@@ -1107,17 +1107,17 @@ export function AssistantPanel({
                       <div
                         className={`rounded-xl border px-3 py-2.5 ${
                           msg.profileSync === 'recorded'
-                            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-200/15 dark:bg-emerald-400/10'
+                            ? 'border-rose-200 bg-rose-50 dark:border-rose-200/15 dark:bg-rose-400/10'
                             : msg.profileSync === 'disabled'
-                              ? 'border-amber-200 bg-amber-50 dark:border-amber-200/15 dark:bg-amber-400/10'
+                              ? 'border-rose-200 bg-rose-50 dark:border-rose-200/15 dark:bg-rose-400/10'
                               : 'border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/[0.035]'
                         }`}
                       >
                         <div className="flex items-start gap-2">
                           {msg.profileSync === 'recorded' ? (
-                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-rose-600 dark:text-rose-300" />
                           ) : msg.profileSync === 'disabled' ? (
-                            <CircleOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-300" />
+                            <CircleOff className="mt-0.5 h-4 w-4 shrink-0 text-rose-600 dark:text-rose-300" />
                           ) : (
                             <Database className="mt-0.5 h-4 w-4 shrink-0 text-slate-500 dark:text-slate-300" />
                           )}
@@ -1144,7 +1144,7 @@ export function AssistantPanel({
                           {syncAction && msg.profileSync !== 'pending' && (
                             <Link
                               href={syncAction.href}
-                              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-slate-900 px-2.5 py-1.5 text-[10px] font-semibold text-white hover:bg-slate-800 dark:bg-cyan-300 dark:text-slate-950 dark:hover:bg-cyan-200"
+                              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-slate-900 px-2.5 py-1.5 text-[10px] font-semibold text-white hover:bg-slate-800 dark:bg-rose-300 dark:text-slate-950 dark:hover:bg-rose-200"
                             >
                               {syncAction.label}
                               <ArrowRight className="h-3 w-3" />

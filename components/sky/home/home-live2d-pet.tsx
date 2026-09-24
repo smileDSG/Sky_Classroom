@@ -17,6 +17,8 @@ import { PetGreetingBubble } from '@/components/sky/pet/pet-greeting-bubble';
 // 点击宠物唤起小镜课堂(复用现有对话组件 + 其开关状态, 不改它的实现)
 import { AssistantPanel } from '@/components/sky/assistant/assistant-panel';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+// 进入首页时, 用「今日学习提醒 + 关心话」替换固定寒暄(异步 fetch, 失败则回退时段问候)
+import { useLearningGreeting } from '@/components/sky/pet/use-learning-greeting';
 
 const CATS = {
   // 亮色 → 白猫 Tororo(本地自托管)
@@ -37,6 +39,11 @@ const VRM_PET = {
 // 所以画面在盒子里占的比例不变 —— 盒子等比缩 = 人等比缩。
 const PET_BASE_SIZE = 0.6;
 
+// 猫整体微调(视觉像素)。此前猫即使贴底, 右下角仍有点缝隙/偏高, 用户想让猫
+// 更贴右下: 往下 100px、往右 10px。实现见 Live2DPet 的 offsetX/offsetY 说明。
+const CAT_OFFSET_X = 10;
+const CAT_OFFSET_Y = 100;
+
 export function HomeLive2DPet() {
   const { resolvedTheme } = useTheme();
   const [enabled, setEnabled] = useState(true);
@@ -44,10 +51,12 @@ export function HomeLive2DPet() {
   const scale = PET_BASE_SIZE;
   // 显示哪只: 'theme' = 随主题的白/黑猫(默认, 保持原行为) ; 'vrm' = VRM 人物。
   // 存在全局 store(持久化), 这样别的页面也知道该显示哪只 —— 各页头像才不会对不上。
+  // 切换动作在宠物脚底的 <PetKindSwitch /> 里做(见 pet-kind-switch.tsx)。
   const kind = useSkyClassroomStore((s) => s.petKind);
-  const setKind = useSkyClassroomStore((s) => s.setPetKind);
   const cat = resolvedTheme === 'dark' ? CATS.dark : CATS.light;
   const isVrm = kind === 'vrm';
+  // 学习提醒话术: 进入时异步取学习数据生成, 失败则为 null(届时气泡回退时段问候)
+  const { greeting } = useLearningGreeting(enabled);
 
   // 小镜课堂的开关状态(复用现有全局 store, 不改它的实现)
   const isOpen = useSkyClassroomStore((s) => s.isOpen);
@@ -66,6 +75,8 @@ export function HomeLive2DPet() {
     let hasDown = false;
     // 返回命中的「当前显示宠物」的舞台元素: 猫挂在 #oml2d-stage, VRM 挂在 #vrm-pet-stage。
     const hitStage = (target: Node | null) => {
+      // 宠物脚底切换条(嵌在舞台内)上的交互不算「点宠物」, 否则点「猫/人」会误开小镜课堂
+      if (target instanceof Element && target.closest('[data-pet-ui]')) return null;
       for (const id of ['oml2d-stage', 'vrm-pet-stage']) {
         const el = document.getElementById(id);
         if (el && target && el.contains(target)) return el;
@@ -101,12 +112,26 @@ export function HomeLive2DPet() {
       {isVrm ? (
         <VrmPet visible={enabled} size={PET_BASE_SIZE} />
       ) : (
-        <Live2DPet modelPath={cat.path} modelName={cat.name} visible={enabled} draggable scale={scale} />
+        <Live2DPet
+          modelPath={cat.path}
+          modelName={cat.name}
+          visible={enabled}
+          draggable
+          scale={scale}
+          offsetX={CAT_OFFSET_X}
+          offsetY={CAT_OFFSET_Y}
+        />
       )}
 
-      {/* 问候语气泡: 谁在场就跟谁走, 停在宠物旁边而不是压在身上。key 随宠物变化 → 换宠物重新问好 */}
+      {/* 问候语气泡: 谁在场就跟谁走, 停在宠物旁边而不是压在身上。key 随宠物变化 → 换宠物重新问好。
+          文字优先用「今日学习提醒」, 取到前先短暂显示时段问候, 取到后就地替换 */}
       {enabled && (
-        <PetGreetingBubble key={isVrm ? 'vrm' : 'theme'} anchorId={isVrm ? 'vrm-pet-stage' : 'oml2d-stage'} />
+        <PetGreetingBubble
+          key={isVrm ? 'vrm' : 'theme'}
+          anchorId={isVrm ? 'vrm-pet-stage' : 'oml2d-stage'}
+          text={greeting ?? undefined}
+          showMs={9000}
+        />
       )}
 
       {/* 点击宠物唤起的小镜课堂。z 高于宠物舞台(9998)。锚在左下角,
@@ -116,52 +141,6 @@ export function HomeLive2DPet() {
           <AssistantPanel />
         </div>
       )}
-
-      {/* 宠物选择: 猫 / 人 二选一。低调地锚在右下角, 不抢主角。
-          「主题猫」= 随亮暗主题的白猫/黑猫, 「人物」= VRM 角色。选中的那项浅色高亮。 */}
-      <div
-        className="fixed z-[10000] flex items-center gap-0.5 rounded-full border px-1 py-1 text-xs font-medium shadow-sm backdrop-blur-md border-slate-200/60 bg-white/55 text-slate-500 dark:border-slate-600/40 dark:bg-slate-800/50 dark:text-slate-400"
-        style={{ right: 20, bottom: 158 }}
-        role="group"
-        aria-label="选择陪伴宠物"
-      >
-        <button
-          type="button"
-          aria-pressed={!isVrm}
-          onClick={() => setKind('theme')}
-          className={
-            'flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors ' +
-            (!isVrm
-              ? 'bg-gradient-to-br from-sky-500 to-violet-500 text-white shadow-sm'
-              : 'hover:text-slate-700 dark:hover:text-slate-200')
-          }
-        >
-          <svg width="13" height="13" viewBox="0 0 46 42" fill="currentColor" aria-hidden="true">
-            <circle cx="15" cy="24" r="6" />
-            <circle cx="31" cy="24" r="6" />
-            <path d="M18 6 q-12 -4 -14 8 q-2 6 6 8 l4 -8 q14 -8 22 -10 q-6 2 -10 8 z" opacity="0.9" />
-            <path d="M28 6 q12 -4 14 8 q2 6 -6 8 l-4 -8 q-14 -8 -22 -10 q6 2 10 8 z" opacity="0.9" />
-          </svg>
-          猫
-        </button>
-        <button
-          type="button"
-          aria-pressed={isVrm}
-          onClick={() => setKind('vrm')}
-          className={
-            'flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors ' +
-            (isVrm
-              ? 'bg-gradient-to-br from-sky-500 to-violet-500 text-white shadow-sm'
-              : 'hover:text-slate-700 dark:hover:text-slate-200')
-          }
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <circle cx="12" cy="6.5" r="3.5" />
-            <path d="M12 11c-4 0-6 3-6 7v1h12v-1c0-4-2-7-6-7z" />
-          </svg>
-          人
-        </button>
-      </div>
 
       {/* 陪伴开关: 右下角固定小圆钮, 独立于宠物, 随时可打开/收起 */}
       <button
@@ -183,11 +162,25 @@ export function HomeLive2DPet() {
             <circle cx="24" cy="16" r="10" fill="currentColor" />
             <circle cx="20.5" cy="15" r="2" fill="#fff" opacity="0.9" />
             <circle cx="27.5" cy="15" r="2" fill="#fff" opacity="0.9" />
-            <path d="M20 20 q4 2 8 0" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path
+              d="M20 20 q4 2 8 0"
+              stroke="#fff"
+              strokeWidth="2"
+              strokeLinecap="round"
+              fill="none"
+            />
           </svg>
         ) : (
           /* 关 → 斜杠圆圈, 表示已收起 */
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="9" />
             <path d="M5 5l14 14" strokeLinecap="round" />
           </svg>

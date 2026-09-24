@@ -396,6 +396,6 @@ describe('cloud mind personalization context', () => {
       targetTool: 'memory',
     });
     expect(context.recommendation?.href).toContain('/sky/cloud-mind/memory');
-    expect(['knowledge', 'write', 'translate']).not.toContain(context.recommendation?.targetTool);
+    expect(['knowledge', 'write']).not.toContain(context.recommendation?.targetTool);
   });
 });

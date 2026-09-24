@@ -9,28 +9,30 @@ export interface TourStep {
 export const TOUR_STEPS: TourStep[] = [
   {
     id: 'generate-classroom',
-    title: '生成互动课堂',
-    description: '想快速开一堂课？点这里输入知识点，AI 老师和同学即刻开讲。',
+    title: '从这里生成新课',
+    description:
+      '想做一堂课？点「生成互动课堂」，输入知识点就能让 AI 老师开讲，这是整个平台的起点。',
   },
   {
     id: 'today-focus',
-    title: '今天优先完成',
-    description: '每天最重要的一件事会出现在这里，点「开始行动」直接进入。',
+    title: '先做今天最重要的事',
+    description: '这里会显示系统建议你优先做的事，点右侧「开始行动」按钮即可直接进入对应任务。',
   },
   {
     id: 'mistakes',
-    title: '错题复习',
-    description: '做错的题会汇总在这里，及时复习巩固，避免重复出错。',
+    title: '订正你的错题',
+    description: '做错的题会自动汇总到「错题复习」，点卡片里的题目重做一遍，避免同样错误再犯。',
   },
   {
     id: 'learning-plan',
-    title: '学习计划',
-    description: '系统根据你的学习记录排好的今日计划，按顺序完成即可。',
+    title: '按今天的学习计划走',
+    description: '「学习计划」根据你的记录排好今日任务，逐项点开卡片完成即可，做完会自动更新进度。',
   },
   {
     id: 'profile-link',
-    title: '完整学习记录',
-    description: '想看更详细的学习数据、进度和薄弱点，点这里进入。',
+    title: '查看完整学习记录',
+    description:
+      '想看详细数据、掌握情况和薄弱点，点右上角「查看完整学习记录」，会进入你的学习档案。',
   },
 ];
 

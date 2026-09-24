@@ -83,7 +83,7 @@ describe('SkyAppShell mobile integration', () => {
     );
 
     expect(await screen.findByRole('button', { name: '学习工作台' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '学习资源' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '云端智囊' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '备课工作区' })).not.toBeInTheDocument();
   });
 
@@ -97,6 +97,6 @@ describe('SkyAppShell mobile integration', () => {
 
     expect(await screen.findByRole('button', { name: '备课工作区' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '学习工作台' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '学习资源' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '云端智囊' })).not.toBeInTheDocument();
   });
 });

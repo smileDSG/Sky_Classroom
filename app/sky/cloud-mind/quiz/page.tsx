@@ -316,7 +316,7 @@ export default function CloudMindQuizPage() {
 
 function CloudMindQuizFallback() {
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-[var(--quiz-void)] text-[var(--quiz-text)]">
+    <div className="min-h-[calc(100dvh-4rem)] text-[var(--quiz-text)]">
       <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-5xl items-center justify-center px-4">
         <div className="flex items-center gap-3 rounded-2xl border border-[var(--quiz-border)] bg-[var(--quiz-surface)] px-5 py-4 text-sm text-[var(--quiz-muted)]">
           <Loader2 className="h-4 w-4 animate-spin text-[var(--quiz-primary)]" />
@@ -767,7 +767,7 @@ function CloudMindQuizContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          subject,
+          ...(quizMode === 'ai' ? {} : { subject }),
           difficulty,
           topic: topic || undefined,
           count,
@@ -795,7 +795,7 @@ function CloudMindQuizContent() {
       setError(msg);
       setState('idle');
     }
-  }, [count, difficulty, pollQuizJob, stopPolling, subject, topic, questionType]);
+  }, [count, difficulty, pollQuizJob, stopPolling, subject, topic, questionType, quizMode]);
   const saveQuizAttempt = useCallback(
     (finalAnswers: (number | null)[]) => {
       if (savePromiseRef.current) return savePromiseRef.current;
@@ -1021,7 +1021,7 @@ function CloudMindQuizContent() {
             : nextDecision.action === 'review'
               ? Brain
               : Target,
-        tone: 'text-amber-800 border-amber-300 bg-amber-50 dark:text-amber-200 dark:border-amber-400/35 dark:bg-amber-400/10',
+        tone: 'text-violet-800 border-violet-300 bg-violet-50 dark:text-violet-200 dark:border-violet-400/35 dark:bg-violet-400/10',
         disabled: false,
       }
     : null;
@@ -1056,7 +1056,7 @@ function CloudMindQuizContent() {
       desc: '生成一段针对性讲解',
       href: `/sky/cloud-mind/teaching?topic=${encodeURIComponent(nextActionTopic)}&from=quiz`,
       icon: Lightbulb,
-      tone: 'text-emerald-700 border-emerald-200 bg-emerald-50 dark:text-emerald-300 dark:border-emerald-500/25 dark:bg-emerald-500/8',
+      tone: 'text-violet-700 border-violet-200 bg-violet-50 dark:text-violet-300 dark:border-violet-500/25 dark:bg-violet-500/8',
       disabled: false,
     },
   ];
@@ -1080,25 +1080,27 @@ function CloudMindQuizContent() {
   };
 
   const configControls = (
-    <div className="space-y-5">
-      <QuizPanel title="学科星域">
-        <div className="grid grid-cols-3 gap-2">
-          {SUBJECTS.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                setSubject(s.id);
-              }}
-              disabled={state === 'generating'}
-              className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-all disabled:opacity-50"
-              style={subject === s.id ? btnPrimary : btnIdle}
-            >
-              <span className={`h-2.5 w-2.5 rounded-full ${s.dot}`} />
-              <span className="text-[var(--quiz-text)]">{s.label}</span>
-            </button>
-          ))}
-        </div>
-      </QuizPanel>
+    <div className=" space-y-2.5">
+      {quizMode === 'bank' && (
+        <QuizPanel title="学科星域">
+          <div className="grid grid-cols-3 gap-2">
+            {SUBJECTS.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => {
+                  setSubject(s.id);
+                }}
+                disabled={state === 'generating'}
+                className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium transition-all disabled:opacity-50"
+                style={subject === s.id ? btnPrimary : btnIdle}
+              >
+                <span className={`h-2.5 w-2.5 rounded-full ${s.dot}`} />
+                <span className="text-[var(--quiz-text)]">{s.label}</span>
+              </button>
+            ))}
+          </div>
+        </QuizPanel>
+      )}
 
       <QuizPanel
         title={
@@ -1123,12 +1125,12 @@ function CloudMindQuizContent() {
           }}
           placeholder="如：导数、牛顿第二定律、线性代数……"
           disabled={state === 'generating'}
-          className="w-full bg-transparent border-b border-[var(--quiz-border)] px-1 py-3 text-sm text-[var(--quiz-text)] placeholder:text-[var(--quiz-muted)] focus:border-[var(--quiz-primary)] focus:outline-none transition-colors disabled:opacity-50"
+          className="w-full bg-transparent border-b border-[var(--quiz-border)] px-1 py-2 text-sm text-[var(--quiz-text)] placeholder:text-[var(--quiz-muted)] focus:border-[var(--quiz-primary)] focus:outline-none transition-colors disabled:opacity-50"
         />
       </QuizPanel>
 
       <QuizPanel title="难度等级">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           {DIFFICULTIES.map((d) => (
             <button
               key={d.id}
@@ -1137,12 +1139,12 @@ function CloudMindQuizContent() {
                 setDifficulty(d.id);
               }}
               disabled={state === 'generating'}
-              className="flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-all disabled:opacity-50"
+              className="flex flex-col items-center gap-0.5 rounded-xl border px-2 py-2 transition-all disabled:opacity-50"
               style={difficulty === d.id ? btnPrimary : btnIdle}
             >
-              <span className="text-base text-[var(--quiz-primary)]">{d.star}</span>
+              <span className="text-sm text-[var(--quiz-primary)]">{d.star}</span>
               <span className="text-sm font-semibold text-[var(--quiz-text)]">{d.label}</span>
-              <span className="text-[10px] text-[var(--quiz-muted)]">{d.desc}</span>
+              <span className="text-[10px] leading-3 text-[var(--quiz-muted)]">{d.desc}</span>
             </button>
           ))}
         </div>
@@ -1158,7 +1160,7 @@ function CloudMindQuizContent() {
                 setCount(n);
               }}
               disabled={state === 'generating'}
-              className="flex-1 rounded-lg py-2.5 text-sm font-medium transition-all disabled:opacity-50"
+              className="flex-1 rounded-lg py-1.5 text-sm font-medium transition-all disabled:opacity-50"
               style={count === n ? btnPrimary : btnIdle}
             >
               {n} 题
@@ -1175,11 +1177,11 @@ function CloudMindQuizContent() {
                 key={t.id}
                 onClick={() => setQuestionType(t.id)}
                 disabled={state === 'generating'}
-                className="flex flex-col items-center gap-1 rounded-xl border p-3 transition-all disabled:opacity-50"
+                className="flex flex-col items-center gap-0.5 rounded-xl border px-2 py-2 transition-all disabled:opacity-50"
                 style={questionType === t.id ? btnPrimary : btnIdle}
               >
                 <span className="text-sm font-semibold text-[var(--quiz-text)]">{t.label}</span>
-                <span className="text-[10px] text-[var(--quiz-muted)]">{t.desc}</span>
+                <span className="text-[10px] leading-3 text-[var(--quiz-muted)]">{t.desc}</span>
               </button>
             ))}
           </div>
@@ -1193,31 +1195,22 @@ function CloudMindQuizContent() {
       className="relative min-h-[calc(100dvh-4rem)] overflow-hidden"
       style={{
         backgroundImage:
-          'radial-gradient(circle at 10% 0%, var(--quiz-glow), transparent 24rem), radial-gradient(circle at 100% 20%, var(--quiz-accent-glow), transparent 28rem), linear-gradient(180deg, var(--quiz-horizon), var(--quiz-void) 38rem)',
+          'radial-gradient(circle at 10% 0%, var(--quiz-glow), transparent 24rem), radial-gradient(circle at 100% 20%, var(--quiz-accent-glow), transparent 28rem)',
       }}
     >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[32rem] opacity-50 dark:opacity-30 [background-size:28px_28px]"
-        style={{
-          backgroundImage:
-            'linear-gradient(color-mix(in srgb, var(--quiz-border) 45%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--quiz-border) 45%, transparent) 1px, transparent 1px)',
-        }}
-      />
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-px bg-gradient-to-r from-transparent via-amber-300/70 to-transparent dark:via-amber-300/35" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-px bg-gradient-to-r from-transparent via-violet-300/70 to-transparent dark:via-violet-300/35" />
 
       <BankInsufficientDialog dialog={bankDialog} onClose={() => setBankDialog(null)} />
 
-      <div className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-6 pt-6 pb-12 space-y-6 text-[var(--quiz-text)]">
-        {/* Hero */}
+      <div className="relative z-10  px-4 sm:px-6 pt-6 pb-12 space-y-6 text-[var(--quiz-text)]">
+        {/* Page header */}
         <motion.div
           data-tour-step="page-header"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl p-6 sm:p-8"
-          style={panelStyle}
+          className="flex items-center justify-between gap-4"
         >
-          <div className="absolute right-0 top-0 h-48 w-48 -translate-y-1/2 translate-x-1/3 rounded-full bg-amber-200/35 blur-3xl dark:bg-amber-300/10" />
-          <div className="relative z-10 flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/15 shadow-[0_0_16px_var(--quiz-glow)]">
               <FileQuestion className="h-7 w-7 text-[var(--quiz-primary)]" />
             </div>
@@ -1242,7 +1235,7 @@ function CloudMindQuizContent() {
               exit={{ opacity: 0 }}
               className="grid gap-6 lg:grid-cols-[1fr_340px]"
             >
-              <div className="space-y-5">
+              <div className=" space-y-3">
                 {/* Mode */}
                 <QuizPanel title="出题模式">
                   <div className="grid grid-cols-2 gap-2">
@@ -1250,7 +1243,7 @@ function CloudMindQuizContent() {
                       <button
                         key={mode}
                         onClick={() => setQuizMode(mode)}
-                        className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-all"
+                        className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium transition-all"
                         style={quizMode === mode ? btnPrimary : btnIdle}
                       >
                         {mode === 'ai' ? (
@@ -1315,9 +1308,9 @@ function CloudMindQuizContent() {
                         {quizMode === 'ai' ? 'AI 正在出题…' : '题库正在抽题…'}
                       </span>
                     </div>
-                    <div className="space-y-4">
+                    <div className=" space-y-4">
                       {Array.from({ length: count }).map((_, i) => (
-                        <div key={i} className="space-y-2">
+                        <div key={i} className=" space-y-2">
                           <div className="h-4 rounded-lg animate-pulse w-full bg-[var(--quiz-primary)]/5" />
                           <div className="h-4 rounded-lg animate-pulse w-3/4 bg-[var(--quiz-primary)]/4" />
                           <div className="grid grid-cols-2 gap-2 mt-2">
@@ -1336,20 +1329,25 @@ function CloudMindQuizContent() {
                         {quizMode === 'ai' ? '出题配置' : '题库抽题配置'}
                       </h3>
                     </div>
-                    <div className="space-y-3">
-                      {[
-                        { label: '学科', value: SUBJECTS.find((s) => s.id === subject)?.label },
-                        {
-                          label: '难度',
-                          value: DIFFICULTIES.find((d) => d.id === difficulty)?.label,
-                        },
-                        { label: '数量', value: `${count} 题` },
-                      ].map((row) => (
-                        <div key={row.label} className="flex items-center justify-between text-sm">
-                          <span className="text-[var(--quiz-muted)]">{row.label}</span>
-                          <span className="font-medium text-[var(--quiz-text)]">{row.value}</span>
+                    <div className=" space-y-3">
+                      {quizMode === 'bank' && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[var(--quiz-muted)]">学科</span>
+                          <span className="font-medium text-[var(--quiz-text)]">
+                            {SUBJECTS.find((s) => s.id === subject)?.label}
+                          </span>
                         </div>
-                      ))}
+                      )}
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[var(--quiz-muted)]">难度</span>
+                        <span className="font-medium text-[var(--quiz-text)]">
+                          {DIFFICULTIES.find((d) => d.id === difficulty)?.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[var(--quiz-muted)]">数量</span>
+                        <span className="font-medium text-[var(--quiz-text)]">{count} 题</span>
+                      </div>
                       {topic && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-[var(--quiz-muted)]">主题</span>
@@ -1429,7 +1427,7 @@ function CloudMindQuizContent() {
                 </div>
 
                 {currentQ.questionType === 'fill' ? (
-                  <div className="space-y-3">
+                  <div className=" space-y-3">
                     {!fillRevealed ? (
                       <>
                         <div className="flex flex-wrap items-center gap-1.5">
@@ -1502,7 +1500,7 @@ function CloudMindQuizContent() {
                             <button
                               type="button"
                               onClick={() => handleAnswer(0)}
-                              className="rounded-xl border border-emerald-400/50 bg-emerald-500/10 px-3 py-2.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-300"
+                              className="rounded-xl border border-violet-400/50 bg-violet-500/10 px-3 py-2.5 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-500/20 dark:text-violet-300"
                             >
                               我答对了
                             </button>
@@ -1529,7 +1527,7 @@ function CloudMindQuizContent() {
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className=" space-y-3">
                     {currentQ.options.map((option, i) => {
                       const isSelected = selectedAnswer === i;
                       const isCorrectAnswer = i === currentQ.answer;
@@ -1537,7 +1535,7 @@ function CloudMindQuizContent() {
                       let border =
                         'border-[var(--quiz-border)] hover:border-[var(--quiz-border-strong)]';
                       if (showResult && isCorrectAnswer)
-                        border = 'border-emerald-400/60 bg-emerald-500/10';
+                        border = 'border-violet-400/60 bg-violet-500/10';
                       else if (showResult && isSelected && !isCorrectAnswer)
                         border = 'border-red-400/60 bg-red-500/10';
                       else if (isSelected)
@@ -1720,30 +1718,30 @@ function CloudMindQuizContent() {
                       animate={{ opacity: 1, y: 0 }}
                       className="rounded-2xl border p-5"
                       style={{
-                        borderColor: 'rgba(251,191,36,0.3)',
-                        background: 'rgba(251,191,36,0.04)',
+                        borderColor: 'rgba(139,92,246,0.3)',
+                        background: 'rgba(139,92,246,0.04)',
                       }}
                     >
                       <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
-                        <BookOpen className="h-4 w-4 text-amber-500" />
+                        <BookOpen className="h-4 w-4 text-violet-500" />
                         错题加入复习计划
                       </div>
                       <p className="mb-3 text-xs leading-5 text-[var(--quiz-muted)]">
                         将错题加入错题本后，系统会按艾宾浩斯遗忘曲线安排复习，下方可取消不需要的题。
                       </p>
-                      <div className="space-y-1.5">
+                      <div className=" space-y-1.5">
                         {wrongQuestions.map((q) => {
                           const index = questions.findIndex((x) => x.id === q.id);
                           return (
                             <label
                               key={q.id}
-                              className="flex items-center gap-2 rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-text)] transition-colors hover:border-amber-300/40 cursor-pointer"
+                              className="flex items-center gap-2 rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-text)] transition-colors hover:border-violet-300/40 cursor-pointer"
                             >
                               <input
                                 type="checkbox"
                                 checked={mistakeBookIds.has(q.id)}
                                 onChange={() => toggleMistakeBookId(q.id)}
-                                className="h-3.5 w-3.5 accent-amber-500"
+                                className="h-3.5 w-3.5 accent-violet-500"
                               />
                               <span className="truncate">
                                 <span className="font-medium text-rose-500/70">
@@ -1770,7 +1768,7 @@ function CloudMindQuizContent() {
                         </button>
                         <button
                           onClick={handleAddWrongToMistakeBook}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 transition-all hover:bg-amber-100 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-4 py-2 text-xs font-medium text-violet-800 transition-all hover:bg-violet-100 dark:border-violet-400/30 dark:bg-violet-400/10 dark:text-violet-200"
                         >
                           <BookOpen className="h-3.5 w-3.5" />
                           确认加入 {mistakeBookIds.size} 道错题
@@ -1790,9 +1788,9 @@ function CloudMindQuizContent() {
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-300/20 dark:bg-emerald-300/[0.07]"
+                      className="rounded-2xl border border-violet-200 bg-violet-50 p-4 dark:border-violet-300/20 dark:bg-violet-300/[0.07]"
                     >
-                      <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-violet-800 dark:text-violet-200">
                         <CheckCircle2 className="h-4 w-4" />
                         已加入 {mistakeBookResult.added} 道错题到错题本
                       </div>
@@ -1881,7 +1879,7 @@ function CloudMindQuizContent() {
                     </div>
                   )}
 
-                  <div className="space-y-3">
+                  <div className=" space-y-3">
                     {questions.map((q, i) => {
                       const userAnswer = answers[i];
                       const isCorrect = userAnswer === q.answer;
@@ -1894,16 +1892,16 @@ function CloudMindQuizContent() {
                           className="rounded-xl border p-4"
                           style={{
                             borderColor: isCorrect
-                              ? 'rgba(52,211,153,0.3)'
+                              ? 'rgba(167,139,250,0.3)'
                               : 'rgba(248,113,113,0.3)',
                             background: isCorrect
-                              ? 'rgba(52,211,153,0.05)'
+                              ? 'rgba(167,139,250,0.05)'
                               : 'rgba(248,113,113,0.05)',
                           }}
                         >
                           <div className="flex items-start gap-3">
                             {isCorrect ? (
-                              <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+                              <CheckCircle2 className="h-5 w-5 text-violet-400 mt-0.5 shrink-0" />
                             ) : (
                               <XCircle className="h-5 w-5 text-red-400 mt-0.5 shrink-0" />
                             )}
@@ -2036,19 +2034,19 @@ function _QuizPersonalizationPanel({
     <motion.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 via-[var(--quiz-surface)] to-amber-50 p-5 shadow-[0_14px_36px_-30px_rgba(15,23,42,0.45)] sm:p-6 dark:border-cyan-300/25 dark:from-cyan-400/12 dark:to-violet-500/10 dark:shadow-[0_0_32px_-12px_var(--quiz-glow)]"
+      className="relative overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 via-[var(--quiz-surface)] to-violet-50 p-5 shadow-[0_14px_36px_-30px_rgba(15,23,42,0.45)] sm:p-6 dark:border-violet-300/25 dark:from-violet-400/12 dark:to-indigo-500/10 dark:shadow-[0_0_32px_-12px_var(--quiz-glow)]"
     >
-      <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl dark:bg-cyan-300/10" />
+      <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-violet-200/30 blur-3xl dark:bg-violet-300/10" />
       <div className="relative">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-sky-200 bg-sky-100 text-sky-700 shadow-sm dark:border-cyan-300/30 dark:bg-cyan-300/10 dark:text-cyan-200 dark:shadow-[0_0_18px_rgba(34,211,238,0.16)]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-violet-100 text-violet-700 shadow-sm dark:border-violet-300/30 dark:bg-violet-300/10 dark:text-violet-200 dark:shadow-[0_0_18px_rgba(167,139,250,0.16)]">
               <Brain className="h-5 w-5" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-base font-bold text-[var(--quiz-text)]">按你的情况出题</h2>
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-300/25 dark:bg-emerald-300/10 dark:text-emerald-200">
+                <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[10px] font-semibold text-violet-700 dark:border-violet-300/25 dark:bg-violet-300/10 dark:text-violet-200">
                   已根据你的情况安排
                 </span>
               </div>
@@ -2059,15 +2057,15 @@ function _QuizPersonalizationPanel({
           </div>
           <div className="rounded-xl border border-[var(--quiz-border)] bg-white/75 px-3 py-2 text-right shadow-sm dark:bg-black/10 dark:shadow-none">
             <div className="text-[10px] text-[var(--quiz-muted)]">本次学习动作</div>
-            <div className="mt-0.5 text-sm font-semibold text-sky-700 dark:text-cyan-200">
+            <div className="mt-0.5 text-sm font-semibold text-violet-700 dark:text-violet-200">
               {ACTION_LABELS[action]}
             </div>
           </div>
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[1.15fr_1fr]">
-          <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-4 dark:border-cyan-300/20 dark:bg-cyan-300/[0.06]">
-            <div className="flex items-center gap-2 text-xs font-semibold text-sky-700 dark:text-cyan-200">
+          <div className="rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-300/20 dark:bg-violet-300/[0.06]">
+            <div className="flex items-center gap-2 text-xs font-semibold text-violet-700 dark:text-violet-200">
               <Target className="h-4 w-4" /> 当前优先知识点
             </div>
             <div className="mt-2 text-xl font-bold text-[var(--quiz-text)]">{targetTopic}</div>
@@ -2078,7 +2076,7 @@ function _QuizPersonalizationPanel({
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/5">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 transition-all dark:from-cyan-400 dark:to-violet-400"
+                  className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all dark:from-violet-400 dark:to-indigo-400"
                   style={{ width: `${Math.max(4, Math.min(100, mastery ?? 4))}%` }}
                 />
               </div>
@@ -2147,7 +2145,7 @@ function _QuizPersonalizationPanel({
             <span>完成后：每道答案都会成为答题记录 → 更新掌握情况 → 重新安排下一步学习。</span>
           </div>
           {hasManualOverride && (
-            <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-[11px] text-amber-700 dark:border-amber-300/25 dark:bg-amber-300/10 dark:text-amber-200">
+            <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-[11px] text-violet-700 dark:border-violet-300/25 dark:bg-violet-300/10 dark:text-violet-200">
               <SlidersHorizontal className="h-3.5 w-3.5" /> 已保留你的手动调整
             </div>
           )}
@@ -2182,7 +2180,7 @@ function QuizProfileUpdatePanel({
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 via-[var(--quiz-surface)] to-sky-50 p-5 dark:border-violet-300/25 dark:from-violet-500/12 dark:to-cyan-400/10"
+      className="relative overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 via-[var(--quiz-surface)] to-indigo-50 p-5 dark:border-violet-300/25 dark:from-violet-500/12 dark:to-indigo-400/10"
       style={{ boxShadow: '0 14px 34px -28px rgba(15, 23, 42, 0.42)' }}
     >
       <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-violet-200/35 blur-3xl dark:bg-violet-400/10" />
@@ -2208,7 +2206,7 @@ function QuizProfileUpdatePanel({
             </div>
           </div>
           {isSaved && (
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-300/25 dark:bg-emerald-300/10 dark:text-emerald-200">
+            <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[10px] font-semibold text-violet-700 dark:border-violet-300/25 dark:bg-violet-300/10 dark:text-violet-200">
               学习完成
             </span>
           )}
@@ -2238,7 +2236,7 @@ function QuizProfileUpdatePanel({
             </div>
 
             {impacts.length > 0 ? (
-              <div className="mt-4 space-y-2">
+              <div className=" mt-4 space-y-2">
                 {impacts.slice(0, 3).map((impact) => {
                   const masteryBefore =
                     impact.masteryBefore === null
@@ -2266,8 +2264,8 @@ function QuizProfileUpdatePanel({
                       </div>
                       <div className="text-xs text-[var(--quiz-muted)]">
                         掌握情况：{masteryBefore}
-                        <span className="mx-1 text-sky-500 dark:text-cyan-300">→</span>
-                        <strong className="text-sky-700 dark:text-cyan-200">
+                        <span className="mx-1 text-violet-500 dark:text-violet-300">→</span>
+                        <strong className="text-violet-700 dark:text-violet-200">
                           {Math.round(impact.masteryAfter * 100)}%
                         </strong>
                       </div>
@@ -2289,10 +2287,10 @@ function QuizProfileUpdatePanel({
             )}
 
             {decision && (
-              <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-300/20 dark:bg-amber-300/[0.07]">
-                <Route className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-200" />
+              <div className="mt-4 flex items-start gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 dark:border-violet-300/20 dark:bg-violet-300/[0.07]">
+                <Route className="mt-0.5 h-4 w-4 shrink-0 text-violet-700 dark:text-violet-200" />
                 <div>
-                  <div className="text-xs font-semibold text-amber-900 dark:text-amber-100">
+                  <div className="text-xs font-semibold text-violet-900 dark:text-violet-100">
                     根据本次答题更新
                   </div>
                   <p className="mt-1 text-xs leading-5 text-[var(--quiz-muted)]">
@@ -2317,7 +2315,7 @@ function QuizProfileUpdatePanel({
 function QuizPanel({ title, children }: { title?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div
-      className="rounded-xl border p-5"
+      className="rounded-xl border p-3"
       style={{
         background: 'var(--quiz-surface)',
         border: '1px solid var(--quiz-border)',
@@ -2325,7 +2323,9 @@ function QuizPanel({ title, children }: { title?: React.ReactNode; children: Rea
       }}
     >
       {title && (
-        <label className="text-sm font-semibold text-[var(--quiz-text)] mb-3 block">{title}</label>
+        <label className="text-sm font-semibold text-[var(--quiz-text)] mb-1.5 block">
+          {title}
+        </label>
       )}
       {children}
     </div>
@@ -2337,7 +2337,7 @@ function QuizNotice({ message }: { message: string }) {
     <motion.div
       initial={{ opacity: 0, y: -5 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/5 dark:text-emerald-300"
+      className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/5 dark:text-violet-300"
     >
       {message}
     </motion.div>

@@ -2,13 +2,21 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowUp, Sparkles, Atom, ImageIcon, FileText, X, Mic, Search, Wand2 } from 'lucide-react';
+import { ArrowUp, ImageIcon, FileText, X, Search, Atom, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SpeechButton } from '@/components/audio/speech-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { StarBorder } from '@/components/reactbits/star-border';
 import { AgentSelector } from './agent-selector';
-import { InputCat } from './input-cat';
+
+// 工具栏 chip 的统一样式：未选中中性灰，选中为唯一的品牌蓝。
+function toolbarChipClass(active: boolean) {
+  return cn(
+    'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+    active
+      ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300'
+      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-slate-200',
+  );
+}
 
 // 主输入区域组件
 export function HeroInput({
@@ -89,13 +97,13 @@ export function HeroInput({
       {/* 主输入框容器 */}
       <div
         className={cn(
-          'relative rounded-3xl overflow-hidden',
-          'bg-white/80 dark:bg-slate-800/80 backdrop-blur-2xl',
-          'border transition-all duration-300',
+          'relative rounded-2xl overflow-hidden bg-white dark:bg-slate-900',
+          'border transition-all duration-200',
+          'shadow-[0_10px_30px_rgba(15,23,42,0.06)]',
+          'dark:border-slate-700 dark:bg-slate-900 dark:shadow-[0_14px_34px_rgba(0,0,0,0.22)]',
           isFocused || isDragging
-            ? 'border-sky-400/50 shadow-2xl shadow-sky-500/20 dark:shadow-sky-900/30'
-            : 'border-slate-200/50 dark:border-slate-700/50 shadow-xl shadow-slate-200/30 dark:shadow-slate-900/20',
-          isDragging && 'ring-2 ring-sky-400/50 ring-offset-2',
+            ? 'border-sky-400 shadow-[0_0_0_3px_rgba(56,189,248,0.14),0_16px_40px_rgba(2,132,199,0.10)] dark:border-sky-500'
+            : 'border-slate-200',
         )}
         onDragOver={(e) => {
           e.preventDefault();
@@ -105,28 +113,15 @@ export function HeroInput({
         onDrop={handleDrop}
       >
         {/* 顶部工具栏 */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-slate-700/50">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between border-b border-slate-100 px-2 py-1.5 dark:border-slate-800">
+          <div className="flex items-center gap-1">
             {/* 模板按钮 */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={onTemplateClick}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-xl',
-                    'text-sm font-medium',
-                    'bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20',
-                    'text-violet-600 dark:text-violet-400',
-                    'border border-violet-200/50 dark:border-violet-700/30',
-                    'hover:shadow-md hover:shadow-violet-500/10',
-                    'transition-all duration-200',
-                  )}
-                >
-                  <Wand2 className="w-4 h-4" />
+                <button onClick={onTemplateClick} className={toolbarChipClass(false)}>
+                  <Wand2 className="h-4 w-4" />
                   <span>模板</span>
-                </motion.button>
+                </button>
               </TooltipTrigger>
               <TooltipContent>从模板快速创建</TooltipContent>
             </Tooltip>
@@ -134,41 +129,14 @@ export function HeroInput({
             {/* 网页搜索 */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
+                  data-tour-step="home-websearch"
                   onClick={() => onWebSearchChange(!webSearch)}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-xl',
-                    'text-sm font-medium transition-all duration-200',
-                    webSearch
-                      ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-700/50'
-                      : 'bg-slate-50 dark:bg-slate-700/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50',
-                  )}
+                  className={toolbarChipClass(webSearch)}
                 >
-                  <Search className="w-4 h-4" />
+                  <Search className="h-4 w-4" />
                   <span>联网搜索</span>
-                  {webSearch && (
-                    <motion.div
-                      layoutId="check"
-                      className="w-4 h-4 rounded-full bg-sky-500 flex items-center justify-center"
-                    >
-                      <svg
-                        className="w-2.5 h-2.5 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={3}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </motion.div>
-                  )}
-                </motion.button>
+                </button>
               </TooltipTrigger>
               <TooltipContent>启用联网搜索获取最新信息</TooltipContent>
             </Tooltip>
@@ -177,44 +145,22 @@ export function HeroInput({
           {/* 互动模式 */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
+                data-tour-step="home-interactive"
                 onClick={() => onInteractiveModeChange(!interactiveMode)}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-xl',
-                  'text-sm font-medium transition-all duration-200',
-                  interactiveMode
-                    ? 'bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 text-cyan-600 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-700/50 shadow-md shadow-cyan-500/10'
-                    : 'bg-slate-50 dark:bg-slate-700/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50',
-                )}
+                className={toolbarChipClass(interactiveMode)}
               >
-                <motion.div
-                  animate={interactiveMode ? { rotate: 360 } : {}}
-                  transition={{
-                    duration: 2,
-                    repeat: interactiveMode ? Infinity : 0,
-                    ease: 'linear',
-                  }}
-                >
-                  <Atom className="w-4 h-4" />
-                </motion.div>
+                <Atom className="h-4 w-4" />
                 <span>互动模式</span>
-                {interactiveMode && (
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
-                  </span>
-                )}
-              </motion.button>
+              </button>
             </TooltipTrigger>
             <TooltipContent>生成可互动的知识点讲解</TooltipContent>
           </Tooltip>
         </div>
 
         {/* 高级协作设置，默认收起，避免用户在开始前先理解 Agent */}
-        <details className="border-b border-slate-100 bg-slate-50/50 dark:border-slate-700/50 dark:bg-slate-800/30">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
+        <details className="border-b border-slate-100 dark:border-slate-800">
+          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between px-3 text-sm text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100">
             <span>教学角色与协作设置</span>
             <span className="text-xs text-slate-400">高级设置</span>
           </summary>
@@ -243,17 +189,14 @@ export function HeroInput({
                 : `点这里，输入你想学的，例如：\n「${EXAMPLES[exIdx]}」`
             }
             className={cn(
-              'w-full px-3 py-3 min-h-[226px] max-h-[400px]',
+              'w-full min-h-[160px] max-h-[320px] px-4 py-3',
               'bg-transparent resize-none',
               'text-[15px] leading-relaxed',
               'placeholder:text-slate-400 dark:placeholder:text-slate-500',
               'focus:outline-none',
             )}
-            rows={9}
+            rows={7}
           />
-
-          {/* 小陪伴：聚焦或输入时"醒"过来 */}
-          <InputCat active={isFocused || value.trim().length > 0} />
 
           {/* 拖拽提示 */}
           <AnimatePresence>
@@ -262,10 +205,10 @@ export function HeroInput({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 flex items-center justify-center bg-sky-500/10 backdrop-blur-sm"
+                className="absolute inset-0 flex items-center justify-center bg-sky-500/10"
               >
                 <div className="flex flex-col items-center gap-2 text-sky-600 dark:text-sky-400">
-                  <FileText className="w-8 h-8" />
+                  <FileText className="h-8 w-8" />
                   <span className="text-sm font-medium">拖放 PDF 文件到这里</span>
                 </div>
               </motion.div>
@@ -282,12 +225,12 @@ export function HeroInput({
               exit={{ opacity: 0, height: 0 }}
               className="px-3 pb-2"
             >
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-700">
-                <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-red-500" />
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-100 dark:bg-red-900/30">
+                  <FileText className="h-4 w-4 text-red-500" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-300">
                     {pdfFile.name}
                   </p>
                   <p className="text-xs text-slate-500">
@@ -296,9 +239,9 @@ export function HeroInput({
                 </div>
                 <button
                   onClick={() => onPdfChange(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </motion.div>
@@ -306,20 +249,16 @@ export function HeroInput({
         </AnimatePresence>
 
         {/* 底部工具栏 */}
-        <div className="flex items-center justify-between px-3 py-2 border-t border-slate-100 dark:border-slate-700/50">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between border-t border-slate-100 px-2 py-1.5 dark:border-slate-800">
+          <div className="flex items-center gap-1">
             {/* 上传 PDF */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <label
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer',
-                    'text-sm text-slate-600 dark:text-slate-400',
-                    'hover:bg-slate-100 dark:hover:bg-slate-700/50',
-                    'transition-colors',
-                  )}
+                  data-tour-step="home-pdf-upload"
+                  className={cn(toolbarChipClass(false), 'cursor-pointer')}
                 >
-                  <ImageIcon className="w-4 h-4" />
+                  <ImageIcon className="h-4 w-4" />
                   <span>上传 PDF</span>
                   <input
                     type="file"
@@ -344,37 +283,29 @@ export function HeroInput({
             />
           </div>
 
-          {/* 提交按钮（React Bits StarBorder 星光描边） */}
-          <StarBorder
+          {/* 提交按钮 */}
+          <button
+            type="button"
+            data-tour-step="home-submit"
             onClick={onSubmit}
             disabled={!canSubmit}
             className={cn(
-              'text-sm font-semibold',
-              'transition-all duration-200',
+              'flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all',
               canSubmit
-                ? 'shadow-lg shadow-sky-500/25 hover:shadow-xl hover:shadow-sky-500/30'
-                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed',
-            )}
-            innerClassName={cn(
-              'flex items-center gap-2 px-5 py-2.5',
-              canSubmit && 'bg-gradient-to-r from-sky-500 to-blue-500 text-white',
+                ? 'bg-sky-600 text-white hover:bg-sky-700 active:translate-y-px dark:bg-sky-500 dark:hover:bg-sky-400'
+                : 'cursor-not-allowed bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
             )}
           >
             <span>开始讲解</span>
-            <ArrowUp className={cn('w-4 h-4', canSubmit && '-rotate-45')} />
-          </StarBorder>
+            <ArrowUp className={cn('h-4 w-4', canSubmit && '-rotate-45')} />
+          </button>
         </div>
       </div>
 
       {/* 提示文字 */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="text-center mt-4 text-xs text-slate-400"
-      >
-        按 Cmd + Enter 快速创建 · 支持拖拽上传 PDF
-      </motion.p>
+      <p className="mt-3 text-center text-xs text-slate-400 dark:text-slate-500">
+        按 Ctrl + Enter 快速创建 · 支持拖拽上传 PDF
+      </p>
     </div>
   );
 }

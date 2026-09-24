@@ -9,6 +9,8 @@
 // 开关由外部(主页右下角圆钮)通过 visible 控制, 本组件不再额外画关闭按钮。
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { PetKindSwitch } from '@/components/sky/pet/pet-kind-switch';
 
 // 库自托管在 public/vendor/oml2d/, 运行时以同源 ESM 加载本地副本。
 // webpackIgnore: 打包器忽略它(不 resolve fs); 常量 specifier 让 tsc 不尝试解析类型。
@@ -27,6 +29,17 @@ type Oml2dLike = {
 // UI 缩放倍数 scale 会乘以它得到模型内部的实际 scale, 保证"视觉与底层同步"。
 const BASE_MODEL_SCALE = 0.18;
 
+// 猫脚下为模式切换条预留的高度(px)。舞台加高、猫随之上移, 切换条停在这段透明区里;
+// 舞台悬在窗口右下角、猫的脚本来就贴着窗口底边, 不抬高一段就没有放条子的地方。
+const FOOT_UI_H = 44;
+// 舞台离窗口右缘的内收距离(px)。库默认 right:0 让盒子贴死窗口右缘, 猫的渲染盒
+// 若比实际形象略窄, 右缘就会被裁 —— 整体右移一段, 猫完整可见。
+const STAGE_RIGHT_OFFSET = 32;
+// 舞台(猫 + 脚下切换条)最大高度占窗口的比例。明明想让人看清这只宠物, 之前 0.28 却把
+// 猫盒高压到窗口 22~25%、缩小成「右下角一个小点」, 用户反映「越来越小了、很丑」。
+// 放宽到 0.55: 猫明显更大更完整, 但仍留上限, 避免窄窗口里把机器人下方内容按钮盖满。
+const PET_MAX_STAGE_H_FRAC = 0.55;
+
 type PetStatus = 'loading' | 'ready' | 'error';
 
 export function Live2DPet({
@@ -38,6 +51,8 @@ export function Live2DPet({
   draggable = false,
   scale = 1,
   onStatusChange,
+  offsetX = 0,
+  offsetY = 0,
 }: {
   modelPath: string;
   modelName?: string;
@@ -50,9 +65,19 @@ export function Live2DPet({
   // 宠物缩放倍数(1 = 原尺寸), 由外部按键控制放大/缩小
   scale?: number;
   onStatusChange?: (status: PetStatus, errorMsg?: string) => void;
+  /**
+   * 整体微调(视觉像素, 向右/下为正)。舞台贴死窗口右下角, 直接平移会把猫推出屏外或裁掉身体,
+   * 所以这里不挪盒子, 而是: offsetX 用于缩小「距右缘内收量」= 更贴右缘; offsetY 用于让猫脚
+   * 沿脚下切换条区域继续下沉。两者都不破坏动画/尺寸, 也不会把身体变矮。
+   */
+  offsetX?: number;
+  offsetY?: number;
 }) {
   const instRef = useRef<Oml2dLike | null>(null);
   const [loaded, setLoaded] = useState(false);
+  // oml2d 舞台元素(库异步挂载到 body, 主题/模型切换会重建): 脚下切换条 portal 进它,
+  // 猫被拖动时切换条跟着走。重建后重新拿新节点, 旧节点自动丢弃。
+  const [stageEl, setStageEl] = useState<HTMLElement | null>(null);
 
   // 模型基准几何(归一化到 UI 倍数=1 时的渲染盒宽高 + 盒子相对模型原点的偏移)。
   // getBounds 可能因库内部状态不稳定返回无效值, 全部判空 + try/catch 兜底, 兜底只做朴素缩放。
@@ -81,6 +106,7 @@ export function Live2DPet({
     // 慢但有效的几何多等等就能定稿; 真正加载失败的模型 12s 后才会被兜底放行, 可接受。
     const MAX_TRIES = 80;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let keeperTimer: ReturnType<typeof setInterval> | undefined;
 
     // 尺寸定稿后才放行显示。库把舞台插进 DOM 时用的是它自己的默认尺寸(实测 360x420),
     // 而我们的盒子要等 getBounds 量到模型渲染盒后才会被改写 —— 中间这段时间如果直接显示,
@@ -103,7 +129,14 @@ export function Live2DPet({
       if (cancelled) return true;
       try {
         const models = (inst as unknown as { models?: unknown }).models as
-          | { model?: { scale?: { x: number }; x: number; y: number; getBounds?: () => { x: number; y: number; width: number; height: number } } }
+          | {
+              model?: {
+                scale?: { x: number };
+                x: number;
+                y: number;
+                getBounds?: () => { x: number; y: number; width: number; height: number };
+              };
+            }
           | undefined;
         const model = models?.model;
         const stage = document.getElementById('oml2d-stage');
@@ -122,7 +155,8 @@ export function Live2DPet({
           return false;
         }
         // 当前模型的实际"UI 倍数"(模型 scale / 基准 scale), 用于把测量值归一化到 UI 倍数=1。
-        const currentUI = model.scale && model.scale.x && BASE_MODEL_SCALE ? model.scale.x / BASE_MODEL_SCALE : 1;
+        const currentUI =
+          model.scale && model.scale.x && BASE_MODEL_SCALE ? model.scale.x / BASE_MODEL_SCALE : 1;
         const key = model as object;
         if (!geomRef.current || geomRef.current.key !== key) {
           const b = model.getBounds();
@@ -143,13 +177,24 @@ export function Live2DPet({
         const win = window;
         const margin = 12;
         // 用「窗口」而非舞台尺寸做放大上限: 舞台已随猫缩到盒子后仍能继续放大, 不会被误判超窗。
-        const fitR = Math.max(0.01, Math.min(scale, (win.innerWidth - margin) / g.bw, (win.innerHeight - margin) / g.bh));
+        // 高度上限收窄到窗口的 PET_MAX_STAGE_H_FRAC: 小窗口下自动缩小成"角落小宠物",
+        // 不再让猫占掉大半个屏幕。
+        const maxBoxH = win.innerHeight * PET_MAX_STAGE_H_FRAC - FOOT_UI_H;
+        const fitR = Math.max(
+          0.01,
+          Math.min(scale, (win.innerWidth - margin) / g.bw, maxBoxH / g.bh),
+        );
         inst.setModelScale(BASE_MODEL_SCALE * fitR);
         // 后框随猫自适应: 只改舞台 CSS 尺寸对齐猫的渲染盒, 并 overflow:hidden 裁掉多余的画布。
         // 不动画布本身(改画布会拉伸/裁剪 Pixi 渲染, 导致模糊)。
         stage.style.width = `${Math.ceil(g.bw * fitR)}px`;
-        stage.style.height = `${Math.ceil(g.bh * fitR)}px`;
+        stage.style.height = `${Math.ceil(g.bh * fitR + FOOT_UI_H)}px`;
         stage.style.overflow = 'hidden';
+        // 猫离窗口右缘留出空隙(默认 right:0 会贴边, 猫的渲染盒若略小于实际形象
+        // 会被窗口右缘裁掉一角 —— 实测出现「猫探头被切」)。整体右移后猫和脚下
+        // 切换条一起内收, 始终完整可见。offsetX>0 时再往里收一点 = 整只猫更贴右缘。
+        const targetRight = Math.max(0, STAGE_RIGHT_OFFSET - offsetX);
+        stage.style.right = `${targetRight}px`;
         // 关键修复「刚进主页猫显示不完整」: 求定位用的 getBoundingClientRect 必须反映
         // 「定稿后的静止盒」。之前是先量 rect 再定宽高 —— 首帧时盒子还是库的默认/过渡盒
         // (甚至被滑入动画 translateY 抬离原位, 实测出现过 1280x0), 拿它算出来的模型位置
@@ -159,11 +204,22 @@ export function Live2DPet({
         stage.style.animation = 'none';
         stage.style.transform = 'none';
         const sRect = stage.getBoundingClientRect();
+        // 下沉量: 模型坐标单位缩放跟随 fitR, 所以把「视觉像素 offset」除以 fitR 还原成模型
+        // 坐标位移, 视觉上就正好走 offsetY 像素。最高让脚贴到舞台底(切换条下缘)为止,
+        // 再多就轮到裁身体了 —— 下沉由脚下 FOOT_UI_H 的透明区消化, 猫不会变矮。
+        const maxDownPx = FOOT_UI_H * 0.9;
+        const dy = Math.min(offsetY, maxDownPx) / fitR;
         // 让盒子右下角对准舞台右下角(舞台默认 bottom:0/right:0, 与窗口右下角重合),
         // 放大时盒子往左/上生长, 不超出窗口。
         inst.setModelPosition({
           x: sRect.width - g.bw * fitR - g.nOffX * fitR,
-          y: sRect.height - g.bh * fitR - g.nOffY * fitR,
+          // getBounds 盒的下缘还垫着一截「模型脚底的透明空隙」(约为盒子高度的一小段, 随缩放等比变化)。
+          // 只把盒底对齐舞台底, 猫脚仍会悬在切换条上方; 缺口大小又随窗口尺寸变, 定值压不下去。
+          // 修法: 下压量也按盒子高度等比给(0.22 * 盒高), 抵消掉那截空闲, 无论如何缩放都能把脚
+          // 钉进底部 FOOT_UI_H 的切换条区域内 —— 超出的部分全是透明空隙, overflow:hidden 裁剪无碍,
+          // 切换条(z 在最上层)顺势遮住脚的下缘, 视觉上就是猫脚贴着按钮。offsetY 在此基础上再沉一点。
+          y:
+            sRect.height - g.bh * fitR - g.nOffY * fitR - FOOT_UI_H * 0.9 + g.bh * fitR * 0.22 + dy,
         });
         reveal(stage); // 尺寸已定稿, 放行显示
         return true;
@@ -173,6 +229,42 @@ export function Live2DPet({
       }
     };
 
+    // 布局守护: 库在模型加载完成的内部回调里会调用 stage.reloadStyle(modelSize),
+    // 把舞台样式重置回它自己算的默认尺寸(360x420、right:0)。这个回调可能晚于我们
+    // attempt() 定稿才触发 —— 盒子被改回去、猫跟着错位, 看起来就是「位置奇怪/不固定」。
+    // 定稿后持续检测盒子是否还是定稿值, 被重置就立刻重跑 attempt() 拉回来。
+    // 用户拖动过(舞台改用 left/top、right=auto)则跳过, 不跟拖动打架。
+    const startKeeper = () => {
+      if (keeperTimer || cancelled) return;
+      keeperTimer = setInterval(() => {
+        if (cancelled) {
+          clearInterval(keeperTimer);
+          return;
+        }
+        const stage = document.getElementById('oml2d-stage');
+        if (!stage) return;
+        if (stage.style.right === 'auto') return;
+        const g = geomRef.current;
+        if (!g) return;
+        const maxBoxH = window.innerHeight * PET_MAX_STAGE_H_FRAC - FOOT_UI_H;
+        const fitR = Math.max(
+          0.01,
+          Math.min(scale, (window.innerWidth - 12) / g.bw, maxBoxH / g.bh),
+        );
+        const w = Math.ceil(g.bw * fitR);
+        const h = Math.ceil(g.bh * fitR + FOOT_UI_H);
+        const targetRight = Math.max(0, STAGE_RIGHT_OFFSET - offsetX);
+        if (
+          stage.dataset.sized !== '1' ||
+          parseInt(stage.style.width, 10) !== w ||
+          parseInt(stage.style.height, 10) !== h ||
+          stage.style.right !== `${targetRight}px`
+        ) {
+          attempt();
+        }
+      }, 500);
+    };
+
     if (!attempt() && tries < MAX_TRIES) {
       timer = setInterval(() => {
         if (cancelled) {
@@ -180,19 +272,24 @@ export function Live2DPet({
           return;
         }
         tries += 1;
-        if (attempt() || tries >= MAX_TRIES) {
+        const ok = attempt();
+        if (ok || tries >= MAX_TRIES) {
           clearInterval(timer);
           // 重试用尽仍没量到几何: 宁可显示一只尺寸没对准的猫, 也不能让它一直隐身
           if (tries >= MAX_TRIES) reveal(document.getElementById('oml2d-stage'));
+          startKeeper();
         }
       }, 150);
+    } else {
+      startKeeper();
     }
 
     return () => {
       cancelled = true;
       if (timer) clearInterval(timer);
+      if (keeperTimer) clearInterval(keeperTimer);
     };
-  }, [scale, loaded, modelPath]);
+  }, [scale, loaded, modelPath, offsetX, offsetY]);
 
   // 让舞台层不拦截鼠标/触摸 —— 否则右下角固定层的透明区会挡住下面的按钮(小镜问答键等)。
   // 非拖拽模式: 猫是纯装饰, 不接收点击。拖拽模式则保留鼠标以便拖动。
@@ -214,6 +311,27 @@ export function Live2DPet({
     return () => clearInterval(timer);
   }, [loaded, modelPath, draggable]);
 
+  // 追踪舞台元素: 库挂载/重建都是异步的, 轮询找最新的 #oml2d-stage 并同步给 state
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    let tries = 0;
+    const poll = () => {
+      const el = document.getElementById('oml2d-stage');
+      if (el && document.body.contains(el)) {
+        setStageEl((prev) => (prev === el ? prev : el));
+        return true;
+      }
+      return false;
+    };
+    if (!poll()) {
+      const timer = setInterval(() => {
+        tries += 1;
+        if (poll() || tries > 80) clearInterval(timer);
+      }, 150);
+      return () => clearInterval(timer);
+    }
+  }, [modelPath, loaded]);
+
   // 拖动宠物: 用 document 上的事件委托, 不依赖舞台何时/被重建几次。
   // 按下时判断目标是否在 #oml2d-stage 内, 是则开始拖动, 位置用 left/top(清掉 bottom/right)。
   // 挂在 document 上, 所以切页重挂、舞台重新创建后依然即时可用。
@@ -232,6 +350,8 @@ export function Live2DPet({
       // 只响应发生在舞台(或其子元素)上的按下 —— 事件委托的门卫
       const target = e.target as Node | null;
       if (!target || !stage.contains(target)) return;
+      // 脚下切换条上的按下不算拖动, 否则点「猫/人」会把猫拖走
+      if (target instanceof Element && target.closest('[data-pet-ui]')) return;
       const rect = stage.getBoundingClientRect();
       startX = e.clientX;
       startY = e.clientY;
@@ -349,13 +469,7 @@ export function Live2DPet({
       instRef.current = null;
       // 关键: 把上一个实例留在 body 里的所有 oml2d 元素清掉,
       // 否则切换主题(modelPath 变 → 重新 init)会叠出多只猫。
-      const ids = [
-        'oml2d-stage',
-        'oml2d-canvas',
-        'oml2d-statusBar',
-        'oml2d-tips',
-        'oml2d-menus',
-      ];
+      const ids = ['oml2d-stage', 'oml2d-canvas', 'oml2d-statusBar', 'oml2d-tips', 'oml2d-menus'];
       for (const id of ids) {
         document.getElementById(id)?.remove();
       }
@@ -375,6 +489,16 @@ export function Live2DPet({
     stage.style.visibility = visible && stage.dataset.sized === '1' ? 'visible' : 'hidden';
   }, [visible, loaded]);
 
-  // 自身不渲染 DOM, 宠物挂在 body 右下角
-  return null;
+  // 自身不渲染 DOM, 宠物由 oml2d 挂到 body 右下角; 唯一例外是脚下切换条
+  // (portal 进 oml2d 舞台, 猫被拖动时它跟着走)。舞台还没挂出来时不渲染。
+  // z 必须压过库给画布设的 z-index:9998 —— 画布盖在切换条上时是透明的(视觉正常),
+  // 但点击命中全落在画布上, 切换条按钮永远收不到事件(实测「猫切不成人」)。
+  // pointer-events-auto: 非拖拽场景舞台是 pointer-events:none, 子元素默认也不收
+  // 事件, 切换条要自己把事件拿回来(预览页等 draggable=false 的地方才点得动)。
+  return stageEl
+    ? createPortal(
+        <PetKindSwitch className="pointer-events-auto absolute bottom-1.5 right-16 z-[9999]" />,
+        stageEl,
+      )
+    : null;
 }

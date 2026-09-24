@@ -105,7 +105,7 @@ export function GenerationStatus({ phase, progress, step, jobId }: GenerationSta
           </p>
           <div className="flex flex-wrap gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/40 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 cursor-default border border-slate-200/50 dark:border-slate-600/30">
-              <Lightbulb className="w-3 h-3 text-amber-500" />
+              <Lightbulb className="w-3 h-3 text-sky-500" />
               试试输入"高中物理：电磁感应"
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/40 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 cursor-default border border-slate-200/50 dark:border-slate-600/30">

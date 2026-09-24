@@ -1,4 +1,4 @@
-import { BarChart3, BookOpenCheck, Network, ShieldCheck } from 'lucide-react';
+import { BookOpenCheck, Network, ShieldCheck } from 'lucide-react';
 
 export const LEARNING_FEATURES = [
   {
@@ -14,13 +14,6 @@ export const LEARNING_FEATURES = [
     desc: '定位薄弱知识点和先修关系',
     href: '/sky/learning/graph',
     icon: Network,
-  },
-  {
-    key: 'stats',
-    label: '学习统计',
-    desc: '查看学习趋势、错因分布和掌握情况',
-    href: '/sky/learning/stats',
-    icon: BarChart3,
   },
   {
     key: 'profile',

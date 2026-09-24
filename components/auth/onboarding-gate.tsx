@@ -1,33 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/components/auth/auth-provider';
-
+// 新用户引导改为「首次进入哪个页面就就地讲解哪个页面」：
+// 各页面通过 <PageTour> 各自判断 localstorage 是否已看过，不再全局强制
+// 跳转 /sky/onboarding。此组件保留为 no-op，避免变更带入回归；如某天
+// 需要恢复全局引导门禁，可在此重写逻辑。
 export function sanitizeInternalRedirect(value: string | null): string {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return '/sky';
   return value;
 }
 
 export function OnboardingGate() {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const query = searchParams.toString();
-
-  useEffect(() => {
-    if (isLoading || !user) return;
-    if (user.role !== 'user') return;
-    if (user.onboardingStatus !== 'pending') return;
-    if (pathname.startsWith('/auth/') || pathname === '/sky/onboarding') return;
-
-    const decodedQuery = query ? decodeURIComponent(query) : '';
-    const currentUrl = sanitizeInternalRedirect(
-      `${pathname}${decodedQuery ? `?${decodedQuery}` : ''}`,
-    );
-    router.replace(`/sky/onboarding?redirect=${encodeURIComponent(currentUrl)}`);
-  }, [isLoading, pathname, query, router, user]);
-
   return null;
 }
