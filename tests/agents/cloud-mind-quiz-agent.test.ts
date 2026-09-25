@@ -41,6 +41,21 @@ describe('cloud mind quiz agent prompt', () => {
     expect(prompt).toContain('所有题目围绕该考点展开');
   });
 
+  it('adapts question design to the selected practice goal', () => {
+    const base = {
+      subjectLabel: '数学',
+      difficultyLabel: '进阶',
+      topic: '二次函数',
+      count: 5,
+    };
+
+    expect(buildQuizUserPrompt({ ...base, goal: 'practice' })).toContain('覆盖核心概念和常见题型');
+    expect(buildQuizUserPrompt({ ...base, goal: 'diagnose' })).toContain(
+      '易错点、边界条件和常见误区',
+    );
+    expect(buildQuizUserPrompt({ ...base, goal: 'mock' })).toContain('接近正式考试表达');
+  });
+
   it('repairs LaTeX commands whose backslashes were consumed by JSON escaping', () => {
     const repaired = restoreConsumedLatexEscapes(
       '在 riangleABC 中，angleA=50 circ，angleB=60 circ，则 angleC 的度数为多少？',

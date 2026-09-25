@@ -4,6 +4,10 @@ export const dynamic = 'force-dynamic';
 import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import {
+  FeaturePageHeader,
+  FeatureWorkspace,
+} from '@/components/sky/layout/feature-page-chrome';
 import { PageTour } from '@/components/sky/tour/page-tour';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
@@ -783,25 +787,11 @@ function CloudMindMemoryContent() {
   return (
     <div className="min-h-[calc(100dvh-4rem)]">
       <div className="mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6">
-        {/* Page heading */}
-        <motion.div
-          data-tour-step="page-header"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex items-center gap-3"
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300">
-            <Brain className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-violet-900 dark:text-violet-100">
-              记忆卡片
-            </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              用主动回忆巩固知识点，复习结果会同步到学习画像。
-            </p>
-          </div>
-        </motion.div>
+        <FeaturePageHeader
+          icon={<Brain className="h-5 w-5" />}
+          title="记忆卡片"
+          description="配置复习内容并生成闪卡，右侧会同步展示本次任务摘要。"
+        />
 
         {personalizationContext && (
           <MemoryPersonalizationPanel
@@ -817,12 +807,22 @@ function CloudMindMemoryContent() {
 
         {/* Input Section — 收集任务台 */}
         {!deck && (
-          <motion.div
-            data-tour-step="page-primary"
-            initial={{ opacity: 0, y: 20 }}
+          <FeatureWorkspace
+            preview={
+              <MemorySetupPreview
+                topic={topic}
+                content={content}
+                cardCount={cardCount}
+                recommendedWeakPoints={recommendedWeakPoints}
+                dueReviewCount={dueMemoryReviews.length}
+              />
+            }
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
             style={{
               color: 'var(--memory-text)',
             }}
@@ -1041,7 +1041,8 @@ function CloudMindMemoryContent() {
                 {error}
               </div>
             )}
-          </motion.div>
+            </motion.div>
+          </FeatureWorkspace>
         )}
 
         {/* Study Mode */}
@@ -1574,6 +1575,81 @@ function CloudMindMemoryContent() {
       </div>
 
       <PageTour id="resources-memory" />
+    </div>
+  );
+}
+
+function MemorySetupPreview({
+  topic,
+  content,
+  cardCount,
+  recommendedWeakPoints,
+  dueReviewCount,
+}: {
+  topic: string;
+  content: string;
+  cardCount: number;
+  recommendedWeakPoints: string[];
+  dueReviewCount: number;
+}) {
+  const resolvedTopic = topic.trim() || recommendedWeakPoints[0] || '等待填写学习主题';
+  const contentReady = content.trim().length > 0;
+
+  return (
+    <div className="sticky top-24 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/85 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+      <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <Layers className="h-4 w-4 text-violet-600 dark:text-violet-300" />
+          记忆任务预览
+        </div>
+        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+          生成前确认主题、卡片数量和复习来源。
+        </p>
+      </div>
+
+      <div className="space-y-4 p-5">
+        <div className="rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-400/20 dark:bg-violet-400/[0.07]">
+          <div className="text-xs font-medium text-violet-700 dark:text-violet-300">学习主题</div>
+          <div className="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">
+            {resolvedTopic}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs text-violet-700 dark:border-violet-400/20 dark:bg-white/[0.04] dark:text-violet-300">
+              {cardCount} 张卡片
+            </span>
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-white/[0.04] dark:text-slate-300">
+              主动回忆
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/30">
+            <div className="text-xs text-slate-500 dark:text-slate-400">学习内容</div>
+            <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {contentReady ? '已准备' : '等待输入'}
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/30">
+            <div className="text-xs text-slate-500 dark:text-slate-400">到期复习</div>
+            <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {dueReviewCount > 0 ? `${dueReviewCount} 张待复习` : '暂无到期卡片'}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950/30">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
+            <Route className="h-4 w-4 text-violet-600 dark:text-violet-300" />
+            生成后的学习流程
+          </div>
+          <ol className="mt-3 space-y-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+            <li>1. 查看正面问题并主动回忆</li>
+            <li>2. 翻面核对答案并评价掌握程度</li>
+            <li>3. 系统安排下一次复习时间</li>
+          </ol>
+        </div>
+      </div>
     </div>
   );
 }

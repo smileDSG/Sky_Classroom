@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import {
@@ -24,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { buildSlidesAdaptivePolicyFromContext } from '@/lib/slides/personalization';
+import { FeatureWorkspace } from '@/components/sky/layout/feature-page-chrome';
 
 interface EmptyStateProps {
   topic: string;
@@ -206,26 +208,11 @@ export function EmptyState({
     </Card>
   ) : null;
 
-  const tipsCard = (
-    <div className="rounded-xl border border-sky-200/40 p-4 dark:border-sky-800/30 dark:bg-sky-950/10">
-      <div className="flex items-center gap-2 text-sm font-medium text-sky-600 dark:text-sky-400">
-        <Sparkles className="h-4 w-4" />
-        生成说明
-      </div>
-      <ul className="mt-2 space-y-1 text-xs leading-5 text-muted-foreground">
-        <li>• 输入主题后，AI 会自动规划课件大纲</li>
-        <li>• 目标学段决定讲解的语言与知识范围</li>
-        <li>• 未输入主题时可查看使用技巧</li>
-        <li>• 会根据你的学习情况调整难度与结构</li>
-      </ul>
-    </div>
-  );
-
   const formCard = (
-    <Card className="overflow-hidden border-sky-200/50 shadow-md shadow-sky-100/50 dark:border-sky-800/40 dark:shadow-sky-900/20">
-      <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-transparent dark:from-sky-950/30 dark:to-transparent">
-        <CardTitle className="flex items-center gap-2 text-base text-sky-700 dark:text-sky-300">
-          <Presentation className="h-4 w-4 text-sky-500" />
+    <Card className="overflow-hidden border-violet-200/70 shadow-sm dark:border-violet-300/20">
+      <CardHeader className="border-b bg-violet-50/70 dark:bg-violet-300/[0.07]">
+        <CardTitle className="flex items-center gap-2 text-base text-slate-900 dark:text-slate-100">
+          <Presentation className="h-4 w-4 text-violet-600 dark:text-violet-300" />
           课件主题
         </CardTitle>
         <CardDescription>输入主题，AI 会规划大纲与内容</CardDescription>
@@ -244,7 +231,7 @@ export function EmptyState({
             value={topic}
             onChange={(e) => onTopicChange(e.target.value)}
             placeholder="例如：导数与函数单调性"
-            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-3 text-lg text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-lg text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
           />
         </div>
 
@@ -268,7 +255,7 @@ export function EmptyState({
                   }`}
                 >
                   <Icon
-                    className={`h-4 w-4 ${isActive ? 'text-sky-600 dark:text-sky-400' : 'text-slate-400 dark:text-slate-500'}`}
+                    className={`h-4 w-4 ${isActive ? 'text-violet-600 dark:text-violet-300' : 'text-slate-400 dark:text-slate-500'}`}
                   />
                   {d.label}
                 </button>
@@ -281,14 +268,10 @@ export function EmptyState({
           <Button
             onClick={() => onGenerate()}
             disabled={generating || !topic.trim()}
-            className="h-12 flex-1 gap-2 bg-sky-500 text-white hover:bg-sky-600 dark:bg-sky-500 dark:hover:bg-sky-400"
+            className="h-12 flex-1 gap-2 bg-violet-600 text-white hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-400"
           >
             <Sparkles className="h-4 w-4" />
-            {generating
-              ? '生成引擎启动中...'
-              : adaptivePolicy
-                ? '按你的情况生成课件'
-                : '启动生成引擎'}
+            {generating ? '正在生成…' : '生成课件'}
             {!generating && <ArrowRight className="h-4 w-4" />}
           </Button>
           <Button asChild variant="outline" className="h-12 gap-2">
@@ -309,12 +292,85 @@ export function EmptyState({
         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
         className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6"
       >
-        <div className="w-full space-y-6">
-          {adaptiveCard}
+        <FeatureWorkspace
+          primaryTourStep={false}
+          preview={
+            <SlidesSetupPreview
+              topic={topic}
+              difficulty={difficulty}
+              adaptivePolicy={adaptivePolicy}
+              adaptiveCard={adaptiveCard}
+            />
+          }
+        >
           {formCard}
-          {!adaptivePolicy && !personalizationNotice && tipsCard}
-        </div>
+        </FeatureWorkspace>
       </motion.div>
+    </div>
+  );
+}
+
+function SlidesSetupPreview({
+  topic,
+  difficulty,
+  adaptivePolicy,
+  adaptiveCard,
+}: {
+  topic: string;
+  difficulty: 'junior' | 'senior' | 'college';
+  adaptivePolicy: ReturnType<typeof buildSlidesAdaptivePolicyFromContext>;
+  adaptiveCard: ReactNode;
+}) {
+  const difficultyLabel = DIFFICULTIES.find((item) => item.value === difficulty)?.label ?? '高中';
+
+  return (
+    <div className="sticky top-4 space-y-4">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/85 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+        <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <Presentation className="h-4 w-4 text-violet-600 dark:text-violet-300" />
+            课件大纲预览
+          </div>
+          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+            AI 会根据主题先规划结构，再完成页面设计与质量检查。
+          </p>
+        </div>
+        <div className="space-y-4 p-5">
+          <div className="rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-400/20 dark:bg-violet-400/[0.07]">
+            <div className="text-xs font-medium text-violet-700 dark:text-violet-300">课件主题</div>
+            <div className="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">
+              {topic.trim() || '等待填写课件主题'}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs text-violet-700 dark:border-violet-400/20 dark:bg-white/[0.04] dark:text-violet-300">
+                {difficultyLabel}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-white/[0.04] dark:text-slate-300">
+                {adaptivePolicy
+                  ? `${adaptivePolicy.minPages}-${adaptivePolicy.maxPages} 页`
+                  : '自动规划页数'}
+              </span>
+            </div>
+          </div>
+          <ol className="space-y-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+            {(
+              adaptivePolicy?.contentPlan ?? [
+                '建立主题与学习目标',
+                '讲解核心概念与示例',
+                '加入练习、总结与复习提示',
+              ]
+            ).map((item, index) => (
+              <li key={item} className="flex items-start gap-2">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[10px] font-bold text-violet-700 dark:bg-violet-400/15 dark:text-violet-300">
+                  {index + 1}
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+      {adaptiveCard}
     </div>
   );
 }

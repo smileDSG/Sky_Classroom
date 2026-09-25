@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PageTour } from '@/components/sky/tour/page-tour';
+import { FeaturePageHeader } from '@/components/sky/layout/feature-page-chrome';
 import { Button } from '@/components/ui/button';
 import { AvatarSpeechPlayer } from './avatar-speech-player';
 import { CoverGallery, type CoverItem } from './cover-gallery';
@@ -839,31 +840,19 @@ function SlidesPageContent({
 
   return (
     <div className="slides-workspace relative flex h-[calc(100dvh-4rem)] min-h-0 w-full flex-col overflow-hidden">
-      {/* Shared page header — matches solve family (gradient title + subtitle, right action) */}
-      <header
-        data-tour-step="page-header"
-        className="z-10 w-full flex-shrink-0 px-4 pt-6 sm:px-6"
-      >
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-sky-900 dark:text-sky-100">
-              AI 智能课件生成
-            </h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              输入主题，AI 自动编排大纲、设计排版并生成精美课件
-            </p>
-          </div>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="hidden shrink-0 gap-2 sm:inline-flex"
-          >
-            <Link href="/sky/learning/path">
-              <Target className="h-4 w-4" /> 我的薄弱点
-            </Link>
-          </Button>
-        </div>
+      <header className="z-10 w-full flex-shrink-0 px-4 pt-6 sm:px-6">
+        <FeaturePageHeader
+          icon={<Presentation className="h-5 w-5" />}
+          title="AI 智能课件生成"
+          description="配置课件主题与目标学段，右侧会同步展示课件结构和个性化策略。"
+          action={
+            <Button asChild variant="outline" size="sm" className="hidden gap-2 sm:inline-flex">
+              <Link href="/sky/learning/path">
+                <Target className="h-4 w-4" /> 我的薄弱点
+              </Link>
+            </Button>
+          }
+        />
       </header>
 
       {/* Main content */}

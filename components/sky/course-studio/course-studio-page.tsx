@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { FeaturePageHeader, FeatureWorkspace } from '@/components/sky/layout/feature-page-chrome';
 import { PageTour } from '@/components/sky/tour/page-tour';
 import { CourseStudioP1EvidencePanel } from '@/components/sky/course-studio/p1-evidence-panel';
 import { CourseStudioP2LongTermPanel } from '@/components/sky/course-studio/p2-long-term-panel';
@@ -856,31 +857,23 @@ export function CourseStudioPage() {
   return (
     <SkyAppShell>
       <div className=" space-y-6 px-4 pt-6 pb-12 sm:px-6">
-        <div data-tour-step="page-header" className="flex items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300">
-              <Layers className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight text-violet-900 dark:text-violet-100">
-                学习包工坊
-              </h1>
-              <p className="mt-1 line-clamp-1 text-sm text-slate-500 dark:text-slate-400">
-                生成讲义、导图、自查清单和学习路径，走完「学→查→练→复盘」完整闭环。
-              </p>
-            </div>
-          </div>
-          <Badge
-            variant="outline"
-            className="h-7 shrink-0 rounded-full px-3 text-slate-600 dark:text-slate-300"
-          >
-            {contextLoading
-              ? '正在读取学习情况'
-              : systemProfileReady
-                ? '已准备好'
-                : '补一句即可生成'}
-          </Badge>
-        </div>
+        <FeaturePageHeader
+          icon={<Layers className="h-5 w-5" />}
+          title="学习包工坊"
+          description="配置学习目标与资料类型，右侧会同步展示即将生成的学习包。"
+          action={
+            <Badge
+              variant="outline"
+              className="h-7 rounded-full px-3 text-slate-600 dark:text-slate-300"
+            >
+              {contextLoading
+                ? '正在读取学习情况'
+                : systemProfileReady
+                  ? '已准备好'
+                  : '补一句即可生成'}
+            </Badge>
+          }
+        />
 
         {error && (
           <div className="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-300/25 dark:bg-rose-300/10 dark:text-rose-100 sm:flex-row sm:items-center sm:justify-between">
@@ -914,53 +907,62 @@ export function CourseStudioPage() {
           </div>
         )}
 
-        <section
-          data-tour-step="page-primary"
-          className="rounded-2xl border border-violet-200/70 bg-violet-50/60 p-4 shadow-sm dark:border-violet-300/20 dark:bg-violet-300/10 sm:p-5"
+        <FeatureWorkspace
+          preview={
+            <CourseStudioSetupPreview
+              supplement={supplement}
+              courseFocus={courseFocus}
+              selectedTypes={selectedTypes}
+              systemProfileReady={systemProfileReady}
+              contextLoading={contextLoading}
+            />
+          }
         >
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-            <Layers className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
-            这次想生成什么样的学习包？
-          </div>
-          <Textarea
-            id="course-studio-intent"
-            value={supplement}
-            onChange={(event) => setSupplement(event.target.value)}
-            placeholder="例如：帮我复习导数，准备期末考试"
-            className="min-h-24 resize-none bg-white text-sm leading-6 dark:bg-slate-950/70"
-          />
-          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {RESOURCE_TYPES.map((item) => (
-                <ResourceTypePill
-                  key={item.id}
-                  item={item}
-                  selected={selectedTypes.includes(item.id)}
-                  onClick={() => toggleType(item.id)}
-                />
-              ))}
+          <section className="rounded-2xl border border-violet-200/70 bg-violet-50/60 p-4 shadow-sm dark:border-violet-300/20 dark:bg-violet-300/10 sm:p-5">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
+              <Layers className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
+              这次想生成什么样的学习包？
             </div>
-            <Button
-              type="button"
-              className="min-h-11 w-full justify-center px-5 lg:w-auto lg:min-w-28"
-              onClick={handleGenerate}
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Play className="h-4 w-4" />
-              )}
-              生成
-            </Button>
-          </div>
-          {typeAdvice && (
-            <div className="mt-3 flex items-start gap-2 rounded-xl border border-violet-200/60 bg-violet-50/60 px-3.5 py-2.5 text-sm leading-6 text-slate-700 dark:border-violet-500/25 dark:bg-violet-500/[0.07] dark:text-violet-100">
-              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
-              <span>{typeAdvice}</span>
+            <Textarea
+              id="course-studio-intent"
+              value={supplement}
+              onChange={(event) => setSupplement(event.target.value)}
+              placeholder="例如：帮我复习导数，准备期末考试"
+              className="min-h-24 resize-none bg-white text-sm leading-6 dark:bg-slate-950/70"
+            />
+            <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {RESOURCE_TYPES.map((item) => (
+                  <ResourceTypePill
+                    key={item.id}
+                    item={item}
+                    selected={selectedTypes.includes(item.id)}
+                    onClick={() => toggleType(item.id)}
+                  />
+                ))}
+              </div>
+              <Button
+                type="button"
+                className="min-h-11 w-full justify-center px-5 lg:w-auto lg:min-w-28"
+                onClick={handleGenerate}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+                生成
+              </Button>
             </div>
-          )}
-        </section>
+            {typeAdvice && (
+              <div className="mt-3 flex items-start gap-2 rounded-xl border border-violet-200/60 bg-violet-50/60 px-3.5 py-2.5 text-sm leading-6 text-slate-700 dark:border-violet-500/25 dark:bg-violet-500/[0.07] dark:text-violet-100">
+                <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+                <span>{typeAdvice}</span>
+              </div>
+            )}
+          </section>
+        </FeatureWorkspace>
 
         <div className="flex flex-wrap justify-center gap-2 text-sm">
           <Button
@@ -1445,6 +1447,102 @@ function ResourceTypePill({
       <Icon className="h-4 w-4 shrink-0" />
       <span className="truncate">{item.label}</span>
     </button>
+  );
+}
+
+function CourseStudioSetupPreview({
+  supplement,
+  courseFocus,
+  selectedTypes,
+  systemProfileReady,
+  contextLoading,
+}: {
+  supplement: string;
+  courseFocus: string;
+  selectedTypes: string[];
+  systemProfileReady: boolean;
+  contextLoading: boolean;
+}) {
+  const selectedResources = RESOURCE_TYPES.filter((item) => selectedTypes.includes(item.id));
+  const topic = courseFocus.trim() || supplement.trim() || '等待填写学习主题';
+
+  return (
+    <div className="sticky top-24 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/85 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+      <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <Eye className="h-4 w-4 text-violet-600 dark:text-violet-300" />
+          学习包预览
+        </div>
+        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+          生成前确认主题、资料组成和个性化状态。
+        </p>
+      </div>
+
+      <div className="space-y-4 p-5">
+        <div className="rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-400/20 dark:bg-violet-400/[0.07]">
+          <div className="text-xs font-medium text-violet-700 dark:text-violet-300">学习主题</div>
+          <div className="mt-2 line-clamp-3 text-base font-semibold leading-6 text-slate-900 dark:text-slate-100">
+            {topic}
+          </div>
+          <div className="mt-3 inline-flex rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs text-violet-700 dark:border-violet-400/20 dark:bg-white/[0.04] dark:text-violet-300">
+            {selectedResources.length} 类学习资料
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">资料组成</div>
+          <div className="grid grid-cols-2 gap-2">
+            {selectedResources.length > 0 ? (
+              selectedResources.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/30"
+                  >
+                    <Icon className="h-4 w-4 text-violet-600 dark:text-violet-300" />
+                    <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {item.label}
+                    </div>
+                    <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      {item.hint}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="col-span-2 rounded-xl border border-dashed border-slate-300 px-4 py-5 text-center text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                请至少选择一种资料类型
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950/30">
+          {contextLoading ? (
+            <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-violet-600 dark:text-violet-300" />
+          ) : systemProfileReady ? (
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
+          ) : (
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+          )}
+          <div>
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {contextLoading
+                ? '正在读取学习情况'
+                : systemProfileReady
+                  ? '已应用个性化信息'
+                  : '可补充参考信息'}
+            </div>
+            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+              {systemProfileReady
+                ? '系统会结合薄弱点、学习节奏和近期表现组织资料。'
+                : '即使没有历史数据，也可以根据当前输入直接生成第一版学习包。'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

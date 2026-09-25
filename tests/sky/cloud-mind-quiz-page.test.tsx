@@ -104,6 +104,7 @@ describe('CloudMindQuizPage', () => {
   const fetchMock = vi.fn();
 
   beforeEach(() => {
+    window.localStorage.clear();
     fetchMock.mockReset();
     fetchMock.mockResolvedValue({
       ok: true,
@@ -131,6 +132,65 @@ describe('CloudMindQuizPage', () => {
     expect(screen.getAllByRole('button', { name: /填空题/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /选择题/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /判断题/ }).length).toBeGreaterThan(0);
+  });
+
+  it('applies the exam preset and sends the selected goal when starting a trial', async () => {
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === '/api/sky/cloud-mind/quiz' && init?.method === 'POST') {
+        return {
+          ok: true,
+          json: async () => ({ success: true, jobId: 'job-1', progress: 0, phase: 'queued' }),
+        };
+      }
+      return { ok: true, json: async () => ({ success: true, data: null }) };
+    });
+
+    render(<CloudMindQuizPage />);
+    fireEvent.click(screen.getAllByRole('button', { name: /考前速练/ })[0]);
+
+    expect(screen.getAllByText('限时模考').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('10 题').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getAllByRole('button', { name: /开启试炼/ })[0]);
+
+    await waitFor(() => {
+      const request = fetchMock.mock.calls.find(
+        ([input, init]) => String(input) === '/api/sky/cloud-mind/quiz' && init?.method === 'POST',
+      );
+      expect(request).toBeDefined();
+      expect(JSON.parse(String(request?.[1]?.body))).toMatchObject({
+        difficulty: 'medium',
+        count: 10,
+        questionType: 'choice',
+        goal: 'mock',
+      });
+    });
+  });
+
+  it('previews one real question and marks it stale after configuration changes', async () => {
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      if (String(input) === '/api/sky/cloud-mind/quiz-preview') {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            signature: 'preview-signature',
+            question: {
+              questionType: 'choice',
+              question: '下列函数中，哪一个是二次函数？',
+              options: ['y=x²+1', 'y=2x+1', 'y=1/x', 'y=3'],
+            },
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({ success: true, data: null }) };
+    });
+
+    render(<CloudMindQuizPage />);
+    fireEvent.click(screen.getAllByRole('button', { name: /预览 1 道样题/ })[0]);
+
+    expect(await screen.findByText('下列函数中，哪一个是二次函数？')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: /挑战/ })[0]);
+    expect(await screen.findByText('预览已过期')).toBeInTheDocument();
   });
 
   it('does not loop when the completed quiz initializes its mistake book selection', async () => {

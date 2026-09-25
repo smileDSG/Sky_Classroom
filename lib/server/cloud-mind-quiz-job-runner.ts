@@ -6,6 +6,7 @@ import { createLogger } from '@/lib/logger';
 import { generateQuiz, type QuizQuestionType } from '@/lib/agents/cloud-mind/quiz-agent';
 import { backfillQuizToQuestionBank } from '@/lib/agents/cloud-mind/quiz-backfill';
 import type { StudentProfile } from '@/lib/student/profile-types';
+import type { QuizGoal } from '@/lib/cloud-mind/quiz-experience';
 import { updateCloudMindQuizJob } from './cloud-mind-quiz-job-store';
 
 const log = createLogger('CloudMindQuizJobRunner');
@@ -25,6 +26,7 @@ export function runCloudMindQuizJob(
     topic: string;
     count: number;
     questionType?: QuizQuestionType;
+    goal: QuizGoal;
     profile?: StudentProfile;
   },
 ): Promise<void> {
@@ -43,6 +45,7 @@ export function runCloudMindQuizJob(
         input.count,
         input.profile,
         input.questionType ?? 'choice',
+        input.goal,
       );
 
       // 自动回填题库（去重 + 题型标记）；失败不影响出题结果

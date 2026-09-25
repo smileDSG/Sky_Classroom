@@ -24,6 +24,7 @@ import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personaliza
 import { requireAuth } from '@/lib/server/auth/helpers';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { safeErrorMessage } from '@/lib/server/sanitize-error';
+import { normalizeQuizGoal, type QuizGoal } from '@/lib/cloud-mind/quiz-experience';
 
 const log = createLogger('API:CloudMindQuiz');
 
@@ -60,16 +61,18 @@ async function resolveJobInput(body: unknown): Promise<{
   topic: string;
   count: number;
   questionType: QuizQuestionType;
+  goal: QuizGoal;
   profile?: Awaited<ReturnType<typeof buildStudentProfile>>;
   profileInjected: boolean;
   derived?: { subject: string; difficulty: string; topic: string; count: number };
 }> {
-  const { subject, difficulty, topic, count, questionType, auto } = (body ?? {}) as {
+  const { subject, difficulty, topic, count, questionType, goal, auto } = (body ?? {}) as {
     subject?: string;
     difficulty?: string;
     topic?: string;
     count?: number;
     questionType?: string;
+    goal?: string;
     auto?: boolean;
   };
 
@@ -102,6 +105,7 @@ async function resolveJobInput(body: unknown): Promise<{
     topic: finalTopic,
     count: questionCount,
     questionType: finalQuestionType,
+    goal: normalizeQuizGoal(goal),
     profile,
     profileInjected: Boolean(profile),
     derived,
@@ -122,6 +126,7 @@ export async function POST(req: NextRequest) {
       topic: input.topic,
       count: input.count,
       questionType: input.questionType,
+      goal: input.goal,
       profileInjected: input.profileInjected,
       derived: input.derived,
     });
@@ -134,6 +139,7 @@ export async function POST(req: NextRequest) {
         topic: input.topic,
         count: input.count,
         questionType: input.questionType,
+        goal: input.goal,
         profile: input.profile,
       }),
     );

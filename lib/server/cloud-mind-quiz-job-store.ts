@@ -4,6 +4,7 @@
 
 import type { QuizOutput, QuizQuestionType } from '@/lib/agents/cloud-mind/quiz-agent';
 import type { QuizBackfillStats } from '@/lib/agents/cloud-mind/quiz-backfill';
+import type { QuizGoal } from '@/lib/cloud-mind/quiz-experience';
 
 export type CloudMindQuizJobStatus = 'queued' | 'running' | 'completed' | 'failed';
 
@@ -20,6 +21,7 @@ export interface CloudMindQuizJob {
   topic: string;
   count: number;
   questionType: QuizQuestionType;
+  goal: QuizGoal;
   profileInjected: boolean;
   derived?: { subject: string; difficulty: string; topic: string; count: number };
   result?: QuizOutput;
@@ -47,7 +49,14 @@ export async function createCloudMindQuizJob(
   id: string,
   input: Pick<
     CloudMindQuizJob,
-    'userId' | 'subject' | 'difficulty' | 'topic' | 'count' | 'questionType' | 'profileInjected'
+    | 'userId'
+    | 'subject'
+    | 'difficulty'
+    | 'topic'
+    | 'count'
+    | 'questionType'
+    | 'goal'
+    | 'profileInjected'
   > & {
     derived?: CloudMindQuizJob['derived'];
   },
@@ -67,6 +76,7 @@ export async function createCloudMindQuizJob(
     topic: input.topic,
     count: input.count,
     questionType: input.questionType,
+    goal: input.goal,
     profileInjected: input.profileInjected,
     derived: input.derived,
   };

@@ -13,6 +13,7 @@ import { retrieveRelevantContext } from '@/lib/agents/rag/retriever';
 import { retrieveCourseStudioContext } from '@/lib/server/resource-generation-kb';
 import { buildProfileContextPrompt } from '@/lib/student/profile-prompts';
 import type { StudentProfile } from '@/lib/student/profile-types';
+import type { QuizGoal } from '@/lib/cloud-mind/quiz-experience';
 import { getSubjectLabelOrSelf } from '@/lib/mistakes/subject-inference';
 import {
   buildCloudMindCacheKey,
@@ -258,6 +259,7 @@ export function buildQuizUserPrompt(input: {
   topic: string;
   count: number;
   questionType?: QuizQuestionType;
+  goal?: QuizGoal;
   profileContext?: string;
   ragContext?: string;
 }): string {
@@ -265,6 +267,7 @@ export function buildQuizUserPrompt(input: {
   const profileContext = input.profileContext ?? '';
   const ragContext = input.ragContext ?? '';
   const questionType = input.questionType ?? 'choice';
+  const goal = input.goal ?? 'practice';
   const typeName = QUESTION_TYPE_LABELS[questionType];
 
   const typeRequirements =
@@ -291,11 +294,17 @@ export function buildQuizUserPrompt(input: {
     ? `\n\n主题命中要求：\n- questions 中的每一道题都必须围绕“${topic}”出题\n- 不要生成与“${topic}”无关的泛化题、随机题或其他章节题\n- JSON 顶层 topic 字段必须写为“${topic}”`
     : '\n\n主题命中要求：\n- 请先为本次测验选定一个清晰的核心考点，并让所有题目围绕该考点展开\n- JSON 顶层 topic 字段必须写出该核心考点';
 
+  const goalRequirements: Record<QuizGoal, string> = {
+    practice: '覆盖核心概念和常见题型，难度分布平稳，适合连续刷题巩固。',
+    diagnose: '优先考查易错点、边界条件和常见误区，让错误能够暴露具体知识缺口。',
+    mock: '题干与选项应接近正式考试表达，减少教学提示，保持独立作答所需的信息完整。',
+  };
+
   const opening = topic
     ? `请为“${input.subjectLabel}”学科，围绕“${topic}”知识点，生成${input.count}道${input.difficultyLabel}难度的${typeName}。`
     : `请为“${input.subjectLabel}”学科，生成${input.count}道${input.difficultyLabel}难度的${typeName}。`;
 
-  return `${opening}\n\n要求：\n${commonRequirements}${topicRequirements}${profileContext}${ragContext}`;
+  return `${opening}\n\n练习目标：${goalRequirements[goal]}\n\n要求：\n${commonRequirements}${topicRequirements}${profileContext}${ragContext}`;
 }
 
 // ── JSON 解析容错层 ────────────────────────────────────────────────
@@ -388,6 +397,7 @@ export async function generateQuiz(
   count: number,
   profile?: StudentProfile,
   questionType: QuizQuestionType = 'choice',
+  goal: QuizGoal = 'practice',
 ): Promise<QuizOutput> {
   const apiKey = resolveApiKey('deepseek');
   const baseUrl = resolveBaseUrl('deepseek') || 'https://api.deepseek.com/v1';
@@ -454,6 +464,7 @@ export async function generateQuiz(
     topic: trimmedTopic,
     count,
     questionType,
+    goal,
     profileContext,
     ragContext,
   });
@@ -472,6 +483,7 @@ export async function generateQuiz(
     topic: trimmedTopic,
     count,
     questionType,
+    goal,
     profileContext,
     ragContext,
   });
