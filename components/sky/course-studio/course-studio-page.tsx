@@ -1415,7 +1415,6 @@ export function CourseStudioPage() {
 
       <PageTour id="resources-course-studio" />
       </div>
-          </div>
         }
         aside={
           <div data-testid="course-studio-ai-advice" className="space-y-4">
