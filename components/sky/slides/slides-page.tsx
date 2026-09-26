@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PageTour } from '@/components/sky/tour/page-tour';
-import { WorkspaceShell } from '@/components/sky/layout/workspace-shell';
+import { FeaturePageHeader } from '@/components/sky/layout/feature-page-chrome';
 import { Button } from '@/components/ui/button';
 import { AvatarSpeechPlayer } from './avatar-speech-player';
 import { CoverGallery, type CoverItem } from './cover-gallery';
