@@ -4,10 +4,7 @@ export const dynamic = 'force-dynamic';
 import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
-import {
-  FeaturePageHeader,
-  FeatureWorkspace,
-} from '@/components/sky/layout/feature-page-chrome';
+import { WorkspaceShell } from '@/components/sky/layout/workspace-shell';
 import { PageTour } from '@/components/sky/tour/page-tour';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
@@ -785,14 +782,29 @@ function CloudMindMemoryContent() {
     .find((item) => item.decision)?.decision;
 
   return (
+    <WorkspaceShell
+      title="记忆卡片"
+      description="配置复习内容并生成闪卡，右侧会同步展示本次任务摘要。"
+      mode="edit"
+      panel={
+        <div data-testid="memory-config-panel" className="space-y-3 text-sm">
+          <div className="flex items-center gap-2 font-semibold text-slate-900">
+            <Brain className="h-4 w-4 text-[#5B8DEF]" /> 卡片参数设置
+          </div>
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <span>主题</span>
+            <span className="max-w-[130px] truncate text-slate-700">{topic || '待填写'}</span>
+          </div>
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <span>卡片数量</span>
+            <span className="text-slate-700">{deck?.cards.length ?? cardCount}</span>
+          </div>
+        </div>
+      }
+      main={
+        <div data-testid="memory-main-workspace" className="min-w-0">
     <div className="min-h-[calc(100dvh-4rem)]">
       <div className="mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6">
-        <FeaturePageHeader
-          icon={<Brain className="h-5 w-5" />}
-          title="记忆卡片"
-          description="配置复习内容并生成闪卡，右侧会同步展示本次任务摘要。"
-        />
-
         {personalizationContext && (
           <MemoryPersonalizationPanel
             context={personalizationContext}
@@ -807,17 +819,7 @@ function CloudMindMemoryContent() {
 
         {/* Input Section — 收集任务台 */}
         {!deck && (
-          <FeatureWorkspace
-            preview={
-              <MemorySetupPreview
-                topic={topic}
-                content={content}
-                cardCount={cardCount}
-                recommendedWeakPoints={recommendedWeakPoints}
-                dueReviewCount={dueMemoryReviews.length}
-              />
-            }
-          >
+          <div data-tour-step="page-primary">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1042,7 +1044,7 @@ function CloudMindMemoryContent() {
               </div>
             )}
             </motion.div>
-          </FeatureWorkspace>
+          </div>
         )}
 
         {/* Study Mode */}
@@ -1576,6 +1578,33 @@ function CloudMindMemoryContent() {
 
       <PageTour id="resources-memory" />
     </div>
+        </div>
+      }
+      aside={
+        <div data-testid="memory-ai-advice" className="space-y-4 text-sm">
+          {!deck && (
+            <MemorySetupPreview
+              topic={topic}
+              content={content}
+              cardCount={cardCount}
+              recommendedWeakPoints={recommendedWeakPoints}
+              dueReviewCount={dueMemoryReviews.length}
+            />
+          )}
+          <div className="flex items-center gap-2 font-semibold text-slate-900">
+            <Sparkles className="h-4 w-4 text-[#34C7B6]" /> AI 优化建议
+          </div>
+          <p className="text-xs leading-5 text-slate-500">
+            根据主题和学习记录自动调整卡片数量、重点与复习间隔。
+          </p>
+          {personalizationNotice && (
+            <div className="rounded-lg border border-[#E4EDF7] bg-[#F5F9FF] px-3 py-2 text-xs leading-5 text-slate-600">
+              {personalizationNotice}
+            </div>
+          )}
+        </div>
+      }
+    />
   );
 }
 

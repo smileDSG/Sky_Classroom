@@ -5,6 +5,7 @@ import { Clock, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeachingPanel } from '@/components/sky/solve/teaching-panel';
 import { TeachingHistoryPanel } from '@/components/sky/solve/teaching-history-panel';
+import { WorkspaceShell } from '@/components/sky/layout/workspace-shell';
 import type { TeachingHistoryItem } from '@/lib/teaching/teaching-job-client';
 import type { LessonPlan, LessonSection } from '@/lib/teaching/lesson-types';
 import type { ContentChunk } from '@/lib/teaching/content-types';
@@ -52,55 +53,66 @@ export function TeachingPage({
   }, []);
 
   return (
-    <div className=" space-y-6">
-      {/* Page header */}
-      <div data-tour-step="page-header" className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[var(--teaching-border)] bg-[var(--teaching-primary)]/15 shadow-[0_0_16px_var(--teaching-glow)]">
-            <GraduationCap className="h-7 w-7 text-[var(--teaching-primary)]" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[var(--teaching-text)]">
-              星际讲堂
-            </h1>
-            <p className="mt-0.5 text-sm text-[var(--teaching-muted)]">
-              AI 导师为你规划教案，逐段讲解知识点
-            </p>
-          </div>
-        </div>
+    <WorkspaceShell
+      title="智能授课"
+      description="AI 导师根据你的学习情况规划教案，逐段讲解知识点。"
+      mode="run"
+      status={
         <button
           onClick={() => setShowHistory((v) => !v)}
           className={cn(
-            'flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all shrink-0',
+            'inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors',
             showHistory
-              ? 'teaching-button-primary text-[var(--teaching-text)]'
-              : 'border border-[var(--teaching-border)] text-[var(--teaching-muted)] hover:text-[var(--teaching-primary-bright)] hover:border-[var(--teaching-border-strong)] hover:bg-[var(--teaching-primary)]/10',
+              ? 'border-[#5B8DEF] bg-[#5B8DEF]/10 text-[#315fbc]'
+              : 'border-[#E4EDF7] bg-white text-slate-600 hover:border-[#5B8DEF]/40',
           )}
         >
-          <Clock className="h-4 w-4" />
-          历史星图
+          <Clock className="h-4 w-4" /> 历史星图
         </button>
-      </div>
-
-      {/* History Panel (toggle) */}
-      {showHistory && (
-        <div className="mb-6">
-          <TeachingHistoryPanel
-            onSelect={handleSelectHistory}
-            onClose={() => setShowHistory(false)}
-            refreshKey={historyRefreshKey}
+      }
+      panel={
+        <div data-testid="teaching-config-panel" className="space-y-3 text-sm">
+          <div className="flex items-center gap-2 font-semibold text-slate-900">
+            <GraduationCap className="h-4 w-4 text-[#5B8DEF]" /> 授课参数
+          </div>
+          <p className="text-xs leading-5 text-slate-500">主题、难度和节奏会根据学情自动调整。</p>
+          <div className="rounded-lg bg-[#F5F9FF] px-3 py-2 text-xs leading-5 text-slate-600">
+            {personalizationNotice ?? '输入主题后开始生成个性化教案。'}
+          </div>
+        </div>
+      }
+      main={
+        <div data-testid="teaching-main-workspace" className="min-w-0">
+          <TeachingPanel
+            viewHistoryItem={historyItem}
+            onViewedHistory={handleViewedHistory}
+            initialTopic={initialTopic}
+            personalizationNotice={personalizationNotice}
+            personalizationPolicy={personalizationPolicy}
+            personalizationContext={personalizationContext}
           />
         </div>
-      )}
-
-      <TeachingPanel
-        viewHistoryItem={historyItem}
-        onViewedHistory={handleViewedHistory}
-        initialTopic={initialTopic}
-        personalizationNotice={personalizationNotice}
-        personalizationPolicy={personalizationPolicy}
-        personalizationContext={personalizationContext}
-      />
-    </div>
+      }
+      aside={
+        <div data-testid="teaching-ai-advice" className="space-y-4">
+          {showHistory ? (
+            <TeachingHistoryPanel
+              onSelect={handleSelectHistory}
+              onClose={() => setShowHistory(false)}
+              refreshKey={historyRefreshKey}
+            />
+          ) : (
+            <div className="rounded-xl border border-[#E4EDF7] bg-white p-4 text-sm">
+              <div className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
+                <GraduationCap className="h-4 w-4 text-[#34C7B6]" /> AI 授课建议
+              </div>
+              <p className="text-xs leading-5 text-slate-500">
+                先输入一个明确主题。生成后可在主区域逐段阅读、提问并提交掌握反馈。
+              </p>
+            </div>
+          )}
+        </div>
+      }
+    />
   );
 }

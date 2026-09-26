@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
-import { FeaturePageHeader, FeatureWorkspace } from '@/components/sky/layout/feature-page-chrome';
+import { WorkspaceShell } from '@/components/sky/layout/workspace-shell';
 import { PageTour } from '@/components/sky/tour/page-tour';
 import { CourseStudioP1EvidencePanel } from '@/components/sky/course-studio/p1-evidence-panel';
 import { CourseStudioP2LongTermPanel } from '@/components/sky/course-studio/p2-long-term-panel';
@@ -856,24 +856,33 @@ export function CourseStudioPage() {
 
   return (
     <SkyAppShell>
-      <div className=" space-y-6 px-4 pt-6 pb-12 sm:px-6">
-        <FeaturePageHeader
-          icon={<Layers className="h-5 w-5" />}
-          title="学习包工坊"
-          description="配置学习目标与资料类型，右侧会同步展示即将生成的学习包。"
-          action={
-            <Badge
-              variant="outline"
-              className="h-7 rounded-full px-3 text-slate-600 dark:text-slate-300"
-            >
-              {contextLoading
-                ? '正在读取学习情况'
-                : systemProfileReady
-                  ? '已准备好'
-                  : '补一句即可生成'}
+      <WorkspaceShell
+        title="学习包工坊"
+        description="配置学习目标与资料类型，右侧会同步展示即将生成的学习包。"
+        mode="edit"
+        panel={
+          <div data-testid="course-studio-config-panel" className="space-y-3 text-sm">
+            <div className="flex items-center gap-2 font-semibold text-slate-900">
+              <Layers className="h-4 w-4 text-[#5B8DEF]" /> 任务信息与参数
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-500">
+              <span>课程重点</span>
+              <span className="max-w-[130px] truncate text-slate-700">
+                {courseFocus || supplement || '待填写'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-500">
+              <span>资料类型</span>
+              <span className="text-slate-700">{selectedTypes.length} 类</span>
+            </div>
+            <Badge variant="outline" className="h-7 rounded-full px-3 text-slate-600">
+              {contextLoading ? '正在读取学习情况' : systemProfileReady ? '已准备好' : '补一句即可生成'}
             </Badge>
-          }
-        />
+          </div>
+        }
+        main={
+          <div data-testid="course-studio-main-workspace" className="min-w-0">
+      <div className="space-y-6 px-1">
 
         {error && (
           <div className="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-300/25 dark:bg-rose-300/10 dark:text-rose-100 sm:flex-row sm:items-center sm:justify-between">
@@ -907,17 +916,6 @@ export function CourseStudioPage() {
           </div>
         )}
 
-        <FeatureWorkspace
-          preview={
-            <CourseStudioSetupPreview
-              supplement={supplement}
-              courseFocus={courseFocus}
-              selectedTypes={selectedTypes}
-              systemProfileReady={systemProfileReady}
-              contextLoading={contextLoading}
-            />
-          }
-        >
           <section className="rounded-2xl border border-violet-200/70 bg-violet-50/60 p-4 shadow-sm dark:border-violet-300/20 dark:bg-violet-300/10 sm:p-5">
             <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
               <Layers className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
@@ -962,8 +960,6 @@ export function CourseStudioPage() {
               </div>
             )}
           </section>
-        </FeatureWorkspace>
-
         <div className="flex flex-wrap justify-center gap-2 text-sm">
           <Button
             type="button"
@@ -1418,6 +1414,39 @@ export function CourseStudioPage() {
       </div>
 
       <PageTour id="resources-course-studio" />
+      </div>
+          </div>
+        }
+        aside={
+          <div data-testid="course-studio-ai-advice" className="space-y-4">
+            <CourseStudioSetupPreview
+              supplement={supplement}
+              courseFocus={courseFocus}
+              selectedTypes={selectedTypes}
+              systemProfileReady={systemProfileReady}
+              contextLoading={contextLoading}
+            />
+            <div className="rounded-xl border border-[#E4EDF7] bg-white p-4 text-xs leading-5 text-slate-500">
+              <div className="mb-1 flex items-center gap-2 font-semibold text-slate-900">
+                <Lightbulb className="h-4 w-4 text-[#34C7B6]" /> AI 建议
+              </div>
+              根据学习目标、薄弱点和资料偏好自动组织学习路径。
+            </div>
+          </div>
+        }
+        actions={
+          <>
+            <Button type="button" variant="outline" onClick={refreshPersonalization} disabled={contextLoading || loading}>
+              {contextLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              更新学习情况
+            </Button>
+            <Button type="button" onClick={handleGenerate} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {loading ? '正在生成' : '生成学习包'}
+            </Button>
+          </>
+        }
+      />
     </SkyAppShell>
   );
 }

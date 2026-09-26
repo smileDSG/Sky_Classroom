@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PageTour } from '@/components/sky/tour/page-tour';
-import { FeaturePageHeader } from '@/components/sky/layout/feature-page-chrome';
+import { WorkspaceShell } from '@/components/sky/layout/workspace-shell';
 import { Button } from '@/components/ui/button';
 import { AvatarSpeechPlayer } from './avatar-speech-player';
 import { CoverGallery, type CoverItem } from './cover-gallery';
@@ -857,7 +857,7 @@ function SlidesPageContent({
 
       {/* Main content */}
       <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
-        <main
+        <div
           data-tour-step="page-primary"
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
@@ -953,7 +953,7 @@ function SlidesPageContent({
               totalSlides={totalPages}
             />
           </div>
-        </main>
+        </div>
       </div>
 
       {showPreview && previewImages && (

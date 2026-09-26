@@ -11,7 +11,6 @@ import { useTaskStore } from '@/lib/store/use-task-store';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import {
-  FileQuestion,
   Sparkles,
   Wand2,
   RotateCcw,
