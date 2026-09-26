@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PageTour } from '@/components/sky/tour/page-tour';
-import { WorkspaceShell } from '@/components/sky/layout/workspace-shell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -919,25 +918,14 @@ export function SolvePage() {
   const isLoading = state === 'recognizing' || state === 'solving' || state === 'grading';
 
   return (
-    <WorkspaceShell
-      title="搜题批改"
-      description="拍照、语音或输入题目，AI 帮你解答。"
-      mode="edit"
-      panel={
-        <div data-testid="solve-config-panel" className="space-y-3 text-sm">
-          <div className="flex items-center gap-2 font-semibold text-slate-900">
-            <ImageIcon className="h-4 w-4 text-[#5B8DEF]" /> 题目输入
-          </div>
-          <p className="text-xs leading-5 text-slate-500">支持拍照、语音和文字输入。</p>
-          <div className="text-xs leading-5 text-slate-500">
-            输入题目后，AI 会在主区域展示解题步骤和批改结果。
-          </div>
-        </div>
-      }
-      main={
-        <div data-testid="solve-main-workspace" className="min-w-0">
     <div className=" ">
-      <div data-tour-step="page-header" className="mb-6 flex items-center justify-end">
+      <div data-tour-step="page-header" className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-teal-800 dark:text-teal-100">
+            搜题批改
+          </h1>
+          <p className="text-sm text-muted-foreground">拍照、语音或输入题目，AI 帮你解答</p>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant={showHistory ? 'default' : 'outline'}
@@ -1261,19 +1249,6 @@ export function SolvePage() {
 
       <PageTour id="resources-solve" />
     </div>
-        </div>
-      }
-      aside={
-        <div data-testid="solve-ai-advice" className="space-y-3 text-sm">
-          <div className="flex items-center gap-2 font-semibold text-slate-900">
-            <Sparkles className="h-4 w-4 text-[#34C7B6]" /> AI 批改建议
-          </div>
-          <p className="text-xs leading-5 text-slate-500">
-            解题完成后，这里会提示错因、掌握情况和下一步练习方向。
-          </p>
-        </div>
-      }
-    />
   );
 }
 

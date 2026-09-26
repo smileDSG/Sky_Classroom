@@ -13,10 +13,6 @@ vi.mock('@/components/sky/slides/slides-page', () => ({
     personalizationNotice?: string | null;
   }) => (
     <section>
-      <div data-testid="workspace-panel" />
-      <div data-testid="workspace-main" />
-      <div data-testid="workspace-aside" />
-      <div data-testid="workspace-grid" data-mode="edit" />
       <div data-testid="slides-topic">{initialTopic ?? ''}</div>
       <div data-testid="slides-notice">{personalizationNotice ?? ''}</div>
     </section>

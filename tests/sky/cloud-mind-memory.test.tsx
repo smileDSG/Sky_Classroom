@@ -154,11 +154,6 @@ describe('CloudMindMemoryPage', () => {
   it('submits manual content to the streaming endpoint', async () => {
     render(<CloudMindMemoryPage />);
 
-    expect(screen.getByTestId('workspace-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('workspace-main')).toBeInTheDocument();
-    expect(screen.getByTestId('workspace-aside')).toBeInTheDocument();
-    expect(screen.getByTestId('workspace-grid')).toHaveAttribute('data-mode', 'edit');
-
     const [topicInput, contentTextarea] = screen.getAllByRole('textbox');
     fireEvent.change(topicInput, { target: { value: '二次函数、待定系数法' } });
     fireEvent.change(contentTextarea, {

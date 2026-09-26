@@ -857,7 +857,7 @@ function SlidesPageContent({
 
       {/* Main content */}
       <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div
+        <main
           data-tour-step="page-primary"
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
@@ -953,7 +953,7 @@ function SlidesPageContent({
               totalSlides={totalPages}
             />
           </div>
-        </div>
+        </main>
       </div>
 
       {showPreview && previewImages && (
