@@ -13,7 +13,7 @@ export function FeaturePageHeader({
   title,
   description,
   action,
-  accentClassName = 'bg-violet-100 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300',
+  accentClassName = 'bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300',
 }: FeaturePageHeaderProps) {
   return (
     <div data-tour-step="page-header" className="mb-6 flex items-center justify-between gap-4">
