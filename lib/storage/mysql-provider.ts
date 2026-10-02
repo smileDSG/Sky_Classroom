@@ -761,6 +761,24 @@ function parseDatetime(val: unknown): number {
   return new Date(val as string).getTime();
 }
 
+/**
+ * 把数据库的 DATE 列转成 YYYY-MM-DD（**按本地时区**取日期）。
+ *
+ * 为什么不能用 toISOString()：DATE 列在驱动里是 Date 对象，而它代表的是
+ * 「当天零点」。若用 toISOString()（转UTC），东八区的 2026-10-01 00:00
+ * 会被转成 2026-09-30 —— **日期凭空减一天**。曾导致连续天数算错、
+ * 召回钩子误判"今天已学"。
+ */
+function toLocalDateStr(val: unknown): string {
+  if (val instanceof Date) {
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  return String(val ?? '').slice(0, 10);
+}
+
 function parseJsonColumn<T>(value: unknown): T | null {
   if (value === null || value === undefined) return null;
   if (typeof value === 'string') return JSON.parse(value) as T;
@@ -814,10 +832,7 @@ function rowToCheckinEntry(row: RowDataPacket): StorageEntry {
     id: row.id as string,
     data: {
       userId: row.user_id,
-      date:
-        row.checkin_date instanceof Date
-          ? row.checkin_date.toISOString().slice(0, 10)
-          : String(row.checkin_date).slice(0, 10),
+      date: toLocalDateStr(row.checkin_date),
       timestamp: Number(row.timestamp),
     },
     createdAt: parseDatetime(row.created_at),

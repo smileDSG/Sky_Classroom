@@ -160,11 +160,16 @@ export class LearningStreakService {
   }
 
   private async lastActiveDate(userId: string, todayStr: string): Promise<string> {
-    const current = await this.countConsecutive(userId, todayStr);
-    if (current > 0) return todayStr;
+    // ⚠️ 不能用 `countConsecutive(...) > 0` 来判断"今天是否已学"：
+    // countConsecutive 在今天没有记录时会回退到昨天继续往前数, 于是只要昨天(或更早)
+    // 学过就返回 > 0, 导致本函数错误地返回"今天"。
+    // 后果: 召回钩子永远判定"今天已经学过了" → 召回永不触发(FR-12 形同虚设)。
+    // 正确做法: 今天是否活跃, 只看今天这一条记录在不在。
+    const todayEntry = await this.storage.get<CheckInRow>(CHECKIN_TABLE, `${userId}_${todayStr}`);
+    if (todayEntry?.data) return todayStr;
     const dates = await this.activeDates(userId);
     for (let i = dates.length - 1; i >= 0; i -= 1) {
-      if (dates[i] <= todayStr) return dates[i];
+      if (dates[i] < todayStr) return dates[i];
     }
     return '';
   }

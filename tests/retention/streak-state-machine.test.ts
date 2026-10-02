@@ -150,6 +150,23 @@ describe('LearningStreakService（连续天数状态机）', () => {
     expect(s.currentStreak).toBe(7);
     expect(s.status).toBe('peak');
   });
+
+  it('回归：今天没学时 lastActiveDate 不能返回今天', async () => {
+    // 只在 10-01 学过，查询 10-02（今天没学）
+    await svc.recordActivity(USER, '2026-10-01');
+    const s = await readStreak(svc, USER, '2026-10-02');
+    // 关键：lastActiveDate 必须是 10-01，不能是 10-02。
+    // 曾因用 countConsecutive>0 判断导致这里返回今天，
+    // 使召回钩子永远判定"今天已学"→ 召回永不触发。
+    expect(s.lastActiveDate).toBe('2026-10-01');
+  });
+
+  it('回归：今天学过时 lastActiveDate 才是今天', async () => {
+    await svc.recordActivity(USER, '2026-10-01');
+    await svc.recordActivity(USER, '2026-10-02');
+    const s = await readStreak(svc, USER, '2026-10-02');
+    expect(s.lastActiveDate).toBe('2026-10-02');
+  });
 });
 
 describe('buildSnapshotFromMistakes（成长快照真实值）', () => {
