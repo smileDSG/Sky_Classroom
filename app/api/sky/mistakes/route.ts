@@ -88,11 +88,19 @@ export async function GET(req: NextRequest) {
     const result = await dao.list(auth.user.id, {
       errorType: errorType ?? undefined,
       reviewed: reviewed !== null ? reviewed === 'true' : undefined,
-      masteryBelow: Number.isFinite(Number(masteryBelow)) ? Number(masteryBelow) : undefined,
-      page: Number.isFinite(Number(page)) ? Math.max(1, Math.trunc(Number(page))) : 1,
-      pageSize: Number.isFinite(Number(pageSize))
-        ? Math.min(100, Math.max(1, Math.trunc(Number(pageSize))))
-        : 20,
+      // 注意: 不能写成 `Number.isFinite(Number(masteryBelow))` —— 参数缺省时
+      // masteryBelow 是 null，而 Number(null) === 0 是有限数，会误判为"用户传了 0"，
+      // 于是 dao 按 masteryLevel < 0 过滤，把所有错题都滤掉（表现为列表永远为空）。
+      // 必须先排除 null / 空串，再做数字转换。
+      masteryBelow:
+        masteryBelow !== null && masteryBelow.trim() !== '' && Number.isFinite(Number(masteryBelow))
+          ? Number(masteryBelow)
+          : undefined,
+      page: page !== null && Number.isFinite(Number(page)) ? Math.max(1, Math.trunc(Number(page))) : 1,
+      pageSize:
+        pageSize !== null && pageSize.trim() !== ''
+          ? Math.min(100, Math.max(1, Math.trunc(Number(pageSize))))
+          : 20,
     });
 
     return apiSuccess({ items: result.items, total: result.total });
