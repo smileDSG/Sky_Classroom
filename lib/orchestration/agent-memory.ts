@@ -9,6 +9,7 @@
  */
 
 import type { AgentTurnSummary } from './types';
+import type { EmotionMemory } from '@/lib/retention/types';
 import { AGENT_MEMORY_TURNS } from './config';
 
 export interface AgentMemory {
@@ -25,11 +26,13 @@ export interface AgentMemory {
 
 export interface MemoryEntry {
   id: string;
-  type: 'preference' | 'fact' | 'progress' | 'question' | 'decision';
+  type: 'preference' | 'fact' | 'progress' | 'question' | 'decision' | 'emotion';
   content: string;
   turnNumber: number;
   importance: number; // 0-1
   source: string;
+  /** 情感记忆（emotion 类型时携带），用于课堂共情兜底。 */
+  emotion?: EmotionMemory;
 }
 
 export interface TypedMemory {
@@ -48,6 +51,7 @@ export function addTypedMemory(
   content: string,
   turnNumber: number,
   importance = 0.5,
+  emotion?: EmotionMemory,
 ): MemoryEntry {
   const entry: MemoryEntry = {
     id: `mem-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -56,6 +60,7 @@ export function addTypedMemory(
     turnNumber,
     importance,
     source: memory.agentId,
+    emotion,
   };
   memory.entries.push(entry);
   if (memory.entries.length > memory.maxEntries) {
@@ -75,6 +80,7 @@ export function buildTypedMemoryContext(memory: TypedMemory): string {
   const prefs = memory.entries.filter((e) => e.type === 'preference');
   const decisions = memory.entries.filter((e) => e.type === 'decision');
   const progress = memory.entries.filter((e) => e.type === 'progress');
+  const emotions = memory.entries.filter((e) => e.type === 'emotion');
   const lines = ['[Agent Memory]'];
   if (prefs.length) lines.push(`Preferences: ${prefs.map((p) => p.content).join('; ')}`);
   if (decisions.length)
@@ -85,6 +91,12 @@ export function buildTypedMemoryContext(memory: TypedMemory): string {
         .join('; ')}`,
     );
   if (progress.length) lines.push(`Progress: ${progress.map((p) => p.content).join('; ')}`);
+  if (emotions.length)
+    lines.push(
+      `Emotions: ${emotions
+        .map((e) => (e.emotion ? `${e.content}(${e.emotion.label})` : e.content))
+        .join('; ')}`,
+    );
   return lines.join('\n');
 }
 

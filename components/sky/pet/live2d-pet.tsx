@@ -190,6 +190,10 @@ export function Live2DPet({
         stage.style.width = `${Math.ceil(g.bw * fitR)}px`;
         stage.style.height = `${Math.ceil(g.bh * fitR + FOOT_UI_H)}px`;
         stage.style.overflow = 'hidden';
+        // 层级: 库只给了 position:fixed, 没给 z-index(auto) → 猫会被页面里任何有层级的
+        // 内容盖住(实测主页的白色卡片把猫的上半身压住, 只剩后腿和尾巴)。
+        // 与 VRM 舞台的 z-[9996] 对齐: 高于页面内容, 低于气泡(9999)与助手(10001)。
+        stage.style.zIndex = '9996';
         // 猫离窗口右缘留出空隙(默认 right:0 会贴边, 猫的渲染盒若略小于实际形象
         // 会被窗口右缘裁掉一角 —— 实测出现「猫探头被切」)。整体右移后猫和脚下
         // 切换条一起内收, 始终完整可见。offsetX>0 时再往里收一点 = 整只猫更贴右缘。
@@ -209,18 +213,55 @@ export function Live2DPet({
         // 再多就轮到裁身体了 —— 下沉由脚下 FOOT_UI_H 的透明区消化, 猫不会变矮。
         const maxDownPx = FOOT_UI_H * 0.9;
         const dy = Math.min(offsetY, maxDownPx) / fitR;
+        // 模型盒左上角在舞台内的位置(模型坐标系的绘制原点)。
+        // 复用与 setModelPosition 完全相同的算式 —— 避免两处公式各写一遍后算出不同结果,
+        // 导致轮廓与实际渲染错位(曾致气泡被顶到屏幕外消失)。
+        const mBoxW = g.bw * fitR;
+        const mBoxH = g.bh * fitR;
+        const mLeft = sRect.width - mBoxW - g.nOffX * fitR;
+        const mTop = sRect.height - mBoxH - g.nOffY * fitR - FOOT_UI_H * 0.9 + mBoxH * 0.22 + dy;
         // 让盒子右下角对准舞台右下角(舞台默认 bottom:0/right:0, 与窗口右下角重合),
         // 放大时盒子往左/上生长, 不超出窗口。
         inst.setModelPosition({
-          x: sRect.width - g.bw * fitR - g.nOffX * fitR,
+          x: mLeft,
           // getBounds 盒的下缘还垫着一截「模型脚底的透明空隙」(约为盒子高度的一小段, 随缩放等比变化)。
           // 只把盒底对齐舞台底, 猫脚仍会悬在切换条上方; 缺口大小又随窗口尺寸变, 定值压不下去。
           // 修法: 下压量也按盒子高度等比给(0.22 * 盒高), 抵消掉那截空闲, 无论如何缩放都能把脚
           // 钉进底部 FOOT_UI_H 的切换条区域内 —— 超出的部分全是透明空隙, overflow:hidden 裁剪无碍,
           // 切换条(z 在最上层)顺势遮住脚的下缘, 视觉上就是猫脚贴着按钮。offsetY 在此基础上再沉一点。
-          y:
-            sRect.height - g.bh * fitR - g.nOffY * fitR - FOOT_UI_H * 0.9 + g.bh * fitR * 0.22 + dy,
+          y: mTop,
         });
+        // 写轮廓: 猫的实际渲染盒(不含底部给切换条留的 FOOT_UI_H 透明区)投影到屏幕坐标,
+        // 写进 data-silhouette。供问候气泡贴猫定位(与 VRM 同一套协议)。
+        // 不写的话气泡只能按舞台盒定位 —— 盒子比猫高一截, 气泡就会飘在猫头顶老远。
+        // 安全兜底: 算出的轮廓若明显不合法(跑到视口外/尺寸异常), 宁可不写,
+        // 让气泡退回按舞台盒定位(偏一点但可见), 好过气泡被顶到屏幕外彻底消失。
+        const silTop = sRect.top + mTop;
+        const silBottom = silTop + mBoxH;
+        if (
+          Number.isFinite(silTop) &&
+          mBoxW > 0 &&
+          mBoxH > 0 &&
+          silBottom > 0 &&
+          silTop < window.innerHeight &&
+          silBottom > silTop
+        ) {
+          try {
+            stage.setAttribute(
+              'data-silhouette',
+              JSON.stringify({
+                left: sRect.left + mLeft,
+                right: sRect.left + mLeft + mBoxW,
+                top: silTop,
+                bottom: silBottom,
+              }),
+            );
+          } catch {
+            /* 轮廓只是优化, 写失败就退回按舞台盒定位 */
+          }
+        } else {
+          stage.removeAttribute('data-silhouette');
+        }
         reveal(stage); // 尺寸已定稿, 放行显示
         return true;
       } catch {
@@ -258,9 +299,45 @@ export function Live2DPet({
           stage.dataset.sized !== '1' ||
           parseInt(stage.style.width, 10) !== w ||
           parseInt(stage.style.height, 10) !== h ||
-          stage.style.right !== `${targetRight}px`
+          stage.style.right !== `${targetRight}px` ||
+          // 库 reloadStyle 可能把 z-index 一并重置 → 猫又会被页面内容盖住
+          stage.style.zIndex !== '9996'
         ) {
           attempt();
+          return;
+        }
+        // 尺寸没变, 但用户可能拖动了猫(舞台改用 left/top)或窗口在缩放 →
+        // 轮廓坐标会变, 定期重算一次供气泡跟随(不重排模型, 只更新 data-silhouette)。
+        const sRect = stage.getBoundingClientRect();
+        if (sRect.width > 0) {
+          const mBoxH = g.bh * fitR;
+          const mBoxW = g.bw * fitR;
+          const dy = Math.min(offsetY, FOOT_UI_H * 0.9) / fitR;
+          const mLeft = sRect.width - mBoxW - g.nOffX * fitR;
+          const mTop = sRect.height - mBoxH - g.nOffY * fitR - FOOT_UI_H * 0.9 + mBoxH * 0.22 + dy;
+          const silTop = sRect.top + mTop;
+          const silBottom = silTop + mBoxH;
+          // 合法性校验同上: 轮廓越界就删掉, 让气泡退回按舞台盒定位(偏但可见)
+          if (
+            Number.isFinite(silTop) &&
+            mBoxW > 0 &&
+            mBoxH > 0 &&
+            silBottom > 0 &&
+            silTop < window.innerHeight &&
+            silBottom > silTop
+          ) {
+            const next = JSON.stringify({
+              left: sRect.left + mLeft,
+              right: sRect.left + mLeft + mBoxW,
+              top: silTop,
+              bottom: silBottom,
+            });
+            if (stage.getAttribute('data-silhouette') !== next) {
+              stage.setAttribute('data-silhouette', next);
+            }
+          } else if (stage.hasAttribute('data-silhouette')) {
+            stage.removeAttribute('data-silhouette');
+          }
         }
       }, 500);
     };

@@ -7,7 +7,8 @@
 // 提供开/关开关: 右下角一个可折叠的小圆钮, 控制宠物显隐。
 // 单文件、可回滚: 想要回退, 删掉主页那行挂载即可。
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { Cat, MessageCircle, X } from 'lucide-react';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { Live2DPet } from '@/components/sky/pet/live2d-pet';
 // VRM 陪伴人物(替换被否的二次元人物「米亚拉」)
@@ -33,10 +34,11 @@ const VRM_PET = {
   path: '/vrm/pet',
 };
 
-// 三只宠物(白猫 / 黑猫 / VRM 人物)共用的基准尺寸 —— 0.6 即整体等比缩小 40%。
+// 三只宠物(白猫 / 黑猫 / VRM 人物)共用的基准尺寸。
 // 白猫黑猫是同一组件的两个模型, 靠 scale 缩: 猫的舞台盒子是按模型渲染盒算出来的,
 // 倍数一变, 人和盒子一起等比缩。VRM 人物靠容器宽高缩: 相机 FOV 与机位都不动,
 // 所以画面在盒子里占的比例不变 —— 盒子等比缩 = 人等比缩。
+// 注: 0.6 是原设计值(视觉大小合适); 曾经下调到 0.38 显得过小, 已还原。
 const PET_BASE_SIZE = 0.6;
 
 // 猫整体微调(视觉像素)。此前猫即使贴底, 右下角仍有点缝隙/偏高, 用户想让猫
@@ -44,9 +46,37 @@ const PET_BASE_SIZE = 0.6;
 const CAT_OFFSET_X = 10;
 const CAT_OFFSET_Y = 100;
 
-export function HomeLive2DPet() {
+function subscribeCompact(listener: () => void) {
+  const query = window.matchMedia('(max-width: 1023px)');
+  query.addEventListener('change', listener);
+  return () => query.removeEventListener('change', listener);
+}
+
+function getCompactSnapshot() {
+  return window.matchMedia('(max-width: 1023px)').matches;
+}
+
+function subscribeReducedMotion(listener: () => void) {
+  const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+  query.addEventListener('change', listener);
+  return () => query.removeEventListener('change', listener);
+}
+
+function getReducedMotionSnapshot() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+export function HomeLive2DPet({ simpleMode = false }: { simpleMode?: boolean }) {
   const { resolvedTheme } = useTheme();
-  const [enabled, setEnabled] = useState(true);
+  const [enabled, setEnabled] = useState(false);
+  const isCompact = useSyncExternalStore(subscribeCompact, getCompactSnapshot, () => false);
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    () => false,
+  );
+  const assistantToggle = isCompact || reducedMotion || simpleMode;
+  const petVisible = enabled && !assistantToggle;
   // 尺寸固定为基准倍数, 不再提供 +/− 缩放
   const scale = PET_BASE_SIZE;
   // 显示哪只: 'theme' = 随主题的白/黑猫(默认, 保持原行为) ; 'vrm' = VRM 人物。
@@ -56,7 +86,7 @@ export function HomeLive2DPet() {
   const cat = resolvedTheme === 'dark' ? CATS.dark : CATS.light;
   const isVrm = kind === 'vrm';
   // 学习提醒话术: 进入时异步取学习数据生成, 失败则为 null(届时气泡回退时段问候)
-  const { greeting } = useLearningGreeting(enabled);
+  const { greeting } = useLearningGreeting(petVisible);
 
   // 小镜课堂的开关状态(复用现有全局 store, 不改它的实现)
   const isOpen = useSkyClassroomStore((s) => s.isOpen);
@@ -109,23 +139,24 @@ export function HomeLive2DPet() {
 
   return (
     <>
-      {isVrm ? (
-        <VrmPet visible={enabled} size={PET_BASE_SIZE} />
-      ) : (
-        <Live2DPet
-          modelPath={cat.path}
-          modelName={cat.name}
-          visible={enabled}
-          draggable
-          scale={scale}
-          offsetX={CAT_OFFSET_X}
-          offsetY={CAT_OFFSET_Y}
-        />
-      )}
+      {!simpleMode &&
+        (isVrm ? (
+          <VrmPet visible={petVisible} size={PET_BASE_SIZE} />
+        ) : (
+          <Live2DPet
+            modelPath={cat.path}
+            modelName={cat.name}
+            visible={petVisible}
+            draggable
+            scale={scale}
+            offsetX={CAT_OFFSET_X}
+            offsetY={CAT_OFFSET_Y}
+          />
+        ))}
 
       {/* 问候语气泡: 谁在场就跟谁走, 停在宠物旁边而不是压在身上。key 随宠物变化 → 换宠物重新问好。
           文字优先用「今日学习提醒」, 取到前先短暂显示时段问候, 取到后就地替换 */}
-      {enabled && (
+      {petVisible && (
         <PetGreetingBubble
           key={isVrm ? 'vrm' : 'theme'}
           anchorId={isVrm ? 'vrm-pet-stage' : 'oml2d-stage'}
@@ -137,7 +168,7 @@ export function HomeLive2DPet() {
       {/* 点击宠物唤起的小镜课堂。z 高于宠物舞台(9998)。锚在左下角,
           把右下角(宠物老家)空出来 —— 否则打开对话会盖住小镜, 使人拖不动它。 */}
       {isOpen && (
-        <div className="fixed bottom-6 left-6 z-[10001] flex w-[380px] flex-col gap-3">
+        <div className="fixed inset-x-3 bottom-16 z-[10001] flex max-h-[calc(100dvh-5rem)] flex-col gap-3 overflow-auto sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[380px]">
           <AssistantPanel />
         </div>
       )}
@@ -145,45 +176,41 @@ export function HomeLive2DPet() {
       {/* 陪伴开关: 右下角固定小圆钮, 独立于宠物, 随时可打开/收起 */}
       <button
         type="button"
-        aria-label={enabled ? '关闭陪伴宠物' : '打开陪伴宠物'}
-        title={enabled ? '关闭陪伴宠物' : '打开陪伴宠物'}
-        onClick={() => setEnabled((v) => !v)}
+        aria-label={
+          assistantToggle
+            ? isOpen
+              ? '关闭学习助手'
+              : '打开学习助手'
+            : enabled
+              ? '关闭陪伴宠物'
+              : '打开陪伴宠物'
+        }
+        title={
+          assistantToggle
+            ? isOpen
+              ? '关闭学习助手'
+              : '打开学习助手'
+            : enabled
+              ? '关闭陪伴宠物'
+              : '打开陪伴宠物'
+        }
+        onClick={assistantToggle ? toggleOpen : () => setEnabled((v) => !v)}
         className={
           'fixed z-[9998] flex h-9 w-9 items-center justify-center rounded-full border shadow-lg transition-transform hover:scale-105 active:scale-95 ' +
-          (enabled
+          ((assistantToggle ? isOpen : enabled)
             ? 'bg-sky-500/90 border-sky-300 text-white'
             : 'bg-slate-200/80 border-slate-300 text-slate-500 dark:bg-slate-700/80 dark:border-slate-600 dark:text-slate-300')
         }
         style={{ right: 18, bottom: 18 }}
       >
-        {enabled ? (
-          /* 开 → 显示猫脸, 表示当前开着 */
-          <svg width="18" height="18" viewBox="0 0 46 42" fill="none" aria-hidden="true">
-            <circle cx="24" cy="16" r="10" fill="currentColor" />
-            <circle cx="20.5" cy="15" r="2" fill="#fff" opacity="0.9" />
-            <circle cx="27.5" cy="15" r="2" fill="#fff" opacity="0.9" />
-            <path
-              d="M20 20 q4 2 8 0"
-              stroke="#fff"
-              strokeWidth="2"
-              strokeLinecap="round"
-              fill="none"
-            />
-          </svg>
+        {assistantToggle ? (
+          isOpen ? (
+            <X className="h-4 w-4" />
+          ) : (
+            <MessageCircle className="h-4 w-4" />
+          )
         ) : (
-          /* 关 → 斜杠圆圈, 表示已收起 */
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="9" />
-            <path d="M5 5l14 14" strokeLinecap="round" />
-          </svg>
+          <Cat className="h-4 w-4" />
         )}
       </button>
     </>

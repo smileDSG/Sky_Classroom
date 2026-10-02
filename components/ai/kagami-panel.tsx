@@ -9,7 +9,7 @@ import { InlineMath } from '@/components/ui/inline-math';
 import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 
-type Scene = 'idle' | 'thinking' | 'teaching' | 'done';
+type Scene = 'idle' | 'thinking' | 'teaching' | 'done' | 'chibi';
 type KagamiMode = 'anime' | 'normal';
 
 function loadMode(): KagamiMode {
@@ -22,11 +22,14 @@ function loadMode(): KagamiMode {
   return 'anime';
 }
 
+const CHIBI = '/avatars/kagami/chibi.png';
+
 const SCENES: Record<Scene, string> = {
   idle: '/avatars/kagami/idle.png',
   thinking: '/avatars/kagami/thinking.png',
   teaching: '/avatars/kagami/teaching.png',
   done: '/avatars/kagami/done.png',
+  chibi: CHIBI,
 };
 
 // Normal mode — single professional avatar with CSS effects per scene
@@ -36,9 +39,9 @@ const NORMAL_SCENES: Record<Scene, string> = {
   thinking: NORMAL_AVATAR,
   teaching: NORMAL_AVATAR,
   done: NORMAL_AVATAR,
+  chibi: NORMAL_AVATAR,
 };
 
-const CHIBI = '/avatars/kagami/chibi.png';
 const NORMAL_ICON = '/avatars/student-glasses-new.jpg';
 
 // Voice clips — provide actual mp3 files in public/avatars/kagami/
@@ -90,6 +93,8 @@ export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
   // 宠物联动: 有宠物形象(白猫/黑猫/VRM人物)时用它当小镜头像, 否则退回二次元/常规头像
   const mascotImage = useSkyClassroomStore((s) => s.mascotImage);
+  // 简洁模式联动：kagamiClosed 时隐藏右下角浮钮（可经 SimpleModeToggle 重新打开）
+  const kagamiClosed = useSkyClassroomStore((s) => s.kagamiClosed);
   // 宠物舞台(#oml2d-stage z-9997 / #vrm-pet-stage z-9996)固定在右下角, 且整块画布
   // 都吃指针事件 —— 会把这个 z-50 的头像整个压住(点不动也拖不动)。
   // 宠物预览页的宠物就是主角, 所以那页把头像一个挪到左下角, 把右下角让给宠物。
@@ -316,6 +321,14 @@ export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
     [scene, playVoice],
   );
 
+  // T04: 课堂运行时检测到受挫信号（detectFrustration）后派发 'kagami-frustration'，
+  // 切到 chibi 场景温柔接住，避免评判式措辞。
+  useEffect(() => {
+    const onFrustration = () => changeScene('chibi');
+    window.addEventListener('kagami-frustration', onFrustration);
+    return () => window.removeEventListener('kagami-frustration', onFrustration);
+  }, [changeScene]);
+
   const sendMessage = async (msgs: Message[]) => {
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
@@ -507,7 +520,7 @@ export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
       <button
         ref={fabRef}
         aria-label={mode === 'anime' ? '打开小镜课堂' : '打开 AI 学习助手'}
-        className={`fixed z-50 h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${mobile || pathname === '/' || pathname?.startsWith('/m/') ? 'hidden' : 'flex'} ${open ? 'hidden' : ''}`}
+        className={`fixed z-50 h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${mobile || pathname === '/' || pathname?.startsWith('/m/') || kagamiClosed ? 'hidden' : 'flex'} ${open ? 'hidden' : ''}`}
         style={
           hasDragged
             ? { left: pos.x, top: pos.y }

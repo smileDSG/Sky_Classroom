@@ -1,6 +1,8 @@
 import { buildKnowledgeGraph, getMasterySummary } from '@/lib/knowledge-graph';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import type { MistakeCause } from '@/lib/solve/types';
+import { toLocalDateStr } from '@/lib/retention/date';
+import type { GrowthSnapshot } from '@/lib/retention/types';
 
 export interface MemoryProgressSnapshot {
   totalFlipped: number;
@@ -395,4 +397,38 @@ export function buildLearningInsights(
       },
     ],
   };
+}
+
+export interface GrowthCurvePoint {
+  /** YYYY-MM-DD */
+  date: string;
+  /** 掌握度% (0-100) */
+  masteryPercent: number;
+  /** 当前薄弱点数量 */
+  weakCount: number;
+}
+
+/**
+ * 从真实快照序列（服务端持久化）叠加当前错题本实时点，派生掌握度曲线。
+ * 严格无插值：仅由真实记录构成；若 history 已含今日，则用实时点覆盖。
+ */
+export function buildGrowthCurve(
+  mistakes: MistakeRecord[],
+  history: GrowthSnapshot[] = [],
+): GrowthCurvePoint[] {
+  const graph = mistakes.length > 0 ? buildKnowledgeGraph(mistakes) : null;
+  const summary = graph ? getMasterySummary(graph) : null;
+  const today = toLocalDateStr();
+  const livePoint: GrowthCurvePoint = {
+    date: today,
+    masteryPercent: summary?.overallMastery ?? 0,
+    weakCount: summary?.weakCount ?? graph?.weakPoints.length ?? 0,
+  };
+
+  const base = history
+    .filter((s) => s.date !== today)
+    .map((s) => ({ date: s.date, masteryPercent: s.masteryPercent, weakCount: s.weakCount }));
+  base.push(livePoint);
+  base.sort((a, b) => a.date.localeCompare(b.date));
+  return base;
 }

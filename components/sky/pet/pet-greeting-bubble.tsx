@@ -53,9 +53,8 @@ export function PetGreetingBubble({
   // 空气说, 而且那时没有包围盒可定位。所以计时从「锚点出现」那一刻才开始。
   // 定位按气泡的真实渲染宽度算, 并优先贴宠物轮廓, 保证既不压到宠物、又不离得太远。
   useEffect(() => {
-    // 贴近宠物: 间隙取小值(仍留 1px, 不真压上去), 宽度用气泡「实际渲染宽度」而不是估算值 ——
-    // 后者的余量会把气泡推得离宠物很远(实测隔了 60 多像素)。
-    const GAP = 1;
+    // 气泡固定停靠在宠物**正上方**: 位置用气泡「实际渲染尺寸」而不是估算值 ——
+    // 估算值的余量会让气泡离宠物很远(实测隔了 60 多像素)。
     let raf = 0;
     let hideTimer: ReturnType<typeof setTimeout> | undefined;
     let armed = false;
@@ -74,8 +73,10 @@ export function PetGreetingBubble({
         const el = ref.current;
         if (el) {
           // 贴「宠物本身」而不是贴它外面的包裹框: 舞台盒子可能比宠物宽得多(VRM 人物只占
-          // 盒子中间一条, 左右各留一大片空白), 贴框边会显得隔了老远。舞台若提供了轮廓
-          // (data-silhouette, 由 VRM 组件把模型包围盒投影到屏幕算出), 就用轮廓定位。
+          // 盒子中间一条, 左右各留一大片空白), 贴框边会显得隔了老远。
+          // 舞台若提供了轮廓 (data-silhouette) 就用轮廓定位。
+          // ⚠️ 约定: 轮廓里的值一律是**屏幕绝对坐标**(猫与 VRM 都如此), 所以直接采用,
+          //    不再叠加舞台的 getBoundingClientRect —— 叠加会让气泡被推出屏幕(切到人就消失)。
           const r = anchor.getBoundingClientRect();
           let left = r.left;
           let right = r.right;
@@ -95,9 +96,9 @@ export function PetGreetingBubble({
                 nums.every((n) => typeof n === 'number' && Number.isFinite(n)) &&
                 s.right > s.left
               ) {
-                left = r.left + s.left;
-                right = r.left + s.right;
-                top = r.top + s.top;
+                left = s.left;
+                right = s.right;
+                top = s.top;
                 height = Math.max(1, s.bottom - s.top);
               }
             } catch {
@@ -105,12 +106,26 @@ export function PetGreetingBubble({
             }
           }
           const w = el.offsetWidth || 180;
-          // 默认停左侧; 左侧放不下(窄屏/宠物被拖到左边)就翻到右侧
-          let x = left - w - GAP;
-          if (x < 8) x = Math.min(window.innerWidth - w - 8, right + GAP);
+          const h = el.offsetHeight || 56;
+          // 气泡是fixed 定位, 不占布局 —— 若摆在宠物左侧就会压住页面内容
+          // (宠物停靠右下角, 左边正是正文区)。所以摆在**正上方**。
+          const GAP = 10;
+          let x = left + (right - left - w) / 2; // 与宠物水平居中
+          x = Math.min(Math.max(8, x), window.innerWidth - w - 8);
+          // 气泡紧贴宠物轮廓**顶边**上方, 绝不压到宠物身上。
+          // 之前给猫用 top + height*0.3(想落在猫耳附近), 实际把锚点下移到了猫身体里,
+          // 气泡直接骑在猫头上 —— 截图里猫只露出腿和耳朵, 就是这么来的。
+          // 轮廓顶(top)才是正确的锚点: 猫矮不矮都一样, 轮廓已经把模型真实形状算进去了。
+          const anchorY = top;
+          // 关键: 宠物停靠在屏幕**底部**, 上方空间本就紧张(算出来 y 常为负)。
+          // 绝不能因为放不下就翻到宠物下方 —— 那会显得很奇怪(气泡在猫肚子下面)。
+          // 正确做法: 贴着视口上沿显示, 保持"在宠物上方"这个语义方向。
+          let y = anchorY - h - GAP;
+          if (y < 8) y = 8; // 贴视口顶, 而非翻转
+          // 硬夹在视口内: 轮廓数据万一异常, 也不能让气泡跑到屏幕外"消失"
+          y = Math.min(y, Math.max(8, window.innerHeight - h - 8));
           el.style.left = `${Math.round(x)}px`;
-          // 竖直方向对着宠物上半身(头/肩一带), 而不是盒子正中
-          el.style.top = `${Math.round(Math.max(8, top + height * 0.12))}px`;
+          el.style.top = `${Math.round(y)}px`;
         }
       }
       raf = requestAnimationFrame(tick);

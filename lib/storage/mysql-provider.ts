@@ -44,7 +44,13 @@ function toDate(ts: number): string {
 
 // ── Table name routing ──────────────────────────────────────────────
 
-const DEDICATED_TABLES = new Set(['users', 'user_checkins', 'user_stats', 'mistakes']);
+const DEDICATED_TABLES = new Set([
+  'users',
+  'user_checkins',
+  'user_stats',
+  'mistakes',
+  'user_growth_snapshots',
+]);
 
 function isDedicatedTable(table: string): boolean {
   return DEDICATED_TABLES.has(table);
@@ -150,6 +156,17 @@ const CREATE_TABLES_SQL = [
     INDEX idx_mistakes_owner_reviewed (user_id, reviewed),
     INDEX idx_mistakes_owner_next_review (user_id, next_review)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+  `CREATE TABLE IF NOT EXISTS user_growth_snapshots (
+    id                  VARCHAR(255) PRIMARY KEY,
+    user_id             VARCHAR(255) NOT NULL,
+    snapshot_date       DATE NOT NULL,
+    data                JSON NOT NULL,
+    created_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_user_snapshot (user_id, snapshot_date),
+    INDEX idx_snapshots_user (user_id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 ];
 
 // ── Schema upgrades for mistakes owner isolation ────────────────────
@@ -207,6 +224,7 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
     { table: 'user_checkins', key: 'user_checkins' },
     { table: 'user_stats', key: 'user_stats' },
     { table: 'mistakes', key: 'mistakes' },
+    { table: 'user_growth_snapshots', key: 'user_growth_snapshots' },
   ];
 
   for (const { table, key } of tables) {
@@ -326,6 +344,19 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
             data.masteryLevel ?? 0,
             data.reviewed ?? false,
             data.sourceSessionId ?? null,
+            createdAt,
+            updatedAt,
+          ],
+        );
+      } else if (table === 'user_growth_snapshots') {
+        await pool.query(
+          `INSERT IGNORE INTO user_growth_snapshots (id, user_id, snapshot_date, data, created_at, updated_at)
+           VALUES (?,?,?,?,?,?)`,
+          [
+            row.id,
+            data.userId ?? null,
+            data.date,
+            JSON.stringify(data),
             createdAt,
             updatedAt,
           ],
@@ -547,11 +578,25 @@ export class MySQLStorageProvider implements StorageProvider {
           data.reviewed ?? false,
           data.sourceSessionId ?? null,
           toDatetime(entry.createdAt),
-          toDatetime(entry.updatedAt),
-        ],
-      );
-    } else {
-      // Fallback: generic storage_entries
+            toDatetime(entry.updatedAt),
+          ],
+        );
+      } else if (table === 'user_growth_snapshots') {
+        await pool.query(
+          `INSERT INTO user_growth_snapshots (id, user_id, snapshot_date, data, created_at, updated_at)
+           VALUES (?,?,?,?,?,?)
+           ON DUPLICATE KEY UPDATE data=VALUES(data), snapshot_date=VALUES(snapshot_date), updated_at=VALUES(updated_at)`,
+          [
+            entry.id,
+            data.userId ?? null,
+            data.date,
+            JSON.stringify(data),
+            toDatetime(entry.createdAt),
+            toDatetime(entry.updatedAt),
+          ],
+        );
+      } else {
+        // Fallback: generic storage_entries
       await pool.query(
         `INSERT INTO storage_entries (id, table_name, data, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?)
@@ -600,6 +645,15 @@ export class MySQLStorageProvider implements StorageProvider {
       return rowToMistakeEntry(rows[0]) as StorageEntry<T>;
     }
 
+    if (table === 'user_growth_snapshots') {
+      const [rows] = await pool.query<RowDataPacket[]>(
+        'SELECT * FROM user_growth_snapshots WHERE id = ?',
+        [id],
+      );
+      if (rows.length === 0) return null;
+      return rowToGrowthSnapshotEntry(rows[0]) as StorageEntry<T>;
+    }
+
     // Fallback
     const [rows] = await pool.query<RowDataPacket[]>(
       'SELECT * FROM storage_entries WHERE id = ? AND table_name = ?',
@@ -636,6 +690,9 @@ export class MySQLStorageProvider implements StorageProvider {
     } else if (table === 'mistakes') {
       const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM mistakes');
       entries = rows.map((r) => rowToMistakeEntry(r) as StorageEntry<T>);
+    } else if (table === 'user_growth_snapshots') {
+      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM user_growth_snapshots');
+      entries = rows.map((r) => rowToGrowthSnapshotEntry(r) as StorageEntry<T>);
     } else {
       const [rows] = await pool.query<RowDataPacket[]>(
         'SELECT * FROM storage_entries WHERE table_name = ?',
@@ -660,8 +717,9 @@ export class MySQLStorageProvider implements StorageProvider {
       users: 'DELETE FROM users WHERE id = ?',
       user_checkins: 'DELETE FROM user_checkins WHERE id = ?',
       user_stats: 'DELETE FROM user_stats WHERE id = ?',
-      mistakes: 'DELETE FROM mistakes WHERE id = ?',
-    };
+    mistakes: 'DELETE FROM mistakes WHERE id = ?',
+    'user_growth_snapshots': 'DELETE FROM user_growth_snapshots WHERE id = ?',
+  };
     const sql = sqlMap[table] ?? 'DELETE FROM storage_entries WHERE id = ? AND table_name = ?';
     const params = sqlMap[table] ? [id] : [id, table];
     const [result] = await pool.query<ResultSetHeader>(sql, params);
@@ -778,6 +836,7 @@ function rowToStatsEntry(row: RowDataPacket): StorageEntry {
           : String(row.stat_date).slice(0, 10),
       studySeconds: row.study_seconds,
       checkinStreak: row.checkin_streak,
+      peakStreak: row.peak_streak,
       masteryScore: row.mastery_score,
       problemsAttempted: row.problems_attempted,
       problemsCorrect: row.problems_correct,
@@ -820,6 +879,16 @@ function rowToMistakeEntry(row: RowDataPacket): StorageEntry {
           : (row.solution_steps ?? []),
       hints: typeof row.hints === 'string' ? JSON.parse(row.hints) : (row.hints ?? []),
     },
+    createdAt: parseDatetime(row.created_at),
+    updatedAt: parseDatetime(row.updated_at),
+  };
+}
+
+function rowToGrowthSnapshotEntry(row: RowDataPacket): StorageEntry {
+  const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+  return {
+    id: row.id as string,
+    data: { ...(data as Record<string, unknown>) },
     createdAt: parseDatetime(row.created_at),
     updatedAt: parseDatetime(row.updated_at),
   };

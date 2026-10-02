@@ -290,15 +290,40 @@ export function VrmPet({
               if (py < minY) minY = py;
               if (py > maxY) maxY = py;
             }
-            stage.setAttribute(
-              'data-silhouette',
-              JSON.stringify({
-                left: Math.round(minX),
-                right: Math.round(maxX),
-                top: Math.round(minY),
-                bottom: Math.round(maxY),
-              }),
-            );
+            // 轮廓写成「屏幕绝对坐标」: px/py 是舞台内的相对坐标, 必须加上舞台自身的
+            // 屏幕位置(sRect.left/top)才是屏幕坐标 —— 与猫的 data-silhouette 保持同一套协议。
+            // 之前这里只写相对坐标, 而气泡按绝对坐标解析(还多加了 r.left), 导致切到人时
+            // 气泡被推到屏幕外, 表现为「切到人就全消失」。
+            const sRect = stage.getBoundingClientRect();
+            // 合法性校验: 首次渲染前舞台可能还没布局好(clientWidth/Height 为 0 或极小),
+            // 此时算出的轮廓是垃圾值, 写了会把气泡推到屏幕外 → 表现为「切到人就消失」。
+            // 不合法就不写(removeAttribute), 让气泡退回按舞台盒定位, 至少不会消失。
+            const silRight = sRect.left + maxX;
+            const silBottom = sRect.top + maxY;
+            const valid =
+              Number.isFinite(silRight) &&
+              Number.isFinite(silBottom) &&
+              cssW > 20 &&
+              cssH > 20 &&
+              maxX > minX &&
+              maxY > minY &&
+              silBottom > 0 &&
+              sRect.top < window.innerHeight &&
+              silRight > 0 &&
+              sRect.left < window.innerWidth;
+            if (valid) {
+              stage.setAttribute(
+                'data-silhouette',
+                JSON.stringify({
+                  left: Math.round(sRect.left + minX),
+                  right: Math.round(silRight),
+                  top: Math.round(sRect.top + minY),
+                  bottom: Math.round(silBottom),
+                }),
+              );
+            } else if (stage.hasAttribute('data-silhouette')) {
+              stage.removeAttribute('data-silhouette');
+            }
           } catch {
             /* 投影失败就退回整框定位 */
           }
@@ -503,6 +528,7 @@ export function VrmPet({
         bottom: 24,
         width: Math.round(STAGE_W * s),
         height: Math.round((STAGE_H + FOOT_UI_H) * s),
+        pointerEvents: visible ? 'auto' : 'none',
         // 纯装饰,不响应多余的指针;拖动/点击由上面的委托处理
         touchAction: 'none',
       }}
