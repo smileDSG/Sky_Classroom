@@ -7,15 +7,10 @@
 
 import { NextRequest } from 'next/server';
 import { generateMemoryCards } from '@/lib/agents/cloud-mind/memory-cards-agent';
-import { buildStudentProfile } from '@/lib/student/profile-builder';
-import { deriveMemoryParamsFromProfile } from '@/lib/student/memory-param-deriver';
+import { buildMemoryCardsGenerationContext } from '@/lib/agents/cloud-mind/memory-cards-context';
 import { createLogger } from '@/lib/logger';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { requireAuth } from '@/lib/server/auth/helpers';
-import { getRequiredServerStorage } from '@/lib/server/server-storage';
-import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
-import { buildTeachingProjection } from '@/lib/adaptive-learning/profile/projection-builder';
-import { injectTeachingProjection } from '@/lib/assistant/context-injector';
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
 import { adaptiveLearningApiError } from '@/lib/adaptive-learning/api-error';
 
@@ -46,59 +41,33 @@ export async function POST(req: NextRequest) {
     const quota = await requireQuota('llmCalls');
     if ('error' in quota) return quota.error;
 
-    const storage = await getRequiredServerStorage();
-    const profileRepository = new LearnerProfileRepository(storage);
-    const preferences = await profileRepository.getLatestPreferences(auth.user.id);
-    if (!preferences) {
-      const error = new AdaptiveLearningError({
-        code: 'PROFILE_NOT_FOUND',
-        message: 'Learner profile is required before generating memory cards',
-        retryable: false,
-        stage: 'memory-cards-profile-load',
+    let context: Awaited<ReturnType<typeof buildMemoryCardsGenerationContext>>;
+    try {
+      context = await buildMemoryCardsGenerationContext(auth.user.id, {
+        content,
+        topic,
+        cardCount,
+        auto,
       });
-      return adaptiveLearningApiError(error, crypto.randomUUID());
+    } catch (err) {
+      if (err instanceof AdaptiveLearningError) {
+        return adaptiveLearningApiError(err, crypto.randomUUID());
+      }
+      throw err;
     }
 
-    const teachingProjection = buildTeachingProjection({
-      userId: auth.user.id,
-      snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w0`,
-      profileVersion: preferences.version,
-      eventWatermark: 0,
-      preferences,
-      knowledgeStatus: 'no-evidence',
-    });
-    const teachingProjectionText = injectTeachingProjection('', teachingProjection).trim();
-
-    let profile: Awaited<ReturnType<typeof buildStudentProfile>> | undefined;
-    if (auto || !content) profile = await buildStudentProfile(auth.user.id);
-
-    // Auto-derive parameters from the student profile
-    let derived: ReturnType<typeof deriveMemoryParamsFromProfile> | undefined;
-    if (auto || !content) {
-      if (!profile)
-        return new Response(JSON.stringify({ error: '学情数据不可用' }), { status: 400 });
-      derived = deriveMemoryParamsFromProfile(profile);
-    }
-
-    const finalContent = content || derived?.content || '';
-    const finalTopic = topic || derived?.topic;
-    const finalCardCount = cardCount || derived?.cardCount;
-
-    if (!finalContent || finalContent.trim().length === 0) {
+    if (!context.content || context.content.trim().length === 0) {
       return new Response(JSON.stringify({ error: '学习内容不能为空' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // 限制内容长度
-    const trimmedContent = finalContent.slice(0, 30000);
-
     const result = await generateMemoryCards(
-      trimmedContent,
-      finalTopic,
-      finalCardCount,
-      teachingProjectionText,
+      context.content,
+      context.topic,
+      context.cardCount,
+      context.teachingProjectionText,
     );
 
     await recordUsage(quota.userId, quota.planType, 'llmCalls');
@@ -109,12 +78,12 @@ export async function POST(req: NextRequest) {
         data: result,
         meta: {
           profileInjected: true,
-          derived: derived
+          derived: context.derived
             ? {
-                topic: derived.topic,
-                cardCount: derived.cardCount,
-                difficulty: derived.difficulty,
-                reviewIntervals: derived.reviewIntervals,
+                topic: context.derived.topic,
+                cardCount: context.derived.cardCount,
+                difficulty: context.derived.difficulty,
+                reviewIntervals: context.derived.reviewIntervals,
               }
             : undefined,
         },

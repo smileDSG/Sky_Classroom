@@ -15,12 +15,68 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from './math-renderer';
-import type { FourPartOutput, GradedFourPartOutput } from '@/lib/solve/types';
+import { VerificationBadge, type VerificationStatus } from './verification-badge';
+import type { FourPartOutput, GradedFourPartOutput, SolveStep, StepType } from '@/lib/solve/types';
 
 interface SolutionPanelProps {
   output: FourPartOutput | GradedFourPartOutput;
   className?: string;
 }
+
+/**
+ * 根据答案自校验结论渲染徽标；skipped/未知时返回 null（不打扰用户）。
+ * 只有"待确认/已修正/已验证"才展示 —— 对应 R1 的"标注答案待确认"。
+ */
+function answerReviewBadge(
+  answerReview?: 'verified' | 'corrected' | 'pending-confirmation' | 'skipped',
+) {
+  const map: Record<string, VerificationStatus> = {
+    verified: 'verified',
+    corrected: 'corrected',
+    'pending-confirmation': 'uncertain',
+  };
+  const status = answerReview ? map[answerReview] : undefined;
+  if (!status) return null;
+  return <VerificationBadge status={status} />;
+}
+
+/** 步骤意图类型对应的差异化样式（type 缺省时走默认卡片样式，不回归）。 */
+const STEP_TYPE_STYLES: Record<
+  StepType,
+  { chip: string; ring: string; labelClass: string; label: string; summaryClass: string }
+> = {
+  idea: {
+    chip: 'from-[var(--probe-accent)]/30 to-[var(--probe-accent)]/10 text-[var(--probe-accent)] border-[var(--probe-accent)]/40',
+    ring: 'border-l-[var(--probe-accent)]',
+    labelClass: 'text-[var(--probe-accent)]',
+    label: '思路',
+    summaryClass:
+      'border-[var(--probe-accent)]/20 bg-[var(--probe-accent)]/5 text-[var(--probe-accent)]',
+  },
+  transform: {
+    chip: 'from-[var(--probe-primary)]/30 to-[var(--probe-primary)]/10 text-[var(--probe-primary-bright)] border-[var(--probe-primary)]/40',
+    ring: 'border-l-[var(--probe-primary)]',
+    labelClass: 'text-[var(--probe-primary-bright)]',
+    label: '推导',
+    summaryClass:
+      'border-[var(--probe-primary)]/20 bg-[var(--probe-primary)]/5 text-[var(--probe-primary-bright)]',
+  },
+  calc: {
+    chip: 'from-[var(--probe-warm)]/30 to-[var(--probe-warm)]/10 text-[var(--probe-warm)] border-[var(--probe-warm)]/40',
+    ring: 'border-l-[var(--probe-warm)]',
+    labelClass: 'text-[var(--probe-warm)]',
+    label: '计算',
+    summaryClass: 'border-[var(--probe-warm)]/20 bg-[var(--probe-warm)]/5 text-[var(--probe-warm)]',
+  },
+  verify: {
+    chip: 'from-[var(--probe-success)]/30 to-[var(--probe-success)]/10 text-[var(--probe-success)] border-[var(--probe-success)]/40',
+    ring: 'border-l-[var(--probe-success)]',
+    labelClass: 'text-[var(--probe-success)]',
+    label: '验证',
+    summaryClass:
+      'border-[var(--probe-success)]/20 bg-[var(--probe-success)]/5 text-[var(--probe-success)]',
+  },
+};
 
 /**
  * Strip math delimiters, whitespace and punctuation for rough comparison.
@@ -56,10 +112,7 @@ function isDuplicateContent(a: string, b: string): boolean {
  * the "解题详解" block and again in the "步骤" tab.
  * Always keeps at least the first step so the tab is never empty.
  */
-function deduplicateSteps(
-  solution: string,
-  steps: { label: string; content: string; keyPoints?: string[] }[],
-): { label: string; content: string; keyPoints?: string[] }[] {
+function deduplicateSteps(solution: string, steps: SolveStep[]): SolveStep[] {
   if (!solution || steps.length === 0) return steps;
 
   const normSolution = normalizeForCompare(solution);
@@ -144,6 +197,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                 className="text-sm font-bold text-[var(--probe-primary-bright)]"
               />
             </span>
+            {answerReviewBadge(output.answerReview)}
           </div>
         </div>
       )}
@@ -195,38 +249,86 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                   <span className="text-sm text-[var(--probe-muted)]">正在解码步骤...</span>
                 </div>
               )}
-              {steps.map((step, index) => (
-                <div key={index} className="px-5 py-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--probe-primary)]/25 to-[var(--probe-primary)]/10 text-[10px] font-bold text-[var(--probe-primary-bright)] mt-0.5 border border-[var(--probe-primary)]/30 shadow-[0_0_8px_var(--probe-glow)]">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm mb-2 text-[var(--probe-text)]">
-                        {step.label}
+              {steps.map((step, index) => {
+                const style = step.type ? STEP_TYPE_STYLES[step.type] : undefined;
+                return (
+                  <div
+                    key={index}
+                    className={cn('px-5 py-4', style && 'border-l-2 pl-4', style?.ring)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={cn(
+                          'flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[10px] font-bold mt-0.5 border shadow-[0_0_8px_var(--probe-glow)]',
+                          style
+                            ? style.chip
+                            : 'from-[var(--probe-primary)]/25 to-[var(--probe-primary)]/10 border-[var(--probe-primary)]/30 text-[var(--probe-primary-bright)]',
+                        )}
+                      >
+                        {index + 1}
                       </div>
-                      <MathRenderer
-                        content={step.content}
-                        className="text-sm leading-loose text-[var(--probe-text)]"
-                      />
-                      {step.keyPoints && step.keyPoints.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {step.keyPoints.map((point, pidx) => (
-                            <Badge
-                              key={pidx}
-                              variant="secondary"
-                              className="bg-[var(--probe-primary)]/15 text-[var(--probe-primary-bright)] border border-[var(--probe-primary)]/30 text-xs shadow-[0_0_4px_var(--probe-glow)]"
+                      <div className="flex-1 min-w-0">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <span
+                            className={cn(
+                              'font-medium text-sm',
+                              style ? style.labelClass : 'text-[var(--probe-text)]',
+                            )}
+                          >
+                            {step.label}
+                          </span>
+                          {style && (
+                            <span
+                              className={cn(
+                                'rounded px-1.5 py-0.5 text-[10px] font-medium leading-none',
+                                style.chip,
+                              )}
                             >
-                              <Lightbulb className="mr-1 h-3 w-3" />
-                              <MathRenderer content={point} />
-                            </Badge>
-                          ))}
+                              {style.label}
+                            </span>
+                          )}
                         </div>
-                      )}
+                        {step.summary && (
+                          <div
+                            className={cn(
+                              'mb-2 rounded border-l-2 px-2 py-1 text-xs',
+                              style
+                                ? style.summaryClass
+                                : 'border-[var(--probe-border)] bg-[var(--probe-border)]/5 text-[var(--probe-muted)]',
+                            )}
+                          >
+                            <span className="font-semibold">本步要点：</span>
+                            {step.summary}
+                          </div>
+                        )}
+                        <MathRenderer
+                          content={step.content}
+                          className={cn(
+                            'text-sm leading-loose',
+                            style?.ring === 'border-l-[var(--probe-primary)]'
+                              ? 'text-base md:text-lg'
+                              : 'text-[var(--probe-text)]',
+                          )}
+                        />
+                        {step.keyPoints && step.keyPoints.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {step.keyPoints.map((point, pidx) => (
+                              <Badge
+                                key={pidx}
+                                variant="secondary"
+                                className="bg-[var(--probe-primary)]/15 text-[var(--probe-primary-bright)] border border-[var(--probe-primary)]/30 text-xs shadow-[0_0_4px_var(--probe-glow)]"
+                              >
+                                <Lightbulb className="mr-1 h-3 w-3" />
+                                <MathRenderer content={point} />
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </TabsContent>
 

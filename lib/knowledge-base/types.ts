@@ -2,7 +2,7 @@
  * Knowledge Base types
  */
 
-export type KBType = 'solve' | 'slides' | 'cards' | 'classroom';
+export type KBType = 'solve' | 'slides' | 'cards' | 'classroom' | 'course';
 
 export interface KBChunk {
   id: string;

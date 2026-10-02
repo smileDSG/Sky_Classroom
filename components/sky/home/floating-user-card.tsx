@@ -155,7 +155,7 @@ export function FloatingUserCard({ onUpgradeOpen }: { onUpgradeOpen: () => void 
               'border border-white/50 dark:border-slate-700/50',
               'shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30',
               'hover:shadow-xl hover:bg-white/90 dark:hover:bg-slate-800/90',
-              isPremium && 'ring-2 ring-amber-400/50',
+              isPremium && 'ring-2 ring-sky-400/50',
             )}
           >
             {/* 头像容器 - 带呼吸动画 */}
@@ -168,7 +168,7 @@ export function FloatingUserCard({ onUpgradeOpen }: { onUpgradeOpen: () => void 
                 className={cn(
                   'w-10 h-10 rounded-xl overflow-hidden',
                   isPremium
-                    ? 'ring-2 ring-amber-400 shadow-lg shadow-amber-400/30'
+                    ? 'ring-2 ring-sky-400 shadow-lg shadow-sky-400/30'
                     : 'ring-2 ring-sky-400/50',
                 )}
               >
@@ -176,7 +176,7 @@ export function FloatingUserCard({ onUpgradeOpen }: { onUpgradeOpen: () => void 
               </div>
               {/* VIP 徽章 */}
               {isPremium && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 flex items-center justify-center shadow-sm">
+                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-sky-400 to-blue-400 flex items-center justify-center shadow-sm">
                   <Crown className="w-2.5 h-2.5 text-white" />
                 </div>
               )}
@@ -218,7 +218,7 @@ export function FloatingUserCard({ onUpgradeOpen }: { onUpgradeOpen: () => void 
                 className="h-20 relative overflow-hidden"
                 style={{
                   background: isPremium
-                    ? 'linear-gradient(135deg, rgba(251,191,36,0.3) 0%, rgba(59,130,246,0.2) 100%)'
+                    ? 'linear-gradient(135deg, rgba(56,189,248,0.3) 0%, rgba(59,130,246,0.2) 100%)'
                     : 'linear-gradient(135deg, rgba(135,206,235,0.4) 0%, rgba(147,197,253,0.2) 100%)',
                 }}
               >
@@ -249,7 +249,7 @@ export function FloatingUserCard({ onUpgradeOpen }: { onUpgradeOpen: () => void 
                         'w-20 h-20 rounded-2xl overflow-hidden cursor-pointer',
                         'ring-4 ring-white dark:ring-slate-700',
                         isPremium
-                          ? 'shadow-lg shadow-amber-400/30'
+                          ? 'shadow-lg shadow-sky-400/30'
                           : 'shadow-lg shadow-slate-300/50',
                       )}
                     >
@@ -293,8 +293,8 @@ export function FloatingUserCard({ onUpgradeOpen }: { onUpgradeOpen: () => void 
                     )}
                     {isPremium && (
                       <div className="flex items-center gap-1 mt-1">
-                        <Crown className="w-3 h-3 text-amber-500" />
-                        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                        <Crown className="w-3 h-3 text-sky-500" />
+                        <span className="text-xs font-medium text-sky-600 dark:text-sky-400">
                           VIP 会员
                         </span>
                       </div>
@@ -384,10 +384,10 @@ export function FloatingUserCard({ onUpgradeOpen }: { onUpgradeOpen: () => void 
                       <TooltipTrigger asChild>
                         <button
                           onClick={onUpgradeOpen}
-                          className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 hover:from-amber-100 hover:to-orange-100 transition-colors border border-amber-200/50 dark:border-amber-800/30"
+                          className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/20 hover:from-sky-100 hover:to-blue-100 transition-colors border border-sky-200/50 dark:border-sky-800/30"
                         >
-                          <Sparkles className="w-5 h-5 text-amber-500" />
-                          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                          <Sparkles className="w-5 h-5 text-sky-500" />
+                          <span className="text-xs font-medium text-sky-600 dark:text-sky-400">
                             升级
                           </span>
                         </button>

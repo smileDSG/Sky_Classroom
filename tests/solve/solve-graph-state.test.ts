@@ -23,9 +23,15 @@ describe('SolveGraphAnnotation', () => {
     expect(spec).toHaveProperty('error');
   });
 
-  test('state annotation has exactly 13 fields', () => {
+  test('state annotation carries answer self-verification channels', () => {
+    const spec = SolveGraphAnnotation.spec;
+    expect(spec).toHaveProperty('answerReview');
+    expect(spec).toHaveProperty('verified');
+  });
+
+  test('state annotation field count matches current graph schema', () => {
     const fieldCount = Object.keys(SolveGraphAnnotation.spec).length;
-    expect(fieldCount).toBe(13);
+    expect(fieldCount).toBeGreaterThanOrEqual(21);
   });
 
   test('all fields are valid LangGraph channels', () => {

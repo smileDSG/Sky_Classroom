@@ -9,7 +9,7 @@ import pptxgen from 'pptxgenjs';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 import { latexToOmml } from '@/lib/export/latex-to-omml';
-import { convertInlineLatexToUnicode } from './content-schemas';
+import { convertInlineLatexToUnicode, latexCommandToUnicode, normalizeInlineMathText } from './content-schemas';
 
 const log = createLogger('InstructionExecutor');
 type PptxSlide = ReturnType<pptxgen['addSlide']>;
@@ -27,10 +27,25 @@ const setBackgroundSchema = z.object({
   }),
 });
 
+const textRunSchema = z.object({
+  text: z.string(),
+  bold: z.boolean().optional(),
+  italic: z.boolean().optional(),
+  color: z
+    .string()
+    .regex(/^#?[0-9A-Fa-f]{6}$/)
+    .optional(),
+  fontSize: z.number().optional(),
+});
+
+export type TextRun = z.infer<typeof textRunSchema>;
+
 const addTextSchema = z.object({
   op: z.literal('addText'),
   params: z.object({
-    text: z.string(),
+    // Rich text: either a plain string, or an array of runs to locally set
+    // bold/italic/color within a paragraph (e.g. 关键词加粗).
+    text: z.union([z.string(), z.array(textRunSchema)]),
     x: z.number(),
     y: z.number(),
     w: z.number(),
@@ -201,80 +216,25 @@ function hex(c: string): string {
   return c.startsWith('#') ? c.slice(1) : c;
 }
 
+/** Normalize an addText `text` value (string or runs) into an array of runs. */
+export function normalizeTextRuns(text: string | TextRun[]): TextRun[] {
+  if (typeof text === 'string') return [{ text }];
+  return text.map((r) => ({ ...r }));
+}
+
+/** Flatten an addText `text` value into its full plain-text content. */
+export function addTextPlain(text: string | TextRun[]): string {
+  return normalizeTextRuns(text)
+    .map((r) => r.text)
+    .join('');
+}
+
 /**
  * Sanitize LaTeX commands that leaked into plain text (not wrapped in $...$).
  * Converts common commands to Unicode and strips orphaned backslashes.
  */
 function sanitizePlainTextLatex(text: string): string {
-  const latexCmdMap: Record<string, string> = {
-    '\\Delta': 'Δ',
-    '\\delta': 'δ',
-    '\\alpha': 'α',
-    '\\beta': 'β',
-    '\\gamma': 'γ',
-    '\\Gamma': 'Γ',
-    '\\pi': 'π',
-    '\\theta': 'θ',
-    '\\lambda': 'λ',
-    '\\mu': 'μ',
-    '\\sigma': 'σ',
-    '\\Sigma': 'Σ',
-    '\\omega': 'ω',
-    '\\Omega': 'Ω',
-    '\\phi': 'φ',
-    '\\Phi': 'Φ',
-    '\\psi': 'ψ',
-    '\\Psi': 'Ψ',
-    '\\rho': 'ρ',
-    '\\tau': 'τ',
-    '\\eta': 'η',
-    '\\epsilon': 'ε',
-    '\\varepsilon': 'ε',
-    '\\kappa': 'κ',
-    '\\chi': 'χ',
-    '\\nu': 'ν',
-    '\\xi': 'ξ',
-    '\\zeta': 'ζ',
-    '\\approx': '≈',
-    '\\rightarrow': '→',
-    '\\to': '→',
-    '\\leftarrow': '←',
-    '\\leftrightarrow': '↔',
-    '\\leq': '≤',
-    '\\geq': '≥',
-    '\\pm': '±',
-    '\\times': '×',
-    '\\div': '÷',
-    '\\cdot': '·',
-    '\\infty': '∞',
-    '\\partial': '∂',
-    '\\nabla': '∇',
-    '\\sqrt': '√',
-    '\\int': '∫',
-    '\\sum': '∑',
-    '\\prod': '∏',
-    '\\ln': 'ln',
-    '\\log': 'log',
-    '\\sin': 'sin',
-    '\\cos': 'cos',
-    '\\tan': 'tan',
-    '\\circ': '°',
-    '\\degree': '°',
-  };
-
-  let result = text;
-  // Sort by length desc to avoid partial matches (e.g. \delta before \Delta)
-  const cmds = Object.keys(latexCmdMap).sort((a, b) => b.length - a.length);
-  for (const cmd of cmds) {
-    // Use split/join to avoid RegExp escaping issues with backslashes
-    result = result.split(cmd).join(latexCmdMap[cmd]);
-  }
-
-  // Strip remaining orphaned backslashes (\word → word, \\ → \, \! → !)
-  result = result.replace(/\\([a-zA-Z]+)/g, '$1');
-  result = result.replace(/\\([^a-zA-Z])/g, '$1');
-
-  return result;
+  return latexCommandToUnicode(convertInlineLatexToUnicode(text));
 }
 
 function isSafePath(p: string): boolean {
@@ -326,20 +286,26 @@ export class InstructionExecutor {
             break;
           }
           case 'addText': {
-            const trimmed = params.text.trim();
+            const runs = normalizeTextRuns(params.text);
+            const fullTrimmed = addTextPlain(params.text).trim();
+
             // Filter out orphaned arrow symbols (process step connectors without labels)
             if (
-              trimmed === '→' ||
-              trimmed === '->' ||
-              trimmed === '←' ||
-              trimmed === '<-' ||
-              trimmed === '↔'
+              fullTrimmed === '→' ||
+              fullTrimmed === '->' ||
+              fullTrimmed === '←' ||
+              fullTrimmed === '<-' ||
+              fullTrimmed === '↔'
             ) {
               log.warn(`Filtered orphaned arrow at instruction ${i} (page ${pageNum})`);
               break;
             }
             // Filter out placeholder text that should have been addFormula
-            if (trimmed === '[Formula]' || trimmed === '[formula]' || trimmed === '【公式】') {
+            if (
+              fullTrimmed === '[Formula]' ||
+              fullTrimmed === '[formula]' ||
+              fullTrimmed === '【公式】'
+            ) {
               log.warn(`Filtered [Formula] placeholder at instruction ${i} (page ${pageNum})`);
               break;
             }
@@ -353,33 +319,75 @@ export class InstructionExecutor {
             ];
             let isDesignHint = false;
             for (const pattern of designHintPatterns) {
-              if (pattern.test(trimmed)) {
+              if (pattern.test(fullTrimmed)) {
                 log.warn(
-                  `Filtered design hint text at instruction ${i} (page ${pageNum}): ${trimmed.slice(0, 50)}...`,
+                  `Filtered design hint text at instruction ${i} (page ${pageNum}): ${fullTrimmed.slice(0, 50)}...`,
                 );
                 isDesignHint = true;
                 break;
               }
             }
             if (isDesignHint) break;
-            // Sanitize LaTeX that leaked into plain text (e.g. \Delta G, \ln K)
-            let displayText = convertInlineLatexToUnicode(params.text);
-            displayText = sanitizePlainTextLatex(displayText);
-            slide.addText(displayText, {
-              x: params.x,
-              y: params.y,
-              w: params.w,
-              h: params.h,
-              fontSize: params.fontSize ?? 14,
-              fontFace: params.fontFace ?? 'Microsoft YaHei',
-              color: params.color ? hex(params.color) : '475569',
-              bold: params.bold,
-              italic: params.italic,
-              align: params.align ?? 'left',
-              valign: params.valign,
-              charSpacing: params.charSpacing,
-              margin: params.margin,
-            });
+
+            // Sanitize LaTeX leaked into plain text per run. Preserve whitespace
+            // runs so accented keywords don't merge with surrounding text.
+            const kept: TextRun[] = [];
+            for (const run of runs) {
+              const display = normalizeInlineMathText(
+                sanitizePlainTextLatex(convertInlineLatexToUnicode(run.text)),
+              );
+              if (display.length === 0) continue;
+              kept.push({ ...run, text: display });
+            }
+            if (kept.length === 0) break;
+
+            const hasRunFormatting = kept.some(
+              (r) => r.bold || r.italic || r.color || r.fontSize,
+            );
+            if (kept.length === 1 && !hasRunFormatting) {
+              slide.addText(kept[0].text, {
+                x: params.x,
+                y: params.y,
+                w: params.w,
+                h: params.h,
+                fontSize: params.fontSize ?? 14,
+                fontFace: params.fontFace ?? 'Noto Sans SC',
+                color: params.color ? hex(params.color) : '475569',
+                bold: params.bold,
+                italic: params.italic,
+                align: params.align ?? 'left',
+                valign: params.valign,
+                charSpacing: params.charSpacing,
+                margin: params.margin,
+              });
+            } else {
+              // Rich-text: keep empty runs (space/punctuation) but only pass
+              // run-local overrides that actually differ from the paragraph default.
+              const textArg = kept.map((r) => ({
+                text: r.text,
+                options: {
+                  bold: r.bold,
+                  italic: r.italic,
+                  color: r.color ? hex(r.color) : undefined,
+                  fontSize: r.fontSize,
+                },
+              }));
+              slide.addText(textArg as never, {
+                x: params.x,
+                y: params.y,
+                w: params.w,
+                h: params.h,
+                fontSize: params.fontSize ?? 14,
+                fontFace: params.fontFace ?? 'Noto Sans SC',
+                color: params.color ? hex(params.color) : '475569',
+                bold: params.bold,
+                italic: params.italic,
+                align: params.align ?? 'left',
+                valign: params.valign,
+                charSpacing: params.charSpacing,
+                margin: params.margin,
+              });
+            }
             break;
           }
           case 'addShape': {
@@ -461,7 +469,7 @@ export class InstructionExecutor {
                 color: hex(headerTxt),
                 bold: true,
                 fontSize: fontSize ?? 12,
-                fontFace: fontFace ?? 'Microsoft YaHei',
+                fontFace: fontFace ?? 'Noto Sans SC',
                 align: 'center' as const,
                 valign: 'middle' as const,
               },
@@ -474,7 +482,7 @@ export class InstructionExecutor {
                   fill: ri % 2 === 1 ? { color: hex(altBg) } : undefined,
                   color: hex(txtC),
                   fontSize: fontSize ?? 11,
-                  fontFace: fontFace ?? 'Microsoft YaHei',
+                  fontFace: fontFace ?? 'Noto Sans SC',
                   align: 'center' as const,
                   valign: 'middle' as const,
                 },

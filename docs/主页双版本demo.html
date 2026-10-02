@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="girl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>主页两版 · 沉稳工房 / 糖果贴纸</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600&family=Lilita+One&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{min-height:100vh;-webkit-font-smoothing:antialiased;padding-bottom:60px}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 26px 0}
+
+/* ================= 版 A · 沉稳 · 工房 (暗) ================= */
+html[data-theme="eng"]{
+  --bg:#0c0e10; --panel:#14171b; --panel2:#181c21; --cardinset:inset 0 1px 0 rgba(255,255,255,.04);
+  --line:rgba(242,240,234,.1); --lineH:rgba(255,180,84,.35);
+  --ink:#f2f0ea; --dim:rgba(242,240,234,.62); --faint:rgba(242,240,234,.34);
+  --acc:#ffb454; --accsoft:rgba(255,180,84,.13); --ok:#8fd8a0; --warn:#e0c17a;
+  --fontbody:"Work Sans",system-ui,"Segoe UI",sans-serif;
+  --fontdis:"Space Mono",ui-monospace,Menlo,monospace;
+  --radius:6px; --shadow:0 26px 60px rgba(0,0,0,.4);
+  --paddot:#3a3426;
+}
+html[data-theme="eng"]{background:var(--bg);color:var(--ink);font-family:var(--fontbody)}
+html[data-theme="eng"] body{
+  background:
+    radial-gradient(70% 50% at 88% -6%,rgba(255,180,84,.06),transparent 55%),
+    linear-gradient(180deg,var(--panel) 0,var(--bg) 340px);
+}
+html[data-theme="eng"] .bar{font-family:var(--fontdis)}
+html[data-theme="eng"] .logo{background:var(--acc);color:#0c0e10;border-radius:5px;font-weight:700}
+html[data-theme="eng"] .brand .t b{color:var(--ink);font-family:var(--fontdis);letter-spacing:.06em;font-size:15px}
+html[data-theme="eng"] .greet{color:var(--acc)}
+html[data-theme="eng"] .eyebrow{color:var(--faint);font-family:var(--fontdis)}
+html[data-theme="eng"] .title{font-family:var(--fontdis);color:var(--ink);font-weight:700;letter-spacing:-.01em}
+html[data-theme="eng"] .title .hl{color:var(--acc)}
+html[data-theme="eng"] .sub{color:var(--dim)}
+html[data-theme="eng"] .console{background:var(--panel);border:1px solid var(--line);box-shadow:var(--cardinset);border-radius:var(--radius)}
+html[data-theme="eng"] .kai{color:var(--acc);font-family:var(--fontdis)}
+html[data-theme="eng"] .console input{color:var(--ink);caret-color:var(--acc);font-family:var(--fontdis);font-size:13.5px}
+html[data-theme="eng"] .console input::placeholder{color:var(--faint)}
+html[data-theme="eng"] .console input:focus{outline:none}
+html[data-theme="eng"] .go{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:var(--radius);font-family:var(--fontdis);letter-spacing:.04em}
+html[data-theme="eng"] .go:hover{background:var(--acc);color:#0c0e10;border-color:var(--acc)}
+html[data-theme="eng"] .go svg{stroke:currentColor}
+html[data-theme="eng"] .scan{background:linear-gradient(90deg,transparent,rgba(255,180,84,.14),transparent)}
+html[data-theme="eng"] .opt{background:var(--panel);border:1px solid rgba(255,180,84,.26);color:var(--ink);font-family:var(--fontdis);font-size:11.5px;letter-spacing:.04em}
+html[data-theme="eng"] .opt svg{stroke:var(--acc)}
+html[data-theme="eng"] .opt:hover{color:var(--ink);border-color:var(--lineH)}
+html[data-theme="eng"] .rows{color:var(--faint);font-family:var(--fontdis);font-size:11px}
+html[data-theme="eng"] .rows b{color:var(--ok);font-weight:400}
+html[data-theme="eng"] .sec{color:var(--faint);font-family:var(--fontdis);letter-spacing:.2em}
+html[data-theme="eng"] .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);box-shadow:var(--cardinset);border-radius:var(--radius)}
+html[data-theme="eng"] .card:hover{border-color:var(--lineH)}
+html[data-theme="eng"] .card .meta{color:var(--faint);font-family:var(--fontdis)}
+html[data-theme="eng"] .card .nm{color:var(--ink);font-family:var(--fontdis)}
+html[data-theme="eng"] .card .d{color:var(--dim)}
+html[data-theme="eng"] .card .bar{background:rgba(255,180,84,.12)}
+html[data-theme="eng"] .card .bar i{background:var(--acc)}
+html[data-theme="eng"] .st{font-family:var(--fontdis);font-size:10px;letter-spacing:.08em;color:var(--faint)}
+html[data-theme="eng"] .st.ok{color:var(--ok)}
+html[data-theme="eng"] .st.warn{color:var(--warn)}
+html[data-theme="eng"] .tool{border:1px solid var(--line);border-radius:var(--radius);background:transparent}
+html[data-theme="eng"] .tool:hover{border-color:var(--lineH);background:var(--accsoft)}
+html[data-theme="eng"] .tool svg{stroke:var(--acc)}
+html[data-theme="eng"] .tool b{font-family:var(--fontdis);color:var(--ink);letter-spacing:.04em}
+html[data-theme="eng"] .tool p{color:var(--dim)}
+html[data-theme="eng"] .foot{color:var(--faint);font-family:var(--fontdis)}
+html[data-theme="eng"] h6.diag{color:var(--faint)}
+
+/* ================= 版 B · 活泼 · 糖果贴纸 (亮) ================= */
+html[data-theme="girl"]{
+  --bg:#fbf1df; --panel:#fffdf6; --panel2:#fff6ea;
+  --line:rgba(58,46,82,.12); --lineH:rgba(255,95,122,.5);
+  --ink:#3a2e52; --dim:rgba(58,46,82,.62); --faint:rgba(58,46,82,.42);
+  --acc:#ff5f7a; --sun:#ffcf3f; --teal:#26c6b1; --lilac:#8d7bff;
+  --fontbody:"Quicksand",system-ui,"Segoe UI",sans-serif;
+  --fontdis:"Lilita One","Quicksand",sans-serif;
+  --radius:16px; --shadow:0 18px 44px rgba(58,46,82,.12);
+}
+html[data-theme="girl"]{background:var(--bg);color:var(--ink);font-family:var(--fontbody)}
+html[data-theme="girl"] body{
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(circle at 9% 16%,rgba(255,207,63,.5) 0 2px,transparent 3px),
+    radial-gradient(circle at 94% 30%,rgba(38,198,177,.4) 0 1.8px,transparent 2.8px),
+    radial-gradient(circle at 82% 82%,rgba(255,95,122,.28) 0 1.6px,transparent 2.6px),
+    radial-gradient(circle at 20% 88%,rgba(141,123,255,.3) 0 1.8px,transparent 2.8px);
+  background-repeat:repeat;background-size:120px 120px;
+}
+html[data-theme="girl"] .bar{font-family:var(--fontbody)}
+html[data-theme="girl"] .logo{background:var(--acc);color:#fff;border-radius:50%;font-weight:700}
+html[data-theme="girl"] .brand .t b{color:var(--ink);font-size:18px;letter-spacing:.2px}
+html[data-theme="girl"] .greet{color:var(--teal);font-weight:700}
+html[data-theme="girl"] .eyebrow{color:var(--faint);font-weight:600;letter-spacing:.08em}
+html[data-theme="girl"] .title{color:var(--ink);font-weight:400;line-height:.95}
+html[data-theme="girl"] .title .hl{color:var(--acc);display:inline-block}
+html[data-theme="girl"] .title .hl.flip{transform:scaleX(-1);-webkit-transform:scaleX(-1)}
+html[data-theme="girl"] .sub{color:var(--dim);font-size:16px}
+html[data-theme="girl"] .console{background:#fff;border:2px solid var(--ink);border-radius:22px;box-shadow:6px 8px 0 rgba(58,46,82,1),0 14px 28px rgba(58,46,82,.1)}
+html[data-theme="girl"] .kai{color:var(--acc);font-weight:700}
+html[data-theme="girl"] .console input{color:var(--ink);caret-color:var(--acc);font-weight:600}
+html[data-theme="girl"] .console input::placeholder{color:var(--faint)}
+html[data-theme="girl"] .console input:focus{outline:none}
+html[data-theme="girl"] .go{background:var(--ink);color:var(--bg);border:0;border-radius:14px;font-weight:700;box-shadow:0 4px 0 var(--sun)}
+html[data-theme="girl"] .go:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--teal);background:var(--acc);color:#fff}
+html[data-theme="girl"] .go svg{stroke:currentColor}
+html[data-theme="girl"] .scan{background:linear-gradient(90deg,transparent,rgba(255,95,122,.12),transparent)}
+html[data-theme="girl"] .opt{background:#fff;border:1.5px solid var(--ink);color:var(--ink);font-weight:600;box-shadow:2px 3px 0 rgba(58,46,82,1)}
+html[data-theme="girl"] .opt:hover{transform:translate(-1px,-1px);box-shadow:3px 5px 0 var(--acc)}
+html[data-theme="girl"] .rows{color:var(--dim);font-weight:500}
+html[data-theme="girl"] .rows b{color:var(--acc);font-weight:700}
+html[data-theme="girl"] .sec{color:var(--faint);font-weight:700;letter-spacing:.06em}
+html[data-theme="girl"] .card{background:#fff;border:2px solid var(--ink);border-radius:18px}
+html[data-theme="girl"] .card:hover{transform:translate(-2px,-2px) rotate(-.6deg);border-color:var(--acc)}
+html[data-theme="girl"] .card .meta{color:var(--faint);font-weight:600;font-size:11px}
+html[data-theme="girl"] .card .nm{color:var(--ink)}
+html[data-theme="girl"] .card .d{color:var(--dim)}
+html[data-theme="girl"] .card .bar{background:rgba(38,198,177,.15)}
+html[data-theme="girl"] .card .bar i{background:linear-gradient(90deg,var(--acc),var(--teal))}
+html[data-theme="girl"] .st{font-weight:700;font-size:11px;color:var(--faint)}
+html[data-theme="girl"] .st.ok{color:var(--teal)}
+html[data-theme="girl"] .st.warn{color:var(--acc)}
+html[data-theme="girl"] .tool{background:var(--panel);border:2px solid var(--ink);border-radius:16px;box-shadow:0 6px 0 rgba(58,46,82,1)}
+html[data-theme="girl"] .tool:hover{transform:translateY(-3px)}
+html[data-theme="girl"] .tool svg{stroke:var(--acc);stroke-width:2}
+html[data-theme="girl"] .tool b{font-family:var(--fontdis);font-weight:400;letter-spacing:.2px}
+html[data-theme="girl"] .tool p{color:var(--dim)}
+html[data-theme="girl"] .foot{color:var(--faint);font-weight:600}
+html[data-theme="girl"] h6.diag{color:var(--faint)}
+
+/* ============ 二次元 mascot + sparkles（糖果版） ============ */
+.mascot{position:absolute;right:-8px;top:36px;width:190px;height:190px;z-index:2;animation:bob 3.6s ease-in-out infinite;transform-origin:50% 100%}
+.mascot svg{width:100%;height:100%;display:block;filter:drop-shadow(0 12px 18px rgba(58,46,82,.16))}
+.catimg{width:100%;height:100%;display:block;object-fit:cover;border-radius:30px;border:3px solid #fff;box-shadow:0 14px 26px rgba(58,46,82,.24);background:#ffe9f1}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.bubble{position:absolute;right:158px;top:-6px;z-index:3;background:#fff;border:2px solid #3a2e52;border-radius:14px;padding:9px 14px;font-weight:700;font-size:13px;font-family:"Quicksand",sans-serif;color:#3a2e52;box-shadow:3px 4px 0 rgba(58,46,82,1);line-height:1.3;white-space:nowrap;animation:bob 3.6s .25s ease-in-out infinite}
+.bubble::before{content:"";position:absolute;left:-9px;top:16px;width:12px;height:12px;background:#fff;border-left:2px solid #3a2e52;border-bottom:2px solid #3a2e52;transform:rotate(45deg)}
+.spark{position:absolute;color:#ffcf3f;opacity:.95;animation:tw 2.4s ease-in-out infinite;pointer-events:none}
+.spark.s2{color:#8d7bff}.spark.s3{color:#ff5f7a}.spark.s4{color:#26c6b1}
+@keyframes tw{0%,100%{transform:scale(.35) rotate(20deg);opacity:.25}50%{transform:scale(1) rotate(0deg);opacity:1}}
+html[data-theme="eng"] .mascot,html[data-theme="eng"] .bubble,html[data-theme="eng"] .spark{display:none}
+
+/* ============ 骨架 ============ */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;position:relative;z-index:5}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{width:34px;height:34px;display:grid;place-items:center;font-size:16px;flex:none}
+.brand .t b{display:block;line-height:1.1}
+.plan{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--dim);font-weight:600}
+
+.hero{padding:40px 0 8px;position:relative;z-index:3}
+.greet{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:14px}
+.title{font-size:clamp(30px,5.4vw,48px);line-height:0.95;margin:2px 0 16px}
+.sub{line-height:1.6;max-width:54ch;margin:0}
+
+.stage{margin-top:30px;position:relative;z-index:3}
+.console{position:relative;display:flex;align-items:center;gap:12px;padding:10px 10px 10px 18px;transition:.25s}
+.kai{flex:none;font-size:14px}
+.console input{flex:1;min-width:0;background:transparent;border:0;padding:11px 0;font-size:15px}
+.go{flex:none;display:inline-flex;align-items:center;gap:9px;padding:13px 20px;font-size:14px;cursor:pointer;transition:.2s}
+.go svg{width:16px;height:16px;fill:none;stroke-width:2}
+.scan{position:absolute;left:0;right:0;bottom:0;height:1.5px;animation:sw 3s linear infinite}
+@keyframes sw{from{transform:translateX(-100%)}to{transform:translateX(220%)}}
+.optbar{display:flex;gap:11px;flex-wrap:wrap;margin-top:16px}
+.opt{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;font-size:12.5px;cursor:pointer;transition:.18s}
+.rows{margin-top:16px;font-size:13px}
+.rows b{font-weight:700}
+
+.cards{margin-top:34px;position:relative;z-index:3}
+.sec{font-size:11px;text-transform:uppercase;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{padding:16px 17px;transition:.22s;position:relative;overflow:hidden}
+.card .meta{letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;margin-bottom:6px}
+.card .nm{font-size:16.5px;font-weight:700;letter-spacing:.2px}
+.card .d{font-size:12.5px;line-height:1.5;margin-top:5px;min-height:20px}
+.card .st{margin-top:13px;text-transform:uppercase}
+.card .bar{height:4px;border-radius:99px;margin-top:7px;overflow:hidden}
+.card .bar i{display:block;height:100%;width:66%;border-radius:99px}
+.card.done .bar i{width:100%}
+
+.tools{margin-top:32px;display:flex;gap:16px;flex-wrap:wrap}
+.tool{flex:1;min-width:190px;padding:17px 18px;transition:.2s}
+.tool svg{width:24px;height:24px;fill:none;stroke-width:1.7}
+.tool b{display:block;margin-top:10px;font-size:15.5px}
+.tool p{font-size:12.5px;line-height:1.55;margin:4px 0 0}
+.foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);font-size:11px;letter-spacing:.06em;display:flex;gap:10px;flex-wrap:wrap;text-transform:uppercase}
+.foot .more{margin-left:auto}
+
+/* 切换器 */
+.switcher{position:fixed;left:18px;bottom:18px;z-index:99;display:flex;flex-direction:column;gap:8px;font-family:"Work Sans",sans-serif}
+.switcher button{border:0;background:#1a1e24;color:#dfe5ee;font-weight:700;font-size:13px;padding:10px 16px;border-radius:999px;cursor:pointer;transition:.2s;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.switcher button.on{background:linear-gradient(90deg,#ff5f7a,#8d7bff);color:#fff}
+.switcher button.eng{background:#0c0e10}
+.switcher button.eng.on{background:#ffb454;color:#0c0e10}
+
+@media (max-width:680px){.grid{grid-template-columns:1fr}.tools{flex-direction:column}.switcher{flex-direction:row;left:50%;right:auto;transform:translateX(-50%)}.mascot{width:120px;height:120px;right:-4px;top:18px}.bubble{display:none}}
+@media (prefers-reduced-motion:reduce){.scan{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="switcher">
+  <button class="eng" data-theme-switch="eng" aria-pressed="false">沉稳 · 工房</button>
+  <button class="on" data-theme-switch="girl" aria-pressed="true">糖果 · 贴纸</button>
+</div>
+
+<div class="wrap">
+
+  <nav class="bar">
+    <div class="brand">
+      <div class="logo">智</div>
+      <div class="t"><b>智眸无界</b></div>
+    </div>
+    <div><span class="plan"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="var(--acc)"/></svg>专业版</span></div>
+  </nav>
+
+  <header class="hero">
+    <div class="greet">下午好，回台</div>
+    <h1 class="title">把一门课，<br><span class="hl">开成在场的一台仪器</span></h1>
+    <p class="sub">丢进一个知识点——AI 为你配上主讲、同学和一台能亲手摆弄的实验台，当场开课，而不是发一份讲义。</p>
+
+    <div class="mascot">
+      <div class="bubble">小眸：今天想学点什么呀？</div>
+      <img class="catimg" src="小猫.jpg" alt="小猫"/>
+    </div>
+
+    <svg class="spark" style="left:3%;top:30%" width="26" height="26" viewBox="0 0 24 24"><path d="M12 2l2.2 5.8L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-2.2z" fill="currentColor"/></svg>
+    <svg class="spark s2" style="right:34%;top:4%" width="20" height="20" viewBox="0 0 24 24"><path d="M12 2l2.2 5.8L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-2.2z" fill="currentColor"/></svg>
+    <svg class="spark s3" style="left:46%;top:-2%" width="14" height="14" viewBox="0 0 24 24"><path d="M12 2l2.2 5.8L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-2.2z" fill="currentColor"/></svg>
+    <svg class="spark s4" style="left:12%;top:6%" width="16" height="16" viewBox="0 0 24 24"><path d="M12 2l2.2 5.8L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-2.2z" fill="currentColor"/></svg>
+  </header>
+
+  <section class="stage">
+    <div class="console">
+      <span class="kai">&gt;</span>
+      <input placeholder="输入想学的点，或直接说一句人话……" aria-label="输入知识点">
+      <button class="go"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg> 生成课堂</button>
+      <div class="scan"></div>
+    </div>
+    <div class="optbar">
+      <button class="opt"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h4l2 3h8a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg> 从模板选</button>
+      <button class="opt"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-3 4.5-4 8-4s6.5 1 8 4"/></svg> 指定主讲</button>
+      <button class="opt"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M4 19c.8-2.5 3-3.5 6-3.5s5.2 1 6 3.5"/></svg> 带上同学</button>
+    </div>
+    <div class="rows">最近在读 <b>光学 · 折射 · 临界角</b>，看到 <b>42%</b> · 今天想做一节新的</div>
+  </section>
+
+  <section class="cards">
+    <div class="sec">你的台面 · 续上</div>
+    <div class="grid">
+      <div class="card done">
+        <div class="meta">03 · 物理</div>
+        <div class="nm">光的折射</div>
+        <div class="d">一束光打进玻璃，当场弯折。上完了。</div>
+        <div class="st ok">已上完 · 复习图谱可导出</div>
+        <div class="bar"><i></i></div>
+      </div>
+      <div class="card running">
+        <div class="meta">02 · 生物</div>
+        <div class="nm">细胞膜 · 物质运输</div>
+        <div class="d">正讲到被动运输一节。</div>
+        <div class="st warn">进行中 · 62%</div>
+        <div class="bar"><i></i></div>
+      </div>
+      <div class="card">
+        <div class="meta">草稿 · 历史</div>
+        <div class="nm">一战与凡尔赛体系</div>
+        <div class="d">大纲已就绪，等你过目。</div>
+        <div class="st">待审 · 5 幕</div>
+        <div class="bar"><i></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tools">
+    <div class="tool"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L5 19a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 19L14 9V3"/></svg><b>配一门课</b><p>你丢一句想法，它替你搭好台。</p></div>
+    <div class="tool"><svg viewBox="0 0 24 24"><path d="M3 20V9m6 11V4m6 16v-8m6 8V7"/></svg><b>复盘图谱</b><p>把已经学过的重新长一遍。</p></div>
+    <div class="tool"><svg viewBox="0 0 24 24"><path d="M3 8h18M3 8v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8M7 5h10l1 3H6z"/></svg><b>工作台</b><p>继续你手头那摊事。</p></div>
+  </section>
+
+  <footer class="foot">
+    <span>智眸无界 · SKY CLASSROOM</span>
+    <span class="more">© 2026</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var btns=document.querySelectorAll('[data-theme-switch]');
+  function set(t){
+    root.setAttribute('data-theme',t);
+    btns.forEach(function(b){b.classList.toggle('on',b.getAttribute('data-theme-switch')===t);b.setAttribute('aria-pressed',String(b.getAttribute('data-theme-switch')===t));});
+  }
+  btns.forEach(function(b){b.addEventListener('click',function(){set(b.getAttribute('data-theme-switch'));});});
+  set('girl');
+})();
+</script>
+</body>
+</html>

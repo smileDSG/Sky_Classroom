@@ -2,12 +2,12 @@
 export const dynamic = 'force-dynamic';
 
 import { TeachingPage } from '@/app/sky/teaching/teaching-page';
-import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial-canvas';
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import type { TeachingGenerationPolicy } from '@/lib/teaching/personalization-policy';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { PageTour } from '@/components/sky/tour/page-tour';
 
 export default function CloudMindTeachingRoute() {
   return (
@@ -20,7 +20,7 @@ export default function CloudMindTeachingRoute() {
 }
 
 function CloudMindTeachingFallback() {
-  return <div className="relative min-h-[calc(100dvh-4rem)] bg-[var(--teaching-void)]" />;
+  return <div className="relative min-h-[calc(100dvh-4rem)]" />;
 }
 
 function CloudMindTeachingContent() {
@@ -99,11 +99,7 @@ function CloudMindTeachingContent() {
   }, [queryTopic]);
 
   return (
-    <div className="relative min-h-[calc(100dvh-4rem)] bg-[var(--teaching-void)]">
-      {/* Deep space starfield */}
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <CelestialCanvas starCount={100} parallax={false} nebula grid={false} />
-      </div>
+    <div className="relative min-h-[calc(100dvh-4rem)]">
       {/* Aurora ambient glow overlays */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute top-0 left-1/3 h-[500px] w-[500px] rounded-full bg-[var(--teaching-primary)]/4 blur-[150px]" />
@@ -112,15 +108,18 @@ function CloudMindTeachingContent() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 pt-6 pb-12">
-        <TeachingPage
-          initialTopic={effectiveInitialTopic}
-          personalizationNotice={effectivePersonalizationNotice}
-          personalizationPolicy={personalizationPolicy}
-          personalizationContext={personalizationContext}
-          showHistoryInitially={showHistoryInitially}
-        />
+      <div className="relative z-10  px-4 sm:px-6 pt-6 pb-12">
+        <div data-tour-step="page-primary">
+          <TeachingPage
+            initialTopic={effectiveInitialTopic}
+            personalizationNotice={effectivePersonalizationNotice}
+            personalizationPolicy={personalizationPolicy}
+            personalizationContext={personalizationContext}
+            showHistoryInitially={showHistoryInitially}
+          />
+        </div>
       </div>
+      <PageTour id="teaching-ai" />
     </div>
   );
 }

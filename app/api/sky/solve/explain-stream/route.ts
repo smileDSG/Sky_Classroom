@@ -24,6 +24,7 @@ import { buildKnowledgePointsPrompt } from '@/lib/solve/solver-prompts';
 import { postProcessMathContent } from '@/lib/solve/math-postprocessor';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { validateProblemSpec } from '@/lib/recognition/problem-spec-parser';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('API:ExplainStream');
 
@@ -161,7 +162,7 @@ export async function POST(req: Request) {
           formatSSEEvent('error', {
             errorCode: 'INVALID_REQUEST',
             message: 'Invalid problemSpec',
-            details: err instanceof Error ? err.message : String(err),
+            details: safeErrorMessage(err),
           }),
           { status: 400, headers: { 'Content-Type': 'text/event-stream' } },
         );
@@ -416,7 +417,7 @@ export async function POST(req: Request) {
           await write(
             formatSSEEvent('error', {
               errorCode: 'INTERNAL_ERROR',
-              message: err instanceof Error ? err.message : '解题失败',
+              message: safeErrorMessage(err),
             }),
           );
           await writer.close();

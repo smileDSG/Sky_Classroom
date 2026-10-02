@@ -1,8 +1,7 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, CalendarClock } from 'lucide-react';
 import { StudentProfilePage } from '@/app/sky/student/student-profile-page';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
@@ -11,13 +10,12 @@ import {
   type LearningFeatureKey,
 } from '@/components/sky/learning/learning-feature-config';
 import { KnowledgeGraphView } from '@/components/sky/learning/knowledge-graph-view';
-import { LearningStats } from '@/components/sky/learning/learning-stats';
 import { MistakeBook } from '@/components/sky/learning/mistake-book';
-import { ReviewPlan } from '@/components/sky/learning/review-plan';
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { PageTour } from '@/components/sky/tour/page-tour';
 
 interface LearningFeaturePageProps {
   activeFeature: LearningFeatureKey;
@@ -56,14 +54,17 @@ export function LearningFeaturePage(props: LearningFeaturePageProps) {
 }
 
 function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const mistakes = useSkyClassroomStore((state) => state.mistakes);
   const prioritizeReview = useSkyClassroomStore((state) => state.prioritizeReview);
   const activeMeta =
     LEARNING_FEATURES.find((feature) => feature.key === activeFeature) ?? LEARNING_FEATURES[0];
   const ActiveIcon = activeMeta.icon;
+
+  const tourId: Record<LearningFeatureKey, string> = {
+    mistakes: 'learning-mistakes',
+    graph: 'learning-graph',
+    profile: 'learning-profile',
+  };
 
   const weakPoints = useMemo(() => {
     if (mistakes.length === 0) return [];
@@ -100,90 +101,81 @@ function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps)
     };
   }, []);
 
-  const handleReviewAutoStartConsumed = useCallback(() => {
-    if (searchParams.get('dailyTask') !== '1') return;
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('dailyTask');
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [pathname, router, searchParams]);
-
   return (
-    <SkyAppShell>
-      <div className="mx-auto max-w-6xl space-y-5 pb-8">
-        <section className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/90 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-cyan-100/10 dark:bg-[#07111f]/95 dark:shadow-[0_24px_72px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
-          <div className="flex flex-col gap-4 border-b border-slate-200/70 bg-[linear-gradient(135deg,#f0fdf4_0%,#f0f9ff_52%,#f8fafc_100%)] px-5 py-5 dark:border-cyan-100/10 dark:bg-[linear-gradient(135deg,#123346_0%,#0d2438_52%,#0b1729_100%)] md:px-6 lg:flex-row lg:items-center lg:justify-between">
+    <SkyAppShell section="learning">
+      <div className=" px-4 pt-6 pb-12 sm:px-6">
+        <header
+          data-tour-step="feature-header"
+          className="mb-6 flex items-center justify-between gap-4"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300">
+              <ActiveIcon className="h-5 w-5" />
+            </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-[0_10px_28px_rgba(16,185,129,0.08)] dark:border-emerald-200/25 dark:bg-emerald-300/10 dark:text-emerald-100 dark:shadow-none">
-                  <ActiveIcon className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <h1 className="text-2xl font-semibold leading-tight text-slate-950 dark:text-white">
-                    {activeMeta.label}
-                  </h1>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                    {activeMeta.desc}
-                  </p>
-                </div>
-              </div>
+              <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
+                {activeMeta.label}
+              </h1>
+              <p className="mt-1 line-clamp-1 text-sm text-slate-500 dark:text-slate-400">
+                {activeMeta.desc}
+              </p>
             </div>
           </div>
+          <Link
+            href="/sky/learning"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-100 dark:shadow-none dark:hover:bg-white/[0.08]"
+          >
+            <ArrowRight className="h-3.5 w-3.5 rotate-180" />
+            返回学习工作台
+          </Link>
+        </header>
 
-          <div className="bg-slate-50/70 p-4 dark:bg-[#07111f]/70">
-            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-inner shadow-slate-200/30 dark:border-cyan-100/10 dark:bg-slate-950/20 dark:shadow-none lg:p-4">
-              {activeFeature === 'mistakes' && <MistakeBook />}
-              {activeFeature === 'review' && (
-                <ReviewPlan
-                  autoStart={searchParams.get('dailyTask') === '1'}
-                  onAutoStartConsumed={handleReviewAutoStartConsumed}
-                />
-              )}
-              {activeFeature === 'graph' && (
-                <div className="space-y-4">
-                  <KnowledgeGraphView />
-                  {weakPoints.length > 0 && (
-                    <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-200/15 dark:bg-rose-300/10">
-                      <div className="text-sm font-semibold text-rose-700 dark:text-rose-100">
-                        薄弱知识点针对性复习
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {weakPoints.map((point) => (
-                          <span
-                            key={point}
-                            className="rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-700 dark:border-rose-200/20 dark:bg-rose-300/10 dark:text-rose-100"
-                          >
-                            {point}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <Link
-                          href={`/sky/cloud-mind/quiz?topic=${encodeURIComponent(weakPoints.join('、'))}`}
-                          className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-3 py-2 text-xs font-semibold text-slate-950"
-                        >
-                          针对出题
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => prioritizeReview(weakPoints)}
-                          className="inline-flex items-center gap-2 rounded-xl bg-emerald-300 px-3 py-2 text-xs font-semibold text-slate-950"
-                        >
-                          <CalendarClock className="h-3.5 w-3.5" />
-                          全部加入复习
-                        </button>
-                      </div>
-                    </div>
-                  )}
+        <div data-tour-step="feature-content" className=" space-y-6">
+          {activeFeature === 'mistakes' && <MistakeBook />}
+          {activeFeature === 'graph' && (
+            <div className=" space-y-6">
+              <KnowledgeGraphView />
+              {weakPoints.length > 0 && (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-200/15 dark:bg-rose-300/10">
+                  <div className="text-sm font-semibold text-rose-700 dark:text-rose-100">
+                    薄弱知识点针对性复习
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {weakPoints.map((point) => (
+                      <span
+                        key={point}
+                        className="rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-700 dark:border-rose-200/20 dark:bg-rose-300/10 dark:text-rose-100"
+                      >
+                        {point}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Link
+                      href={`/sky/cloud-mind/quiz?topic=${encodeURIComponent(weakPoints.join('、'))}`}
+                      className="inline-flex items-center gap-2 rounded-xl bg-sky-300 px-3 py-2 text-xs font-semibold text-slate-950"
+                    >
+                      针对出题
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => prioritizeReview(weakPoints)}
+                      className="inline-flex items-center gap-2 rounded-xl bg-sky-300 px-3 py-2 text-xs font-semibold text-slate-950"
+                    >
+                      <CalendarClock className="h-3.5 w-3.5" />
+                      全部加入复习
+                    </button>
+                  </div>
                 </div>
               )}
-              {activeFeature === 'stats' && <LearningStats />}
-              {activeFeature === 'profile' && <StudentProfilePage />}
             </div>
-          </div>
-        </section>
+          )}
+          {activeFeature === 'profile' && <StudentProfilePage />}
+        </div>
       </div>
+
+      <PageTour id={tourId[activeFeature]} />
     </SkyAppShell>
   );
 }

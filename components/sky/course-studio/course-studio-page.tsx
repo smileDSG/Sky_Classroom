@@ -10,18 +10,16 @@ import {
   BrainCircuit,
   CheckCircle2,
   Clipboard,
-  Code2,
   Download,
   Eye,
   FileQuestion,
-  Film,
   History,
   Info,
   Layers,
+  Lightbulb,
   Loader2,
   Map,
   Play,
-  Presentation,
   RefreshCw,
   Route,
   Search,
@@ -32,6 +30,8 @@ import {
 } from 'lucide-react';
 
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { FeaturePageHeader, FeatureWorkspace } from '@/components/sky/layout/feature-page-chrome';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { CourseStudioP1EvidencePanel } from '@/components/sky/course-studio/p1-evidence-panel';
 import { CourseStudioP2LongTermPanel } from '@/components/sky/course-studio/p2-long-term-panel';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +44,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { submitClassroomJob } from '@/lib/classroom/classroom-job-client';
 import { addActiveJobEntry } from '@/lib/classroom/classroom-session';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
+import {
+  buildResourceRecommendations,
+  type RecommendationProfile,
+} from '@/lib/software-cup/resource-recommendation';
 import { cn } from '@/lib/utils';
 
 type StageStatus = 'pending' | 'running' | 'completed' | 'failed';
@@ -128,10 +132,6 @@ interface GeneratedResource {
   format?: string;
   content?: string;
   downloadFileName?: string;
-  slides?: string[];
-  questionIds?: string[];
-  caseFile?: string;
-  scriptFile?: string;
   trust: {
     confidence: number;
     status: string;
@@ -220,11 +220,9 @@ type DetailTabId = 'fit' | 'process' | 'trust' | 'follow';
 
 const RESOURCE_TYPES: ResourceTypeOption[] = [
   { id: 'markdown_lecture', label: '讲义', hint: '结构化解释', icon: BookOpen },
-  { id: 'ppt_outline', label: 'PPT', hint: '课件大纲', icon: Presentation },
   { id: 'mind_map', label: '导图', hint: '知识结构', icon: Map },
-  { id: 'quiz_bank', label: '题库', hint: '分层练习', icon: FileQuestion },
-  { id: 'code_case', label: '实操', hint: '代码案例', icon: Code2 },
-  { id: 'video_script', label: '视频', hint: '讲解脚本', icon: Film },
+  { id: 'self_check', label: '自查清单', hint: '薄弱点自查', icon: Clipboard },
+  { id: 'learning_path', label: '学习路径', hint: '学·查·练·复盘', icon: Route },
 ];
 
 const INITIAL_STAGES: StageItem[] = [
@@ -256,37 +254,25 @@ const RESOURCE_META: Record<string, { label: string; icon: LucideIcon; className
     label: '讲义',
     icon: BookOpen,
     className:
-      'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-300/20 dark:bg-sky-300/10 dark:text-sky-100',
-  },
-  ppt_outline: {
-    label: 'PPT',
-    icon: Presentation,
-    className:
-      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-100',
+      'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/10 dark:text-violet-100',
   },
   mind_map: {
     label: '导图',
     icon: Map,
     className:
-      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-100',
+      'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/10 dark:text-violet-100',
   },
-  quiz_bank: {
-    label: '题库',
-    icon: FileQuestion,
-    className:
-      'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-300/20 dark:bg-rose-300/10 dark:text-rose-100',
-  },
-  code_case: {
-    label: '实操',
-    icon: Code2,
+  self_check: {
+    label: '自查清单',
+    icon: Clipboard,
     className:
       'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/10 dark:text-violet-100',
   },
-  video_script: {
-    label: '视频',
-    icon: Film,
+  learning_path: {
+    label: '学习路径',
+    icon: Route,
     className:
-      'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-300/20 dark:bg-cyan-300/10 dark:text-cyan-100',
+      'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/10 dark:text-violet-100',
   },
 };
 
@@ -482,12 +468,66 @@ function buildStudentInput(params: {
 }
 
 function resourceSummary(resource: GeneratedResource): string {
-  if (resource.contentPreview) return resource.contentPreview;
-  if (resource.slides?.length) return resource.slides.slice(0, 3).join(' / ');
-  if (resource.questionIds?.length) return `包含 ${resource.questionIds.length} 道课程题库练习`;
-  if (resource.caseFile) return `实操案例：${resource.caseFile}`;
-  if (resource.scriptFile) return `视频脚本：${resource.scriptFile}`;
-  return '已生成资源内容摘要';
+  const typeSummary: Record<string, string> = {
+    markdown_lecture: '个性化概念讲义',
+    mind_map: '知识结构导图',
+    self_check: '薄弱点自查清单',
+    learning_path: '学·查·练·复盘 闭环指引',
+  };
+  return resource.contentPreview ?? typeSummary[resource.type] ?? '已生成资源内容摘要';
+}
+
+/** 把 PersonalizationContext 收敛成推荐函数需要的画像结构 */
+function toRecommendationProfile(
+  context: PersonalizationContext | null,
+  weakInput: string,
+): RecommendationProfile {
+  const weak = uniqueNonEmpty([
+    ...(context?.weakPoints ?? []).map((item) => item.knowledgePoint),
+    ...(context?.errorPatterns ?? []).map((item) => item.knowledgePoint),
+    ...splitList(weakInput),
+  ]).slice(0, 6);
+
+  return {
+    dimensions: {
+      majorBackground: { value: '', confidence: 0, evidence: [] },
+      learningGoal: { value: context?.recommendation?.title ?? '', confidence: 0, evidence: [] },
+      knowledgeBase: { weakPoints: weak, strongPoints: [], confidence: 0, evidence: [] },
+      cognitiveStyle: {
+        value: context?.tutoringPolicy?.explanationStyle ?? '',
+        confidence: 0,
+        evidence: [],
+      },
+      errorPatternPreference: {
+        value: (context?.errorPatterns ?? []).map((item) => item.errorType).filter(Boolean),
+        confidence: 0,
+        evidence: [],
+      },
+      resourcePreference: {
+        value: context?.tutoringPolicy?.resourceFormats ?? [],
+        confidence: 0,
+        evidence: [],
+      },
+      learningPace: { value: '', confidence: 0, evidence: [] },
+      currentLearningState: { value: '', confidence: 0, evidence: [] },
+    },
+  };
+}
+
+/** 一句话画像建议：根据学习情况给出“本次建议优先生成哪类资料” */
+function buildTypeAdvice(
+  context: PersonalizationContext | null,
+  weakInput: string,
+  hasProfile: boolean,
+): string | null {
+  if (!hasProfile) return null;
+  const profile = toRecommendationProfile(context, weakInput);
+  const primary = buildResourceRecommendations(profile)
+    .filter((item) => item.priority !== 'optional')
+    .slice(0, 2);
+  if (primary.length === 0) return null;
+  const labels = primary.map((item) => RESOURCE_META[item.type]?.label ?? '资料').join(' + ');
+  return `根据你的学习情况，本次建议优先：${labels}`;
 }
 
 export function CourseStudioPage() {
@@ -675,6 +715,10 @@ export function CourseStudioPage() {
     return recommendationEvidence(personalization);
   }, [contextLoading, personalization]);
   const systemProfileReady = hasSystemProfile(personalization);
+  const typeAdvice = useMemo(
+    () => buildTypeAdvice(personalization, weakPoints, systemProfileReady),
+    [personalization, systemProfileReady, weakPoints],
+  );
 
   const toggleType = (type: string) => {
     setSelectedTypes((current) => {
@@ -727,7 +771,11 @@ export function CourseStudioPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ input, userId: COURSE_STUDIO_USER_ID }),
+        body: JSON.stringify({
+          input,
+          userId: COURSE_STUDIO_USER_ID,
+          resourceTypes: selectedTypes,
+        }),
       });
       const payload = (await response.json().catch(() => null)) as {
         success?: boolean;
@@ -808,26 +856,15 @@ export function CourseStudioPage() {
 
   return (
     <SkyAppShell>
-      <div className="mx-auto max-w-4xl space-y-4 pb-24 sm:pb-10">
-        <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70 sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <Badge
-                variant="outline"
-                className="h-7 rounded-full px-3 text-cyan-700 dark:text-cyan-100"
-              >
-                课程资源工坊
-              </Badge>
-              <h1 className="mt-3 text-2xl font-semibold leading-tight text-slate-950 dark:text-white sm:text-3xl">
-                这次想生成什么学习资料？
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                已根据你的学习情况预设偏好。补一句本次重点，或直接生成一套资料。
-              </p>
-            </div>
+      <div className=" space-y-6 px-4 pt-6 pb-12 sm:px-6">
+        <FeaturePageHeader
+          icon={<Layers className="h-5 w-5" />}
+          title="学习包工坊"
+          description="配置学习目标与资料类型，右侧会同步展示即将生成的学习包。"
+          action={
             <Badge
               variant="outline"
-              className="h-8 shrink-0 rounded-full px-3 text-slate-600 dark:text-slate-300"
+              className="h-7 rounded-full px-3 text-slate-600 dark:text-slate-300"
             >
               {contextLoading
                 ? '正在读取学习情况'
@@ -835,50 +872,97 @@ export function CourseStudioPage() {
                   ? '已准备好'
                   : '补一句即可生成'}
             </Badge>
-          </div>
-        </section>
+          }
+        />
 
         {error && (
-          <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-300/25 dark:bg-rose-300/10 dark:text-rose-100">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            {error}
+          <div className="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-300/25 dark:bg-rose-300/10 dark:text-rose-100 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+            {!loading && (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-rose-200 bg-white/80 text-rose-700 hover:bg-rose-50 dark:border-rose-300/30 dark:bg-slate-950/40 dark:text-rose-100"
+                  onClick={() => setError(null)}
+                >
+                  知道了
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-rose-300 bg-white/80 text-rose-700 hover:bg-rose-100 dark:border-rose-300/40 dark:bg-slate-950/40 dark:text-rose-100"
+                  onClick={handleGenerate}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  重试
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
-        <section className="rounded-2xl border border-cyan-200/70 bg-cyan-50/60 p-4 shadow-sm dark:border-cyan-300/20 dark:bg-cyan-300/10 sm:p-5">
-          <Textarea
-            id="course-studio-intent"
-            value={supplement}
-            onChange={(event) => setSupplement(event.target.value)}
-            placeholder="例如：帮我复习导数，准备期末考试"
-            className="min-h-24 resize-none bg-white text-sm leading-6 dark:bg-slate-950/70"
-          />
-          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {RESOURCE_TYPES.map((item) => (
-                <ResourceTypePill
-                  key={item.id}
-                  item={item}
-                  selected={selectedTypes.includes(item.id)}
-                  onClick={() => toggleType(item.id)}
-                />
-              ))}
+        <FeatureWorkspace
+          preview={
+            <CourseStudioSetupPreview
+              supplement={supplement}
+              courseFocus={courseFocus}
+              selectedTypes={selectedTypes}
+              systemProfileReady={systemProfileReady}
+              contextLoading={contextLoading}
+            />
+          }
+        >
+          <section className="rounded-2xl border border-violet-200/70 bg-violet-50/60 p-4 shadow-sm dark:border-violet-300/20 dark:bg-violet-300/10 sm:p-5">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
+              <Layers className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
+              这次想生成什么样的学习包？
             </div>
-            <Button
-              type="button"
-              className="min-h-11 w-full justify-center px-5 lg:w-auto lg:min-w-28"
-              onClick={handleGenerate}
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Play className="h-4 w-4" />
-              )}
-              生成
-            </Button>
-          </div>
-        </section>
+            <Textarea
+              id="course-studio-intent"
+              value={supplement}
+              onChange={(event) => setSupplement(event.target.value)}
+              placeholder="例如：帮我复习导数，准备期末考试"
+              className="min-h-24 resize-none bg-white text-sm leading-6 dark:bg-slate-950/70"
+            />
+            <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {RESOURCE_TYPES.map((item) => (
+                  <ResourceTypePill
+                    key={item.id}
+                    item={item}
+                    selected={selectedTypes.includes(item.id)}
+                    onClick={() => toggleType(item.id)}
+                  />
+                ))}
+              </div>
+              <Button
+                type="button"
+                className="min-h-11 w-full justify-center px-5 lg:w-auto lg:min-w-28"
+                onClick={handleGenerate}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+                生成
+              </Button>
+            </div>
+            {typeAdvice && (
+              <div className="mt-3 flex items-start gap-2 rounded-xl border border-violet-200/60 bg-violet-50/60 px-3.5 py-2.5 text-sm leading-6 text-slate-700 dark:border-violet-500/25 dark:bg-violet-500/[0.07] dark:text-violet-100">
+                <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+                <span>{typeAdvice}</span>
+              </div>
+            )}
+          </section>
+        </FeatureWorkspace>
 
         <div className="flex flex-wrap justify-center gap-2 text-sm">
           <Button
@@ -919,7 +1003,7 @@ export function CourseStudioPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
-                <BrainCircuit className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-100" />
+                <BrainCircuit className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-100" />
                 <h2 className="text-sm font-semibold text-slate-950 dark:text-white">参考信息</h2>
               </div>
               <Badge
@@ -927,19 +1011,19 @@ export function CourseStudioPage() {
                 className={cn(
                   'h-7 shrink-0 rounded-full px-3',
                   systemProfileReady
-                    ? 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-300/30 dark:bg-cyan-300/10 dark:text-cyan-100'
+                    ? 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/30 dark:bg-violet-300/10 dark:text-violet-100'
                     : 'text-slate-500 dark:text-slate-300',
                 )}
               >
                 {contextLoading ? '读取中' : systemProfileReady ? '已自动应用' : '待补充'}
               </Badge>
             </div>
-            <div className="mb-4 flex gap-2 rounded-xl bg-cyan-50 px-3 py-3 text-xs leading-5 text-cyan-800 dark:bg-cyan-300/10 dark:text-cyan-100">
+            <div className="mb-4 flex gap-2 rounded-xl bg-violet-50 px-3 py-3 text-xs leading-5 text-violet-800 dark:bg-violet-300/10 dark:text-violet-100">
               <Info className="mt-0.5 h-4 w-4 shrink-0" />
               <span>这些内容会帮助系统了解你的学习情况，不需要每次生成都填写。</span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
+              <div className=" space-y-2">
                 <Label htmlFor="major">专业背景</Label>
                 <Input
                   id="major"
@@ -949,7 +1033,7 @@ export function CourseStudioPage() {
                   className="min-h-11"
                 />
               </div>
-              <div className="space-y-2">
+              <div className=" space-y-2">
                 <Label htmlFor="course-focus">课程重点</Label>
                 <Input
                   id="course-focus"
@@ -959,7 +1043,7 @@ export function CourseStudioPage() {
                   className="min-h-11"
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
+              <div className=" space-y-2 sm:col-span-2">
                 <Label htmlFor="goal">学习目标</Label>
                 <Textarea
                   id="goal"
@@ -969,7 +1053,7 @@ export function CourseStudioPage() {
                   className="min-h-20 resize-none text-sm leading-6"
                 />
               </div>
-              <div className="space-y-2">
+              <div className=" space-y-2">
                 <Label htmlFor="weak-points">薄弱点</Label>
                 <Input
                   id="weak-points"
@@ -996,7 +1080,7 @@ export function CourseStudioPage() {
                   </div>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className=" space-y-2">
                 <Label htmlFor="study-time">学习节奏</Label>
                 <Input
                   id="study-time"
@@ -1006,7 +1090,7 @@ export function CourseStudioPage() {
                   className="min-h-11"
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
+              <div className=" space-y-2 sm:col-span-2">
                 <Label htmlFor="history">学习记录摘要</Label>
                 <Textarea
                   id="history"
@@ -1016,7 +1100,7 @@ export function CourseStudioPage() {
                   className="min-h-20 resize-none text-sm leading-6"
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
+              <div className=" space-y-2 sm:col-span-2">
                 <Label htmlFor="preference-text">资料偏好</Label>
                 <Input
                   id="preference-text"
@@ -1034,7 +1118,7 @@ export function CourseStudioPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-                <Search className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
+                <Search className="h-4 w-4 text-violet-600 dark:text-violet-100" />
                 {loading ? '正在生成学习资料' : '生成流程'}
               </div>
               <Badge variant="outline" className="h-7 rounded-full px-3">
@@ -1052,11 +1136,11 @@ export function CourseStudioPage() {
         )}
 
         {result && (
-          <section className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 shadow-sm dark:border-sky-300/20 dark:bg-sky-300/10 sm:p-5">
+          <section className="rounded-2xl border border-violet-200 bg-violet-50/70 p-4 shadow-sm dark:border-violet-300/20 dark:bg-violet-300/10 sm:p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-                  <Play className="h-4 w-4 text-sky-600 dark:text-sky-200" />
+                  <Play className="h-4 w-4 text-violet-600 dark:text-violet-200" />
                   课程已经准备好，下一步做什么？
                 </div>
                 <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
@@ -1078,7 +1162,7 @@ export function CourseStudioPage() {
                   type="button"
                   variant="outline"
                   onClick={() => router.push('/generation-history')}
-                  className="min-h-10 border-sky-200 bg-white/80 dark:border-sky-300/30 dark:bg-slate-950/40"
+                  className="min-h-10 border-violet-200 bg-white/80 dark:border-violet-300/30 dark:bg-slate-950/40"
                 >
                   <History className="h-4 w-4" />
                   我的生成记录
@@ -1087,7 +1171,7 @@ export function CourseStudioPage() {
                   type="button"
                   onClick={handleStartClassroom}
                   disabled={nextAction !== 'idle'}
-                  className="min-h-10 bg-sky-600 text-white hover:bg-sky-700"
+                  className="min-h-10 bg-violet-600 text-white hover:bg-violet-700"
                 >
                   <Play className="h-4 w-4" />
                   {nextAction === 'classroom' ? '正在启动课堂' : '进入互动课堂'}
@@ -1097,7 +1181,7 @@ export function CourseStudioPage() {
                   variant="outline"
                   onClick={handleCreateLearningPlan}
                   disabled={nextAction !== 'idle'}
-                  className="min-h-10 border-sky-200 bg-white/80 dark:border-sky-300/30 dark:bg-slate-950/40"
+                  className="min-h-10 border-violet-200 bg-white/80 dark:border-violet-300/30 dark:bg-slate-950/40"
                 >
                   <BrainCircuit className="h-4 w-4" />
                   {nextAction === 'plan' ? '正在生成任务' : '生成学习任务'}
@@ -1117,7 +1201,7 @@ export function CourseStudioPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
+                  <Layers className="h-4 w-4 text-violet-600 dark:text-violet-100" />
                   <h2 className="text-sm font-semibold text-slate-950 dark:text-white">
                     已生成 {result.resources.length} 份资料
                   </h2>
@@ -1153,7 +1237,7 @@ export function CourseStudioPage() {
                 </p>
               </div>
             ) : (
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {visibleResources.map((resource) => (
                   <ResourceCard key={resource.id} resource={resource} />
                 ))}
@@ -1184,7 +1268,7 @@ export function CourseStudioPage() {
                     className={cn(
                       'flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors',
                       active
-                        ? 'border-cyan-200 bg-white text-cyan-700 shadow-sm dark:border-cyan-300/30 dark:bg-cyan-300/10 dark:text-cyan-100'
+                        ? 'border-violet-200 bg-white text-violet-700 shadow-sm dark:border-violet-300/30 dark:bg-violet-300/10 dark:text-violet-100'
                         : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-white dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-950/70',
                     )}
                   >
@@ -1213,13 +1297,13 @@ export function CourseStudioPage() {
                       生成后显示学习情况摘要。
                     </p>
                   )}
-                  <div className="mt-4 space-y-2">
+                  <div className=" mt-4 space-y-2">
                     {evidenceItems.map((item) => (
                       <div
                         key={item}
                         className="flex gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600 dark:bg-slate-900/60 dark:text-slate-300"
                       >
-                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-500 dark:bg-cyan-300" />
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500 dark:bg-violet-300" />
                         <span>{item}</span>
                       </div>
                     ))}
@@ -1232,7 +1316,7 @@ export function CourseStudioPage() {
                   <Progress value={progress} className="h-2" />
                   <StageCards stages={stages} />
                   {result.agentTrace.length > 0 && (
-                    <div className="mt-4 space-y-2">
+                    <div className=" mt-4 space-y-2">
                       {result.agentTrace.map((trace) => (
                         <div
                           key={`${trace.agent}-${trace.output}`}
@@ -1251,11 +1335,11 @@ export function CourseStudioPage() {
 
               {activeDetail === 'trust' && (
                 <>
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-300/20 dark:bg-emerald-300/10">
-                    <div className="text-xs font-medium text-emerald-700 dark:text-emerald-100">
+                  <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 dark:border-violet-300/20 dark:bg-violet-300/10">
+                    <div className="text-xs font-medium text-violet-700 dark:text-violet-100">
                       {safety?.riskLevel ? `风险等级：${safety.riskLevel}` : '等待审核'}
                     </div>
-                    <p className="mt-1 text-xs leading-5 text-emerald-700/80 dark:text-emerald-100/80">
+                    <p className="mt-1 text-xs leading-5 text-violet-700/80 dark:text-violet-100/80">
                       {safety?.message ?? '生成时会检查隐私、敏感内容和学术诚信风险。'}
                     </p>
                   </div>
@@ -1283,9 +1367,9 @@ export function CourseStudioPage() {
               {activeDetail === 'follow' && (
                 <>
                   <div className="grid gap-4 xl:grid-cols-2">
-                    <div className="space-y-3">
+                    <div className=" space-y-3">
                       <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-                        <Route className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
+                        <Route className="h-4 w-4 text-violet-600 dark:text-violet-100" />
                         学习路径
                       </div>
                       {result.learningPath.map((node, index) => (
@@ -1294,7 +1378,7 @@ export function CourseStudioPage() {
                           className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700/40 dark:bg-slate-900/60"
                         >
                           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-600 text-xs text-white dark:bg-cyan-300 dark:text-slate-950">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-xs text-white dark:bg-violet-300 dark:text-slate-950">
                               {index + 1}
                             </span>
                             {node.goal}
@@ -1305,25 +1389,24 @@ export function CourseStudioPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="space-y-2">
+                    <div className=" space-y-2">
                       <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-100" />
-                        下一步
+                        <Play className="h-4 w-4 text-violet-600 dark:text-violet-100" />
+                        继续学习
                       </div>
-                      <NextAction href="/sky/learning" icon={Route} label="加入天梯工坊计划" />
                       <NextAction
                         href="/sky/cloud-mind/quiz"
                         icon={FileQuestion}
-                        label="生成配套练习"
+                        label="用出题引擎练薄弱点"
                       />
                       <NextAction
                         href="/sky/learning#learning-plan"
                         icon={BrainCircuit}
-                        label="查看个人学习计划"
+                        label="跳转错题复盘与学习计划"
                       />
                     </div>
                   </div>
-                  <div className="mt-4 space-y-4">
+                  <div className=" mt-4 space-y-4">
                     <CourseStudioP1EvidencePanel result={result} userId={COURSE_STUDIO_USER_ID} />
                     <CourseStudioP2LongTermPanel p2={result.p2Enhancements} />
                   </div>
@@ -1333,6 +1416,8 @@ export function CourseStudioPage() {
           </section>
         )}
       </div>
+
+      <PageTour id="resources-course-studio" />
     </SkyAppShell>
   );
 }
@@ -1355,13 +1440,109 @@ function ResourceTypePill({
       className={cn(
         'flex h-11 w-full items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors',
         selected
-          ? 'border-cyan-300 bg-white text-cyan-800 shadow-sm dark:border-cyan-300/40 dark:bg-slate-950/70 dark:text-cyan-50'
-          : 'border-slate-200 bg-white/70 text-slate-600 hover:border-cyan-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300',
+          ? 'border-violet-300 bg-white text-violet-800 shadow-sm dark:border-violet-300/40 dark:bg-slate-950/70 dark:text-violet-50'
+          : 'border-slate-200 bg-white/70 text-slate-600 hover:border-violet-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300',
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
       <span className="truncate">{item.label}</span>
     </button>
+  );
+}
+
+function CourseStudioSetupPreview({
+  supplement,
+  courseFocus,
+  selectedTypes,
+  systemProfileReady,
+  contextLoading,
+}: {
+  supplement: string;
+  courseFocus: string;
+  selectedTypes: string[];
+  systemProfileReady: boolean;
+  contextLoading: boolean;
+}) {
+  const selectedResources = RESOURCE_TYPES.filter((item) => selectedTypes.includes(item.id));
+  const topic = courseFocus.trim() || supplement.trim() || '等待填写学习主题';
+
+  return (
+    <div className="sticky top-24 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/85 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+      <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <Eye className="h-4 w-4 text-violet-600 dark:text-violet-300" />
+          学习包预览
+        </div>
+        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+          生成前确认主题、资料组成和个性化状态。
+        </p>
+      </div>
+
+      <div className="space-y-4 p-5">
+        <div className="rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-400/20 dark:bg-violet-400/[0.07]">
+          <div className="text-xs font-medium text-violet-700 dark:text-violet-300">学习主题</div>
+          <div className="mt-2 line-clamp-3 text-base font-semibold leading-6 text-slate-900 dark:text-slate-100">
+            {topic}
+          </div>
+          <div className="mt-3 inline-flex rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs text-violet-700 dark:border-violet-400/20 dark:bg-white/[0.04] dark:text-violet-300">
+            {selectedResources.length} 类学习资料
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">资料组成</div>
+          <div className="grid grid-cols-2 gap-2">
+            {selectedResources.length > 0 ? (
+              selectedResources.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/30"
+                  >
+                    <Icon className="h-4 w-4 text-violet-600 dark:text-violet-300" />
+                    <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {item.label}
+                    </div>
+                    <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      {item.hint}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="col-span-2 rounded-xl border border-dashed border-slate-300 px-4 py-5 text-center text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                请至少选择一种资料类型
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950/30">
+          {contextLoading ? (
+            <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-violet-600 dark:text-violet-300" />
+          ) : systemProfileReady ? (
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
+          ) : (
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+          )}
+          <div>
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {contextLoading
+                ? '正在读取学习情况'
+                : systemProfileReady
+                  ? '已应用个性化信息'
+                  : '可补充参考信息'}
+            </div>
+            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+              {systemProfileReady
+                ? '系统会结合薄弱点、学习节奏和近期表现组织资料。'
+                : '即使没有历史数据，也可以根据当前输入直接生成第一版学习包。'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1378,9 +1559,9 @@ function StageCards({ stages }: { stages: StageItem[] }) {
               {stage.label}
             </span>
             {stage.status === 'running' ? (
-              <Loader2 className="h-4 w-4 animate-spin text-cyan-600 dark:text-cyan-100" />
+              <Loader2 className="h-4 w-4 animate-spin text-violet-600 dark:text-violet-100" />
             ) : stage.status === 'completed' ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <CheckCircle2 className="h-4 w-4 text-violet-500" />
             ) : stage.status === 'failed' ? (
               <AlertTriangle className="h-4 w-4 text-rose-500" />
             ) : (
@@ -1421,8 +1602,8 @@ function FilterButton({
       className={cn(
         'inline-flex min-h-9 shrink-0 items-center rounded-full border px-3 text-xs font-semibold transition-colors',
         active
-          ? 'border-cyan-300 bg-cyan-50 text-cyan-700 dark:border-cyan-300/40 dark:bg-cyan-300/10 dark:text-cyan-100'
-          : 'border-slate-200 bg-white text-slate-500 hover:border-cyan-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300',
+          ? 'border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-300/40 dark:bg-violet-300/10 dark:text-violet-100'
+          : 'border-slate-200 bg-white text-slate-500 hover:border-violet-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300',
       )}
     >
       {children}
@@ -1494,7 +1675,7 @@ function ResourceCard({ resource }: { resource: GeneratedResource }) {
               {Math.round(resource.trust.confidence * 100)}%
             </span>
           </div>
-          <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950 dark:text-white">
+          <h3 className="mt-3 text-lg font-semibold leading-6 text-slate-950 dark:text-white">
             {resource.title}
           </h3>
           <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
@@ -1569,7 +1750,7 @@ function NextAction({
   return (
     <Link
       href={href}
-      className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:border-cyan-300/30 dark:hover:bg-cyan-300/10 dark:hover:text-cyan-100"
+      className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:border-violet-300/30 dark:hover:bg-violet-300/10 dark:hover:text-violet-100"
     >
       <span className="flex items-center gap-2">
         <Icon className="h-4 w-4" />

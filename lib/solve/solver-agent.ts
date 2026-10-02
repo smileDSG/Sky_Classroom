@@ -26,10 +26,10 @@ const log = createLogger('SolveGraph');
 // ── Agent → provider/model mapping ───────────────────────────────
 
 const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> = {
-  universal: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-  science: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-  humanities: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-  grading: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
+  universal: { providerId: 'deepseek', modelId: 'deepseek-flash' },
+  science: { providerId: 'deepseek', modelId: 'deepseek-flash' },
+  humanities: { providerId: 'deepseek', modelId: 'deepseek-flash' },
+  grading: { providerId: 'deepseek', modelId: 'deepseek-flash' },
 };
 
 const ENV_KEY_MAP: Record<string, string> = {
@@ -74,10 +74,10 @@ export function parseSolutionResponse(text: string): ParsedSolution | null {
  * Resolve the ModelConfig for a given solver agent type.
  *
  * Agent type → provider/model mapping:
- *   universal   → deepseek / deepseek-v4-flash
+ *   universal   → deepseek / deepseek-flash
  *   science     → glm / glm-5.1
  *   humanities  → qwen / qwen3.6-plus
- *   grading     → deepseek / deepseek-v4-flash
+ *   grading     → deepseek / deepseek-flash
  *
  * API key and base URL come from environment variables.
  */

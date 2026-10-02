@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { shareTokens } from '@/app/api/sky/teaching/[jobId]/share/route';
 import { createLogger } from '@/lib/logger';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('TeachingSharedAPI');
 
@@ -54,7 +55,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Get shared teaching failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

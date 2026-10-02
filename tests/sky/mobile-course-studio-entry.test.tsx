@@ -22,17 +22,18 @@ describe('MobileCourseStudioPage', () => {
 
     expect(screen.getByRole('heading', { name: '课程工作室' })).toBeInTheDocument();
     expect(screen.getByText('讲义')).toBeInTheDocument();
-    expect(screen.getByText('PPT')).toBeInTheDocument();
     expect(screen.getByText('导图')).toBeInTheDocument();
-    expect(screen.queryByText('题库')).not.toBeInTheDocument();
+    expect(screen.getByText('自查清单')).toBeInTheDocument();
+    expect(screen.getByText('学习路径')).toBeInTheDocument();
+    expect(screen.queryByText('PPT')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('学习目标'), {
       target: { value: '两周内补上 RAG 和过拟合' },
     });
 
-    expect(screen.getByRole('link', { name: /打开完整工作室/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /继续生成课程资料/ })).toHaveAttribute(
       'href',
-      '/sky/cloud-mind/course-studio?goal=%E4%B8%A4%E5%91%A8%E5%86%85%E8%A1%A5%E4%B8%8A+RAG+%E5%92%8C%E8%BF%87%E6%8B%9F%E5%90%88&types=markdown_lecture%2Cppt_outline',
+      '/sky/cloud-mind/course-studio?goal=%E4%B8%A4%E5%91%A8%E5%86%85%E8%A1%A5%E4%B8%8A+RAG+%E5%92%8C%E8%BF%87%E6%8B%9F%E5%90%88&types=markdown_lecture%2Cmind_map%2Cself_check%2Clearning_path',
     );
   });
 });

@@ -43,9 +43,7 @@ export async function POST() {
       { status: 503 },
     );
   } catch (err) {
-    return NextResponse.json(
-      { success: false, error: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
-    );
+    console.error('seed-admin failed:', err instanceof Error ? err.message : err);
+    return NextResponse.json({ success: false, error: 'Admin seed failed' }, { status: 500 });
   }
 }

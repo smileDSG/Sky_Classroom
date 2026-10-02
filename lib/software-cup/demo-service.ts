@@ -27,6 +27,28 @@ const log = createLogger('SoftwareCupDemo');
 
 const DISABLE_THINKING: ThinkingConfig = { mode: 'disabled', enabled: false };
 
+/**
+ * 学习包工坊支持的 4 种资源类型（学→查→练→复盘 四阶段产物）。
+ * 练习、复盘环节外包给出题引擎与错题复盘，包内不埋题。
+ * 客户端按需选择，服务端只对所选类型生成，不再一锅端全量生成。
+ */
+export const COURSE_RESOURCE_TYPES = [
+  'markdown_lecture',
+  'mind_map',
+  'self_check',
+  'learning_path',
+] as const;
+
+export type CourseResourceType = (typeof COURSE_RESOURCE_TYPES)[number];
+
+export function isCourseResourceType(value: string): value is CourseResourceType {
+  return (COURSE_RESOURCE_TYPES as readonly string[]).includes(value);
+}
+
+function normalizeResourceTypes(values: string[] | undefined): string[] {
+  return Array.isArray(values) ? Array.from(new Set(values.filter(isCourseResourceType))) : [];
+}
+
 export type SafetyRiskLevel = 'low' | 'medium' | 'high';
 export type AgentStatus = 'pending' | 'running' | 'completed' | 'need_review';
 
@@ -85,10 +107,6 @@ export interface GeneratedResource {
   format?: string;
   content?: string;
   downloadFileName?: string;
-  slides?: string[];
-  questionIds?: string[];
-  caseFile?: string;
-  scriptFile?: string;
   trust: {
     confidence: number;
     status: string;
@@ -144,6 +162,8 @@ export interface RunSoftwareCupGenerationOptions {
   userId?: string;
   profileSignals?: ProfileSignal[];
   enableLlm?: boolean;
+  /** 仅生成指定的资源类型；为空时生成全部 4 类（用于兼容既有调用）。 */
+  resourceTypes?: string[];
   onProgress?: (progress: SoftwareCupProgress) => void | Promise<void>;
 }
 
@@ -178,23 +198,6 @@ interface LlmRagEnhancement {
 
 const DEMO_ROOT = path.join(process.cwd(), 'data', 'demo', 'software-cup');
 const COURSE_KNOWLEDGE_ROOT = path.join(process.cwd(), 'data', 'course-knowledge', 'ai-intro');
-
-interface AiIntroQuestion {
-  id: string;
-  chapter?: string;
-  knowledgePoints?: string[];
-  type?: string;
-  difficulty?: string;
-  stem: string;
-  options?: string[];
-  answer: string | string[] | boolean;
-  explanation?: string;
-  errorTags?: string[];
-}
-
-interface AiIntroQuestionBank {
-  questions: AiIntroQuestion[];
-}
 
 async function readJson<T>(fileName: string): Promise<T> {
   const text = await fs.readFile(path.join(DEMO_ROOT, fileName), 'utf8');
@@ -252,11 +255,7 @@ async function readCourseKnowledgeFile(file: string | undefined): Promise<string
 async function readResourceSources(
   resource: GeneratedResource,
 ): Promise<Array<{ file: string; content: string }>> {
-  const files = unique([
-    resource.caseFile ?? '',
-    resource.scriptFile ?? '',
-    ...resource.sourceCitations.filter((source) => source.endsWith('.md')),
-  ]);
+  const files = unique(resource.sourceCitations.filter((source) => source.endsWith('.md')));
   const pairs = await Promise.all(
     files.map(async (file) => {
       const content = await readCourseKnowledgeFile(file);
@@ -328,35 +327,6 @@ function buildLectureContent(
   ].join('\n');
 }
 
-function buildPptContent(resource: GeneratedResource, profile: SoftwareCupStudentProfile): string {
-  const slides = resource.slides ?? [];
-  return [
-    `# ${resource.title}`,
-    '',
-    '## 课件定位',
-    `这套课件面向「${profile.dimensions.learningGoal.value}」，重点补强 ${normalizeTopicText(
-      profile.dimensions.knowledgeBase.weakPoints,
-    )}。`,
-    '',
-    '## 幻灯片大纲',
-    ...slides.flatMap((slide, index) => [
-      '',
-      `### ${index + 1}. ${slide}`,
-      `- 讲解重点：围绕 ${normalizeTopicText(profile.dimensions.knowledgeBase.weakPoints)} 建立清晰概念。`,
-      '- 互动问题：请学生说出一个容易混淆的点，并用课程来源验证。',
-      '- 板书建议：保留关键词、流程箭头和一句结论。',
-    ]),
-    '',
-    '## 使用建议',
-    '- 先用前 3 页统一概念，再进入诊断题和案例。',
-    '- 每讲完一个薄弱点，要求学生写下一个可检查的判断标准。',
-    '- 课后把错题和项目反馈写回学习画像。',
-    '',
-    '## 来源',
-    citationsMarkdown(resource),
-  ].join('\n');
-}
-
 function buildMindMapContent(
   resource: GeneratedResource,
   profile: SoftwareCupStudentProfile,
@@ -383,47 +353,70 @@ function buildMindMapContent(
   ].join('\n');
 }
 
-function formatAnswer(answer: AiIntroQuestion['answer']): string {
-  if (Array.isArray(answer)) return answer.join('；');
-  return String(answer);
-}
-
-async function buildQuizContent(resource: GeneratedResource): Promise<string> {
-  const raw = await readCourseKnowledgeFile('question-bank.json');
-  const bank = raw ? (JSON.parse(raw) as AiIntroQuestionBank) : { questions: [] };
-  const selectedIds = new Set(resource.questionIds ?? []);
-  const questions = bank.questions.filter((question) => selectedIds.has(question.id));
+function buildSelfCheckContent(
+  resource: GeneratedResource,
+  profile: SoftwareCupStudentProfile,
+): string {
+  const weakPoints = profile.dimensions.knowledgeBase.weakPoints;
+  const points = weakPoints.length > 0 ? weakPoints : ['核心概念'];
+  const checklist = points
+    .map(
+      (point) =>
+        `### ${point}\n` +
+        [0, 1, 2]
+          .map(
+            (index) =>
+              `- [ ] ${['能用自己的话讲清它的核心含义', '能说出它在课程中的前置与后继关系', '能判断一个例子是否真正涉及它'][index]}`,
+          )
+          .join('\n'),
+    )
+    .join('\n\n');
 
   return [
     `# ${resource.title}`,
     '',
     '## 使用说明',
-    '- 先独立完成，再查看参考答案和解析。',
-    '- 错题需要标注错因，并回写到学习画像。',
+    '逐条判断：能做到就勾选，做不到就标记为待复学。本清单只用于自查定位薄弱点，不替代正式答题与出题引擎练习。',
     '',
-    ...questions.flatMap((question, index) => [
-      `## 题 ${index + 1}：${question.id}`,
-      '',
-      `- 类型：${question.type ?? '未标注'}`,
-      `- 难度：${question.difficulty ?? '未标注'}`,
-      `- 知识点：${question.knowledgePoints?.join('、') || '未标注'}`,
-      '',
-      question.stem,
-      '',
-      ...(question.options?.length
-        ? [
-            '### 选项',
-            ...question.options.map((option, optionIndex) => `${optionIndex + 1}. ${option}`),
-            '',
-          ]
-        : []),
-      `**参考答案：** ${formatAnswer(question.answer)}`,
-      '',
-      `**解析：** ${question.explanation ?? '暂无解析'}`,
-      '',
-      question.errorTags?.length ? `**常见错因：** ${question.errorTags.join('、')}` : '',
-      '',
-    ]),
+    '## 常见错因对照',
+    '- 概念边界混淆：把 A 与看似相近但不同的 B 混为一谈。',
+    '- 前置缺失：缺少训练集/验证集等前置概念支撑。',
+    '- 流程连接弱：能背概念但连不起来整体步骤。',
+    '',
+    '## 按薄弱点自查',
+    checklist,
+    '',
+    '## 来源',
+    citationsMarkdown(resource),
+  ].join('\n');
+}
+
+function buildLearningPathContent(
+  resource: GeneratedResource,
+  profile: SoftwareCupStudentProfile,
+): string {
+  const topic = normalizeTopicText(profile.dimensions.knowledgeBase.weakPoints);
+  return [
+    `# ${resource.title}`,
+    '',
+    '## 学习闭环（学 → 查 → 练 → 复盘）',
+    '这套学习包按以下顺序使用。练习与复盘通过平台既有功能完成，包内不内置题目。',
+    '',
+    '### 1. 学：建立概念',
+    `先用「${topic} 个性化讲义」理解概念边界，再用「知识结构导图」定位薄弱点与前置关系。`,
+    '',
+    '### 2. 查：逐条自查',
+    '打开「薄弱点自查清单」，逐条判断自己“能做到”还是“还不行”，定位真正薄弱的点。',
+    '',
+    '### 3. 练：跳转出题引擎',
+    '打开平台出题引擎（`/sky/cloud-mind/quiz`），把自查后仍薄弱的点作为出题主题进行针对性练习。',
+    '',
+    '### 4. 复盘：跳转错题复盘',
+    '练习后到错题画像与学习计划（`/sky/learning`）查看解析与复习安排，把新错因回写并更新后续学习顺序。',
+    '',
+    '## 推荐顺序',
+    '个性化讲义 → 知识结构导图 → 薄弱点自查清单 → 出题练习 → 错题复盘',
+    '',
     '## 来源',
     citationsMarkdown(resource),
   ].join('\n');
@@ -463,26 +456,9 @@ async function buildResourceContent(
   const sources = await readResourceSources(resource);
 
   if (resource.type === 'markdown_lecture') return buildLectureContent(resource, profile, sources);
-  if (resource.type === 'ppt_outline') return buildPptContent(resource, profile);
   if (resource.type === 'mind_map') return buildMindMapContent(resource, profile);
-  if (resource.type === 'quiz_bank') return buildQuizContent(resource);
-
-  const fileContent =
-    (resource.caseFile ? await readCourseKnowledgeFile(resource.caseFile) : null) ??
-    (resource.scriptFile ? await readCourseKnowledgeFile(resource.scriptFile) : null);
-  if (fileContent) {
-    return [
-      fileContent.trim(),
-      '',
-      '---',
-      '',
-      '## 个性化推荐理由',
-      resource.personalizationReason ?? '系统根据学习画像选择该材料。',
-      '',
-      '## 来源',
-      citationsMarkdown(resource),
-    ].join('\n');
-  }
+  if (resource.type === 'self_check') return buildSelfCheckContent(resource, profile);
+  if (resource.type === 'learning_path') return buildLearningPathContent(resource, profile);
 
   return buildFallbackContent(resource, profile, sources);
 }
@@ -673,15 +649,8 @@ async function enhanceResourcesWithLlmRag(params: {
     );
 
     if (applied === 0) {
-      return {
-        resources: params.resources.map((resource) => ({
-          ...resource,
-          generationSource: 'demo',
-        })),
-        used: false,
-        reason: 'LLM returned no usable resource patches.',
-        model: `${modelConfig.providerId}:${modelConfig.modelId}`,
-      };
+      // 信任底线：模型没有产出任何可用资源时绝不回退到 demo 假料，明确抛错交由上层处理。
+      throw new Error('生成模型未输出可用的学习资源，请重试。');
     }
 
     return {
@@ -691,15 +660,9 @@ async function enhanceResourcesWithLlmRag(params: {
       reviewPatch: normalizeReviewPatch(parsed?.reviewResult),
     };
   } catch (error) {
-    log.warn('LLM RAG generation failed, falling back to deterministic resources:', error);
-    return {
-      resources: params.resources.map((resource) => ({
-        ...resource,
-        generationSource: 'demo',
-      })),
-      used: false,
-      reason: error instanceof Error ? error.message : String(error),
-    };
+    // 不再静默降级到 demo 资源：把错误抛给调用方，最终让任务进入 failed 态 + 可重试。
+    log.warn('Course Studio LLM RAG generation failed:', error);
+    throw error;
   }
 }
 
@@ -835,11 +798,9 @@ function personalizeResourceTitle(resource: GeneratedResource, topics: string[])
   const topicText = normalizeTopicText(topics);
   const titles: Record<string, string> = {
     markdown_lecture: `${topicText} 个性化讲义`,
-    ppt_outline: `${topicText} 复习课件大纲`,
     mind_map: `${topicText} 知识结构导图`,
-    quiz_bank: `${topicText} 分层练习题库`,
-    code_case: `${topicText} 实操案例`,
-    video_script: `${topicText} 短视频讲解脚本`,
+    self_check: `${topicText} 薄弱点自查清单`,
+    learning_path: `${topicText} 学习路径与跳转指引`,
   };
   return titles[resource.type] ?? resource.title;
 }
@@ -929,38 +890,35 @@ function buildPersonalizedLearningPath(
   profile: SoftwareCupStudentProfile,
   resources: GeneratedResource[],
 ): LearningPathNode[] {
-  const weakPoints = profile.dimensions.knowledgeBase.weakPoints;
-  const topicText = normalizeTopicText(weakPoints);
+  const topicText = normalizeTopicText(profile.dimensions.knowledgeBase.weakPoints);
   const lecture = resources.find((resource) => resource.type === 'markdown_lecture')?.id;
   const mindMap = resources.find((resource) => resource.type === 'mind_map')?.id;
-  const quiz = resources.find((resource) => resource.type === 'quiz_bank')?.id;
-  const code = resources.find((resource) => resource.type === 'code_case')?.id;
-  const video = resources.find((resource) => resource.type === 'video_script')?.id;
+  const selfCheck = resources.find((resource) => resource.type === 'self_check')?.id;
 
   return [
     {
-      dayRange: '第 1 步',
+      dayRange: '第 1 步 · 学',
       goal: `建立 ${topicText} 的概念框架`,
       resources: unique([lecture, mindMap].filter(Boolean) as string[]),
-      reason: '先补齐概念边界，降低后续练习和实操的理解成本。',
+      reason: '先补齐概念边界，降低后续自查和练习的理解成本。',
     },
     {
-      dayRange: '第 2 步',
-      goal: '完成一组分层诊断练习',
-      resources: unique([quiz].filter(Boolean) as string[]),
-      reason: '用题目验证画像中的薄弱点是否准确，并沉淀错因。',
+      dayRange: '第 2 步 · 查',
+      goal: '逐条自查薄弱点',
+      resources: unique([selfCheck].filter(Boolean) as string[]),
+      reason: '用自查清单判断哪些点“能做到”、哪些“还不行”，为出题练习确定主题。',
     },
     {
-      dayRange: '第 3 步',
-      goal: '用案例把概念落到可运行任务',
-      resources: unique([code, video].filter(Boolean) as string[]),
-      reason: '将抽象知识转成实操经验，适合案例驱动型学习偏好。',
+      dayRange: '第 3 步 · 练',
+      goal: '跳转出题引擎针对性练习',
+      resources: [],
+      reason: '打开平台出题引擎，把自查后仍薄弱的点作为主题完成练习，包内不埋题。',
     },
     {
-      dayRange: '第 4 步',
-      goal: '复盘并更新学习画像',
-      resources: resources.slice(0, 3).map((resource) => resource.id),
-      reason: '根据练习反馈调整资源推荐和后续学习顺序。',
+      dayRange: '第 4 步 · 复盘',
+      goal: '跳转错题复盘并更新学习顺序',
+      resources: [],
+      reason: '练习后回到错题画像与学习计划，把新错因回写并调整后续安排。',
     },
   ];
 }
@@ -1143,13 +1101,28 @@ export async function runSoftwareCupGeneration(
   const profile = mergeConversationProfile(baseProfile, conversationProfile);
   emit({ step: 'profile', progress: 20, message: '已了解你的学习情况' });
 
+  // 按需单生成：只保留用户选择的资源类型，避免「用户只要一样却等六样」。
+  const selectedTypes = normalizeResourceTypes(options.resourceTypes);
+  if (options.resourceTypes && options.resourceTypes.length > 0 && selectedTypes.length === 0) {
+    throw new Error('所选资源类型无效，请选择支持的资源类型后重试。');
+  }
+  const resourceSlots =
+    selectedTypes.length > 0
+      ? demo.resources.filter((resource) =>
+          selectedTypes.includes(resource.type as CourseResourceType),
+        )
+      : demo.resources;
+  if (resourceSlots.length === 0) {
+    throw new Error('未选择可生成的资源类型，请至少选择一种后重试。');
+  }
+
   const query = unique([...profile.dimensions.knowledgeBase.weakPoints, '人工智能导论']).join(' ');
   const courseHits = await searchAiIntroCourse(query, 6);
   emit({ step: 'search', progress: 38, message: `已检索到 ${courseHits.length} 条课程资料` });
   const safety = checkSoftwareCupContentSafety(text);
   emit({ step: 'generate', progress: 42, message: '正在为你生成学习资料' });
   const fallbackResources = await hydrateResourceArtifacts(
-    personalizeResources(demo.resources, profile, courseHits),
+    personalizeResources(resourceSlots, profile, courseHits),
     profile,
   );
   const llmGeneration: LlmRagEnhancement = options.enableLlm
@@ -1251,13 +1224,13 @@ export function buildSoftwareCupProgressEvents(): AgentTraceItem[] {
     {
       agent: 'ResourceDesignAgent',
       status: 'completed',
-      output: '确定 6 类个性化资源。',
+      output: '确定 4 类学习包产物。',
       progress: 55,
     },
     {
       agent: 'ResourceAgents',
       status: 'completed',
-      output: '生成讲义、PPT、题库、导图、案例、视频脚本。',
+      output: '生成讲义、导图、自查清单与学习路径。',
       progress: 78,
     },
     {
@@ -1269,7 +1242,7 @@ export function buildSoftwareCupProgressEvents(): AgentTraceItem[] {
     {
       agent: 'LearningPathAgent',
       status: 'completed',
-      output: '生成两周学习路径和推荐理由。',
+      output: '按“学→查→练→复盘”生成学习闭环与跳转指引。',
       progress: 100,
     },
   ];

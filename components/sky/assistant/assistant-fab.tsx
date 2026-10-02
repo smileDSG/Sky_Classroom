@@ -7,6 +7,8 @@ import { AssistantConfig } from './assistant-config';
 export function AssistantFab() {
   const isOpen = useSkyClassroomStore((s) => s.isOpen);
   const toggleOpen = useSkyClassroomStore((s) => s.toggleOpen);
+  // 宠物联动: 有宠物形象(白猫/黑猫/VRM人物)时用当小镜头像, 否则退回默认二次元头像
+  const mascotImage = useSkyClassroomStore((s) => s.mascotImage);
 
   if (!isOpen) {
     return (
@@ -16,7 +18,11 @@ export function AssistantFab() {
         onClick={toggleOpen}
         className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg transition-transform hover:scale-110 hover:shadow-xl"
       >
-        <img src="/avatars/kagami/chibi.png" alt="小镜" className="h-full w-full object-cover" />
+        <img
+          src={mascotImage || '/avatars/kagami/chibi.png'}
+          alt="小镜"
+          className="h-full w-full object-cover"
+        />
       </button>
     );
   }

@@ -9,6 +9,7 @@
 import { nanoid } from 'nanoid';
 import { type NextRequest, NextResponse } from 'next/server';
 import { apiError } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { buildOutlineOnlyResultFromTeachingJob } from '@/lib/server/teaching-to-classroom-outline';
 import type { TeachingToClassroomConfig } from '@/lib/teaching/classroom-config-recommendation';
@@ -167,11 +168,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ job
       `Start classroom from teaching job failed [jobId=${resolvedJobId ?? 'unknown'}]:`,
       err,
     );
-    return apiError(
-      'INTERNAL_ERROR',
-      500,
-      '创建课堂失败',
-      err instanceof Error ? err.message : 'Unknown error',
-    );
+    return apiError('INTERNAL_ERROR', 500, '创建课堂失败', safeErrorMessage(err));
   }
 }

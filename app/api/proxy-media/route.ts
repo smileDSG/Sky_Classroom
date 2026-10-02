@@ -20,6 +20,10 @@ const log = createLogger('ProxyMedia');
 
 export const maxDuration = 60;
 
+// Cap downstream media payload to prevent memory exhaustion from a
+// compromised/hostile upstream returning an arbitrarily large body.
+const MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024;
+
 export async function POST(request: NextRequest) {
   let url: string | undefined;
   try {
@@ -44,8 +48,36 @@ export async function POST(request: NextRequest) {
       return apiError('UPSTREAM_ERROR', 502, `Upstream returned ${response.status}`);
     }
 
-    const blob = await response.blob();
+    // Reject oversized payloads before buffering them into memory.
+    const declaredLength = Number(response.headers.get('content-length') ?? 0);
+    if (declaredLength && declaredLength > MAX_DOWNLOAD_BYTES) {
+      return apiError('UPSTREAM_ERROR', 502, 'Upstream payload exceeds size limit');
+    }
+
     const contentType = response.headers.get('content-type') || 'application/octet-stream';
+
+    // Stream the body with a hard size cap so a hostile upstream cannot force
+    // us to buffer an unbounded amount of data.
+    if (!response.body) {
+      return apiError('UPSTREAM_ERROR', 502, 'Upstream returned no body');
+    }
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_DOWNLOAD_BYTES) {
+        await reader.cancel();
+        return apiError('UPSTREAM_ERROR', 502, 'Upstream payload exceeds size limit');
+      }
+      chunks.push(value);
+    }
+    const blob = new Blob(
+      chunks.map((c) => c.slice()),
+      { type: contentType },
+    );
 
     return new NextResponse(blob, {
       headers: {

@@ -30,6 +30,8 @@ import type {
 } from '@/lib/mistakes/types';
 import type { Slide } from '@/lib/types/slides';
 import type { MemoryReviewRecord } from '@/lib/cloud-mind/types';
+import type { StreakState, GrowthSnapshot } from '@/lib/retention/types';
+import { recordLearningStreakClient } from '@/lib/retention/streak-client';
 import { createLogger } from '@/lib/logger';
 import { refreshLearningPlanAfterEvidence } from '@/lib/adaptive-learning/client/refresh-learning-plan';
 
@@ -225,6 +227,8 @@ const createMistakesSlice = (
       return { mistakes: [...s.mistakes, m] };
     });
     syncAddToServer(m);
+    // Q1: 做题产生错题即"当日完成 ≥1 知识点"的有效学习证据。
+    void recordLearningStreakClient();
   },
   markReviewed: async (id, correct = true) => {
     const now = Date.now();
@@ -257,6 +261,8 @@ const createMistakesSlice = (
         };
       }),
     }));
+    // Q1: 复习一道错题（无论对错）都是真实学习证据，计入当日活跃。
+    void recordLearningStreakClient();
     return syncReviewToServer(id, correct);
   },
   setFilter: (filter) => set({ activeFilter: filter }),
@@ -298,16 +304,26 @@ const createMistakesSlice = (
 
 // ── Assistant Slice ────────────────────────────────────────────────
 
+/** 当前显示哪只宠物: 'theme'=随主题的白/黑猫, 'vrm'=VRM 人物。 */
+export type PetKind = 'theme' | 'vrm';
+
 interface AssistantSlice {
   isOpen: boolean;
   subject: string;
   style: string;
   difficulty: string;
+  /** 当前宠物。持久化, 这样每个页面(不只主页)都知道该显示哪只。 */
+  petKind: PetKind;
+  /** 由 petKind + 当前主题解析出来的小镜头像(白猫/黑猫/VRM人物)。
+   *  MascotSync 全局维护它 —— 猫随主题变, 人形与主题无关。 */
+  mascotImage: string;
 
   toggleOpen: () => void;
   setSubject: (subject: string) => void;
   setStyle: (style: string) => void;
   setDifficulty: (difficulty: string) => void;
+  setPetKind: (kind: PetKind) => void;
+  setMascotImage: (src: string) => void;
 }
 
 const createAssistantSlice = (set: SetFn<AssistantSlice>): AssistantSlice => ({
@@ -315,10 +331,14 @@ const createAssistantSlice = (set: SetFn<AssistantSlice>): AssistantSlice => ({
   subject: '',
   style: 'detailed',
   difficulty: 'high-school',
+  petKind: 'theme',
+  mascotImage: '',
   toggleOpen: () => set((s) => ({ isOpen: !s.isOpen })),
   setSubject: (subject) => set({ subject }),
   setStyle: (style) => set({ style }),
   setDifficulty: (difficulty) => set({ difficulty }),
+  setPetKind: (petKind) => set({ petKind }),
+  setMascotImage: (src) => set({ mascotImage: src }),
 });
 
 // ── Memory Slice ──────────────────────────────────────────────────
@@ -359,13 +379,39 @@ const createMemorySlice = (set: SetFn<MemorySlice>): MemorySlice => ({
   clearMemoryReviews: () => set({ memoryReviews: [] }),
 });
 
+// ── Retention Slice (P0: 界面克制 + 成长缓存) ─────────────────────
+
+interface RetentionSlice {
+  /** 简洁模式：隐藏动态背景与陪伴宠物（跨端同步）。 */
+  simpleMode: boolean;
+  /** 关闭右下角小镜助手浮钮（跨端同步）。 */
+  kagamiClosed: boolean;
+  /** 连续学习天数状态缓存（真实值，来自 /api/sky/learning-streak）。 */
+  streakCache: StreakState | null;
+  /** 成长历史（真实快照序列）缓存（来自 /api/sky/growth-history）。 */
+  growthLocalCache: GrowthSnapshot[];
+
+  setSimpleMode: (value: boolean) => void;
+  setKagamiClosed: (value: boolean) => void;
+}
+
+const createRetentionSlice = (set: SetFn<RetentionSlice>): RetentionSlice => ({
+  simpleMode: false,
+  kagamiClosed: false,
+  streakCache: null,
+  growthLocalCache: [],
+  setSimpleMode: (value) => set({ simpleMode: value }),
+  setKagamiClosed: (value) => set({ kagamiClosed: value }),
+});
+
 // ── Combined Store ─────────────────────────────────────────────────
 
 export type SkyClassroomStore = SolveSlice &
   SlidesSlice &
   MistakesSlice &
   AssistantSlice &
-  MemorySlice;
+  MemorySlice &
+  RetentionSlice;
 
 export const useSkyClassroomStore = create<SkyClassroomStore>()(
   persist(
@@ -380,6 +426,8 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
       ...createAssistantSlice(set),
       // Memory
       ...createMemorySlice(set),
+      // Retention
+      ...createRetentionSlice(set),
     }),
     {
       name: 'sky-classroom-storage',
@@ -434,9 +482,15 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
         subject: state.subject,
         style: state.style,
         difficulty: state.difficulty,
+        petKind: state.petKind,
+        mascotImage: state.mascotImage,
         mistakes: state.mistakes,
         memoryProgress: state.memoryProgress,
         memoryReviews: state.memoryReviews,
+        simpleMode: state.simpleMode,
+        kagamiClosed: state.kagamiClosed,
+        streakCache: state.streakCache,
+        growthLocalCache: state.growthLocalCache,
       }),
     },
   ),

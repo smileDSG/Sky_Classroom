@@ -84,11 +84,11 @@ function loadMode(): KagamiMode {
 }
 
 const THEME_MAP: Record<string, string> = {
-  sky: '#0ea5e9',
-  violet: '#8B5CF6',
-  emerald: '#10b981',
+  sky: '#f43f5e',
+  violet: '#f43f5e',
+  emerald: '#f43f5e',
   rose: '#f43f5e',
-  amber: '#f59e0b',
+  amber: '#f43f5e',
 };
 
 function loadTheme(): string {
@@ -277,6 +277,8 @@ export function AssistantPanel({
   const subject = useSkyClassroomStore((s) => s.subject);
   const difficulty = useSkyClassroomStore((s) => s.difficulty);
   const style = useSkyClassroomStore((s) => s.style);
+  // 宠物联动: 有宠物形象(白猫/黑猫/VRM人物)时用它当小镜头像, 否则退回二次元/常规头像
+  const mascotImage = useSkyClassroomStore((s) => s.mascotImage);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -720,6 +722,15 @@ export function AssistantPanel({
 
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
+  // 宠物联动: 根据当前显示的小镜头像判断用户点的是哪只(主题猫 / VRM人物),
+  // 让对话框的欢迎内容与之保持一致。小镜头像未设置时退回小镜/常规默认。
+  const petPersona =
+    mascotImage && mascotImage.includes('/mascot/ren')
+      ? 'vrm'
+      : mascotImage && mascotImage.includes('/mascot/')
+        ? 'cat'
+        : null;
+
   const difficultyLabel = difficulty === 'college' ? '大学' : '高中';
 
   const styleLabel = style === 'concise' ? '简洁' : style === 'heuristic' ? '启发' : '详细';
@@ -840,8 +851,8 @@ export function AssistantPanel({
             }}
             className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
               mode === 'anime'
-                ? 'bg-pink-100 text-pink-600 hover:bg-pink-200 dark:bg-pink-950/30 dark:text-pink-300 dark:hover:bg-pink-900/40'
-                : 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-900/40'
+                ? 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-900/40'
+                : 'bg-pink-100 text-pink-600 hover:bg-pink-200 dark:bg-pink-950/30 dark:text-pink-300 dark:hover:bg-pink-900/40'
             }`}
             title={mode === 'anime' ? '当前：二次元版' : '当前：常规版'}
           >
@@ -946,18 +957,23 @@ export function AssistantPanel({
               <div className="mb-3 flex justify-center">
                 <img
                   src={
-                    mode === 'anime'
+                    mascotImage ||
+                    (mode === 'anime'
                       ? '/avatars/kagami/chibi.png'
-                      : '/avatars/student-glasses-new.jpg'
+                      : '/avatars/student-glasses-new.jpg')
                   }
                   className="h-16 w-16 rounded-full object-cover"
                   alt="小镜"
                 />
               </div>
               <p className="text-sm leading-relaxed text-gray-500 dark:text-slate-400">
-                {mode === 'anime'
-                  ? '哈？遇到不会的题目了？告诉我吧。'
-                  : '你好！有任何学习问题，尽管问我。'}
+                {petPersona === 'vrm'
+                  ? '你好呀，我是来陪你的学习伙伴，有什么难题尽管问我。'
+                  : petPersona === 'cat'
+                    ? '喵~ 我一直陪着你，遇到不会的题就指给我看吧。'
+                    : mode === 'anime'
+                      ? '哈？遇到不会的题目了？告诉我吧。'
+                      : '你好！有任何学习问题，尽管问我。'}
               </p>
               <div className="mt-4 flex flex-col gap-1.5">
                 {hints.map((hint) => (
@@ -1013,9 +1029,10 @@ export function AssistantPanel({
                     ) : (
                       <img
                         src={
-                          mode === 'anime'
+                          mascotImage ||
+                          (mode === 'anime'
                             ? '/avatars/kagami/chibi.png'
-                            : '/avatars/student-glasses-new.jpg'
+                            : '/avatars/student-glasses-new.jpg')
                         }
                         className="size-full rounded-full object-cover"
                         alt="小镜"
@@ -1027,8 +1044,8 @@ export function AssistantPanel({
                     className={`max-w-[82%] space-y-2 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}
                   >
                     {msg.role === 'assistant' && msg.personalization && (
-                      <div className="rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 to-cyan-50 p-3 shadow-sm dark:border-violet-200/15 dark:from-violet-950/35 dark:to-cyan-950/30 dark:shadow-none">
-                        <div className="flex items-center gap-2 text-[11px] font-bold text-violet-700 dark:text-violet-200">
+                      <div className="rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 to-pink-50 p-3 shadow-sm dark:border-rose-200/15 dark:from-rose-950/35 dark:to-pink-950/30 dark:shadow-none">
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-rose-700 dark:text-rose-200">
                           <BrainCircuit className="h-3.5 w-3.5" />
                           学习情况让本回答发生了这些变化
                         </div>
@@ -1090,17 +1107,17 @@ export function AssistantPanel({
                       <div
                         className={`rounded-xl border px-3 py-2.5 ${
                           msg.profileSync === 'recorded'
-                            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-200/15 dark:bg-emerald-400/10'
+                            ? 'border-rose-200 bg-rose-50 dark:border-rose-200/15 dark:bg-rose-400/10'
                             : msg.profileSync === 'disabled'
-                              ? 'border-amber-200 bg-amber-50 dark:border-amber-200/15 dark:bg-amber-400/10'
+                              ? 'border-rose-200 bg-rose-50 dark:border-rose-200/15 dark:bg-rose-400/10'
                               : 'border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/[0.035]'
                         }`}
                       >
                         <div className="flex items-start gap-2">
                           {msg.profileSync === 'recorded' ? (
-                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-rose-600 dark:text-rose-300" />
                           ) : msg.profileSync === 'disabled' ? (
-                            <CircleOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-300" />
+                            <CircleOff className="mt-0.5 h-4 w-4 shrink-0 text-rose-600 dark:text-rose-300" />
                           ) : (
                             <Database className="mt-0.5 h-4 w-4 shrink-0 text-slate-500 dark:text-slate-300" />
                           )}
@@ -1127,7 +1144,7 @@ export function AssistantPanel({
                           {syncAction && msg.profileSync !== 'pending' && (
                             <Link
                               href={syncAction.href}
-                              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-slate-900 px-2.5 py-1.5 text-[10px] font-semibold text-white hover:bg-slate-800 dark:bg-cyan-300 dark:text-slate-950 dark:hover:bg-cyan-200"
+                              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-slate-900 px-2.5 py-1.5 text-[10px] font-semibold text-white hover:bg-slate-800 dark:bg-rose-300 dark:text-slate-950 dark:hover:bg-rose-200"
                             >
                               {syncAction.label}
                               <ArrowRight className="h-3 w-3" />
@@ -1145,9 +1162,10 @@ export function AssistantPanel({
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full">
                   <img
                     src={
-                      mode === 'anime'
+                      mascotImage ||
+                      (mode === 'anime'
                         ? '/avatars/kagami/chibi.png'
-                        : '/avatars/student-glasses-new.jpg'
+                        : '/avatars/student-glasses-new.jpg')
                     }
                     className="size-full object-cover"
                     alt="小镜"

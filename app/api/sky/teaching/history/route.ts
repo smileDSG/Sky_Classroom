@@ -20,7 +20,8 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const limitParam = url.searchParams.get('limit');
-  const limit = limitParam ? Math.min(parseInt(limitParam, 10), 100) : 50;
+  const parsedLimit = limitParam ? parseInt(limitParam, 10) : 50;
+  const limit = Number.isFinite(parsedLimit) ? Math.max(1, Math.min(parsedLimit, 100)) : 50;
   const favorited = url.searchParams.get('favorited') === 'true';
 
   const allJobs = await listTeachingJobsByUser(quota.userId);

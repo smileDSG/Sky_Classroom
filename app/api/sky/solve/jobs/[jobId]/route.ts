@@ -6,6 +6,7 @@ import { apiSuccess, apiError } from '@/lib/server/api-response';
 import { getSolveJob } from '@/lib/server/solve-job-store';
 import { createLogger } from '@/lib/logger';
 import { requireAuth } from '@/lib/server/auth/helpers';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('API:SolveJobStatus');
 
@@ -44,7 +45,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ jobId: 
       'INTERNAL_ERROR',
       500,
       '获取作业状态失败',
-      err instanceof Error ? err.message : undefined,
+      err instanceof Error ? safeErrorMessage(err) : undefined,
     );
   }
 }

@@ -20,6 +20,60 @@ export class AudioPlayer {
   private muted: boolean = false;
   private volume: number = 1;
   private playbackRate: number = 1;
+  // Preloaded element for the next expected audio (avoids sentence-gap network stalls)
+  private prefetchedAudio: HTMLAudioElement | null = null;
+  private prefetchedKey: string | null = null;
+  private prefetchedBlobUrl: string | null = null;
+  private prefetchInFlight: boolean = false;
+
+  private static key(audioId: string, audioUrl?: string): string {
+    return `${audioId}\u0000${audioUrl || ''}`;
+  }
+
+  /**
+   * Preload audio for a future play() call. The element stays paused until
+   * play() is invoked with the same (audioId, audioUrl) pair, then it is
+   * reused so playback starts with no network/IndexedDB latency.
+   */
+  public async prefetch(audioId: string, audioUrl?: string): Promise<void> {
+    if (this.prefetchedAudio || this.prefetchInFlight || !audioId) return;
+    this.prefetchInFlight = true;
+    try {
+      let src: string;
+      let blobUrl: string | null = null;
+      if (audioUrl) {
+        src = audioUrl;
+      } else {
+        const audioRecord = await db.audioFiles.get(audioId);
+        if (!audioRecord) return;
+        blobUrl = URL.createObjectURL(audioRecord.blob);
+        src = blobUrl;
+      }
+      const el = new Audio();
+      el.preload = 'auto';
+      el.src = src;
+      el.volume = this.muted ? 0 : this.volume;
+      el.defaultPlaybackRate = this.playbackRate;
+      el.load();
+      this.prefetchedAudio = el;
+      this.prefetchedBlobUrl = blobUrl;
+      this.prefetchedKey = AudioPlayer.key(audioId, audioUrl);
+    } catch (error) {
+      log.warn('Audio prefetch failed:', error);
+      this.clearPrefetched();
+    } finally {
+      this.prefetchInFlight = false;
+    }
+  }
+
+  private clearPrefetched(): void {
+    if (this.prefetchedBlobUrl) {
+      URL.revokeObjectURL(this.prefetchedBlobUrl);
+      this.prefetchedBlobUrl = null;
+    }
+    this.prefetchedAudio = null;
+    this.prefetchedKey = null;
+  }
 
   /**
    * Play audio (from URL or IndexedDB pre-generated cache)
@@ -29,6 +83,26 @@ export class AudioPlayer {
    */
   public async play(audioId: string, audioUrl?: string): Promise<boolean> {
     try {
+      // Reuse the prefetched element when it matches the requested audio
+      const key = AudioPlayer.key(audioId, audioUrl);
+      if (this.prefetchedAudio && this.prefetchedKey === key) {
+        const el = this.prefetchedAudio;
+        this.prefetchedAudio = null;
+        this.prefetchedKey = null;
+        const blobUrl = this.prefetchedBlobUrl;
+        this.prefetchedBlobUrl = null;
+        this.stop();
+        this.audio = el;
+        this.audio.addEventListener('ended', () => {
+          if (blobUrl) URL.revokeObjectURL(blobUrl);
+          this.onEndedCallback?.();
+        });
+        await this.audio.play();
+        this.audio.playbackRate = this.playbackRate;
+        return true;
+      }
+      this.clearPrefetched();
+
       // 1. Try audioUrl first (server-generated TTS)
       if (audioUrl) {
         this.stop();
@@ -193,6 +267,7 @@ export class AudioPlayer {
    */
   public destroy(): void {
     this.stop();
+    this.clearPrefetched();
     this.onEndedCallback = null;
   }
 }

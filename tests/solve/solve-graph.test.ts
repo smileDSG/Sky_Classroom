@@ -109,9 +109,9 @@ describe('conditional edges', () => {
       expect(afterSolve(state)).toBe('generateOutput');
     });
 
-    test('routes to gradeAnswer when no error', () => {
+    test('routes to verifyAnswer when no error', () => {
       const state = buildSolveInitialState('test');
-      expect(afterSolve(state)).toBe('gradeAnswer');
+      expect(afterSolve(state)).toBe('verifyAnswer');
     });
   });
 });

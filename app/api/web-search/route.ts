@@ -11,6 +11,7 @@ import { formatSearchResultsAsContext, searchWeb } from '@/lib/web-search';
 import { resolveWebSearchApiKey } from '@/lib/server/provider-config';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import {
   buildSearchQuery,
   SEARCH_QUERY_REWRITE_EXCERPT_LENGTH,
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
     try {
       baseUrl = resolveWebSearchRouteBaseUrl(providerId, clientBaseUrl);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Invalid web search base URL';
+      const message = safeErrorMessage(error);
       return apiError('INVALID_REQUEST', 400, message);
     }
 

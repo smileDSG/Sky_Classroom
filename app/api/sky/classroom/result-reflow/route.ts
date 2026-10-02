@@ -19,7 +19,8 @@
  * Response: { success: true, attemptId: string }
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
@@ -29,17 +30,51 @@ import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:ClassroomResultReflow');
 
+const validSubjects = [
+  'math',
+  'physics',
+  'chemistry',
+  'biology',
+  'chinese',
+  'english',
+  'history',
+  'geography',
+  'politics',
+  'unknown',
+] as const;
+
+const ResultReflowSchema = z.object({
+  stageId: z.string().max(200),
+  subject: z.enum(validSubjects).default('math'),
+  topic: z.string().max(500).default(''),
+  questions: z
+    .array(
+      z.object({
+        question: z.string().min(1).max(20000),
+        options: z.array(z.string().max(2000)).max(20).optional().default([]),
+        answer: z.number().int().optional().default(0),
+        userAnswer: z.number().int().nullable().optional().default(null),
+        isCorrect: z.boolean().optional().default(false),
+        knowledgePoints: z.array(z.string().max(200)).max(20).optional().default([]),
+        explanation: z.string().max(20000).optional(),
+      }),
+    )
+    .min(1)
+    .max(500),
+});
+
 export async function POST(req: NextRequest) {
   try {
     const auth = await requireAuth();
     if ('error' in auth) return auth.error;
 
     const body = await req.json();
-    const { stageId, subject, topic, questions } = body;
-
-    if (!stageId || !Array.isArray(questions)) {
+    const parsed = ResultReflowSchema.safeParse(body);
+    if (!parsed.success) {
       return apiError('MISSING_REQUIRED_FIELD', 400, '缺少 stageId 或 questions 参数');
     }
+
+    const { stageId, subject, topic, questions } = parsed.data;
 
     if (questions.length === 0) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'questions 不能为空数组');
@@ -51,40 +86,17 @@ export async function POST(req: NextRequest) {
     const quizAttemptDAO = createQuizAttemptDAO(storage);
 
     // Map questions to QuizAttemptQuestion format
-    const attemptQuestions = questions.map((q: unknown) => {
-      const question = q as {
-        question: string;
-        options?: string[];
-        answer?: number;
-        userAnswer?: number | null;
-        isCorrect?: boolean;
-        knowledgePoints?: string[];
-        explanation?: string;
-      };
-      return {
-        question: question.question || '',
-        options: question.options ?? [],
-        answer: typeof question.answer === 'number' ? question.answer : 0,
-        userAnswer: question.userAnswer ?? null,
-        isCorrect: question.isCorrect === true,
-        explanation: question.explanation,
-        knowledgePoints: question.knowledgePoints ?? [],
-      };
-    });
+    const attemptQuestions = questions.map((question) => ({
+      question: question.question || '',
+      options: question.options ?? [],
+      answer: typeof question.answer === 'number' ? question.answer : 0,
+      userAnswer: question.userAnswer ?? null,
+      isCorrect: question.isCorrect === true,
+      explanation: question.explanation,
+      knowledgePoints: question.knowledgePoints ?? [],
+    }));
 
     // Save quiz attempt
-    const validSubjects = [
-      'math',
-      'physics',
-      'chemistry',
-      'biology',
-      'chinese',
-      'english',
-      'history',
-      'geography',
-      'politics',
-      'unknown',
-    ] as const;
     const validSubject = validSubjects.includes(subject) ? subject : 'math';
 
     const attempt = await quizAttemptDAO.add({

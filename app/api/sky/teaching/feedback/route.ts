@@ -13,6 +13,7 @@ import {
 } from '@/lib/teaching/profile-impact';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('TeachingFeedbackAPI');
 
@@ -173,7 +174,7 @@ export async function POST(request: NextRequest) {
       data: { feedback, profileUpdate },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Record feedback failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

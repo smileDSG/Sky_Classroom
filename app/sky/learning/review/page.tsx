@@ -1,5 +1,5 @@
-import { LearningFeaturePage } from '@/components/sky/learning/learning-feature-page';
+import { redirect } from 'next/navigation';
 
 export default function LearningReviewPage() {
-  return <LearningFeaturePage activeFeature="review" />;
+  redirect('/sky/cloud-mind/memory');
 }

@@ -60,7 +60,6 @@ describe('MobileStudyLabPage', () => {
       ['/m/sky/learning/mistakes', /错题本/],
       ['/m/sky/learning/review/plan', /复习计划/],
       ['/m/sky/learning/graph', /知识图谱/],
-      ['/m/sky/learning/stats', /学习统计/],
       ['/m/sky/learning/profile', /学情分析/],
     ].forEach(([href, name]) => {
       expect(within(toolSection).getByRole('link', { name: name as RegExp })).toHaveAttribute(

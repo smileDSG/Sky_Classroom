@@ -12,6 +12,7 @@ import { AssistantSettings } from '@/components/sky/assistant/assistant-settings
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { Feather, Wind, Cloud, MessageCircle, Sparkles, History, Settings } from 'lucide-react';
+import { PageTour } from '@/components/sky/tour/page-tour';
 
 const SIDEBAR_ITEMS = [
   { key: 'chat', label: '对话', icon: MessageCircle, desc: '与小镜交流' },
@@ -131,29 +132,29 @@ function AssistantContent() {
           className="w-64 shrink-0 flex flex-col gap-4"
         >
           {/* Hero Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 p-5">
+          <div data-tour-step="page-header" className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 via-pink-600 to-indigo-700 p-5">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/10 rounded-full blur-xl translate-y-1/2 -translate-x-1/4" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-pink-400/10 rounded-full blur-xl translate-y-1/2 -translate-x-1/4" />
 
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 backdrop-blur-sm">
-                  <Feather className="h-4 w-4 text-sky-200" />
+                  <Feather className="h-4 w-4 text-rose-200" />
                 </div>
-                <span className="text-[10px] font-medium text-sky-200 tracking-wider uppercase">
+                <span className="text-[10px] font-medium text-rose-200 tracking-wider uppercase">
                   AI 助教
                 </span>
               </div>
               <h2 className="text-xl font-bold text-white mb-1">云翼助手</h2>
-              <p className="text-xs text-sky-100 leading-relaxed">
+              <p className="text-xs text-rose-100 leading-relaxed">
                 小镜随时待命，为你解答疑惑、梳理思路。
               </p>
               <div className="mt-3 flex items-center gap-3">
-                <div className="flex items-center gap-1 text-[10px] text-sky-200">
+                <div className="flex items-center gap-1 text-[10px] text-rose-200">
                   <Wind className="h-3 w-3" />
                   <span>即时响应</span>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-sky-200">
+                <div className="flex items-center gap-1 text-[10px] text-rose-200">
                   <Cloud className="h-3 w-3" />
                   <span>云端记忆</span>
                 </div>
@@ -172,14 +173,14 @@ function AssistantContent() {
                   onClick={() => setActiveSidebar(item.key)}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all duration-300 ${
                     isActive
-                      ? 'bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/10 border border-sky-200 dark:border-sky-700/30 shadow-sm'
+                      ? 'bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/10 border border-rose-200 dark:border-rose-700/30 shadow-sm'
                       : 'hover:bg-white/50 dark:hover:bg-slate-800/40 border border-transparent'
                   }`}
                 >
                   <div
                     className={`flex h-9 w-9 items-center justify-center rounded-lg ${
                       isActive
-                        ? 'bg-gradient-to-br from-sky-500 to-blue-500 shadow-sm'
+                        ? 'bg-gradient-to-br from-rose-500 to-pink-500 shadow-sm'
                         : 'bg-slate-100 dark:bg-slate-700/50'
                     }`}
                   >
@@ -193,7 +194,7 @@ function AssistantContent() {
                     <div
                       className={`text-sm font-medium ${
                         isActive
-                          ? 'text-sky-700 dark:text-sky-300'
+                          ? 'text-rose-700 dark:text-rose-300'
                           : 'text-slate-700 dark:text-slate-300'
                       }`}
                     >
@@ -228,6 +229,7 @@ function AssistantContent() {
 
         {/* 主内容区 */}
         <motion.div
+          data-tour-step="page-primary"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -258,6 +260,8 @@ function AssistantContent() {
           )}
         </motion.div>
       </div>
+
+      <PageTour id="resources-assistant" />
     </SkyAppShell>
   );
 }

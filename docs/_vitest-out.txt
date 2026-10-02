@@ -1,0 +1,70 @@
+﻿node.exe : 
+所在位置 C:\Users\lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent\vm\tools\node\npx.ps1:16 字符: 5
++     & "$basedir/node$exe"  "$basedir/node_modules/npm/bin/npx-cli.js" ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Startup Error [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯⎯[39m
+Error: Failed to load custom Reporter from basic
+    at loadCustomReporterModule (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626ddd
+32b3e5246f9cbe11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:11317:9)
+    at file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626ddd32b3e5246f9cbe11368f8c0504
+/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:11333:23
+    ... 3 lines matching cause stack trace ...
+    at _createServer (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emnapi+core@1.8_c87697851d1f38767
+435e7047ff2c687/node_modules/vite/dist/node/chunks/node.js:26114:84)
+    at createViteServer (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626ddd32b3e524
+6f9cbe11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:8825:17)
+    at createVitest (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626ddd32b3e5246f9c
+be11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:14047:18)
+    at prepareVitest (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626ddd32b3e5246f9
+cbe11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:14414:14)
+    at startVitest (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626ddd32b3e5246f9cb
+e11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:14357:14) {
+  [cause]: Error: Failed to load url basic (resolved id: basic). Does the file exist?
+      at reviveInvokeError (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emnapi+core@1.8_c87697851d1
+f38767435e7047ff2c687/node_modules/vite/dist/node/module-runner.js:538:14)
+      at Object.invoke (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emnapi+core@1.8_c87697851d1f387
+67435e7047ff2c687/node_modules/vite/dist/node/module-runner.js:554:33)
+      at ServerModuleRunner.getModuleInformation (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emnap
+i+core@1.8_c87697851d1f38767435e7047ff2c687/node_modules/vite/dist/node/module-runner.js:1183:7)
+      at ServerModuleRunner.import (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emnapi+core@1.8_c87
+697851d1f38767435e7047ff2c687/node_modules/vite/dist/node/module-runner.js:1099:23)
+      at loadCustomReporterModule (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626d
+dd32b3e5246f9cbe11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:11315:26)
+      at file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626ddd32b3e5246f9cbe11368f8c05
+04/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:11333:23
+      at async Promise.all (index 0)
+      at Vitest._setServer (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626ddd32b3e
+5246f9cbe11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:13049:138)
+      at BasicMinimalPluginContext.handler (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelem
+etry_626ddd32b3e5246f9cbe11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:14013:5)
+      at _createServer (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emnapi+core@1.8_c87697851d1f387
+67435e7047ff2c687/node_modules/vite/dist/node/chunks/node.js:26114:84) {
+    code: 'ERR_LOAD_URL',
+    runnerError: Error: RunnerError
+        at reviveInvokeError (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emnapi+core@1.8_c87697851
+d1f38767435e7047ff2c687/node_modules/vite/dist/node/module-runner.js:539:64)
+        at Object.invoke (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emnapi+core@1.8_c87697851d1f3
+8767435e7047ff2c687/node_modules/vite/dist/node/module-runner.js:554:33)
+        at ServerModuleRunner.getModuleInformation (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emn
+api+core@1.8_c87697851d1f38767435e7047ff2c687/node_modules/vite/dist/node/module-runner.js:1183:7)
+        at ServerModuleRunner.import (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emnapi+core@1.8_c
+87697851d1f38767435e7047ff2c687/node_modules/vite/dist/node/module-runner.js:1099:23)
+        at loadCustomReporterModule (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_62
+6ddd32b3e5246f9cbe11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:11315:26)
+        at file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626ddd32b3e5246f9cbe11368f8c
+0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:11333:23
+        at async Promise.all (index 0)
+        at Vitest._setServer (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentelemetry_626ddd32b
+3e5246f9cbe11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:13049:138)
+        at BasicMinimalPluginContext.handler (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vitest@4.1.0_@opentel
+emetry_626ddd32b3e5246f9cbe11368f8c0504/node_modules/vitest/dist/chunks/cli-api.DuT9iuvY.js:14013:5)
+        at _createServer (file:///E:/01_Work/sky-classroom/node_modules/.pnpm/vite@8.0.0_@emnapi+core@1.8_c87697851d1f3
+8767435e7047ff2c687/node_modules/vite/dist/node/chunks/node.js:26114:84)
+  }
+}
+
+
+

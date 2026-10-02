@@ -5,7 +5,7 @@
  * Previously located in lib/mistakes/knowledge-graph.ts.
  */
 
-import type { KnowledgeGraph, KnowledgeNode, KnowledgeEdge, LearningPath } from './types';
+import type { KnowledgeGraph, KnowledgeNode, KnowledgeEdge, LearningPath, KnowledgeRelation } from './types';
 import { KNOWLEDGE_RELATIONS } from './relations';
 
 const EBBINGHAUS_MAX_ROUNDS = 6;
@@ -120,13 +120,55 @@ export function buildKnowledgeGraph<T extends RecordLike>(records: T[]): Knowled
     }
   }
 
-  for (const [kp, rels] of Object.entries(KNOWLEDGE_RELATIONS)) {
-    if (!kpSet.has(kp)) continue;
-    for (const prereq of rels.prereqs ?? []) {
-      if (kpSet.has(prereq)) addEdge(prereq, kp, 'prerequisite');
+  // ── 结构性前置链（数据驱动，不依赖关系表覆盖）──
+  // 同一道错题内的多个知识点，若存在「学科·主题」容器词条，
+  // 则视为该具体术语的前置基础，建立 主题 → 术语 的前置依赖，
+  // 让「先学 X 主题、再学其中具体点」的方向在真实数据中立起来。
+  for (const m of records) {
+    const kps = [...new Set(m.knowledgePoints)];
+    if (kps.length < 2) continue;
+    const container = kps.find((k) => k.includes('·'));
+    if (!container) continue;
+    for (const term of kps) {
+      if (term === container) continue;
+      // 容器 → 具体术语（容器通常是更宽泛的学科/专题）
+      addEdge(container, term, 'prerequisite');
     }
-    for (const related of rels.related ?? []) {
-      if (kpSet.has(related)) addEdge(kp, related, 'related');
+  }
+
+  // 关系表匹配：支持「模糊包含」——真实错题知识点常带学科前缀（如「高中数学·导数」），
+  // 只要能包含关系表词条即命中，从而正确推断「基础→进阶」的前置依赖主干，
+  // 避免整图退化成只有双向相关线的乱网。
+  const relationEntryFor = (nodeName: string): KnowledgeRelation | null => {
+    if (KNOWLEDGE_RELATIONS[nodeName]) return KNOWLEDGE_RELATIONS[nodeName];
+    // 精确未命中：前缀剥离后匹配（「高中数学·导数」→ 剥离「数学」→「导数」）
+    for (const key of Object.keys(KNOWLEDGE_RELATIONS)) {
+      if (key.length >= 2 && nodeName.includes(key)) {
+        return KNOWLEDGE_RELATIONS[key];
+      }
+    }
+    return null;
+  };
+
+  for (const n of nodes) {
+    const entry = relationEntryFor(n.name);
+    if (!entry) continue;
+    for (const prereq of entry.prereqs ?? []) {
+      // 前置目标也做模糊匹配：找到错题集中包含该前置词条的知识点作为目标
+      for (const maybe of nodes) {
+        if (maybe.name === n.name) continue;
+        if (maybe.name === prereq || (prereq.length >= 2 && maybe.name.includes(prereq))) {
+          addEdge(maybe.name, n.name, 'prerequisite');
+        }
+      }
+    }
+    for (const related of entry.related ?? []) {
+      for (const maybe of nodes) {
+        if (maybe.name === n.name) continue;
+        if (maybe.name === related || (related.length >= 2 && maybe.name.includes(related))) {
+          addEdge(n.name, maybe.name, 'related');
+        }
+      }
     }
   }
 

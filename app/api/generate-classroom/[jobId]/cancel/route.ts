@@ -1,5 +1,6 @@
 import { type NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import {
   isValidClassroomJobId,
   readClassroomGenerationJobHybrid,
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
       'INTERNAL_ERROR',
       500,
       'Failed to cancel classroom generation job',
-      error instanceof Error ? error.message : String(error),
+      safeErrorMessage(error),
     );
   }
 }

@@ -13,6 +13,8 @@ import { createUserDAO } from '@/lib/storage/dao/users';
 import { createBillingDAO } from '@/lib/storage/dao/billing';
 import { PLANS, type PlanType } from '@/lib/server/billing/plans';
 
+const PAYMENT_METHODS = new Set(['mock', 'wechat', 'alipay', 'card']);
+
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
@@ -39,6 +41,8 @@ export async function POST(request: Request) {
     }
 
     const plan = PLANS[planType];
+    const requestedMethod = typeof body.paymentMethod === 'string' ? body.paymentMethod : 'mock';
+    const paymentMethod = PAYMENT_METHODS.has(requestedMethod) ? requestedMethod : 'mock';
     const dao = await createBillingDAO();
     const orderId = crypto.randomUUID();
     const outTradeNo = `MAIC${Date.now()}${orderId.slice(0, 8).toUpperCase()}`;
@@ -50,7 +54,7 @@ export async function POST(request: Request) {
       amount: plan.price,
       currency: 'CNY',
       status: 'pending',
-      paymentMethod: body.paymentMethod || 'mock',
+      paymentMethod,
       outTradeNo,
     });
 

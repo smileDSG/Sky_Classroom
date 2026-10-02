@@ -3,8 +3,10 @@
  */
 
 import { createLogger } from '@/lib/logger';
-import { generateQuiz } from '@/lib/agents/cloud-mind/quiz-agent';
+import { generateQuiz, type QuizQuestionType } from '@/lib/agents/cloud-mind/quiz-agent';
+import { backfillQuizToQuestionBank } from '@/lib/agents/cloud-mind/quiz-backfill';
 import type { StudentProfile } from '@/lib/student/profile-types';
+import type { QuizGoal } from '@/lib/cloud-mind/quiz-experience';
 import { updateCloudMindQuizJob } from './cloud-mind-quiz-job-store';
 
 const log = createLogger('CloudMindQuizJobRunner');
@@ -23,6 +25,8 @@ export function runCloudMindQuizJob(
     difficulty: string;
     topic: string;
     count: number;
+    questionType?: QuizQuestionType;
+    goal: QuizGoal;
     profile?: StudentProfile;
   },
 ): Promise<void> {
@@ -40,16 +44,36 @@ export function runCloudMindQuizJob(
         input.topic,
         input.count,
         input.profile,
+        input.questionType ?? 'choice',
+        input.goal,
       );
+
+      // 自动回填题库（去重 + 题型标记）；失败不影响出题结果
+      let backfill;
+      try {
+        backfill = await backfillQuizToQuestionBank(result, {
+          subject: input.subject,
+          difficulty: input.difficulty,
+          topic: input.topic,
+        });
+      } catch (backfillError) {
+        log.warn(`Quiz job ${jobId} backfill failed:`, backfillError);
+      }
 
       updateCloudMindQuizJob(jobId, {
         status: 'completed',
         phase: 'done',
         progress: 100,
         result,
+        backfill,
       });
 
-      log.info(`Quiz job ${jobId} completed with ${result.questions.length} questions`);
+      log.info(
+        `Quiz job ${jobId} completed with ${result.questions.length} questions` +
+          (backfill
+            ? ` (backfilled: ${backfill.backfilled}, duplicates: ${backfill.duplicates})`
+            : ''),
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       log.error(`Quiz job ${jobId} failed:`, error);

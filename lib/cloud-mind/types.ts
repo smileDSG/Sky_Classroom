@@ -58,7 +58,6 @@ export interface RecentLearningRecord {
     | 'memory'
     | 'knowledge'
     | 'write'
-    | 'translate'
     | 'slides'
     | 'profile';
   title: string;
@@ -213,7 +212,7 @@ export interface MemoryReviewRecord {
   mastery: number;
   lastReviewedAt: string;
   nextReviewAt: string;
-  sourceType?: 'mistake' | 'manual' | 'write' | 'translate' | 'memory';
+  sourceType?: 'mistake' | 'manual' | 'write' | 'memory';
   sourceId?: string;
   front?: string;
   back?: string;

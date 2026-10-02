@@ -779,7 +779,7 @@ export default function MathTestPage() {
 
   return (
     <SkyAppShell>
-      <div className="mx-auto max-w-7xl">
+      <div className=" ">
         <div className="mb-6">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
             解题详解渲染测试

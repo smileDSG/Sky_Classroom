@@ -1,6 +1,7 @@
 import { type NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import {
   buildRequestOrigin,
   isValidClassroomId,
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       'Failed to store classroom',
-      error instanceof Error ? error.message : String(error),
+      safeErrorMessage(error),
     );
   }
 }
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       'Failed to retrieve classroom',
-      error instanceof Error ? error.message : String(error),
+      safeErrorMessage(error),
     );
   }
 }

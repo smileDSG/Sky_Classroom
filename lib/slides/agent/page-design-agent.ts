@@ -6,7 +6,7 @@ import { callLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import type { LanguageModel } from 'ai';
 import type { DesignDNA } from './design-dna';
-import { pageInstructionsSchema, type PageInstructions } from './instruction-executor';
+import { pageInstructionsSchema, type PageInstructions, addTextPlain } from './instruction-executor';
 import { cleanJsonText } from './content-schemas';
 
 const log = createLogger('PageDesignAgent');
@@ -53,6 +53,43 @@ ${educationLevel ? `\n## 受众适配\n本课件面向${educationLevel}学生。
 4. addFormula: { "op":"addFormula", "params":{"latex":"\\int_a^b f(x)dx","x":1,"y":2,"w":8,"h":0.8, "fontSize":16,"color":"1E293B"} }  ← 用于数学公式，latex 字段放 LaTeX 源码
 5. addTable: { "op":"addTable", "params":{"headers":["A","B"],"rows":[["1","2"]], "x":0.8,"y":2,"w":11.7, "headerBgColor":"...","borderColor":"..."} }
 
+### addText 支持富文本（关键词加粗）
+把 \`text\` 写成 run 数组即可实现段落内局部加粗/变色。每个 run 是 {"text":"...", "bold":true, "color":"..."} 可选加 bold/italic/color/fontSize。
+例：{ "op":"addText", "params":{"text":[{"text":"静态测评只能记录","color":"F3F0E4"},{"text":"结果","bold":true,"color":"C9A227"},{"text":"，无法回溯判断过程","color":"F3F0E4"}], "x":0.8,"y":1.9,"w":11.7,"h":0.8, "fontSize":24,"bold":true,"align":"left"} }
+- 无加粗需求的普通文本直接写字符串即可。
+- 关键词加粗用于：正文中挑出 2~3 个核心术语用 accent 色 + bold 突出，其余普通。
+
+### addShape 卡片容器（内容页骨架的基础）
+- 圆角矩形卡片：{ "op":"addShape", "params":{"type":"ROUNDED_RECTANGLE","x":0.8,"y":1.9,"w":5.7,"h":4.2, "fillColor":"F3F0E4","lineColor":"E4DEC6","lineWidth":1,"rectRadius":0.12,"shadow":{"type":"outer","color":"1B2A4A","blur":6,"offset":2,"angle":45,"opacity":12}} }
+- 圆形编号图标：{ "op":"addShape", "params":{"type":"OVAL","x":1.0,"y":2.1,"w":0.5,"h":0.5, "fillColor":"C9A227"} } + 其上/addText 白色数字。
+- 通栏论点条：{ "op":"addShape", "params":{"type":"ROUNDED_RECTANGLE","x":0.5,"y":1.5,"w":12.3,"h":0.75, "fillColor":"1B2A4A"} } 白色加粗文字覆盖其上。
+- **Z 轴顺序（硬规则）**：所有背景卡片/色条/圆形图标必须用 addShape 排在对应的 addText 之前（先画容器，再画文字），否则文字会被卡片盖住。addText 没有层级参数，顺序即层级。
+
+## 内容页版式骨架（concept / case / compare / process / summary 必遵守）
+不再用"文字飘在背景上"的排版。每种内容页必须按下面的骨架组织，保证像真实 PPT：
+- **卡片容器优先**：为每栏/每个信息块画一个 ROUNDED_RECTANGLE 背景（fillColor 用 accentLight，浅描边），文字放在卡片上面；卡片之间留 0.25~0.35" 间距。
+- **通栏论点条**：若本页有"总结/核心结论/highlight/conclusion/summary"一句式内容，放最上方一张全宽 accentSecondary 或 accent 圆角条（y≈1.4，h≈0.75），白字加粗居中；其余卡片列在下方。
+- **圆形编号图标**：多卡片/多步骤时，在每个卡片标题左上放一个 OVAL 小圆（fillColor=accent，直径 0.45"），内写白色序号文字，增强"编号放大"的章节感。
+   在 compare/loc 双栏时建议用两个圆形编号 ① ② 区分两栏，左栏副标题用 accent，右栏副标题用 accentSecondary。
+- **关键词加粗**：正文描述中挑 2~3 个最核心术语，用 text 数组 run 的 bold+accent 色标出（见上方富文本语法）。
+- **布局比例**：标题区顶部 y≈0.5, 高度 0.7；内容区从 y≥1.4 开始到 ≤7.0；左右双栏 x=0.8 与 x=6.85，宽度各 5.7。
+- 保持每页信息密度 ≥4 个非背景元素（title + 至少一个容器 + 2 个以上内容块/编号圆），严禁只有标题+一行文字的稀疏页。
+
+## 封面版式骨架（pageType=cover 必遵守）——仿高端学术演示封面
+严禁"全屏纯色 + 居中一行标题"的简陋排版。封面必须用「左对齐文本 + 背景装饰层」的非对称构图，按下面顺序与元素排布：
+1. 先 setBackground(coverBg) 铺满深色底。
+2. 装饰背景层（必须排在所有文字指令之前，Z轴最底）：
+   - 主标题右上方一枚大 OVAL 半透明圆（fillColor=accent，fillTransparency≈85，直径≈4.5"），仅作淡淡色斑。
+   - 再叠一枚更大的同色 OVAL（fillTransparency≈92，直径≈6.5"）与其部分重叠，形成双层光晕。
+   - 右下角一条旋转 RECTANGLE 金色斜线（fillColor=accent，w≈8"，h≈0.08"，rotate≈-12）作动感力线。
+3. 顶部左侧 EN 标签：英文小字（如 TEACHING COURSEWARE / MODERN ACADEMIC），accent 色，charSpacing≈6，fontSize≈14，y≈0.55，x=0.8。
+4. 主标题上方一条金色短装饰线（RECTANGLE，fillColor=accent，w≈1.1"，h≈0.06"，y≈1.85，x=0.8）。
+5. 主标题（y≈2.2，h≈1.2，x=0.8，宽 11.7，左对齐）：用最大字号（≥48pt，可 56~60pt）fontFace=heading，颜色 textOnDark/白，bold + charSpacing≈2。标题较长可拆两行但仍左对齐，严禁居中。
+6. 副标题（subtitle/grade，y≈3.6，左对齐）：20~24pt，颜色 accentLight 或浅色，可在左加一枚小金色方形/竖条字标。
+7. 副标题下方 3 枚"渐大方点"装饰：三枚 OVAL 从小到大沿水平排列，fillColor=accent，fillTransparency 分别约 30/45/60，直径 0.12"/0.2"/0.32"，间距 0.18"，y≈4.35。
+8. 底部信息条：左对齐一条金色细线（RECTANGLE，w≈12.3"，h≈0.02"，y≈6.9，x=0.5），线上方左侧放日期/落款浅色小字（fontSize≈12，accentLight 色）。
+9. 密度硬规则：cover 至少 5 个非背景元素（装饰圆≥3 + 标题 + 副标题 + 底部线），严禁只输出"背景 + 居中标 + 一行字"。
+
 ## 设计规则
 - 所有颜色使用DesignDNA中的，禁止自创
 - 文字颜色必须与背景有强对比度
@@ -92,12 +129,12 @@ ${educationLevel ? `\n## 受众适配\n本课件面向${educationLevel}学生。
   3. label 和 formula 垂直排列，间距 0.2"
   4. **如果 formulas[].latex 为空字符串或仅包含占位符（如 [Formula]），则只渲染 label，不生成 addFormula**
 - formula 类型页面必须使用 addFormula 渲染 mainFormula 字段的内容
-- 正文（cards.desc / keyPoints / scenarios.problem / steps.desc 等）中的数学表达式保持原文，由系统统一处理，不需要从中提取生成 addFormula
+- 正文（cards.desc / keyPoints / scenarios.problem / steps.desc 等）中的数学表达式保持原文，由系统统一处理，不需要从中提取生成 addFormula。**但行内数学片段（如下标/上标/公式）务必用 $...$ 符号包裹**，例如 h'=h/n 写 $h'=h/n$、θ1 写 $theta_1$、sinθ2=sinθ1/n 写 $sin theta_2=sin theta_1/n$；未包裹的零散符号（如普通句子里的 θ）可保持原样，系统会做轻度规范。
 - LaTeX 公式必须正确使用 ^ 上标和 _ 下标：电荷用 ^（如 Zn^{2+}、e^{-}），原子数用 _（如 H_2O、CO_2）。严禁省略括号写成 Zn2+ 或 H2O
 - 流程步骤之间严禁使用 addText 输出孤立的 "→" 或 "->" 符号。步骤连接必须通过 addShape(LINE) 实现，或完全省略箭头，仅用编号区分步骤
 
 ## 页型布局参考（严格遵循）
-- cover: 全屏背景色 + 居中标题(大字号,44pt+) + 居中副标题(小字号) + 底部装饰形状/线条
+- cover: 左对齐文本 + 背景装饰层(半透明圆/双层光晕/金色斜线) + 英文标签 + 金色短线条 + 超大标题 + 副标题 + 渐大方点 + 底部信息条，严格按下方"封面版式骨架"执行
 - toc: 背景色 + 顶部标题"目录" + 纵向排列的章节列表(每项带序号,左对齐)
 - chapter: 全屏背景色 + 左侧章节编号(极大字号,半透明) + 章节标题 + 副标题
 - concept: 顶部标题 + 2-6个卡片(等宽横向排列或纵向排列) + 底部总结文本
@@ -258,6 +295,17 @@ export async function designPage(
 
     log.info(`Designing page ${pageNum} (${pageType})`);
 
+    // Cover is composed deterministically for guaranteed quality & run-to-run
+    // consistency — the LLM's improvisation fluctuates and underperforms the
+    // reference-informed layout here.
+    if (pageType === 'cover') {
+      const deterministic = buildFallbackInstructions(pageNum, pageType, content, designDNA);
+      if (deterministic) {
+        log.info(`Cover page ${pageNum}: deterministic cover composer`);
+        return { success: true, pageInstructions: deterministic };
+      }
+    }
+
     const pageTypeTokenMap: Record<string, number> = {
       cover: 4096,
       toc: 4096,
@@ -399,12 +447,14 @@ export async function designPage(
     let removedDups = 0;
     for (const inst of instructions) {
       if (inst.op === 'addText') {
-        const text = (inst.params as Record<string, unknown>).text as string;
-        if (seenTexts.has(text)) {
+        const p = (inst.params as Record<string, unknown>)?.text;
+        const joined =
+          typeof p === 'string' ? p : addTextPlain(p as Array<{ text: string }>);
+        if (seenTexts.has(joined)) {
           removedDups++;
           continue;
         }
-        seenTexts.add(text);
+        seenTexts.add(joined);
       }
       deduped.push(inst);
     }
@@ -466,8 +516,9 @@ export async function designPage(
         const llmTextCleanSet = new Set<string>();
         const llmFormulaSet = new Set<string>();
         for (const i of instructions) {
-          if (i.op === 'addText' && typeof i.params?.text === 'string') {
-            const raw = (i.params as { text: string }).text.trim();
+          if (i.op === 'addText') {
+            const p = (i.params as Record<string, unknown>)?.text;
+            const raw = (typeof p === 'string' ? p : addTextPlain(p as Array<{ text: string }>)).trim();
             llmTextSet.add(raw);
             llmTextCleanSet.add(stripTextPrefix(raw));
           }
@@ -537,11 +588,14 @@ function checkContentCoverage(
 ): { ok: boolean; reason?: string } {
   const renderedTexts = new Set(
     instructions
-      .filter(
-        (i) =>
-          i.op === 'addText' && typeof (i.params as Record<string, unknown>)?.text === 'string',
-      )
-      .map((i) => ((i.params as Record<string, unknown>).text as string).trim()),
+      .filter((i) => i.op === 'addText')
+      .map((i) => {
+        const p = (i.params as Record<string, unknown>)?.text;
+        return Array.isArray(p)
+          ? p.map((r) => ((r as Record<string, unknown>).text as string) ?? '').join('')
+          : ((p as string | undefined) ?? '');
+      })
+      .map((t) => t.trim()),
   );
   const renderedClean = new Set([...renderedTexts].map((t) => stripTextPrefix(t)));
 
@@ -666,7 +720,7 @@ function checkContentCoverage(
 function getMinInstructionCount(pageType: string, content: Record<string, unknown>): number {
   switch (pageType) {
     case 'cover':
-      return 3; // bg + title + subtitle
+      return 6; // layered decor + title + subtitle + dots + footer strip
     case 'toc':
       return 3; // bg + title + items
     case 'chapter':
@@ -795,6 +849,51 @@ function buildFallbackInstructions(
     },
   });
 
+  const PANEL = (
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    opts: Record<string, unknown> = {},
+  ) => ({
+    op: 'addShape',
+    params: {
+      type: 'ROUNDED_RECTANGLE',
+      x,
+      y,
+      w,
+      h,
+      fillColor: colors.accentLight,
+      lineColor: 'E4DEC6',
+      lineWidth: 1,
+      rectRadius: 0.12,
+      shadow: {
+        type: 'outer',
+        color: colors.textPrimary,
+        blur: 6,
+        offset: 2,
+        angle: 45,
+        opacity: 12,
+      },
+      ...opts,
+    } as Record<string, unknown>,
+  });
+
+  // Numbered circle chip: must be requested with an OVAL then the numeral text.
+  const chipOv = (x: number, y: number, d = 0.42, fill = colors.accent) => ({
+    op: 'addShape',
+    params: { type: 'OVAL', x, y, w: d, h: d, fillColor: fill },
+  });
+  const chipNum = (label: string | number, x: number, y: number, d = 0.42) =>
+    addTxt(String(label), x, y + 0.04, d, d - 0.06, {
+      fontSize: 16,
+      fontFace: fonts.heading,
+      color: colors.textOnDark,
+      bold: true,
+      align: 'center',
+      valign: 'middle',
+    });
+
   const title = (content.title as string) || '';
 
   switch (pageType) {
@@ -808,33 +907,40 @@ function buildFallbackInstructions(
         }),
       );
       const cards = (content.cards as Array<{ title?: string; desc?: string }>) || [];
-      let y = 1.5;
-      const cardHeight = cards.length > 0 ? Math.min(1.2, (5.5 - 1.5) / cards.length) : 1;
-      for (const card of cards) {
+      // Wrap the whole card list in one rounded panel; add per-card number chips.
+      const panelTop = 1.4;
+      const panelBottom = cards.length > 0 ? Math.min(6.9, panelTop + cards.length * 1.25 + 0.4) : 2.2;
+      instructions.push(PANEL(0.5, panelTop, 12.3, Math.max(0.8, panelBottom - panelTop)));
+      let y = panelTop + 0.3;
+      cards.forEach((card, ci) => {
+        const chipX = 0.85;
+        instructions.push(chipOv(chipX, y, 0.42));
+        instructions.push(chipNum(ci + 1, chipX, y, 0.42));
         instructions.push(
-          addTxt(card.title || '', 0.8, y, 11.7, 0.4, {
+          addTxt(card.title || '', chipX + 0.6, y - 0.02, 10.6, 0.42, {
             fontSize: 16,
             fontFace: fonts.heading,
-            color: colors.accent,
+            color: colors.textPrimary,
             bold: true,
           }),
         );
         instructions.push(
-          addTxt(card.desc || '', 0.8, y + 0.4, 11.7, cardHeight - 0.4, { fontSize: 13 }),
+          addTxt(card.desc || '', chipX + 0.6, y + 0.42, 10.9, 0.72, { fontSize: 13 }),
         );
-        y += cardHeight + 0.2;
-      }
+        y += 1.2;
+      });
       if (content.summary) {
         instructions.push(
-          addTxt(content.summary as string, 0.8, Math.min(y + 0.2, 6.2), 11.7, 0.8, {
+          addTxt(content.summary as string, 0.8, Math.min(y + 0.15, 6.5), 11.7, 0.5, {
             fontSize: 13,
             fontFace: fonts.heading,
             color: colors.textMuted,
             italic: true,
+            bold: false,
           }),
         );
       }
-      // Formulas are appended uniformly after the switch block (see ~line 870)
+      // Formulas are appended uniformly after the switch block (see below)
       // to avoid double-injection when fallback merges with LLM output.
       break;
     }
@@ -850,22 +956,31 @@ function buildFallbackInstructions(
       const scenarios =
         (content.scenarios as Array<{ problem?: string; solution?: string; analysis?: string }>) ||
         [];
-      let y = 1.5;
-      for (const s of scenarios) {
+      // One panel wrapping the scenario stack (cases are tall; panel adapts).
+      const scenarioTop = 1.4;
+      let y = scenarioTop + 0.3;
+      const scenarioH = scenarios.length * 3.2;
+      instructions.push(PANEL(0.5, scenarioTop, 12.3, Math.min(4.6, Math.max(1.2, scenarioH))));
+      scenarios.forEach((s, si) => {
+        const chipX = 0.85;
+        instructions.push(chipOv(chipX, y, 0.42));
+        instructions.push(chipNum(si + 1, chipX, y, 0.42));
         instructions.push(
-          addTxt('问题: ' + (s.problem || ''), 0.8, y, 11.7, 0.8, {
+          addTxt('问题: ' + (s.problem || ''), chipX + 0.6, y, 11.0, 0.7, {
             fontSize: 14,
             fontFace: fonts.heading,
+            color: colors.textPrimary,
             bold: true,
-            color: colors.accent,
           }),
         );
         instructions.push(
-          addTxt('解答: ' + (s.solution || ''), 0.8, y + 0.9, 11.7, 1.2, { fontSize: 13 }),
+          addTxt('解答: ' + (s.solution || ''), chipX + 0.6, y + 0.75, 11.0, 1.1, {
+            fontSize: 13,
+          }),
         );
         if (s.analysis) {
           instructions.push(
-            addTxt('分析: ' + s.analysis, 0.8, y + 2.2, 11.7, 0.8, {
+            addTxt('分析: ' + s.analysis, chipX + 0.6, y + 1.95, 11.0, 0.8, {
               fontSize: 12,
               color: colors.textMuted,
               italic: true,
@@ -873,14 +988,29 @@ function buildFallbackInstructions(
           );
         }
         y += 3.2;
-      }
+      });
       if (content.highlight) {
+        // Full-width accent banner with white bold text (核心论点条)
+        instructions.push({
+          op: 'addShape',
+          params: {
+            type: 'ROUNDED_RECTANGLE',
+            x: 0.5,
+            y: 6.15,
+            w: 12.3,
+            h: 0.72,
+            fillColor: colors.accentSecondary,
+            rectRadius: 0.1,
+          },
+        });
         instructions.push(
-          addTxt(content.highlight as string, 0.8, 6.2, 11.7, 0.8, {
-            fontSize: 13,
+          addTxt(content.highlight as string, 0.9, 6.22, 11.5, 0.6, {
+            fontSize: 15,
             fontFace: fonts.heading,
-            color: colors.accentSecondary,
+            color: colors.textOnDark,
             bold: true,
+            align: 'center',
+            valign: 'middle',
           }),
         );
       }
@@ -897,44 +1027,66 @@ function buildFallbackInstructions(
       );
       const left = content.left as { title?: string; bullets?: string[] } | undefined;
       const right = content.right as { title?: string; bullets?: string[] } | undefined;
+      // Two-panel symmetric skeleton with number chips ① ②.
+      const colY = 1.4;
+      const colH = 4.6;
+      instructions.push(PANEL(0.5, colY, 6.05, colH));
+      instructions.push(PANEL(6.8, colY, 6.05, colH));
       if (left) {
+        instructions.push(chipOv(0.85, colY + 0.25, 0.42, colors.accent));
+        instructions.push(chipNum('①', 0.85, colY + 0.25, 0.42));
         instructions.push(
-          addTxt(left.title || '', 0.8, 1.4, 5.5, 0.5, {
+          addTxt(left.title || '', 1.4, colY + 0.28, 5.05, 0.45, {
             fontSize: 16,
             fontFace: fonts.heading,
             color: colors.accent,
             bold: true,
           }),
         );
-        let y = 2.0;
+        let y = colY + 0.95;
         for (const b of left.bullets || []) {
-          instructions.push(addTxt('• ' + b, 0.8, y, 5.5, 0.5, { fontSize: 13 }));
+          instructions.push(addTxt('• ' + b, 0.85, y, 5.5, 0.5, { fontSize: 13 }));
           y += 0.55;
         }
       }
       if (right) {
+        instructions.push(chipOv(7.15, colY + 0.25, 0.42, colors.accentSecondary));
+        instructions.push(chipNum('②', 7.15, colY + 0.25, 0.42));
         instructions.push(
-          addTxt(right.title || '', 6.8, 1.4, 5.5, 0.5, {
+          addTxt(right.title || '', 7.7, colY + 0.28, 5.05, 0.45, {
             fontSize: 16,
             fontFace: fonts.heading,
             color: colors.accentSecondary,
             bold: true,
           }),
         );
-        let y = 2.0;
+        let y = colY + 0.95;
         for (const b of right.bullets || []) {
-          instructions.push(addTxt('• ' + b, 6.8, y, 5.5, 0.5, { fontSize: 13 }));
+          instructions.push(addTxt('• ' + b, 7.15, y, 5.5, 0.5, { fontSize: 13 }));
           y += 0.55;
         }
       }
       if (content.conclusion) {
+        instructions.push({
+          op: 'addShape',
+          params: {
+            type: 'ROUNDED_RECTANGLE',
+            x: 0.5,
+            y: 6.2,
+            w: 12.3,
+            h: 0.72,
+            fillColor: colors.accentSecondary,
+            rectRadius: 0.1,
+          },
+        });
         instructions.push(
-          addTxt(content.conclusion as string, 0.8, 6.2, 11.7, 0.8, {
-            fontSize: 13,
+          addTxt(content.conclusion as string, 0.9, 6.27, 11.5, 0.6, {
+            fontSize: 15,
             fontFace: fonts.heading,
-            color: colors.textMuted,
-            italic: true,
+            color: colors.textOnDark,
+            bold: true,
             align: 'center',
+            valign: 'middle',
           }),
         );
       }
@@ -953,22 +1105,27 @@ function buildFallbackInstructions(
       // Dynamically compute step height so all steps fit within slide bounds (title ends at 1.2, leave 0.4" margin)
       const availableH = 7.5 - 1.2 - 0.4; // ≈ 5.9"
       const stepSpacing = steps.length > 0 ? availableH / steps.length : 1.4;
-      let y = 1.2;
+      // Wrap steps in one rounded panel + per-step number chips.
+      instructions.push(PANEL(0.5, 1.2, 12.3, Math.min(5.8, steps.length * stepSpacing + 0.4)));
+      let y = 1.4;
+      let si = 1;
       for (const s of steps) {
-        const titleH = Math.min(0.35, stepSpacing * 0.35);
-        const descH = Math.min(0.7, stepSpacing * 0.55);
+        const chipX = 0.85;
+        instructions.push(chipOv(chipX, y, 0.4));
+        instructions.push(chipNum(si, chipX, y, 0.4));
         instructions.push(
-          addTxt(s.title || '', 0.8, y, 11.7, titleH, {
+          addTxt(s.title || '', chipX + 0.55, y - 0.02, 11.2, 0.35, {
             fontSize: 15,
             fontFace: fonts.heading,
-            color: colors.accent,
+            color: colors.textPrimary,
             bold: true,
           }),
         );
         instructions.push(
-          addTxt(s.desc || '', 0.8, y + titleH + 0.05, 11.7, descH, { fontSize: 13 }),
+          addTxt(s.desc || '', chipX + 0.55, y + 0.4, 11.3, stepSpacing - 0.45, { fontSize: 13 }),
         );
         y += stepSpacing;
+        si++;
         if (y > 7.0) break; // hard stop before bottom
       }
       break;
@@ -1069,12 +1226,18 @@ function buildFallbackInstructions(
       const availableH = 7.5 - 1.5 - 0.5; // from y=1.5 to bottom margin
       const pointH = keyPoints.length > 0 ? Math.min(0.6, availableH / keyPoints.length) : 0.6;
       const spacing = keyPoints.length > 0 ? Math.min(0.7, availableH / keyPoints.length) : 0.7;
-      let y = 1.5;
-      for (const kp of keyPoints) {
-        instructions.push(addTxt(kp, 0.8, y, 11.7, pointH, { fontSize: 14 }));
+      // Wrap key points in one rounded panel + per-point number chips.
+      instructions.push(
+        PANEL(0.5, 1.4, 12.3, Math.min(5.6, keyPoints.length * spacing + 0.5)),
+      );
+      let y = 1.6;
+      keyPoints.forEach((kp, ki) => {
+        const chipX = 0.85;
+        instructions.push(chipOv(chipX, y, 0.4));
+        instructions.push(chipNum(ki + 1, chipX, y, 0.4));
+        instructions.push(addTxt(kp, chipX + 0.55, y - 0.02, 11.2, pointH, { fontSize: 14 }));
         y += spacing;
-        if (y > 6.8) break; // hard stop before bottom
-      }
+      });
       // Summary pages should NOT render formulas — formulas belong on concept/case/formula/process pages
       break;
     }
@@ -1124,45 +1287,269 @@ function buildFallbackInstructions(
     }
     case 'cover': {
       const subtitle = (content.subtitle as string) || '';
-      const tagline = (content.tagline as string) || '';
-      // Main title centered upper
+      // 中式封面：水墨底纹 + 竖排楷体标题 + 朱红印鉴
+      const isChineseStyle =
+        /中式|古典|水墨/.test(String(designDNA.styleName || '')) ||
+        designDNA.decoration?.motif === 'chinese-seal';
+      if (isChineseStyle) {
+        const ink = colors.accentSecondary || colors.textPrimary; // 深墨
+        const accent = colors.accent; // 朱红
+        const onDark = colors.textOnDark; // 暖白
+        // ── 背景装饰层（Z轴最底）──
+        instructions.push({
+          op: 'addShape',
+          params: {
+            type: 'OVAL',
+            x: -0.4,
+            y: 0.1,
+            w: 4.6,
+            h: 4.6,
+            fillColor: ink,
+            fillTransparency: 88,
+          },
+        });
+        instructions.push({
+          op: 'addShape',
+          params: {
+            type: 'OVAL',
+            x: 8.6,
+            y: 4.3,
+            w: 3.7,
+            h: 3.7,
+            fillColor: ink,
+            fillTransparency: 88,
+          },
+        });
+        // 主标题背后的淡朱光晕，为深墨标题托底形成对比
+        instructions.push({
+          op: 'addShape',
+          params: {
+            type: 'OVAL',
+            x: 8.4,
+            y: 1.1,
+            w: 3.9,
+            h: 4.1,
+            fillColor: accent,
+            fillTransparency: 92,
+          },
+        });
+        // 顶部 / 底部朱砂细边
+        for (const [yy, hh] of [
+          [0, 0.045],
+          [7.455, 0.045],
+        ] as const) {
+          instructions.push({
+            op: 'addShape',
+            params: {
+              type: 'RECTANGLE',
+              x: 0,
+              y: yy,
+              w: 13.33,
+              h: hh,
+              fillColor: accent,
+              fillTransparency: 30,
+            },
+          });
+        }
+        // 左侧朱红竖线（填充留白 + 划分信息区）
+        instructions.push({
+          op: 'addShape',
+          params: {
+            type: 'RECTANGLE',
+            x: 3.05,
+            y: 1.3,
+            w: 0.035,
+            h: 4.7,
+            fillColor: accent,
+            fillTransparency: 8,
+          },
+        });
+        // 底部深墨信息带（强对比、填底）
+        instructions.push({
+          op: 'addShape',
+          params: {
+            type: 'RECTANGLE',
+            x: 0,
+            y: 6.5,
+            w: 13.33,
+            h: 1.0,
+            fillColor: ink,
+          },
+        });
+        instructions.push({
+          op: 'addShape',
+          params: {
+            type: 'RECTANGLE',
+            x: 0,
+            y: 6.47,
+            w: 13.33,
+            h: 0.035,
+            fillColor: accent,
+          },
+        });
+        // ── 顶部学科标签 ──
+        instructions.push(
+          addTxt('OPTICS  ·  光 学', 0.8, 0.58, 6, 0.42, {
+            fontSize: 13,
+            fontFace: fonts.en,
+            color: accent,
+            bold: true,
+            charSpacing: 4,
+          }),
+        );
+        // ── 左侧竖排章节字（补白）──
+        ;['高', '中', '物', '理'].forEach((ch, i) => {
+          instructions.push(
+            addTxt(ch, 1.15, 1.95 + i * 0.5, 1.2, 0.5, {
+              fontSize: 18,
+              fontFace: 'KaiTi',
+              color: accent,
+              bold: true,
+              align: 'center',
+            }),
+          );
+        });
+        // ── 竖排主标题（首字朱红对比，余字深墨）──
+        const coverChars = String(content.title || title || '')
+          .replace(/\s/g, '')
+          .split('');
+        const ccH = 0.66;
+        const ccTotal = coverChars.length * ccH;
+        const ccStart = (7.2 - ccTotal) / 2;
+        coverChars.forEach((ch, i) => {
+          instructions.push(
+            addTxt(ch, 8.9, ccStart + i * ccH, 2.6, ccH, {
+              fontSize: Math.min(44, fonts.pageTitleSize),
+              fontFace: 'KaiTi',
+              color: i === 0 ? accent : ink,
+              bold: true,
+              align: 'center',
+            }),
+          );
+        });
+        // ── 朱红印章（logo 落款，置于信息带之上）──
+        instructions.push({
+          op: 'addShape',
+          params: {
+            type: 'RECTANGLE',
+            x: 12.15,
+            y: 6.62,
+            w: 0.78,
+            h: 0.78,
+            fillColor: accent,
+            lineColor: onDark,
+            lineWidth: 0.6,
+          },
+        });
+        instructions.push(
+          addTxt('雅', 12.15, 6.62, 0.78, 0.78, {
+            fontSize: 16,
+            fontFace: 'KaiTi',
+            color: onDark,
+            align: 'center',
+            valign: 'middle',
+            bold: true,
+          }),
+        );
+        // ── 底部信息带文字（白字，强对比）──
+        instructions.push(
+          addTxt(subtitle || '教学课件', 0.95, 6.68, 10, 0.6, {
+            fontSize: 20,
+            fontFace: fonts.heading,
+            color: onDark,
+            bold: true,
+            align: 'left',
+          }),
+        );
+        instructions.push(
+          addTxt('书 于 灯 火 处 · 传 授 光 之 理', 8.1, 6.72, 3.8, 0.5, {
+            fontSize: 11,
+            fontFace: fonts.en,
+            color: colors.accent,
+            align: 'right',
+            charSpacing: 2,
+          }),
+        );
+        return { pageNum, instructions: instructions as PageInstructions['instructions'] };
+      }
+      // Top-left EN micro-label (wide letter-spacing for a designed feel)
       instructions.push(
-        addTxt(title, 0.8, 2.0, 11.7, 1.0, {
-          fontSize: fonts.pageTitleSize + 4,
-          fontFace: fonts.heading,
-          color: colors.textPrimary,
-          bold: true,
-          align: 'center',
+        addTxt('TEACHING COURSEWARE', 0.8, 0.55, 8, 0.4, {
+          fontSize: 14,
+          fontFace: fonts.en,
+          color: colors.accent,
+          charSpacing: 6,
         }),
       );
-      // Decorative line
+      // Gold short overline above the main title
       instructions.push({
         op: 'addShape',
-        params: { shapeType: 'rect', x: 5.5, y: 3.2, w: 1.5, h: 0.04, fillColor: colors.accent },
+        params: {
+          type: 'RECTANGLE',
+          x: 0.8,
+          y: 1.85,
+          w: 1.1,
+          h: 0.06,
+          fillColor: colors.accent,
+        },
       });
-      // Subtitle
+      // Main title: oversized, left-aligned
+      instructions.push(
+        addTxt(title, 0.8, 2.2, 11.7, 1.3, {
+          fontSize: Math.max(fonts.pageTitleSize + 12, 56),
+          fontFace: fonts.heading,
+          color: colors.textOnDark,
+          bold: true,
+          charSpacing: 2,
+        }),
+      );
+      // Subtitle: smaller, with a small gold chip marker on the left
       if (subtitle) {
+        instructions.push({
+          op: 'addShape',
+          params: { type: 'RECTANGLE', x: 0.8, y: 3.78, w: 0.09, h: 0.32, fillColor: colors.accent },
+        });
         instructions.push(
-          addTxt(subtitle, 0.8, 3.5, 11.7, 0.7, {
-            fontSize: 18,
+          addTxt(subtitle, 1.05, 3.6, 9, 0.7, {
+            fontSize: 22,
             fontFace: fonts.body,
-            color: colors.textBody,
-            align: 'center',
+            color: colors.accentLight,
           }),
         );
       }
-      // Tagline at bottom
-      if (tagline) {
-        instructions.push(
-          addTxt(tagline, 0.8, 6.2, 11.7, 0.5, {
-            fontSize: 13,
-            fontFace: fonts.body,
-            color: colors.textMuted,
-            align: 'center',
-            italic: true,
-          }),
-        );
+      // Three progressively larger dots (concentric up), signature academic accent
+      const dotY = 4.55;
+      const dots: Array<[number, number, number]> = [
+        [0.8, 0.12, 30],
+        [1.1, 0.2, 45],
+        [1.5, 0.32, 60],
+      ];
+      for (const [x, d, t] of dots) {
+        instructions.push({
+          op: 'addShape',
+          params: {
+            type: 'OVAL',
+            x,
+            y: dotY - d / 2,
+            w: d,
+            h: d,
+            fillColor: colors.accent,
+            fillTransparency: t,
+          },
+        });
       }
+      // Footer anchoring hairline + date
+      instructions.push({
+        op: 'addShape',
+        params: { type: 'RECTANGLE', x: 0.5, y: 6.9, w: 12.33, h: 0.02, fillColor: colors.accent },
+      });
+      instructions.push(
+        addTxt('高中教学课件', 0.8, 6.55, 6, 0.4, {
+          fontSize: 12,
+          fontFace: fonts.body,
+          color: colors.accentLight,
+        }),
+      );
       break;
     }
     case 'end': {

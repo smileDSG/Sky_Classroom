@@ -460,7 +460,127 @@ export function deepRepairContent(
 
 // ── Inline LaTeX → Unicode Conversion ──────────────────────────────
 
-/** Convert inline $...$ LaTeX to Unicode. Block formulas $$...$$ are left as-is for addFormula. */
+const SUB_DIGITS: Record<string, string> = {
+  '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+  '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+};
+const SUPER_DIGITS: Record<string, string> = {
+  '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+  '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+};
+
+function mapToSub(num: string): string {
+  return num
+    .split('')
+    .map((d) => SUB_DIGITS[d] || d)
+    .join('');
+}
+function mapToSup(num: string): string {
+  return num
+    .split('')
+    .map((d) => SUPER_DIGITS[d] || d)
+    .join('');
+}
+
+/** Latin letter or Greek letter (variables used in math). */
+const VARIABLE_RE = '[A-Za-zα-ωΑ-Ω]';
+
+/**
+ * Lightweight "nice inline math" normalization for formulas that appear
+ * inside plain paragraphs WITHOUT `$...$` delimiters (LLMs often skip them).
+ *
+ * Turns the most jarring patterns into textbook-like form:
+ *   `θ1` → `θ₁`     `n2` → `n₂`      `10^8` → `10⁸`
+ *
+ * It only touches a variable/greek letter immediately followed by a short
+ * digit run (subscript) or `^...` (superscript), so it never rewrites
+ * ordinary prose such as years, page numbers or Chinese text (`第2步`).
+ */
+export function normalizeInlineMathText(text: string): string {
+  if (!/[0-9]/.test(text)) return text;
+  let s = text;
+  // Subscript: variable(greek/latin) + 1-2 digits, not glued to more words
+  s = s.replace(
+    new RegExp(`(${VARIABLE_RE})(\\d{1,2})(?![\\d${VARIABLE_RE}])`, 'g'),
+    (_m, v: string, num: string) => v + mapToSub(num),
+  );
+  // Superscript: base + ^<digits> (+/- charge kept)
+  s = s.replace(/([A-Za-z0-9])\^\{?([0-9]+)\}?/g, (_m, b: string, e: string) => b + mapToSup(e));
+  s = s.replace(/([A-Za-z])\^\{?([+-])\}?/g, (_m, b: string, ch: string) => b + (ch === '+' ? '⁺' : '⁻'));
+  return s;
+}
+
+/** Shared map of common LaTeX commands to their Unicode equivalents. */
+export const LATEX_CMD_UNICODE: Record<string, string> = {
+  '\\Delta': 'Δ',
+  '\\delta': 'δ',
+  '\\alpha': 'α',
+  '\\beta': 'β',
+  '\\gamma': 'γ',
+  '\\Gamma': 'Γ',
+  '\\pi': 'π',
+  '\\theta': 'θ',
+  '\\lambda': 'λ',
+  '\\mu': 'μ',
+  '\\sigma': 'σ',
+  '\\Sigma': 'Σ',
+  '\\omega': 'ω',
+  '\\Omega': 'Ω',
+  '\\phi': 'φ',
+  '\\Phi': 'Φ',
+  '\\psi': 'ψ',
+  '\\Psi': 'Ψ',
+  '\\rho': 'ρ',
+  '\\tau': 'τ',
+  '\\eta': 'η',
+  '\\epsilon': 'ε',
+  '\\varepsilon': 'ε',
+  '\\kappa': 'κ',
+  '\\chi': 'χ',
+  '\\nu': 'ν',
+  '\\xi': 'ξ',
+  '\\zeta': 'ζ',
+  '\\approx': '≈',
+  '\\rightarrow': '→',
+  '\\to': '→',
+  '\\leftarrow': '←',
+  '\\leftrightarrow': '↔',
+  '\\leq': '≤',
+  '\\geq': '≥',
+  '\\pm': '±',
+  '\\times': '×',
+  '\\div': '÷',
+  '\\cdot': '·',
+  '\\infty': '∞',
+  '\\partial': '∂',
+  '\\nabla': '∇',
+  '\\sqrt': '√',
+  '\\int': '∫',
+  '\\sum': '∑',
+  '\\prod': '∏',
+  '\\ln': 'ln',
+  '\\log': 'log',
+  '\\sin': 'sin',
+  '\\cos': 'cos',
+  '\\tan': 'tan',
+  '\\circ': '°',
+  '\\degree': '°',
+};
+
+/** Replace LaTeX commands with Unicode symbols and strip orphaned backslashes. */
+export function latexCommandToUnicode(text: string): string {
+  let result = text;
+  // Sort by length desc to avoid partial matches (e.g. \delta before \Delta)
+  const cmds = Object.keys(LATEX_CMD_UNICODE).sort((a, b) => b.length - a.length);
+  for (const cmd of cmds) {
+    result = result.split(cmd).join(LATEX_CMD_UNICODE[cmd]);
+  }
+  // Strip remaining orphaned backslashes (\word → word, \\ → \, \! → !)
+  result = result.replace(/\\([a-zA-Z]+)/g, '$1');
+  result = result.replace(/\\([^a-zA-Z])/g, '$1');
+  return result;
+}
+
 export function convertInlineLatexToUnicode(text: string): string {
   // ── Inline LaTeX → Unicode ──────────────────────────────────────────
   // Applies in order: longer patterns first to avoid partial matches.
@@ -606,7 +726,7 @@ export function convertInlineLatexToUnicode(text: string): string {
     return s;
   });
 
-  return result;
+  return latexCommandToUnicode(result);
 }
 
 // ── Unicode Math → LaTeX Conversion ────────────────────────────────

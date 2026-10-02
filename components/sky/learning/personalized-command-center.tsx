@@ -40,12 +40,12 @@ const ACTION_ICONS: Record<LearningInsightAction['tone'], ElementType> = {
 
 const ACTION_STYLES: Record<LearningInsightAction['tone'], string> = {
   review:
-    'text-amber-200 bg-amber-300/10 border-amber-200/20 shadow-[inset_0_1px_0_rgba(251,191,36,0.08)]',
-  quiz: 'text-violet-200 bg-violet-300/10 border-violet-200/20 shadow-[inset_0_1px_0_rgba(167,139,250,0.08)]',
+    'text-sky-200 bg-sky-300/10 border-sky-200/20 shadow-[inset_0_1px_0_rgba(56,189,248,0.08)]',
+  quiz: 'text-sky-200 bg-sky-300/10 border-sky-200/20 shadow-[inset_0_1px_0_rgba(56,189,248,0.08)]',
   memory:
     'text-rose-200 bg-rose-300/10 border-rose-200/20 shadow-[inset_0_1px_0_rgba(251,113,133,0.08)]',
   teaching:
-    'text-emerald-200 bg-emerald-300/10 border-emerald-200/20 shadow-[inset_0_1px_0_rgba(52,211,153,0.08)]',
+    'text-sky-200 bg-sky-300/10 border-sky-200/20 shadow-[inset_0_1px_0_rgba(56,189,248,0.08)]',
 };
 
 export function PersonalizedCommandCenter({
@@ -65,17 +65,17 @@ export function PersonalizedCommandCenter({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
-      className="relative overflow-hidden rounded-[24px] border border-emerald-200/20 bg-[#06101d] shadow-[0_24px_70px_rgba(0,0,0,0.36),0_0_0_1px_rgba(45,212,191,0.06),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur"
+      className="relative overflow-hidden rounded-[24px] border border-sky-200/20 bg-[#06101d] shadow-[0_24px_70px_rgba(0,0,0,0.36),0_0_0_1px_rgba(56,189,248,0.06),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur"
     >
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-200/70 to-transparent" />
-      <div className="relative border-b border-emerald-200/15 bg-[linear-gradient(135deg,#123346_0%,#0d223b_48%,#131a36_100%)] px-6 py-5 shadow-[inset_0_-1px_0_rgba(255,255,255,0.035)]">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-200/70 to-transparent" />
+      <div className="relative border-b border-sky-200/15 bg-[linear-gradient(135deg,#123346_0%,#0d223b_48%,#131a36_100%)] px-6 py-5 shadow-[inset_0_-1px_0_rgba(255,255,255,0.035)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200/30 bg-emerald-300/10 shadow-[0_0_24px_rgba(52,211,153,0.12)]">
-                <Sparkles className="h-4 w-4 text-emerald-200" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-200/30 bg-sky-300/10 shadow-[0_0_24px_rgba(56,189,248,0.12)]">
+                <Sparkles className="h-4 w-4 text-sky-200" />
               </span>
-              <span className="rounded-full border border-emerald-200/25 bg-emerald-300/10 px-2.5 py-1 text-xs font-semibold tracking-wide text-emerald-100">
+              <span className="rounded-full border border-sky-200/25 bg-sky-300/10 px-2.5 py-1 text-xs font-semibold tracking-wide text-sky-100">
                 个性化学习决策
               </span>
             </div>
@@ -84,8 +84,8 @@ export function PersonalizedCommandCenter({
               {insights.focusReason}
             </p>
           </div>
-          <div className="rounded-2xl border border-emerald-200/25 bg-[#07111f]/70 px-4 py-3 text-right shadow-[0_10px_30px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.04)]">
-            <div className="text-[11px] font-medium text-emerald-100/75">当前策略</div>
+          <div className="rounded-2xl border border-sky-200/25 bg-[#07111f]/70 px-4 py-3 text-right shadow-[0_10px_30px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="text-[11px] font-medium text-sky-100/75">当前策略</div>
             <div className="mt-0.5 text-base font-semibold text-white">
               {insights.strategyLabel}
             </div>
@@ -139,7 +139,7 @@ export function PersonalizedCommandCenter({
                 <Link
                   key={`${action.tone}-${action.href}`}
                   href={action.href}
-                  className="group rounded-xl border border-cyan-100/10 bg-[#0c182b] px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-all hover:-translate-y-0.5 hover:border-emerald-200/35 hover:bg-[#10223a]"
+                  className="group rounded-xl border border-sky-100/10 bg-[#0c182b] px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-all hover:-translate-y-0.5 hover:border-sky-200/35 hover:bg-[#10223a]"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex min-w-0 items-center gap-2">
@@ -155,7 +155,7 @@ export function PersonalizedCommandCenter({
                         {action.label}
                       </span>
                     </span>
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-200" />
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform group-hover:translate-x-0.5 group-hover:text-sky-200" />
                   </div>
                   <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-300">
                     {action.description}
@@ -167,7 +167,7 @@ export function PersonalizedCommandCenter({
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-xl border border-cyan-100/10 bg-[#0b1729]/75 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]">
+          <div className="rounded-xl border border-sky-100/10 bg-[#0b1729]/75 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
                 <Target className="h-4 w-4 text-rose-200" />
@@ -177,7 +177,7 @@ export function PersonalizedCommandCenter({
                 <button
                   type="button"
                   onClick={() => onPrioritizeReview(priorityTopics)}
-                  className="rounded-lg border border-emerald-200/20 bg-emerald-300/10 px-2.5 py-1 text-[11px] font-medium text-emerald-100 transition-colors hover:border-emerald-200/45 hover:bg-emerald-300/15"
+                  className="rounded-lg border border-sky-200/20 bg-sky-300/10 px-2.5 py-1 text-[11px] font-medium text-sky-100 transition-colors hover:border-sky-200/45 hover:bg-sky-300/15"
                 >
                   加入复习
                 </button>
@@ -190,18 +190,18 @@ export function PersonalizedCommandCenter({
                     key={topic.name}
                     type="button"
                     onClick={() => onOpenTab('graph')}
-                    className="group w-full rounded-lg border border-cyan-100/10 bg-[#081423] p-3 text-left transition-colors hover:border-emerald-200/35 hover:bg-[#0e2036]"
+                    className="group w-full rounded-lg border border-sky-100/10 bg-[#081423] p-3 text-left transition-colors hover:border-sky-200/35 hover:bg-[#0e2036]"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-cyan-100/10 bg-cyan-200/10 text-[10px] font-semibold text-cyan-100">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-sky-100/10 bg-sky-200/10 text-[10px] font-semibold text-sky-100">
                           {index + 1}
                         </span>
                         <span className="min-w-0 truncate text-sm font-semibold text-slate-100">
                           {topic.name}
                         </span>
                       </span>
-                      <span className="shrink-0 rounded-full border border-cyan-100/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-slate-200">
+                      <span className="shrink-0 rounded-full border border-sky-100/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-slate-200">
                         {topic.mastery}%
                       </span>
                     </div>
@@ -212,19 +212,19 @@ export function PersonalizedCommandCenter({
                 ))}
               </div>
             ) : (
-              <div className="rounded-lg border border-dashed border-cyan-100/15 bg-[#081423] p-4 text-sm text-slate-300">
+              <div className="rounded-lg border border-dashed border-sky-100/15 bg-[#081423] p-4 text-sm text-slate-300">
                 还没有足够数据定位薄弱点，先通过拍照搜题或针对练习补充样本。
               </div>
             )}
           </div>
 
-          <div className="rounded-xl border border-cyan-100/10 bg-[#0b1729]/75 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]">
+          <div className="rounded-xl border border-sky-100/10 bg-[#0b1729]/75 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
-                <Activity className="h-4 w-4 text-indigo-200" />
+                <Activity className="h-4 w-4 text-blue-200" />
                 学习记录质量
               </div>
-              <span className="text-xs font-semibold text-indigo-100">
+              <span className="text-xs font-semibold text-blue-100">
                 {insights.dataHealth.label} · {insights.dataHealth.score}%
               </span>
             </div>
@@ -235,7 +235,7 @@ export function PersonalizedCommandCenter({
                     <CheckCircle2
                       className={cn(
                         'h-3.5 w-3.5 shrink-0',
-                        signal.ready ? 'text-emerald-200' : 'text-slate-500',
+                        signal.ready ? 'text-sky-200' : 'text-slate-500',
                       )}
                     />
                     <span className="text-xs font-medium text-slate-200">{signal.label}</span>
@@ -253,7 +253,7 @@ export function PersonalizedCommandCenter({
                     key={item.cause}
                     type="button"
                     onClick={() => onOpenTab('stats')}
-                    className="rounded-full border border-cyan-100/10 bg-white/[0.04] px-2 py-1 text-[11px] font-medium text-slate-300 transition-colors hover:border-indigo-200/35 hover:text-indigo-100"
+                    className="rounded-full border border-sky-100/10 bg-white/[0.04] px-2 py-1 text-[11px] font-medium text-slate-300 transition-colors hover:border-blue-200/35 hover:text-blue-100"
                   >
                     {item.label} {item.count}
                   </button>
@@ -265,10 +265,10 @@ export function PersonalizedCommandCenter({
           <button
             type="button"
             onClick={() => onOpenTab('profile')}
-            className="flex w-full items-center justify-between rounded-xl border border-cyan-100/10 bg-[#0c182b] px-3 py-2.5 text-left transition-colors hover:border-indigo-200/35 hover:bg-[#10223a]"
+            className="flex w-full items-center justify-between rounded-xl border border-sky-100/10 bg-[#0c182b] px-3 py-2.5 text-left transition-colors hover:border-blue-200/35 hover:bg-[#10223a]"
           >
             <span className="flex items-center gap-2 text-sm font-semibold text-slate-100">
-              <Route className="h-4 w-4 text-indigo-200" />
+              <Route className="h-4 w-4 text-blue-200" />
               查看完整学习情况
             </span>
             <ArrowRight className="h-3.5 w-3.5 text-slate-500" />
@@ -295,17 +295,17 @@ function MetricCard({
   tone: 'amber' | 'emerald' | 'sky' | 'violet';
 }) {
   const toneClass = {
-    amber: 'text-amber-200 bg-amber-300/10 border-amber-200/20',
-    emerald: 'text-emerald-200 bg-emerald-300/10 border-emerald-200/20',
+    amber: 'text-sky-200 bg-sky-300/10 border-sky-200/20',
+    emerald: 'text-sky-200 bg-sky-300/10 border-sky-200/20',
     sky: 'text-sky-200 bg-sky-300/10 border-sky-200/20',
-    violet: 'text-violet-200 bg-violet-300/10 border-violet-200/20',
+    violet: 'text-sky-200 bg-sky-300/10 border-sky-200/20',
   }[tone];
 
   return (
     <div
       className={cn(
         'rounded-xl border bg-[#0c182b] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]',
-        active ? 'border-emerald-200/25 bg-[#10223a]' : 'border-cyan-100/10',
+        active ? 'border-sky-200/25 bg-[#10223a]' : 'border-sky-100/10',
       )}
     >
       <div className="flex items-center gap-2 text-xs font-medium text-slate-300">

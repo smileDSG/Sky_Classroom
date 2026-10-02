@@ -12,6 +12,7 @@ export interface UserStatsEntry {
   date: string; // YYYY-MM-DD
   studySeconds: number; // Real study time in seconds
   checkinStreak: number; // Consecutive check-in days
+  peakStreak: number; // Longest consecutive streak (retained across breaks)
   masteryScore: number; // Comprehensive mastery score (0-100)
   problemsAttempted: number;
   problemsCorrect: number;
@@ -48,6 +49,7 @@ export function createUserStatsDAO(storage: StorageProvider) {
         date: d,
         studySeconds: 0,
         checkinStreak: 0,
+        peakStreak: 0,
         masteryScore: 0,
         problemsAttempted: 0,
         problemsCorrect: 0,

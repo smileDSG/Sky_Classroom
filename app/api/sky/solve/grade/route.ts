@@ -21,6 +21,7 @@ import { injectTeachingProjection } from '@/lib/assistant/context-injector';
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
 import { adaptiveLearningApiError } from '@/lib/adaptive-learning/api-error';
 import { getLearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('API:SkySolveGrade');
 
@@ -183,7 +184,11 @@ export async function POST(req: Request) {
       } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         log.error('错题本存储失败:', errMsg, e instanceof Error ? e.stack : '');
-        return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, `错题本存储失败: ${errMsg}`);
+        return apiError(
+          API_ERROR_CODES.INTERNAL_ERROR,
+          500,
+          `错题本存储失败: ${safeErrorMessage(e)}`,
+        );
       }
     }
 
@@ -203,7 +208,7 @@ export async function POST(req: Request) {
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       '批改失败',
-      err instanceof Error ? err.message : undefined,
+      err instanceof Error ? safeErrorMessage(err) : undefined,
     );
   }
 }

@@ -70,17 +70,28 @@ describe('software cup LLM RAG generation', () => {
     expect(result.reviewResult.suggestions).toContain('Keep citations visible.');
   });
 
-  it('falls back to deterministic demo resources when LLM fails', async () => {
+  it('never silently returns demo resources when the LLM fails — it rejects instead', async () => {
     const { callLLM } = await import('@/lib/ai/llm');
     const { runSoftwareCupGeneration } = await import('@/lib/software-cup/demo-service');
 
     vi.mocked(callLLM).mockRejectedValueOnce(new Error('LLM unavailable'));
 
-    const result = await runSoftwareCupGeneration('I need RAG resources.', { enableLlm: true });
+    await expect(
+      runSoftwareCupGeneration('I need RAG resources.', { enableLlm: true }),
+    ).rejects.toThrow('LLM unavailable');
 
     expect(callLLM).toHaveBeenCalledTimes(1);
-    expect(result.generationMode).toBe('demo_fallback');
-    expect(result.resources.length).toBeGreaterThan(0);
-    expect(result.resources[0].content?.length ?? 0).toBeGreaterThan(180);
+  });
+
+  it('rejects on invalid/empty LLM output instead of falling back to demo resources', async () => {
+    const { callLLM } = await import('@/lib/ai/llm');
+    const { runSoftwareCupGeneration } = await import('@/lib/software-cup/demo-service');
+
+    // Not a valid resource patch array -> merge yields 0 applied patches -> must throw.
+    vi.mocked(callLLM).mockResolvedValueOnce(JSON.stringify({ resources: [] }) as any);
+
+    await expect(
+      runSoftwareCupGeneration('I need RAG resources.', { enableLlm: true }),
+    ).rejects.toThrow('未输出可用的学习资源');
   });
 });

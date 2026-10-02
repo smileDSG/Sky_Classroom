@@ -15,8 +15,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 import { buildStudentProfile, invalidateProfileCache } from '@/lib/student/profile-builder';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { resolveSubject } from '@/lib/student/profile-config';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
@@ -27,10 +29,32 @@ import { getSession } from '../route';
 
 const log = createLogger('TeachingDiagnosticSubmitAPI');
 
+const SubmitSchema = z.object({
+  sessionId: z.string().min(1).max(200),
+  answers: z
+    .array(
+      z.object({
+        questionId: z.number().int().optional(),
+        selectedOption: z.number().int().optional(),
+      }),
+    )
+    .min(1)
+    .max(200),
+  topic: z.string().max(200).optional().default('前置知识诊断'),
+});
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, answers, topic = '前置知识诊断' } = body;
+    const parsed = SubmitSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: `Validation failed: ${parsed.error.issues[0].message}` },
+        { status: 400 },
+      );
+    }
+
+    const { sessionId, answers, topic } = parsed.data;
 
     if (!sessionId || typeof sessionId !== 'string') {
       return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 });
@@ -155,7 +179,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Diagnostic submission failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

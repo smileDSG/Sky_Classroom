@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   '/api/server-providers',
   '/api/sky/enrichment',
   '/sky/software-cup',
+  '/sky/pet-buddy', // TEMP-DIAG: playwright headless debug
   '/sky/cloud-mind/course-studio',
   '/sky/study-lab',
   '/api/sky/cloud-mind/personalization-context',
@@ -31,6 +32,8 @@ const STATIC_PREFIXES = [
   '/sw.js',
   '/logos/',
   '/avatars/',
+  '/live2d/',
+  '/vendor/',
   '/logo-icon.svg',
   '/logo-horizontal.png',
   '/logo-app-icon.png',
@@ -106,6 +109,6 @@ function redirectToLogin(request: NextRequest, pathname: string): NextResponse {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png|logo-app-icon\\.png|sky-observatory\\.jpg).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|logos/|avatars/|live2d/|logo-icon\\.svg|logo-horizontal\\.png|logo-app-icon\\.png|sky-observatory\\.jpg).*)',
   ],
 };

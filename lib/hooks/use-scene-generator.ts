@@ -4,13 +4,12 @@ import { useCallback, useRef } from 'react';
 import { useStageStore } from '@/lib/store/stage';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { useSettingsStore } from '@/lib/store/settings';
-import { db } from '@/lib/utils/database';
 import type { SceneOutline, PdfImage, ImageMapping } from '@/lib/types/generation';
 import type { AgentInfo } from '@/lib/generation/generation-pipeline';
 import type { Scene } from '@/lib/types/stage';
 import type { SpeechAction } from '@/lib/types/action';
 import { splitLongSpeechActions } from '@/lib/audio/tts-utils';
-import { getVoxCPMProviderOptions } from '@/lib/audio/voxcpm-voices';
+import { generateAndStoreTTS } from '@/lib/audio/client-tts';
 import { generateMediaForOutlines } from '@/lib/media/media-orchestrator';
 import { createLogger } from '@/lib/logger';
 
@@ -124,64 +123,6 @@ async function fetchSceneActions(
   }
 
   return response.json();
-}
-
-/** Generate TTS for one speech action and store in IndexedDB */
-export async function generateAndStoreTTS(
-  audioId: string,
-  text: string,
-  language?: string,
-  signal?: AbortSignal,
-): Promise<void> {
-  const settings = useSettingsStore.getState();
-  if (settings.ttsProviderId === 'browser-native-tts') return;
-
-  const ttsProviderConfig = settings.ttsProvidersConfig?.[settings.ttsProviderId];
-  const providerOptions =
-    settings.ttsProviderId === 'voxcpm-tts'
-      ? {
-          ...(ttsProviderConfig?.providerOptions || {}),
-          ...(await getVoxCPMProviderOptions(settings.ttsVoice, { role: 'teacher', language })),
-        }
-      : undefined;
-  const response = await fetch('/api/generate/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text,
-      audioId,
-      ttsProviderId: settings.ttsProviderId,
-      ttsModelId: ttsProviderConfig?.modelId,
-      ttsVoice: settings.ttsVoice,
-      ttsSpeed: settings.ttsSpeed,
-      ttsProviderOptions: providerOptions,
-    }),
-    signal,
-  });
-
-  const data = await response
-    .json()
-    .catch(() => ({ success: false, error: response.statusText || 'Invalid TTS response' }));
-  if (!response.ok || !data.success || !data.base64 || !data.format) {
-    const err = new Error(
-      data.details || data.error || `TTS request failed: HTTP ${response.status}`,
-    );
-    log.warn('TTS failed for', audioId, ':', err);
-    throw err;
-  }
-
-  const binary = atob(data.base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  const blob = new Blob([bytes], { type: `audio/${data.format}` });
-  await db.audioFiles.put({
-    id: audioId,
-    blob,
-    format: data.format,
-    createdAt: Date.now(),
-  });
 }
 
 /** Generate TTS for all speech actions in a scene. Returns result. */

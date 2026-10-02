@@ -24,6 +24,8 @@ export interface SolveJob {
     similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
     fromQuestionBank: boolean;
     fromSolveCache: boolean;
+    answerReview?: 'verified' | 'corrected' | 'pending-confirmation' | 'skipped';
+    verified?: boolean;
     solvingTime: number;
   };
   error?: string;

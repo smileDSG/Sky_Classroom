@@ -14,6 +14,7 @@ import { verifyAccessToken } from '@/lib/server/auth';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { deriveQuizParamsFromProfile } from '@/lib/student/quiz-param-deriver';
 import { getSubjectLabelOrSelf } from '@/lib/mistakes/subject-inference';
+import type { QuizQuestionType } from '@/lib/agents/cloud-mind/quiz-agent';
 import {
   createCloudMindQuizJob,
   getCloudMindQuizJob,
@@ -22,6 +23,8 @@ import { runCloudMindQuizJob } from '@/lib/server/cloud-mind-quiz-job-runner';
 import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personalization';
 import { requireAuth } from '@/lib/server/auth/helpers';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
+import { normalizeQuizGoal, type QuizGoal } from '@/lib/cloud-mind/quiz-experience';
 
 const log = createLogger('API:CloudMindQuiz');
 
@@ -30,8 +33,14 @@ export const maxDuration = 60;
 const DIFFICULTIES = new Set(['easy', 'medium', 'hard']);
 type QuizDifficulty = 'easy' | 'medium' | 'hard';
 
+const QUESTION_TYPES = new Set(['choice', 'fill', 'judge']);
+
 function normalizeDifficulty(value: string): QuizDifficulty {
   return DIFFICULTIES.has(value) ? (value as QuizDifficulty) : 'medium';
+}
+
+function normalizeQuestionType(value: string): QuizQuestionType {
+  return QUESTION_TYPES.has(value) ? (value as QuizQuestionType) : 'choice';
 }
 
 async function resolveUserId(): Promise<string | null> {
@@ -51,15 +60,19 @@ async function resolveJobInput(body: unknown): Promise<{
   difficulty: QuizDifficulty;
   topic: string;
   count: number;
+  questionType: QuizQuestionType;
+  goal: QuizGoal;
   profile?: Awaited<ReturnType<typeof buildStudentProfile>>;
   profileInjected: boolean;
   derived?: { subject: string; difficulty: string; topic: string; count: number };
 }> {
-  const { subject, difficulty, topic, count, auto } = (body ?? {}) as {
+  const { subject, difficulty, topic, count, questionType, goal, auto } = (body ?? {}) as {
     subject?: string;
     difficulty?: string;
     topic?: string;
     count?: number;
+    questionType?: string;
+    goal?: string;
     auto?: boolean;
   };
 
@@ -84,12 +97,15 @@ async function resolveJobInput(body: unknown): Promise<{
   const finalDifficulty = normalizeDifficulty(difficulty || derived?.difficulty || 'medium');
   const finalTopic = topic || derived?.topic || '';
   const questionCount = Math.min(Math.max(count || derived?.count || 5, 1), 20);
+  const finalQuestionType = normalizeQuestionType(questionType ?? '');
 
   return {
     subject: finalSubject,
     difficulty: finalDifficulty,
     topic: finalTopic,
     count: questionCount,
+    questionType: finalQuestionType,
+    goal: normalizeQuizGoal(goal),
     profile,
     profileInjected: Boolean(profile),
     derived,
@@ -109,6 +125,8 @@ export async function POST(req: NextRequest) {
       difficulty: input.difficulty,
       topic: input.topic,
       count: input.count,
+      questionType: input.questionType,
+      goal: input.goal,
       profileInjected: input.profileInjected,
       derived: input.derived,
     });
@@ -120,12 +138,14 @@ export async function POST(req: NextRequest) {
         difficulty: input.difficulty,
         topic: input.topic,
         count: input.count,
+        questionType: input.questionType,
+        goal: input.goal,
         profile: input.profile,
       }),
     );
 
     log.info(
-      `Quiz job created: ${jobId} for ${getSubjectLabelOrSelf(input.subject)} / ${input.difficulty} / ${input.count}`,
+      `Quiz job created: ${jobId} for ${getSubjectLabelOrSelf(input.subject)} / ${input.difficulty} / ${input.questionType} / ${input.count}`,
     );
 
     return apiSuccess(
@@ -142,7 +162,12 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Quiz generation enqueue failed:', message);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '创建智能出题任务失败', message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      '创建智能出题任务失败',
+      safeErrorMessage(error),
+    );
   }
 }
 
@@ -168,12 +193,18 @@ export async function GET(req: NextRequest) {
       phase: job.phase,
       progress: job.progress,
       result: job.result,
+      backfill: job.backfill,
       error: job.error,
       done: job.status === 'completed' || job.status === 'failed',
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Quiz job poll failed:', message);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '获取智能出题状态失败', message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      '获取智能出题状态失败',
+      safeErrorMessage(error),
+    );
   }
 }

@@ -42,9 +42,9 @@ const coverDecorations = {
 
 // ── Theme 1: Sky Blue → 蓝模板 (Nana Gradients: pink + blue) ───────
 
-export const SKY_BLUE_THEME: ThemeToken = {
-  id: 'sky-blue',
-  name: '天空蓝',
+export const ACADEMIC_NAVY_THEME: ThemeToken = {
+  id: 'academic-navy',
+  name: '学术深蓝',
   description: 'Nana Gradients 粉蓝渐变，活泼现代',
   coverBg: '#FFA4AB',
   coverBgGradient: { from: '#FFA4AB', to: '#A9DCE7', angle: 135 },
@@ -59,7 +59,7 @@ export const SKY_BLUE_THEME: ThemeToken = {
   bodyMutedColor: '#64748b',
   pageNumColor: '#ECAFCC',
   dividerColor: '#ffd1d5',
-  fontFamily: 'Microsoft YaHei',
+  fontFamily: 'Noto Sans SC',
   headingFont: 'Montserrat',
   coverTitleSize: 40,
   coverSubSize: 20,
@@ -106,7 +106,7 @@ export const MINIMAL_THEME: ThemeToken = {
   bodyMutedColor: '#888888',
   pageNumColor: '#49DE93',
   dividerColor: '#e0ffee',
-  fontFamily: 'Microsoft YaHei',
+  fontFamily: 'Noto Sans SC',
   headingFont: 'Inter',
   coverTitleSize: 42,
   coverSubSize: 20,
@@ -157,7 +157,7 @@ export const ACADEMIC_THEME: ThemeToken = {
   bodyMutedColor: '#666666',
   pageNumColor: '#FFA4A1',
   dividerColor: '#ffe4e1',
-  fontFamily: 'Microsoft YaHei',
+  fontFamily: 'Noto Sans SC',
   headingFont: 'Georgia',
   coverTitleSize: 38,
   coverSubSize: 18,
@@ -209,7 +209,7 @@ export const TECH_DARK_THEME: ThemeToken = {
   bodyMutedColor: '#a89fd6',
   pageNumColor: '#FF8E9E',
   dividerColor: '#695A9F',
-  fontFamily: 'Microsoft YaHei',
+  fontFamily: 'Noto Sans SC',
   headingFont: 'JetBrains Mono',
   coverTitleSize: 40,
   coverSubSize: 20,
@@ -261,7 +261,7 @@ export const NATURE_FRESH_THEME: ThemeToken = {
   bodyMutedColor: '#757575',
   pageNumColor: '#81C784',
   dividerColor: '#C8E6C9',
-  fontFamily: 'Microsoft YaHei',
+  fontFamily: 'Noto Sans SC',
   headingFont: 'Microsoft YaHei',
   coverTitleSize: 40,
   coverSubSize: 20,
@@ -313,7 +313,7 @@ export const MACARON_PINK_THEME: ThemeToken = {
   bodyMutedColor: '#64748b',
   pageNumColor: '#d8b4d9',
   dividerColor: '#f5d0fe',
-  fontFamily: 'Microsoft YaHei',
+  fontFamily: 'Noto Sans SC',
   headingFont: 'Montserrat',
   coverTitleSize: 40,
   coverSubSize: 20,
@@ -370,7 +370,7 @@ export const HANDDRAWN_THEME: ThemeToken = {
   bodyMutedColor: '#A09080',
   pageNumColor: '#D4A574',
   dividerColor: '#E8DCC8',
-  fontFamily: 'Microsoft YaHei',
+  fontFamily: 'Noto Sans SC',
   headingFont: 'Comic Sans MS',
   coverTitleSize: 38,
   coverSubSize: 18,
@@ -411,7 +411,7 @@ export const HANDDRAWN_THEME: ThemeToken = {
 // ── Registry ───────────────────────────────────────────────────────
 
 export const ALL_THEMES: ThemeToken[] = [
-  SKY_BLUE_THEME,
+  ACADEMIC_NAVY_THEME,
   MINIMAL_THEME,
   ACADEMIC_THEME,
   TECH_DARK_THEME,
@@ -425,7 +425,9 @@ export const THEME_MAP: Record<string, ThemeToken> = Object.fromEntries(
 );
 
 export function getThemeById(id: string): ThemeToken {
-  return THEME_MAP[id] || NATURE_FRESH_THEME;
+  // 兼容别名：历史记录的 'sky-blue' 映射到更名后的 'academic-navy'
+  const resolved = id === 'sky-blue' ? 'academic-navy' : id;
+  return THEME_MAP[resolved] || NATURE_FRESH_THEME;
 }
 
 export function getAllThemeIds(): string[] {

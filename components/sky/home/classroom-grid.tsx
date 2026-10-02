@@ -243,7 +243,7 @@ function ClassroomCard({
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-blue-100 dark:from-violet-900/30 dark:to-blue-900/30 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-100 to-blue-100 dark:from-sky-900/30 dark:to-blue-900/30 flex items-center justify-center">
                   <span className="text-2xl opacity-50">📄</span>
                 </div>
               </div>
@@ -419,14 +419,11 @@ export function ClassroomGrid({
     >
       {/* 标题栏 */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-500/25">
-            <Clock className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{'最近学习'}</h2>
-            <p className="text-sm text-slate-500">共 {classrooms.length} 个课堂</p>
-          </div>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">全部课堂</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            共 {classrooms.length} 个，可搜索、重命名或删除
+          </p>
         </div>
 
         <div className="flex items-center gap-3">

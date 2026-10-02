@@ -61,7 +61,7 @@ describe('exportPptx with DesignDNA template', () => {
     const result = await exportPptx({
       title: '勾股定理',
       slides,
-      theme: 'sky-blue',
+      theme: 'academic-navy',
       designDNA: templateDNA('split-panel'),
       layoutMode: 'ai',
     });

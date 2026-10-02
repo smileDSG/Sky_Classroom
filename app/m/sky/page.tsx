@@ -39,6 +39,9 @@ import { SpeechButton } from '@/components/audio/speech-button';
 import { STUDENT_OPTIONS, TEACHER_OPTIONS } from '@/components/sky/home/agent-selector';
 import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
 import { MobileStudyCompanionCarousel } from '@/components/mobile/home/mobile-study-companion-carousel';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { SimpleModeToggle } from '@/components/sky/layout/simple-mode-toggle';
+import { fetchStreakStateClient } from '@/lib/retention/streak-client';
 
 function getGreeting(isDark: boolean): string {
   const hour = new Date().getHours();
@@ -645,6 +648,9 @@ export default function MobileSkyHomePage() {
     streakDays: 0,
     masteryPercent: 0,
   });
+  // 简洁模式 / 连续天数（跨端同步，来自 RetentionSlice）
+  const simpleMode = useSkyClassroomStore((s) => s.simpleMode);
+  const streakCache = useSkyClassroomStore((s) => s.streakCache);
 
   useEffect(() => {
     syncMistakesFromQuizzes();
@@ -669,6 +675,15 @@ export default function MobileSkyHomePage() {
       })
       .catch(() => {});
   }, [user]);
+
+  // 拉取连续天数（失败则用本地 stats.streakDays 兜底）
+  useEffect(() => {
+    if (!streakCache) {
+      void fetchStreakStateClient().then((state) => {
+        if (state) useSkyClassroomStore.setState({ streakCache: state });
+      });
+    }
+  }, [streakCache]);
 
   const handleRequirementChange = (value: string) => {
     setRequirement(value);
@@ -776,7 +791,12 @@ export default function MobileSkyHomePage() {
     },
     {
       label: '打卡',
-      value: stats.streakDays > 0 ? `${stats.streakDays}` : '-',
+      value:
+        streakCache?.currentStreak != null && streakCache.currentStreak > 0
+          ? `${streakCache.currentStreak}`
+          : stats.streakDays > 0
+            ? `${stats.streakDays}`
+            : '-',
       icon: CalendarCheck,
       iconClass: 'bg-pink-400/12 text-pink-300',
     },
@@ -791,7 +811,9 @@ export default function MobileSkyHomePage() {
   return (
     <MobileSkyShell fullBleed>
       <div className="relative flex flex-col">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-gradient-to-b from-sky-600/30 via-indigo-600/15 to-transparent" />
+        {!simpleMode && (
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-gradient-to-b from-sky-600/30 via-indigo-600/15 to-transparent" />
+        )}
 
         <section
           data-testid="mobile-home-greeting"
@@ -848,6 +870,8 @@ export default function MobileSkyHomePage() {
         </section>
 
         <div className="relative space-y-4 px-4 pb-24">
+          {!simpleMode && <SimpleModeToggle />}
+
           <MobileCloudMindSection />
 
           <MobileSkyTeachingSection>

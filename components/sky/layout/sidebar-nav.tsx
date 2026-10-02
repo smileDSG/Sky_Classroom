@@ -5,47 +5,31 @@ import { usePathname } from 'next/navigation';
 import {
   BookOpenCheck,
   ChevronRight,
-  FlaskConical,
   Home,
   LibraryBig,
   PanelLeft,
   PanelLeftClose,
   Presentation,
-  Sparkles,
   Settings,
+  Sparkles,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { SECTION_GROUPS, type SkySection } from './sky-section-nav';
+import {
+  getSkySection,
+  isSkySectionVisible,
+  SECTION_GROUPS,
+  SECTION_META,
+  type SkySection,
+} from './sky-section-nav';
 import { cn } from '@/lib/utils';
+import { useQuickIdentity } from '@/lib/hooks/use-quick-identity';
+import { CloudDoodle, DotGridBg, MountainDoodle, RocketDoodle } from '@/components/sky/pattern/sky-doodles';
 
-const SECTIONS: Array<{ key: SkySection; label: string; icon: typeof BookOpenCheck }> = [
-  { key: 'learning', label: '学习工作台', icon: BookOpenCheck },
-  { key: 'resources', label: '学习资源', icon: LibraryBig },
-  { key: 'teaching', label: '备课工作区', icon: Presentation },
+const SECTIONS: Array<{ key: SkySection; icon: typeof BookOpenCheck }> = [
+  { key: 'learning', icon: BookOpenCheck },
+  { key: 'resources', icon: LibraryBig },
+  { key: 'teaching', icon: Presentation },
 ];
-
-function isSectionActive(pathname: string, section: SkySection): boolean {
-  if (section === 'learning') {
-    return (
-      pathname === '/sky' ||
-      pathname.startsWith('/sky/learning') ||
-      pathname.startsWith('/sky/study-lab') ||
-      pathname.startsWith('/sky/student')
-    );
-  }
-
-  if (section === 'resources') {
-    return (
-      (pathname.startsWith('/sky/cloud-mind') &&
-        !pathname.startsWith('/sky/cloud-mind/teaching')) ||
-      pathname.startsWith('/sky/assistant') ||
-      pathname.startsWith('/sky/solve') ||
-      pathname.startsWith('/sky/slides')
-    );
-  }
-
-  return pathname.startsWith('/sky/teaching') || pathname.startsWith('/sky/cloud-mind/teaching');
-}
 
 function isItemActive(pathname: string, item: { href: string; exact?: boolean }): boolean {
   if (item.href.includes('#') || item.href.includes('?')) return false;
@@ -70,6 +54,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
   const pathname = usePathname();
   const navigationRef = useRef<HTMLElement>(null);
   const [expandedSections, setExpandedSections] = useState(INITIAL_EXPANDED_SECTIONS);
+  const identity = useQuickIdentity();
 
   const persistScrollPosition = () => {
     const scrollTop = navigationRef.current?.scrollTop;
@@ -86,7 +71,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
   }, []);
 
   useEffect(() => {
-    const activeSection = SECTIONS.find((section) => isSectionActive(pathname, section.key));
+    const activeSection = SECTIONS.find((section) => getSkySection(pathname) === section.key);
     if (!activeSection) return;
 
     setExpandedSections((current) =>
@@ -98,6 +83,8 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
     setExpandedSections((current) => ({ ...current, [section]: !current[section] }));
   };
 
+  const visibleSections = SECTIONS.filter((section) => isSkySectionVisible(section.key, identity));
+
   return (
     <aside
       data-sky-sidebar
@@ -107,11 +94,12 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
         collapsed ? 'w-[72px]' : 'w-[248px]',
       )}
     >
-      <div className="relative flex h-16 shrink-0 items-center justify-between gap-2 border-b border-slate-200/70 px-4 dark:border-cyan-100/10">
+      <div className="relative flex h-16 shrink-0 items-center justify-between gap-2 overflow-hidden border-b border-slate-200/70 px-4 dark:border-cyan-100/10">
+        <DotGridBg className="opacity-60" />
         <Link
           href="/"
           aria-label="返回天空课堂首页"
-          className={cn('flex min-w-0 items-center gap-2.5', collapsed && 'justify-center')}
+          className={cn('relative flex min-w-0 items-center gap-2.5', collapsed && 'justify-center')}
         >
           <img src="/logo-icon.svg" alt="天空课堂" className="h-8 w-8 shrink-0" />
           {!collapsed && (
@@ -149,15 +137,16 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
         aria-label="工作区分区"
       >
         {!collapsed && (
-          <p className="px-3 pb-2 text-[10px] font-semibold tracking-[0.14em] text-slate-400 dark:text-slate-500">
-            工作区
+          <p className="flex items-center gap-1.5 px-3 pb-2 text-xs font-semibold tracking-wide text-slate-500 dark:text-slate-400">
+            <Sparkles className="h-4 w-4 text-sky-500 dark:text-sky-300" />
+            按下面的板块进入对应功能区
           </p>
         )}
 
         <div className="flex min-h-full flex-1 flex-col">
-          {SECTIONS.map((section) => {
+          {visibleSections.map((section) => {
             const SectionIcon = section.icon;
-            const sectionActive = isSectionActive(pathname, section.key);
+            const sectionActive = getSkySection(pathname) === section.key;
             const sectionExpanded = expandedSections[section.key];
             const sectionContentId = `sidebar-${section.key}-content`;
 
@@ -179,26 +168,28 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
                   id={`sidebar-${section.key}`}
                   aria-controls={sectionContentId}
                   aria-expanded={sectionExpanded}
-                  title={collapsed ? section.label : undefined}
+                  title={collapsed ? SECTION_META[section.key].label : undefined}
                   className={cn(
-                    'group flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
+                    'group flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[15px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
                     collapsed && 'justify-center px-0',
                     sectionActive
                       ? 'bg-sky-500/10 text-sky-700 dark:bg-sky-300/10 dark:text-sky-100'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white',
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white',
                   )}
                 >
                   <span
                     className={cn(
-                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors',
+                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors',
                       sectionActive
                         ? 'bg-sky-500 text-white dark:bg-sky-300 dark:text-slate-950'
                         : 'bg-slate-100 text-slate-500 group-hover:text-sky-600 dark:bg-white/[0.06] dark:text-slate-400 dark:group-hover:text-sky-100',
                     )}
                   >
-                    <SectionIcon className="h-4 w-4" />
+                    <SectionIcon className="h-[18px] w-[18px]" />
                   </span>
-                  {!collapsed && <span className="min-w-0 flex-1 truncate">{section.label}</span>}
+                  {!collapsed && (
+                    <span className="min-w-0 flex-1 truncate">{SECTION_META[section.key].label}</span>
+                  )}
                   {!collapsed && (
                     <ChevronRight
                       className={cn(
@@ -214,9 +205,13 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
                     id={sectionContentId}
                     className="ml-6 mt-1.5 space-y-3 border-l border-slate-200/80 pl-3 dark:border-cyan-100/10"
                   >
+                    <p className="flex items-center gap-1.5 px-1 pb-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 text-sky-400 dark:text-sky-300" />
+                      {SECTION_META[section.key].description}
+                    </p>
                     {SECTION_GROUPS[section.key].map((group) => (
                       <div key={group.label}>
-                        <p className="px-2 pb-1 text-[10px] font-medium text-slate-400 dark:text-slate-500">
+                        <p className="px-2 pb-1 text-[13px] font-semibold text-slate-600 dark:text-slate-300">
                           {group.label}
                         </p>
                         <div className="space-y-0.5">
@@ -230,13 +225,13 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
                                 href={item.href}
                                 aria-current={active ? 'page' : undefined}
                                 className={cn(
-                                  'flex min-h-9 items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
+                                  'flex min-h-10 items-center gap-2.5 rounded-lg px-2 py-2 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
                                   active
                                     ? 'bg-sky-500 text-white shadow-sm dark:bg-sky-300 dark:text-slate-950'
-                                    : 'text-slate-500 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-sky-100',
+                                    : 'text-slate-600 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-sky-100',
                                 )}
                               >
-                                <Icon className="h-3.5 w-3.5 shrink-0" />
+                                <Icon className="h-4 w-4 shrink-0" />
                                 <span className="truncate">{item.label}</span>
                               </Link>
                             );
@@ -254,10 +249,24 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
 
       <div className="shrink-0 space-y-1 border-t border-slate-200/70 p-3 dark:border-cyan-100/10">
         <Link
-          href="/"
-          title={collapsed ? '天空课堂' : undefined}
+          href="/classroom/new"
+          title={collapsed ? '生成互动课堂' : undefined}
           className={cn(
-            'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white',
+            'group flex min-h-11 items-center gap-3 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 px-3 py-2.5 text-[15px] font-bold text-white shadow-lg shadow-sky-500/20 transition-all hover:from-sky-600 hover:to-blue-700 active:scale-[0.98] dark:from-sky-300 dark:to-blue-300 dark:text-slate-950 dark:hover:from-sky-200 dark:hover:to-blue-200',
+            collapsed && 'justify-center px-0',
+          )}
+        >
+          <Presentation className="h-5 w-5 shrink-0" />
+          {!collapsed && <span className="truncate">生成互动课堂</span>}
+          {!collapsed && (
+            <ChevronRight className="ml-auto h-4 w-4 shrink-0 opacity-70 transition-transform group-hover:translate-x-0.5" />
+          )}
+        </Link>
+        <Link
+          href="/"
+          title={collapsed ? '天空课堂首页' : undefined}
+          className={cn(
+            'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white',
             collapsed && 'justify-center px-0',
           )}
         >
@@ -268,7 +277,7 @@ export function SkySidebar({ collapsed, onToggle }: SkySidebarProps) {
           href="/settings"
           title={collapsed ? '设置' : undefined}
           className={cn(
-            'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white',
+            'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white',
             collapsed && 'justify-center px-0',
           )}
         >

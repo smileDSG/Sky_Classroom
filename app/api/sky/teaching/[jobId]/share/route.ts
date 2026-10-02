@@ -3,6 +3,7 @@ import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { createLogger } from '@/lib/logger';
 import { requireAuth } from '@/lib/server/auth/helpers';
 import { randomUUID } from 'crypto';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('TeachingShareAPI');
 
@@ -63,7 +64,7 @@ export async function POST(
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Generate share token failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -119,7 +120,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Get share info failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

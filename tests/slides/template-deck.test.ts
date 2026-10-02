@@ -8,6 +8,7 @@ import {
   generateTemplateDeckContent,
   buildTemplateDeckBuffer,
   summarizeTemplatePages,
+  latexToUnicode,
   type TemplatePage,
 } from '@/lib/slides/template-deck';
 import {
@@ -169,7 +170,7 @@ describe('generateTemplateDeckContent', () => {
 });
 
 describe('buildTemplateDeckBuffer', () => {
-  const theme = buildThemeFromDesignDNA(dna(), 'sky-blue');
+  const theme = buildThemeFromDesignDNA(dna(), 'academic-navy');
 
   it('renders every page type into a valid PPTX with cover and end slides', async () => {
     const buffer = await buildTemplateDeckBuffer({
@@ -213,5 +214,35 @@ describe('summarizeTemplatePages', () => {
       { pageNum: 2, title: '课程目录', type: 'toc' },
       { pageNum: 3, title: '核心概念', type: 'bullets' },
     ]);
+  });
+});
+
+describe('latexToUnicode', () => {
+  it('strips \\left/\\right/\\quad and converts \\frac to linear text', () => {
+    const input =
+      'y=ax^2+bx+c=a\\left(x+\\frac{b}{2a}\\right)^2+\\frac{4ac-b^2}{4a},\\quad \\Delta=b^2-4ac';
+    expect(latexToUnicode(input)).toBe('y=ax²+bx+c=a(x+(b)/(2a))²+(4ac-b²)/(4a),  Δ=b²-4ac');
+  });
+
+  it('leaves existing Unicode sub/superscripts intact and maps \\rightarrow', () => {
+    expect(latexToUnicode('6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2')).toBe(
+      '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂',
+    );
+  });
+
+  it('expands \\text{} and unknown commands without leaking backslashes', () => {
+    expect(latexToUnicode('\\text{速度} = \\dfrac{s}{t}\\quad v\\text{(m/s)}')).toBe(
+      '速度 = (s)/(t)  v(m/s)',
+    );
+  });
+
+  it('converts sqrt/pm combos used by the quadratic formula', () => {
+    expect(latexToUnicode('x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}')).toBe('x=(-b±√(b²-4ac))/(2a)');
+  });
+
+  it('maps common Greek letters and relations', () => {
+    expect(latexToUnicode('\\alpha + \\beta \\leq \\gamma, \\theta \\approx 30^\\circ')).toBe(
+      'α + β ≤ γ, θ ≈ 30°',
+    );
   });
 });

@@ -100,6 +100,16 @@ export const SolveGraphAnnotation = Annotation.Root({
     value: (_prev, next) => next,
     default: () => null,
   }),
+  /** 答案自校验结论（verified/corrected/pending-confirmation/skipped）。 */
+  answerReview: Annotation<'verified' | 'corrected' | 'pending-confirmation' | 'skipped' | null>({
+    value: (_prev, next) => next,
+    default: () => null,
+  }),
+  /** 最终答案是否经独立复核（answerReview ∈ verified/corrected）。 */
+  verified: Annotation<boolean>({
+    value: (_prev, next) => next,
+    default: () => false,
+  }),
   fromQuestionBank: Annotation<boolean>({
     value: (_prev, next) => next,
     default: () => false,

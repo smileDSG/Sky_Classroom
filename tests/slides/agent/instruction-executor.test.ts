@@ -41,6 +41,50 @@ describe('InstructionExecutor', () => {
     expect(result.success).toBe(true);
   });
 
+  it('executes addText with rich-text runs (关键词加粗)', async () => {
+    const { slide, pres } = makeSlide();
+    const instructions: Instruction[] = [
+      {
+        op: 'addText',
+        params: {
+          text: [
+            { text: '静态测评只能记录' },
+            { text: '结果', bold: true, color: 'C9A227' },
+            { text: '，无法回溯判断过程' },
+          ],
+          x: 0.8,
+          y: 1.9,
+          w: 11.7,
+          h: 0.8,
+          fontSize: 24,
+          align: 'left',
+        },
+      },
+    ];
+    const result = await executor.execute(slide, pres, instructions, 1);
+    expect(result.success).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('filters orphaned arrow inside any rich-text run', async () => {
+    const { slide, pres } = makeSlide();
+    const instructions: Instruction[] = [
+      {
+        op: 'addText',
+        params: {
+          text: [{ text: '→' }],
+          x: 1,
+          y: 1,
+          w: 5,
+          h: 0.5,
+        },
+      },
+    ];
+    const result = await executor.execute(slide, pres, instructions, 1);
+    expect(result.success).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
   it('executes addShape instruction', async () => {
     const { slide, pres } = makeSlide();
     const instructions: Instruction[] = [

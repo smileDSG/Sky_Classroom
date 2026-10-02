@@ -2,10 +2,87 @@
 
 import { useMemo } from 'react';
 import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
 interface InlineMathProps {
   text: string;
   className?: string;
+}
+
+// Parameterless LaTeX commands that are safe to render on their own as inline math.
+const BARE_CMD = new Set([
+  'neq',
+  'le',
+  'ge',
+  'leq',
+  'geq',
+  'times',
+  'div',
+  'pm',
+  'sum',
+  'int',
+  'prod',
+  'infty',
+  'cdot',
+  'dots',
+  'cup',
+  'cap',
+  'emptyset',
+  'subset',
+  'subseteq',
+  'supset',
+  'supseteq',
+  'in',
+  'notin',
+  'to',
+  'rightarrow',
+  'leftarrow',
+  'approx',
+  'sim',
+  'cong',
+  'propto',
+  'forall',
+  'exists',
+  'neg',
+  'land',
+  'lor',
+  'alpha',
+  'beta',
+  'gamma',
+  'delta',
+  'epsilon',
+  'theta',
+  'lambda',
+  'mu',
+  'pi',
+  'sigma',
+  'phi',
+  'omega',
+  'nabla',
+]);
+
+const BARE_PATTERN = new RegExp(`\\\\(${Array.from(BARE_CMD).join('|')})\\b`, 'g');
+
+export function wrapBareLatexCommands(text: string): string {
+  // Protect already-wrapped $...$ segments so their inner commands aren't doubled.
+  const protectedSegments: string[] = [];
+  const shielded = text.replace(/\$[^$]+\$/g, (m) => {
+    protectedSegments.push(m);
+    return `\u0000${protectedSegments.length - 1}\u0000`;
+  });
+
+  const wrapped = shielded.replace(
+    BARE_PATTERN,
+    (match, _cmd: string, offset: number, whole: string) => {
+      // Only wrap when the command is adjacent to math-ish content, not in prose.
+      const before = offset > 0 ? whole[offset - 1] : '';
+      const after = offset + match.length < whole.length ? whole[offset + match.length] : '';
+      const mathish = /[0-9a-zA-Z(){}\\]|\s/.test(before) && /[\s0-9=<>,.;]/.test(after);
+      return mathish ? `$${match}$` : match;
+    },
+  );
+
+  return protectedSegments.reduce((acc, seg, i) => acc.replace(`\u0000${i}\u0000`, seg), wrapped);
 }
 
 export function InlineMath({ text, className }: InlineMathProps) {
@@ -34,6 +111,9 @@ export function InlineMath({ text, className }: InlineMathProps) {
       .replace(/…/g, '\\dots');
     // Fix \sqrt(...) → \sqrt{...}
     preprocessed = preprocessed.replace(/\\sqrt(\[[^\]]*\])?\(([^)]+)\)/g, '\\sqrt$1{$2}');
+    // Wrap bare LaTeX commands (not inside $...$) as inline math so that
+    // faint commands like \neq still render instead of leaking as raw text.
+    preprocessed = wrapBareLatexCommands(preprocessed);
 
     // Split by $$...$$ first, then by $...$
     const blockRegex = /\$\$([\s\S]*?)\$\$/g;

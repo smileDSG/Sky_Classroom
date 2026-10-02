@@ -17,6 +17,7 @@ import { callLLM } from '@/lib/ai/llm';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { resolveApiKey, resolveBaseUrl } from '@/lib/server/provider-config';
 import { jsonrepair } from 'jsonrepair';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('API:SkySolveRecognize');
 
@@ -420,7 +421,9 @@ export async function POST(req: Request) {
       } catch (llmErr) {
         const msg = llmErr instanceof Error ? llmErr.message : String(llmErr);
         log.warn(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} failed: ${msg}`);
-        errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: ${msg}`);
+        errors.push(
+          `${visionConfig.providerId}/${visionConfig.modelId}: ${safeErrorMessage(llmErr)}`,
+        );
       }
     }
 
@@ -445,7 +448,7 @@ export async function POST(req: Request) {
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       '图片识别失败',
-      err instanceof Error ? err.message : undefined,
+      err instanceof Error ? safeErrorMessage(err) : undefined,
     );
   }
 }

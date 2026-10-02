@@ -44,6 +44,7 @@ export interface SuggestCoverResult {
 
 function getPaletteMood(id: string): string {
   const moodMap: Record<string, string> = {
+    'modern-academic': '学术权威',
     'midnight-executive': '商务专业',
     'forest-moss': '自然清新',
     'coral-energy': '活力热情',

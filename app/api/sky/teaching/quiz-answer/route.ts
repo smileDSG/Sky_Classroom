@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 import { requireAuth } from '@/lib/server/auth/helpers';
 import { getServerStorage } from '@/lib/server/server-storage';
@@ -10,8 +11,18 @@ import {
   type TeachingProfileUpdate,
 } from '@/lib/teaching/profile-impact';
 import { readTeachingJob, updateTeachingJob } from '@/lib/server/teaching-job-store';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('QuizAnswerAPI');
+
+const QuizAnswerSchema = z.object({
+  sectionId: z.string().max(200).optional().default(''),
+  chunkOrder: z.number().int().optional().default(0),
+  selectedOption: z.number().int(),
+  correctAnswer: z.number().int().optional().default(0),
+  knowledgePoints: z.array(z.string().max(200)).max(50).optional().default([]),
+  jobId: z.string().max(200).optional(),
+});
 
 /**
  * POST /api/sky/teaching/quiz-answer
@@ -26,7 +37,13 @@ export async function POST(request: NextRequest) {
     const userId = auth.user.id;
 
     const body = await request.json();
-    const { sectionId, chunkOrder, selectedOption, correctAnswer, knowledgePoints, jobId } = body;
+    const parsed = QuizAnswerSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed' }, { status: 400 });
+    }
+
+    const { sectionId, chunkOrder, selectedOption, correctAnswer, knowledgePoints, jobId } =
+      parsed.data;
 
     if (selectedOption === undefined || selectedOption === null) {
       return NextResponse.json({ error: 'Missing selectedOption parameter' }, { status: 400 });
@@ -116,7 +133,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Quiz answer verification failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

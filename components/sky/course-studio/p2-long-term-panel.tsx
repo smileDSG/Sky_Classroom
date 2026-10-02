@@ -63,7 +63,7 @@ export function CourseStudioP2LongTermPanel({ p2 }: { p2: P2Enhancements }) {
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <GraduationCap className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
+          <GraduationCap className="h-4 w-4 text-sky-600 dark:text-sky-100" />
           <h2 className="text-sm font-semibold text-slate-950 dark:text-white">P2 Long-Term</h2>
         </div>
         <Badge variant="outline" className="h-7 rounded-full px-3">

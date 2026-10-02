@@ -9,6 +9,7 @@ import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-grap
 import { saveToQuestionBank, isProblemInBank } from '@/lib/solve/question-bank';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { validateProblemSpec } from '@/lib/recognition/problem-spec-parser';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('API:SkySolveExplain');
 
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
           API_ERROR_CODES.INVALID_REQUEST,
           400,
           'Invalid problemSpec',
-          err instanceof Error ? err.message : String(err),
+          safeErrorMessage(err),
         );
       }
     }
@@ -123,7 +124,7 @@ export async function POST(req: Request) {
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       '解题失败',
-      err instanceof Error ? err.message : undefined,
+      err instanceof Error ? safeErrorMessage(err) : undefined,
     );
   }
 }

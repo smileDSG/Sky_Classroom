@@ -77,7 +77,7 @@ export function generateSuggestions(mistakes: MistakeRecord[], stats: QuickStats
       text: `你的"${weakest.name}"掌握度仅 ${weakest.mastery}%，错因集中在${topCause}，建议今天重点复习`,
       action: {
         label: '去复习',
-        href: `/sky/learning/review?topic=${encodeURIComponent(weakest.name)}`,
+        href: `/sky/cloud-mind/memory?topic=${encodeURIComponent(weakest.name)}`,
       },
     });
   }
@@ -91,7 +91,7 @@ export function generateSuggestions(mistakes: MistakeRecord[], stats: QuickStats
     suggestions.push({
       icon: '🔥',
       text: `连续打卡 ${stats.streakDays} 天了，再坚持 ${remaining} 天解锁${name}徽章！`,
-      action: { label: '查看详情', href: '/sky/learning/stats' },
+      action: { label: '查看详情', href: '/sky/learning/profile-dashboard' },
     });
   }
 
@@ -117,7 +117,7 @@ export function generateSuggestions(mistakes: MistakeRecord[], stats: QuickStats
     suggestions.push({
       icon: '⏰',
       text: `今天有 ${dueToday.length} 道题需要复习，花 10 分钟巩固一下吧`,
-      action: { label: '去复习', href: '/sky/learning/review' },
+      action: { label: '去复习', href: '/sky/cloud-mind/memory' },
     });
   }
 
@@ -128,7 +128,7 @@ export function generateSuggestions(mistakes: MistakeRecord[], stats: QuickStats
     suggestions.push({
       icon: '💡',
       text: `今天搜了 ${todayMistakes.length} 道题，记得休息一下，劳逸结合效果更好`,
-      action: { label: '学习统计', href: '/sky/learning/stats' },
+      action: { label: '学习记录', href: '/sky/learning/profile-dashboard' },
     });
   }
 

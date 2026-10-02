@@ -62,7 +62,7 @@ describe('software cup resource personalization', () => {
     const { runSoftwareCupGeneration } = await import('@/lib/software-cup/demo-service');
 
     const result = await runSoftwareCupGeneration(
-      '软件工程学生，想补强过拟合、模型评估和 RAG，需要讲义、PPT、题库、代码案例和视频脚本。',
+      '软件工程学生，想补强过拟合、模型评估和 RAG，需要讲义、导图、自查清单和学习路径。',
     );
 
     expect(result.resources.length).toBeGreaterThan(0);
@@ -71,14 +71,14 @@ describe('software cup resource personalization', () => {
       expect(resource.content?.length ?? 0).toBeGreaterThan(180);
     }
 
-    expect(result.resources.find((resource) => resource.type === 'quiz_bank')?.content).toContain(
-      '参考答案',
-    );
-    expect(result.resources.find((resource) => resource.type === 'code_case')?.content).toContain(
-      '实操案例',
+    expect(result.resources.find((resource) => resource.type === 'self_check')?.content).toContain(
+      '能做到',
     );
     expect(
-      result.resources.find((resource) => resource.type === 'video_script')?.content,
-    ).toContain('视频脚本');
+      result.resources.find((resource) => resource.type === 'learning_path')?.content,
+    ).toContain('学习闭环');
+    expect(
+      result.resources.find((resource) => resource.type === 'learning_path')?.content,
+    ).toContain('出题引擎');
   });
 });

@@ -20,7 +20,31 @@ export interface ColorPalette {
   textOnDark: string;
 }
 
+/**
+ * 精选母版集：只在 UI 展示这些风格；其余风格数据保留（兼容历史/脚本/测试），
+ * 但不作为可选配色向用户暴露，避免选到没有专属渲染主题而回退默认的风格。
+ */
+export const CURATED_PALETTE_IDS: string[] = [
+  'modern-academic',
+  'forest-moss',
+  'charcoal-minimal',
+  'classical-chinese',
+  'berry-cream',
+  'tech-dark-cn',
+];
+
 export const COLOR_PALETTES: Record<string, ColorPalette> = {
+  'modern-academic': {
+    coverBg: '1B2A4A', // 主色深藏青
+    contentBg: 'FAFAFA', // 近白背景
+    accent: 'C9A227', // 强调色 金
+    accentSecondary: '1B2A4A',
+    accentLight: 'F3F0E4', // 暖白微金，作浅色点缀
+    textPrimary: '1B2A4A',
+    textBody: '2D3436', // 近黑正文
+    textMuted: '8A93A6', // 弱化灰蓝，用于 caption
+    textOnDark: 'FAFAFA',
+  },
   'midnight-executive': {
     coverBg: '1E2761',
     contentBg: 'FFFFFF',
@@ -145,13 +169,13 @@ export const COLOR_PALETTES: Record<string, ColorPalette> = {
   },
   'tech-dark-cn': {
     coverBg: '0F1D3D',
-    contentBg: 'F8FAFE',
+    contentBg: '0F1524',
     accent: '00D4FF',
     accentSecondary: '3B82F6',
-    accentLight: 'E8F4FF',
-    textPrimary: '1E293B',
-    textBody: '475569',
-    textMuted: '94A3B8',
+    accentLight: '16233B',
+    textPrimary: 'F3F4F6',
+    textBody: 'D1D5DB',
+    textMuted: '93A5BB',
     textOnDark: 'FFFFFF',
   },
 };
@@ -160,6 +184,11 @@ export const PALETTE_STYLE_INFO: Record<
   string,
   { styleName: string; mood: string; bestFor: string[] }
 > = {
+  'modern-academic': {
+    styleName: '现代学术',
+    mood: '学术权威 · 克制现代',
+    bestFor: ['课程授课', '学术讲座', '论文答辩', '专业培训'],
+  },
   'midnight-executive': {
     styleName: '商务天空蓝',
     mood: '专业稳重',
@@ -222,7 +251,7 @@ export const PALETTE_STYLE_INFO: Record<
   },
 };
 
-export const DEFAULT_COLOR_PALETTE = COLOR_PALETTES['midnight-executive'];
+export const DEFAULT_COLOR_PALETTE = COLOR_PALETTES['modern-academic'];
 
 // ── Font Pairings (from pptx skill) ────────────────────────────────────
 
@@ -239,6 +268,20 @@ export interface FontPairing {
 }
 
 export const FONT_PAIRS: Record<string, FontPairing> = {
+  // "现代学术"默认：思源黑体全替换，告别雅黑/衬线；大字号拉开层级
+  'noto-sans': {
+    heading: 'Noto Sans SC',
+    body: 'Noto Sans SC',
+    en: 'Arial',
+    headingSize: 48,
+    pageTitleSize: 30,
+    bodySize: 24,
+    captionSize: 18,
+    headingStack:
+      '"Noto Sans SC", "Noto Sans CJK SC", "Source Han Sans SC", "思源黑体", sans-serif',
+    bodyStack:
+      '"Noto Sans SC", "Noto Sans CJK SC", "Source Han Sans SC", "思源黑体", sans-serif',
+  },
   'georgia-calibri': {
     heading: 'Microsoft YaHei',
     body: 'Microsoft YaHei',
@@ -296,7 +339,7 @@ export const FONT_PAIRS: Record<string, FontPairing> = {
   },
 };
 
-export const DEFAULT_FONT_PAIR = FONT_PAIRS['arial-black-arial'];
+export const DEFAULT_FONT_PAIR = FONT_PAIRS['noto-sans'];
 
 // ── Allowed Values ─────────────────────────────────────────────────────
 
@@ -413,8 +456,8 @@ export const fontsSchema = z.object({
   en: z.string().min(1),
   headingSize: z.number().min(36).max(72),
   pageTitleSize: z.number().min(24).max(44),
-  bodySize: z.number().min(10).max(18),
-  captionSize: z.number().min(8).max(14),
+  bodySize: z.number().min(10).max(32),
+  captionSize: z.number().min(8).max(22),
   headingStack: z.string().optional(),
   bodyStack: z.string().optional(),
 });
@@ -504,7 +547,7 @@ function sanitizeComponents(comp: Record<string, unknown>) {
   return {
     cardStyle: ALLOWED_CARD_STYLES.includes(comp.cardStyle as (typeof ALLOWED_CARD_STYLES)[number])
       ? comp.cardStyle
-      : 'accent-left-bar',
+      : 'shadow-only',
     bulletStyle: ALLOWED_BULLET_STYLES.includes(
       comp.bulletStyle as (typeof ALLOWED_BULLET_STYLES)[number],
     )
@@ -598,7 +641,7 @@ export function getDefaultDesignDNA(): DesignDNA {
     fonts: { ...DEFAULT_FONT_PAIR },
     decoration: { motif: 'geometric-lines', density: 'moderate', cornerWeight: 'top-right' },
     components: {
-      cardStyle: 'accent-left-bar',
+      cardStyle: 'shadow-only',
       bulletStyle: 'dot',
       pageNumberStyle: 'number-slash-total',
     },

@@ -16,6 +16,7 @@ import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { createTeachingJob } from '@/lib/server/teaching-job-store';
 import { runTeachingJob } from '@/lib/server/teaching-job-runner';
 import { createLogger } from '@/lib/logger';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 import { teachingGenerationPolicySchema } from '@/lib/teaching/personalization-policy';
 
 const log = createLogger('API:TeachingGenerate');
@@ -62,11 +63,6 @@ export async function POST(req: NextRequest) {
     return apiSuccess({ jobId, topic: trimmedTopic }, 202);
   } catch (err) {
     log.error('Teaching job creation failed:', err);
-    return apiError(
-      'INTERNAL_ERROR',
-      500,
-      'Failed to create teaching job',
-      err instanceof Error ? err.message : 'Unknown error',
-    );
+    return apiError('INTERNAL_ERROR', 500, 'Failed to create teaching job', safeErrorMessage(err));
   }
 }

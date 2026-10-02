@@ -1,0 +1,201 @@
+﻿
+ RUN  v4.1.0 E:/01_Work/sky-classroom
+
+node.exe : stderr | tests/sky/cloud-mind-page.test.tsx > CloudMindPage > keeps six tool cards while giving each card a 
+personalized next action
+所在位置 C:\Users\lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent\vm\tools\node\npx.ps1:16 字符: 5
++     & "$basedir/node$exe"  "$basedir/node_modules/npm/bin/npx-cli.js" ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (stderr | tests/...zed next action:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+An update to CloudMindPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/w
+rap-tests-with-act
+An update to CloudMindPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/w
+rap-tests-with-act
+
+ ❯ tests/sky/cloud-mind-page.test.tsx (1 test | 1 failed) 570ms
+     × keeps six tool cards while giving each card a personalized next action 562ms
+ ✓ tests/sky/workshop-learning-plan.test.ts (2 tests) 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/sky/cloud-mind-page.test.tsx > CloudMindPage > keeps six tool cards while giving each card a personalized 
+next action
+TestingLibraryElementError: Unable to find an element with the text: 课程资源工坊. This could be because the text is broken u
+p by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexib
+le.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mx-auto max-w-6xl space-y-5 pt-1"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"学习资源页面导航"[39m
+          [33mclass[39m=[32m"border-b border-slate-200/70 pb-4 dark:border-cyan-100/10 md:hidden"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100"
+[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"h-2 w-2 rounded-full bg-sky-500"[39m
+                [36m/>[39m
+                [0m学习资源[0m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400"[39m
+              [36m>[39m
+                [0m题目、讲解、复习和课程材料[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"grid min-w-0 flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"min-w-0"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"mb-1.5 text-[11px] font-semibold tracking-wide text-slate-400 dark:text-slate-5
+00"[39m
+                [36m>[39m
+                  [0m开始使用[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex flex-wrap gap-1"[39m
+                [36m>[39m
+                  [36m<a[39m
+                    [33mclass[39m=[32m"inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs fon
+t-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 text-slate-6
+00 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-300 dark:hover:bg-white/[0.07] dark:hover:text-sky-100"[39m
+                    [33mhref[39m=[32m"/sky/cloud-mind"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-library-big h-3.5 w-3.5 shrink-0"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"24"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<rect[39m
+                        [33mheight[39m=[32m"18"[39m
+                        [33mrx[39m=[32m"1"[39m
+                        [33mwidth[39m=[32m"8"[39m
+                        [33mx[39m=[32m"3"[39m
+                        [33my[39m=[32m"3"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M7 3v18"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.
+1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"truncate"[39m
+                    [36m>[39m
+                      [0m资源总览[0m
+                    [36m</span>[39m
+                  [36m</a>[39m
+                  [36m<a[39m
+                    [33mclass[39m=[32m"inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs fon
+t-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 text-slate-6
+00 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-300 dark:hover:bg-white/[0.07] dark:hover:text-sky-100"[39m
+                    [33mhref[39m=[32m"/sky/cloud-mind/solve"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-camera h-3.5 w-3.5 shrink-0"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"24"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 
+2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"[39m
+                      [36m/>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"12"[39m
+                        [33mcy[39m=[32m"13"[39m
+                        [33mr[39m=[32m"3"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"truncate"[39m
+                    [36m>[39m
+                      [0m拍题解析[0m
+                    [36m</span>[39m
+                  [36m</a>[39m
+                  [36m<a[39m
+                    [33mclass[39m=[32m"inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs fon
+t-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 text-slate-6
+00 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-300 dark:hover:bg-white/[0.07] dark:hover:text-sky-100"[39m
+                    [33mhref[39m=[32m"/sky/cloud-mind/quiz"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-file-question-mark h-3.5 w-3.5 shrink-0"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m...
+ ❯ Object.getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.
+js:37:19
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/sky/cloud-mind-page.test.tsx:175:19
+    173|     expect(screen.getByText('记忆卡片')).toBeInTheDocument();
+    174|     expect(screen.getByText('智能授课')).toBeInTheDocument();
+    175|     expect(screen.getByText('课程资源工坊')).toBeInTheDocument();
+       |                   ^
+    176|
+    177|     expect(await screen.findByText('今日推荐工具')).toBeInTheDocument();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 2 passed (3)
+   Start at  10:39:06
+   Duration  5.75s (transform 1.67s, setup 467ms, import 4.65s, tests 579ms, environment 3.47s)
+

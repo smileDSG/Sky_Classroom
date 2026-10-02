@@ -9,20 +9,18 @@ import {
   Brain,
   Camera,
   CheckCircle2,
-  Clock3,
   FileQuestion,
-  Gauge,
   Layers,
   ListChecks,
   Loader2,
   Presentation,
   Sparkles,
-  Target,
   Zap,
   type LucideIcon,
 } from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import type {
   CloudMindDashboardData,
   LearningRecommendation,
@@ -49,7 +47,7 @@ const TOOLS: Array<{
     description: '拍照识别题目，AI 智能解答，步骤清晰',
     href: '/sky/cloud-mind/solve',
     icon: Camera,
-    gradient: 'from-violet-500 to-purple-600',
+    gradient: 'from-violet-500 to-indigo-600',
     stats: '已解答 1.2k+ 题',
     badge: '热门',
     policyKey: 'solve',
@@ -61,7 +59,7 @@ const TOOLS: Array<{
     description: '输入主题，AI 一键生成精美PPT课件',
     href: '/sky/cloud-mind/slides',
     icon: Presentation,
-    gradient: 'from-cyan-500 to-blue-600',
+    gradient: 'from-violet-500 to-indigo-600',
     stats: 'AI 智能生成',
     badge: '推荐',
     policyKey: 'slides',
@@ -73,7 +71,7 @@ const TOOLS: Array<{
     description: '选择学科与难度，AI 量身定制练习题',
     href: '/sky/cloud-mind/quiz',
     icon: FileQuestion,
-    gradient: 'from-amber-500 to-yellow-500',
+    gradient: 'from-violet-500 to-indigo-500',
     stats: '9 大学科覆盖',
     badge: '新',
     policyKey: 'quiz',
@@ -85,7 +83,7 @@ const TOOLS: Array<{
     description: 'AI 生成记忆卡片，艾宾浩斯高效复习',
     href: '/sky/cloud-mind/memory',
     icon: Brain,
-    gradient: 'from-rose-500 to-pink-600',
+    gradient: 'from-rose-500 to-violet-600',
     stats: '科学记忆法',
     policyKey: 'memory',
     group: 'learning',
@@ -96,7 +94,7 @@ const TOOLS: Array<{
     description: '针对薄弱点生成微课，边学边练并即时检查',
     href: '/sky/cloud-mind/teaching',
     icon: BookOpen,
-    gradient: 'from-amber-500 to-orange-600',
+    gradient: 'from-violet-500 to-indigo-600',
     stats: '学生微课讲解',
     badge: '新',
     policyKey: 'teaching',
@@ -104,11 +102,11 @@ const TOOLS: Array<{
   },
   {
     id: 'course-studio',
-    label: '课程资源工坊',
-    description: '结合课程资料和你的学习情况，生成讲义、题库、导图、实操案例和视频脚本',
+    label: '学习包工坊',
+    description: '结合课程资料和你的学习情况，生成讲义、导图、自查清单和学习路径',
     href: '/sky/cloud-mind/course-studio',
     icon: Layers,
-    gradient: 'from-emerald-500 to-teal-600',
+    gradient: 'from-violet-500 to-indigo-600',
     stats: 'AI 导论知识库',
     badge: '个性化',
     policyKey: 'learningPath',
@@ -388,26 +386,6 @@ export default function CloudMindPage() {
   const recommendationAction = getRecommendationAction(primaryRecommendation);
   const suggestedTopic = dashboard?.weakPoints[0]?.knowledgePoint;
   const policies = profileContext?.toolPolicies;
-  const primaryWeakPoint = dashboard?.weakPoints[0];
-  const mastery = primaryWeakPoint?.mastery ?? dashboard?.summary.masteryAverage ?? 0;
-  const accuracy = dashboard?.summary.recentAccuracy;
-  const profileStatus = !dashboard?.hasLearningData
-    ? '正在了解你的学习情况'
-    : mastery < 50
-      ? '需要补基础'
-      : mastery < 75
-        ? '正在稳定提升'
-        : '状态良好';
-  const statusTone = !dashboard?.hasLearningData
-    ? 'text-sky-700 dark:text-sky-300'
-    : mastery < 50
-      ? 'text-amber-700 dark:text-amber-300'
-      : 'text-emerald-700 dark:text-emerald-300';
-  const profileReason = !dashboard?.hasLearningData
-    ? '完成一次短练习，系统才知道从哪里开始最合适。'
-    : primaryWeakPoint
-      ? `根据最近的答题和错题，${primaryWeakPoint.knowledgePoint} 是当前最值得先处理的薄弱点。`
-      : '系统会继续观察你的答题表现，动态调整后续工具。';
   const secondaryAction = recommendationAction.href.startsWith('/sky/cloud-mind/memory')
     ? {
         href: buildTeachingHref(suggestedTopic),
@@ -418,160 +396,50 @@ export default function CloudMindPage() {
         label: '生成记忆卡片',
       };
 
-  const profileAction = !dashboard?.hasLearningData
-    ? { href: '/sky/cloud-mind/quiz?mode=diagnostic', label: '开始 5 分钟入门练习' }
-    : recommendationAction;
   const recommendedToolId = primaryRecommendation?.target.href
     .split('/sky/cloud-mind/')[1]
     ?.split('?')[0];
 
   return (
     <SkyAppShell>
-      <div className="mx-auto max-w-6xl space-y-5 pt-1">
+      <div className=" space-y-5 pt-1">
         <SkySectionNav section="resources" />
 
         <motion.section
+          data-tour-step="page-header"
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-7 py-8 shadow-2xl shadow-violet-950/20 md:px-10 md:py-10"
+          className="relative overflow-hidden rounded-3xl border border-violet-200/70 bg-gradient-to-br from-white to-violet-50 px-7 py-6 shadow-lg shadow-violet-200/40 md:px-10 md:py-8"
         >
-          <div className="absolute right-0 top-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-48 w-48 -translate-x-1/2 translate-y-1/2 rounded-full bg-indigo-400/20 blur-2xl" />
+          <div className="absolute right-8 top-0 h-48 w-48 rounded-full bg-violet-200/30 blur-3xl" />
 
-          <div className="relative z-10">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                <Sparkles className="h-5 w-5 text-white" />
+          <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <div className="mb-2 flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600">
+                  <Sparkles className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-xs font-semibold tracking-wider text-violet-600 uppercase">
+                  AI 工具集
+                </span>
               </div>
-              <span className="text-sm font-medium tracking-wider text-indigo-200 uppercase">
-                AI 工具集
-              </span>
+              <h1 className="text-2xl font-bold text-violet-900 md:text-3xl">云端智囊</h1>
+              <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
+                拍照搜题、PPT课件、智能出题、记忆卡片与微课讲解，一站直达。
+              </p>
             </div>
 
-            <h1 className="mb-3 text-3xl font-bold text-white md:text-4xl">云端智囊</h1>
-            <p className="max-w-xl text-base leading-relaxed text-indigo-100 md:text-lg">
-              汇聚 AI
-              之力，为你的学习保驾护航。拍照搜题、PPT课件生成、智能出题、记忆卡片、智能授课、课程资源，一站直达。
-            </p>
-
-            <div className="mt-6 flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-indigo-200">
+            <div className="flex shrink-0 items-center gap-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-violet-700">
                 <Zap className="h-4 w-4" />
                 <span>{TOOLS.length} 大智能工具</span>
               </div>
-              <div className="h-4 w-px bg-indigo-400/40" />
-              <div className="flex items-center gap-2 text-sm text-indigo-200">
+              <div className="h-4 w-px bg-violet-200" />
+              <div className="flex items-center gap-2 text-sm font-medium text-violet-700">
                 <Sparkles className="h-4 w-4" />
                 <span>持续更新中</span>
               </div>
-            </div>
-          </div>
-        </motion.section>
-
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.08 }}
-          className="overflow-hidden rounded-3xl border border-sky-200/80 bg-white shadow-xl shadow-sky-100/70 dark:border-sky-900/60 dark:bg-slate-900/80 dark:shadow-slate-950/20"
-        >
-          <div className="border-b border-slate-200/80 bg-slate-50/80 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/40 md:px-7">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
-                  <Gauge className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">
-                    学习情况中心
-                  </p>
-                  <h2 className="mt-0.5 text-lg font-bold text-slate-950 dark:text-white">
-                    你的学习状态，正在驱动下面的每个工具
-                  </h2>
-                </div>
-              </div>
-              <span className={`text-sm font-semibold ${statusTone}`}>
-                {dashboardState === 'loading' ? '正在读取数据…' : profileStatus}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid gap-6 px-5 py-6 md:grid-cols-[1.15fr_0.85fr] md:px-7">
-            <div>
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    当前优先主题
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-slate-950 dark:text-white">
-                    {dashboardState === 'loading'
-                      ? '正在分析…'
-                      : (primaryWeakPoint?.knowledgePoint ?? '先完成一次入门练习')}
-                  </p>
-                </div>
-                <p className="text-3xl font-bold tabular-nums text-sky-700 dark:text-sky-300">
-                  {mastery}%
-                </p>
-              </div>
-              <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.max(4, Math.min(100, mastery))}%` }}
-                  transition={{ duration: 0.8, delay: 0.25 }}
-                  className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400"
-                />
-              </div>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                {profileReason}
-              </p>
-              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">近 14 天正确率</p>
-                  <p className="mt-1 text-lg font-bold tabular-nums text-slate-900 dark:text-white">
-                    {accuracy === null || accuracy === undefined ? '暂无' : `${accuracy}%`}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">待复习</p>
-                  <p className="mt-1 text-lg font-bold tabular-nums text-amber-600 dark:text-amber-300">
-                    {dashboard?.dueReviews.length ?? 0} 项
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">累计练习</p>
-                  <p className="mt-1 text-lg font-bold tabular-nums text-slate-900 dark:text-white">
-                    {dashboard?.summary.totalQuestions ?? 0} 题
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">学习记录</p>
-                  <p className="mt-1 text-lg font-bold text-emerald-600 dark:text-emerald-300">
-                    {profileContext?.hasPersonalizationSignals ? '已启用' : '待收集'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-between rounded-2xl border border-sky-200 bg-sky-50/80 p-5 dark:border-sky-900/60 dark:bg-sky-950/30">
-              <div>
-                <div className="flex items-center gap-2 text-sm font-semibold text-sky-800 dark:text-sky-200">
-                  <Target className="h-4 w-4" />
-                  系统下一步怎么安排
-                </div>
-                <p className="mt-3 text-xl font-bold text-slate-950 dark:text-white">
-                  {primaryRecommendation?.title ?? '先做一次入门练习'}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  {primaryRecommendation?.reason ?? '用 5 道题建立基线，后续难度和内容会自动调整。'}
-                </p>
-              </div>
-              <Link
-                href={profileAction.href}
-                className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-sky-600/20 transition-colors hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
-              >
-                {profileAction.label}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
           </div>
         </motion.section>
@@ -629,12 +497,10 @@ export default function CloudMindPage() {
               学习时先用核心工具，准备课程时进入资源生成区
             </p>
           </div>
-          <span className="rounded-full border border-slate-200/80 bg-white/85 px-3 py-1 text-xs font-semibold text-slate-500 dark:border-slate-700/40 dark:bg-slate-900/55 dark:text-slate-400">
-            {TOOLS.length} 个工具
-          </span>
         </div>
 
         <motion.section
+          data-tour-step="page-primary"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -669,9 +535,9 @@ export default function CloudMindPage() {
                     <Link
                       href={toolHref}
                       aria-label={`${tool.label}：${cardView.action}`}
-                      className={`group relative flex min-h-56 flex-col overflow-hidden rounded-2xl border bg-white/90 p-6 shadow-lg shadow-slate-200/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300/50 hover:bg-white hover:shadow-xl hover:shadow-indigo-200/50 dark:bg-slate-900/55 dark:shadow-none dark:hover:border-indigo-400/30 dark:hover:bg-slate-900/75 dark:hover:shadow-indigo-500/10 ${
+                      className={`group relative flex min-h-48 flex-col overflow-hidden rounded-2xl border bg-white/90 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-200/40 dark:bg-slate-900/55 dark:shadow-none dark:hover:bg-slate-900/75 dark:hover:shadow-indigo-500/10 ${
                         isRecommended
-                          ? 'border-sky-400 ring-2 ring-sky-400/20 dark:border-sky-400/70 dark:ring-sky-400/20'
+                          ? 'border-violet-400 ring-2 ring-violet-400/20 dark:border-violet-400/70 dark:ring-violet-400/20'
                           : 'border-slate-200/80 dark:border-slate-700/30'
                       }`}
                     >
@@ -680,51 +546,39 @@ export default function CloudMindPage() {
                       />
 
                       <div className="relative z-10 flex h-full flex-col">
-                        <div className="mb-4 flex items-start justify-between">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2.5">
                             <div
-                              className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-lg`}
+                              className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-md`}
                             >
-                              <Icon className="h-6 w-6 text-white" />
+                              <Icon className="h-5 w-5 text-white" />
                             </div>
-                            {tool.badge && (
-                              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-                                {tool.badge}
+                            {isRecommended ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700 dark:bg-violet-300/15 dark:text-violet-200">
+                                <CheckCircle2 className="h-3 w-3" />
+                                当前优先
                               </span>
+                            ) : (
+                              tool.badge && (
+                                <span className="inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+                                  {tool.badge}
+                                </span>
+                              )
                             )}
                           </div>
-                          <ArrowRight className="h-5 w-5 text-slate-400 transition-all duration-300 group-hover:translate-x-1 group-hover:text-indigo-500 dark:text-slate-600 dark:group-hover:text-indigo-300" />
+                          <ArrowRight className="h-5 w-5 text-slate-300 transition-all duration-300 group-hover:translate-x-1 group-hover:text-indigo-500 dark:text-slate-600 dark:group-hover:text-indigo-300" />
                         </div>
 
-                        <h3 className="mb-1.5 text-lg font-bold text-slate-800 dark:text-slate-100">
+                        <h3 className="mt-3 text-base font-bold text-slate-800 dark:text-slate-100">
                           {tool.label}
                         </h3>
-                        <div className="mt-3 flex flex-1 flex-col border-t border-slate-200/80 pt-3 dark:border-slate-700/50">
-                          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-sky-700 dark:text-sky-300">
-                            {isRecommended ? (
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                            ) : (
-                              <Target className="h-3.5 w-3.5" />
-                            )}
-                            {isRecommended ? '当前优先' : cardView.kicker}
-                          </div>
-                          <p className="mt-1.5 text-sm font-semibold leading-5 text-slate-800 dark:text-slate-100">
-                            {cardView.title}
-                          </p>
-                          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                            {cardView.detail}
-                          </p>
-                          <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-3 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                            <span className="inline-flex items-center gap-1">
-                              <Clock3 className="h-3.5 w-3.5" />
-                              {cardView.meta}
-                            </span>
-                            <span className="inline-flex items-center gap-1 text-sky-700 dark:text-sky-300">
-                              <ListChecks className="h-3.5 w-3.5" />
-                              {cardView.action}
-                            </span>
-                          </div>
-                        </div>
+                        <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-500 dark:text-slate-400">
+                          {cardView.title}
+                        </p>
+                        <p className="mt-auto flex items-center gap-1.5 pt-3 text-xs font-medium text-violet-700 dark:text-violet-300">
+                          <ListChecks className="h-3.5 w-3.5" />
+                          {cardView.action}
+                        </p>
                       </div>
                     </Link>
                   </motion.div>
@@ -734,6 +588,8 @@ export default function CloudMindPage() {
           ))}
         </motion.section>
       </div>
+
+      <PageTour id="resources-overview" />
     </SkyAppShell>
   );
 }

@@ -1,0 +1,69 @@
+
+[1m[46m RUN [49m[22m [36mv4.1.0 [39m[90mE:/01_Work/sky-classroom[39m
+
+ [32m✓[39m tests/slides/latex-to-image.test.ts[2m > [22mnormalizeLatex[2m > [22mconverts Unicode superscripts to ^{...}[32m 2[2mms[22m[39m
+ [32m✓[39m tests/slides/latex-to-image.test.ts[2m > [22mnormalizeLatex[2m > [22mconverts Unicode subscripts to _{...}[32m 0[2mms[22m[39m
+ [31m×[39m tests/slides/latex-to-image.test.ts[2m > [22mnormalizeLatex[2m > [22mmaps Unicode math symbols to TeX commands[32m 4[2mms[22m[39m
+[31m   → expected 'a\timesb\approxc\neqd\leqe\geqf' to be 'a\times b\approx c\neq d\leq e\geq f' // Object.is equality[39m
+ [31m×[39m tests/slides/latex-to-image.test.ts[2m > [22mnormalizeLatex[2m > [22mconverts linear fractions to \frac (the LLM-style vertex form)[32m 1[2mms[22m[39m
+[31m   → expected 'y=ax^{2}+bx+c=a\left(x+(b)/(2a)\right…' to be 'y=ax^{2}+bx+c=a\left(x+\frac{b}{2a}\r…' // Object.is equality[39m
+ [31m×[39m tests/slides/latex-to-image.test.ts[2m > [22mnormalizeLatex[2m > [22mkeeps function-call parentheses untouched[32m 1[2mms[22m[39m
+[31m   → expected 'y=(x+1)/(x-1)' to be 'y=\frac{x+1}{x-1}' // Object.is equality[39m
+ [32m✓[39m tests/slides/latex-to-image.test.ts[2m > [22mnormalizeLatex[2m > [22mleaves already-standard TeX unchanged[32m 0[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/slides/latex-to-image.test.ts[2m > [22mnormalizeLatex[2m > [22mmaps Unicode math symbols to TeX commands
+[31m[1mAssertionError[22m: expected 'a\timesb\approxc\neqd\leqe\geqf' to be 'a\times b\approx c\neq d\leq e\geq f' // Object.is equality[39m
+
+Expected: [32m"a\times[7m [27mb\approx[7m [27mc\neq[7m [27md\leq[7m [27me\geq[7m [27mf"[39m
+Received: [31m"a\timesb\approxc\neqd\leqe\geqf"[39m
+
+[36m [2m❯[22m tests/slides/latex-to-image.test.ts:[2m21:43[22m[39m
+    [90m 19|[39m   [34mit[39m([32m'maps Unicode math symbols to TeX commands'[39m[33m,[39m () [33m=>[39m {
+    [90m 20|[39m     [34mexpect[39m([34mnormalizeLatex[39m([32m'Δ=b²-4ac'[39m))[33m.[39m[34mtoBe[39m([32m'\\Delta=b^{2}-4ac'[39m)[33m;[39m
+    [90m 21|[39m     expect(normalizeLatex('a×b≈c≠d≤e≥f')).toBe('a\\times b\\approx c\\…
+    [90m   |[39m                                           [31m^[39m
+    [90m 22|[39m   })[33m;[39m
+    [90m 23|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/slides/latex-to-image.test.ts[2m > [22mnormalizeLatex[2m > [22mconverts linear fractions to \frac (the LLM-style vertex form)
+[31m[1mAssertionError[22m: expected 'y=ax^{2}+bx+c=a\left(x+(b)/(2a)\right…' to be 'y=ax^{2}+bx+c=a\left(x+\frac{b}{2a}\r…' // Object.is equality[39m
+
+Expected: [32m"y=ax^{2}+bx+c=a\left(x+[7m\frac{b}{[27m2a[7m}[27m\right)^{2}+[7m\frac{[27m4ac-b^{2}[7m}{[27m4a[7m}[27m"[39m
+Received: [31m"y=ax^{2}+bx+c=a\left(x+[7m(b)/([27m2a[7m)[27m\right)^{2}+[7m([27m4ac-b^{2}[7m)/([27m4a[7m)[27m"[39m
+
+[36m [2m❯[22m tests/slides/latex-to-image.test.ts:[2m25:84[22m[39m
+    [90m 23|[39m
+    [90m 24|[39m   it('converts linear fractions to \\frac (the LLM-style vertex form)'…
+    [90m 25|[39m     expect(normalizeLatex('y=ax²+bx+c=a\\left(x+(b)/(2a)\\right)²+(4ac…
+    [90m   |[39m                                                                                    [31m^[39m
+    [90m 26|[39m       'y=ax^{2}+bx+c=a\\left(x+\\frac{b}{2a}\\right)^{2}+\\frac{4ac-b^…
+    [90m 27|[39m     )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/slides/latex-to-image.test.ts[2m > [22mnormalizeLatex[2m > [22mkeeps function-call parentheses untouched
+[31m[1mAssertionError[22m: expected 'y=(x+1)/(x-1)' to be 'y=\frac{x+1}{x-1}' // Object.is equality[39m
+
+Expected: [32m"y=[7m\frac{x+1}{[27mx-1[7m}[27m"[39m
+Received: [31m"y=[7m(x+1)/([27mx-1[7m)[27m"[39m
+
+[36m [2m❯[22m tests/slides/latex-to-image.test.ts:[2m32:45[22m[39m
+    [90m 30|[39m   [34mit[39m([32m'keeps function-call parentheses untouched'[39m[33m,[39m () [33m=>[39m {
+    [90m 31|[39m     [34mexpect[39m([34mnormalizeLatex[39m([32m'f(x)/(x-1)'[39m))[33m.[39m[34mtoBe[39m([32m'f(x)/(x-1)'[39m)[33m;[39m
+    [90m 32|[39m     [34mexpect[39m([34mnormalizeLatex[39m([32m'y=(x+1)/(x-1)'[39m))[33m.[39m[34mtoBe[39m([32m'y=\\frac{x+1}{x-1}'[39m)[33m;[39m
+    [90m   |[39m                                             [31m^[39m
+    [90m 33|[39m   })[33m;[39m
+    [90m 34|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 20:35:05
+[2m   Duration [22m 1.67s[2m (transform 55ms, setup 159ms, import 152ms, tests 9ms, environment 1.16s)[22m
+

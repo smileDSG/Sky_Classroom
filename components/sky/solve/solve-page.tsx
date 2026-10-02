@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -271,6 +272,8 @@ interface JobState {
   knowledgePoints: { name: string; description: string; difficulty: string }[];
   similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
   fromQuestionBank: boolean;
+  answerReview?: 'verified' | 'corrected' | 'pending-confirmation' | 'skipped';
+  verified?: boolean;
   solvingTime: number;
 }
 
@@ -297,6 +300,8 @@ async function pollSolveJob(
         knowledgePoints: job.result.knowledgePoints,
         similarQuestions: job.result.similarQuestions,
         fromQuestionBank: job.result.fromQuestionBank,
+        answerReview: job.result.answerReview,
+        verified: job.result.verified,
         solvingTime: job.result.solvingTime,
       });
     }
@@ -391,10 +396,10 @@ function SolveProfileFeedback({ feedback }: { feedback: SolveGradeResponse }) {
   const nextAction = decision ? getSolveNextAction(decision) : null;
 
   return (
-    <section className="overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50/60 dark:border-emerald-800/50 dark:from-emerald-950/35 dark:via-slate-950/70 dark:to-sky-950/25">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-emerald-200/70 px-4 py-3 dark:border-emerald-900/60">
+    <section className="overflow-hidden rounded-xl border border-teal-200 bg-gradient-to-br from-teal-50 via-white to-cyan-50/60 dark:border-teal-800/50 dark:from-teal-950/35 dark:via-slate-950/70 dark:to-teal-950/25">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-teal-200/70 px-4 py-3 dark:border-teal-900/60">
         <div className="flex items-start gap-2.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-500 text-white">
             <Brain className="h-4 w-4" />
           </span>
           <div>
@@ -406,7 +411,7 @@ function SolveProfileFeedback({ feedback }: { feedback: SolveGradeResponse }) {
             </p>
           </div>
         </div>
-        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-300/10 dark:text-emerald-200">
+        <span className="rounded-full bg-teal-100 px-2.5 py-1 text-[10px] font-bold text-teal-700 dark:bg-teal-300/10 dark:text-teal-200">
           {evidence?.updatedStates ? `更新 ${evidence.updatedStates} 个知识点情况` : '结果已记录'}
         </span>
       </div>
@@ -417,7 +422,7 @@ function SolveProfileFeedback({ feedback }: { feedback: SolveGradeResponse }) {
             {impacts.slice(0, 3).map((impact) => (
               <div
                 key={impact.nodeId}
-                className="rounded-xl border border-emerald-200/70 bg-white/75 p-3 dark:border-emerald-900/50 dark:bg-slate-950/35"
+                className="rounded-xl border border-teal-200/70 bg-white/75 p-3 dark:border-teal-900/50 dark:bg-slate-950/35"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -432,7 +437,7 @@ function SolveProfileFeedback({ feedback }: { feedback: SolveGradeResponse }) {
                       {impact.masteryBefore === null
                         ? '新建'
                         : `${Math.round(impact.masteryBefore * 100)}%`}
-                      <span className="mx-1 text-emerald-500">→</span>
+                      <span className="mx-1 text-teal-500">→</span>
                       {Math.round(impact.masteryAfter * 100)}%
                     </strong>
                   </div>
@@ -442,7 +447,7 @@ function SolveProfileFeedback({ feedback }: { feedback: SolveGradeResponse }) {
                       {impact.confidenceBefore === null
                         ? '新建'
                         : `${Math.round(impact.confidenceBefore * 100)}%`}
-                      <span className="mx-1 text-emerald-500">→</span>
+                      <span className="mx-1 text-teal-500">→</span>
                       {Math.round(impact.confidenceAfter * 100)}%
                     </strong>
                   </div>
@@ -459,9 +464,9 @@ function SolveProfileFeedback({ feedback }: { feedback: SolveGradeResponse }) {
         )}
 
         {decision && nextAction && (
-          <div className="flex flex-col gap-3 rounded-xl border border-sky-200/70 bg-sky-50/75 p-3 dark:border-sky-900/50 dark:bg-sky-950/30 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-xl border border-teal-200/70 bg-teal-50/75 p-3 dark:border-teal-900/50 dark:bg-teal-950/30 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.1em] text-sky-700 dark:text-sky-300">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.1em] text-teal-700 dark:text-teal-300">
                 <Route className="h-3.5 w-3.5" /> 根据本次答题更新
               </div>
               <div className="mt-1 text-sm font-bold text-slate-900 dark:text-white">
@@ -474,13 +479,13 @@ function SolveProfileFeedback({ feedback }: { feedback: SolveGradeResponse }) {
             <div className="flex shrink-0 flex-wrap gap-2">
               <Link
                 href="/sky/learning/path"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-white px-3 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-50 dark:border-sky-800 dark:bg-slate-950/50 dark:text-sky-300"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-white px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-50 dark:border-teal-800 dark:bg-slate-950/50 dark:text-teal-300"
               >
                 查看路线
               </Link>
               <Link
                 href={nextAction.href}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-500"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-500"
               >
                 {nextAction.label} <ArrowRight className="h-3.5 w-3.5" />
               </Link>
@@ -598,6 +603,8 @@ export function SolvePage() {
         knowledgePoints: { name: string; description: string; difficulty: string }[];
         similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
         fromQuestionBank: boolean;
+        answerReview?: 'verified' | 'corrected' | 'pending-confirmation' | 'skipped';
+        verified?: boolean;
       }> = {};
 
       await pollSolveJob(
@@ -647,6 +654,8 @@ export function SolvePage() {
           difficulty: q.difficulty,
           knowledgePoint: q.knowledgePoint,
         })),
+        answerReview: latestPartial.answerReview,
+        verified: latestPartial.verified,
       };
 
       const solveResult: SolveResult = {
@@ -909,10 +918,10 @@ export function SolvePage() {
   const isLoading = state === 'recognizing' || state === 'solving' || state === 'grading';
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="mb-6 flex items-center justify-between">
+    <div className=" ">
+      <div data-tour-step="page-header" className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold tracking-tight text-teal-800 dark:text-teal-100">
             搜题批改
           </h1>
           <p className="text-sm text-muted-foreground">拍照、语音或输入题目，AI 帮你解答</p>
@@ -943,13 +952,13 @@ export function SolvePage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
+      <div data-tour-step="page-primary" className="grid gap-6 lg:grid-cols-[400px_1fr]">
         {/* ── LEFT COLUMN ── */}
         <div className="space-y-6">
-          <Card className="overflow-hidden border-sky-200/50 dark:border-sky-800/40 shadow-md shadow-sky-100/50 dark:shadow-sky-900/20">
-            <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-transparent dark:from-sky-950/30 dark:to-transparent">
-              <CardTitle className="flex items-center gap-2 text-base text-sky-700 dark:text-sky-300">
-                <ImageIcon className="h-4 w-4 text-sky-500" />
+          <Card className="overflow-hidden border-teal-200/50 dark:border-teal-800/40 shadow-md shadow-teal-100/50 dark:shadow-teal-900/20">
+            <CardHeader className="border-b bg-gradient-to-r from-teal-50 to-transparent dark:from-teal-950/30 dark:to-transparent">
+              <CardTitle className="flex items-center gap-2 text-base text-teal-700 dark:text-teal-300">
+                <ImageIcon className="h-4 w-4 text-teal-500" />
                 题目输入
               </CardTitle>
               <CardDescription>支持拍照、语音和文字输入</CardDescription>
@@ -965,8 +974,8 @@ export function SolvePage() {
           </Card>
 
           {state === 'idle' && (
-            <div className="rounded-lg border border-sky-200/40 dark:border-sky-800/30 bg-sky-50/50 dark:bg-sky-950/20 p-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-sky-600 dark:text-sky-400">
+            <div className="rounded-lg border border-teal-200/40 dark:border-teal-800/30 bg-teal-50/50 dark:bg-teal-950/20 p-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-teal-600 dark:text-teal-400">
                 <Sparkles className="h-4 w-4" />
                 使用技巧
               </div>
@@ -980,14 +989,14 @@ export function SolvePage() {
           )}
 
           {state === 'recognizing' && (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-sky-200/40 dark:border-sky-800/30 bg-sky-50/50 dark:bg-sky-950/20 p-8">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-teal-200/40 dark:border-teal-800/30 bg-teal-50/50 dark:bg-teal-950/20 p-8">
               <div className="relative">
-                <div className="h-12 w-12 animate-pulse rounded-full bg-sky-200/50 dark:bg-sky-800/50" />
+                <div className="h-12 w-12 animate-pulse rounded-full bg-teal-200/50 dark:bg-teal-800/50" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <ImageIcon className="h-6 w-6 text-sky-500" />
+                  <ImageIcon className="h-6 w-6 text-teal-500" />
                 </div>
               </div>
-              <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">
+              <p className="mt-4 text-sm font-medium text-teal-600 dark:text-teal-400">
                 正在识别图片...
               </p>
               <p className="text-xs text-muted-foreground">请稍候</p>
@@ -1043,7 +1052,7 @@ export function SolvePage() {
           )}
 
           {(state === 'solving' || state === 'grading') && (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-sky-200/40 dark:border-sky-800/30 bg-sky-50/50 dark:bg-sky-950/20 p-8">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-teal-200/40 dark:border-teal-800/30 bg-teal-50/50 dark:bg-teal-950/20 p-8">
               {previewImage && (
                 <img
                   src={previewImage}
@@ -1052,12 +1061,12 @@ export function SolvePage() {
                 />
               )}
               <div className="relative">
-                <div className="h-12 w-12 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
+                <div className="h-12 w-12 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Wand2 className="h-5 w-5 text-sky-500" />
+                  <Wand2 className="h-5 w-5 text-teal-500" />
                 </div>
               </div>
-              <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">
+              <p className="mt-4 text-sm font-medium text-teal-600 dark:text-teal-400">
                 {state === 'grading' ? '正在批改...' : phaseLabel(streamPhase)}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -1070,9 +1079,9 @@ export function SolvePage() {
               )}
               {/* Progress bar */}
               <div className="mt-4 w-full max-w-[200px]">
-                <div className="h-1.5 rounded-full bg-sky-200 dark:bg-sky-800 overflow-hidden">
+                <div className="h-1.5 rounded-full bg-teal-200 dark:bg-teal-800 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-sky-500 transition-all duration-700 ease-in-out"
+                    className="h-full rounded-full bg-teal-500 transition-all duration-700 ease-in-out"
                     style={{ width: phaseProgress(streamPhase) }}
                   />
                 </div>
@@ -1087,7 +1096,7 @@ export function SolvePage() {
           )}
 
           {(state === 'success' || state === 'graded') && result && (
-            <Card className="overflow-hidden border-sky-200/50 dark:border-sky-800/40">
+            <Card className="overflow-hidden border-teal-200/50 dark:border-teal-800/40">
               <CardHeader className="border-b bg-muted/30">
                 <CardTitle className="text-sm font-medium">题目预览</CardTitle>
               </CardHeader>
@@ -1109,7 +1118,7 @@ export function SolvePage() {
                 )}
                 <MathRenderer content={result.problem} className="text-sm text-foreground" />
                 {result.fromQuestionBank && (
-                  <div className="mt-3 flex items-center gap-2 text-xs text-sky-600 dark:text-sky-400">
+                  <div className="mt-3 flex items-center gap-2 text-xs text-teal-600 dark:text-teal-400">
                     <Sparkles className="h-3 w-3" />
                     来自题库，秒速响应
                   </div>
@@ -1134,9 +1143,9 @@ export function SolvePage() {
               )}
 
               {state === 'idle' && (
-                <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-sky-200/40 dark:border-sky-800/30 bg-sky-50/30 dark:bg-sky-950/10 py-20">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/40">
-                    <Sparkles className="h-8 w-8 text-sky-500" />
+                <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-teal-200/40 dark:border-teal-800/30 bg-teal-50/30 dark:bg-teal-950/10 py-20">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900/40">
+                    <Sparkles className="h-8 w-8 text-teal-500" />
                   </div>
                   <h3 className="mt-4 text-lg font-medium text-foreground">开始搜题</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -1237,24 +1246,26 @@ export function SolvePage() {
           )}
         </div>
       </div>
+
+      <PageTour id="resources-solve" />
     </div>
   );
 }
 
 export function SolvePageSkeleton() {
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className=" ">
       <div className="mb-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-sky-100 dark:bg-sky-900/30" />
-        <div className="mt-2 h-4 w-64 animate-pulse rounded bg-sky-50 dark:bg-sky-900/20" />
+        <div className="h-8 w-48 animate-pulse rounded bg-teal-100 dark:bg-teal-900/30" />
+        <div className="mt-2 h-4 w-64 animate-pulse rounded bg-teal-50 dark:bg-teal-900/20" />
       </div>
       <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
         <div className="space-y-6">
-          <div className="h-[400px] animate-pulse rounded-xl bg-sky-50 dark:bg-sky-900/20" />
+          <div className="h-[400px] animate-pulse rounded-xl bg-teal-50 dark:bg-teal-900/20" />
         </div>
         <div className="space-y-6">
-          <div className="h-[300px] animate-pulse rounded-xl bg-sky-50 dark:bg-sky-900/20" />
-          <div className="h-[200px] animate-pulse rounded-xl bg-sky-50 dark:bg-sky-900/20" />
+          <div className="h-[300px] animate-pulse rounded-xl bg-teal-50 dark:bg-teal-900/20" />
+          <div className="h-[200px] animate-pulse rounded-xl bg-teal-50 dark:bg-teal-900/20" />
         </div>
       </div>
     </div>

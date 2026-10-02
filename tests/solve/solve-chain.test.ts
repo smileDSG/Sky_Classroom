@@ -30,6 +30,7 @@ vi.mock('@/lib/solve/streaming-solver', () => ({
 vi.mock('@/lib/solve/solver-constants', () => ({
   classifyProblem: vi.fn(() => 'universal'),
   resolveSolverModel: vi.fn(() => ({ providerId: 'deepseek', modelId: 'deepseek-v4-flash' })),
+  SOLVE_THINKING_CONFIG: { mode: 'disabled', enabled: false },
 }));
 
 vi.mock('@/lib/solve/solver-prompts', () => ({
@@ -189,7 +190,7 @@ describe('runSolveChain', () => {
     expect(result.answer).toBe('3');
   });
 
-  it('continues chain when verify fails (with warning)', async () => {
+  it('marks answer as pending-confirmation when verify fails (never silently accepts)', async () => {
     const { analyzeProblem } = await import('@/lib/solve/agents/analyze-agent');
     vi.mocked(analyzeProblem).mockResolvedValue({
       subject: 'math',
@@ -204,11 +205,47 @@ describe('runSolveChain', () => {
 
     const result = await runSolveChain('求1+1');
 
-    expect(result.verification).toBeNull();
+    // 校验失败绝不静默接受：verification 不再为 null，而是标记 isCorrect=false + pending-confirmation
+    expect(result.verification).not.toBeNull();
+    expect(result.verification!.isCorrect).toBe(false);
+    expect(result.answerReview).toBe('pending-confirmation');
     expect(result.warnings.some((w) => w.includes('校验'))).toBe(true);
-    // No correction attempted (verify result is null)
+    // No correction attempted (no suggestedAnswer)
     expect(result.correction).toBeNull();
     expect(result.answer).toBe('3'); // original answer preserved
+  });
+
+  it('forces verification for deterministic (fill) answers even when answer is pure numeric', async () => {
+    const { analyzeProblem } = await import('@/lib/solve/agents/analyze-agent');
+    // 填空 / 判断：答案定值，即使高置信也必须独立复核
+    vi.mocked(analyzeProblem).mockResolvedValue({
+      subject: 'math',
+      knowledgePoints: ['算术'],
+      difficulty: 'easy',
+      questionType: 'fill',
+      confidence: 0.95,
+    });
+
+    const { verifyAnswer } = await import('@/lib/solve/agents/verify-agent');
+    const verifyMock = vi.mocked(verifyAnswer);
+    verifyMock.mockResolvedValue({
+      isCorrect: false,
+      confidence: 0.6,
+      suggestedAnswer: '3025',
+      reasoning: '计算有误，应为 55²=3025',
+    });
+
+    const { correctAnswer } = await import('@/lib/solve/agents/correct-agent');
+    vi.mocked(correctAnswer).mockResolvedValue({
+      steps: [{ label: '修正', content: '55²', keyPoints: [] }],
+      answer: '3025',
+    });
+
+    // answer=3 是纯数字、题目很短 —— 旧逻辑会跳过验证，新逻辑对可判定题强制复核
+    const result = await runSolveChain('55²=?');
+    expect(result.answerReview).toBe('corrected'); // 不一致 → 已修正
+    expect(result.answer).toBe('3025');
+    expect(verifyMock).toHaveBeenCalledTimes(1);
   });
 
   it('generates knowledge points when solver does not return them', async () => {

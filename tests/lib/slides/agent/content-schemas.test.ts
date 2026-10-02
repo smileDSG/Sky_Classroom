@@ -85,4 +85,16 @@ describe('convertInlineLatexToUnicode', () => {
     expect(result).toContain('CO₃²⁻');
     expect(result).toContain('CaCO₃');
   });
+
+  it('converts LaTeX commands in formulas (label path)', () => {
+    // Regression: formula label previously kept raw \sin\theta while _n became ₁
+    const label = '$n_1 \\sin\\theta_1 = n_2 \\sin\\theta_2$';
+    expect(convertInlineLatexToUnicode(label)).toBe('n₁ sinθ₁ = n₂ sinθ₂');
+  });
+
+  it('converts LaTeX commands even without $ delimiters', () => {
+    expect(convertInlineLatexToUnicode('n = c/v，\\lambda 为波长，角度 \\theta，\\Delta E')).toBe(
+      'n = c/v，λ 为波长，角度 θ，Δ E',
+    );
+  });
 });

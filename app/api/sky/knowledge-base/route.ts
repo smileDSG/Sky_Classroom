@@ -11,10 +11,11 @@ import { NextRequest } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import type { KBType } from '@/lib/knowledge-base/types';
 import { requireAdmin } from '@/lib/server/auth/helpers';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('API:KnowledgeBase');
 
-const VALID_TYPES: KBType[] = ['solve', 'slides', 'cards', 'classroom'];
+const VALID_TYPES: KBType[] = ['solve', 'slides', 'cards', 'classroom', 'course'];
 
 export async function GET(req: NextRequest) {
   try {
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('KB GET failed:', message);
-    return Response.json({ success: false, error: message }, { status: 500 });
+    return Response.json({ success: false, error: safeErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -108,6 +109,6 @@ export async function DELETE(req: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('KB DELETE failed:', message);
-    return Response.json({ success: false, error: message }, { status: 500 });
+    return Response.json({ success: false, error: safeErrorMessage(error) }, { status: 500 });
   }
 }

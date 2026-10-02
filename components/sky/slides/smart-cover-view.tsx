@@ -5,7 +5,7 @@ import type { Density } from '@/lib/slides/hooks/use-cover-draft';
 import { AnimatePresence, motion } from 'motion/react';
 import CoverSVGRenderer from './cover-svg-renderer';
 import { StyleLabPanel } from './style-lab-panel';
-import { COLOR_PALETTES } from '@/lib/slides/agent/design-dna';
+import { COLOR_PALETTES, CURATED_PALETTE_IDS } from '@/lib/slides/agent/design-dna';
 import {
   Sparkles,
   Check,
@@ -32,14 +32,7 @@ interface SmartCoverViewProps {
   onUpdateDensity: (density: Density) => void;
 }
 
-const QUICK_PALETTES = [
-  'midnight-executive',
-  'forest-moss',
-  'ocean-gradient',
-  'coral-energy',
-  'berry-cream',
-  'tech-dark-cn',
-] as const;
+const QUICK_PALETTES: readonly string[] = CURATED_PALETTE_IDS;
 
 export function SmartCoverView({
   topic,

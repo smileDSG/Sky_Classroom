@@ -24,7 +24,7 @@ describe('Theme Registry', () => {
   it('should include all expected theme IDs', () => {
     const ids = getAllThemeIds();
     expect(ids).toEqual([
-      'sky-blue',
+      'academic-navy',
       'minimal',
       'academic',
       'tech-dark',
@@ -42,7 +42,8 @@ describe('Theme Registry', () => {
   });
 
   it('should return the correct theme via getThemeById', () => {
-    expect(getThemeById('sky-blue').id).toBe('sky-blue');
+    expect(getThemeById('academic-navy').id).toBe('academic-navy');
+    expect(getThemeById('sky-blue').id).toBe('academic-navy'); // 历史别名
     expect(getThemeById('handdrawn').id).toBe('handdrawn');
   });
 
@@ -91,8 +92,8 @@ describe('Handdrawn Theme', () => {
 });
 
 describe('PPTX Themes (backward compatibility)', () => {
-  it('should contain exactly 7 PPTX themes', () => {
-    expect(Object.keys(PPTX_THEMES)).toHaveLength(7);
+  it('should contain exactly 8 PPTX themes', () => {
+    expect(Object.keys(PPTX_THEMES)).toHaveLength(8);
   });
 
   it('should include handdrawn in PPTX_THEMES', () => {
@@ -102,6 +103,7 @@ describe('PPTX Themes (backward compatibility)', () => {
 
   it('should map each PptxThemeId to a valid PptxTheme', () => {
     const ids: PptxThemeId[] = [
+      'academic-navy',
       'sky-blue',
       'minimal',
       'academic',
@@ -114,12 +116,13 @@ describe('PPTX Themes (backward compatibility)', () => {
     for (const id of ids) {
       const theme = getPptxTheme(id);
       expect(theme).toBeDefined();
-      expect(theme.id).toBe(id);
+      // 'sky-blue' 是别名，映射到更名后的主题
+      expect(theme.id).toBe(id === 'sky-blue' ? 'academic-navy' : id);
     }
   });
 
-  it('should fallback to sky-blue for unknown PPTX theme IDs', () => {
+  it('should fallback to academic-navy for unknown PPTX theme IDs', () => {
     const fallback = getPptxTheme('unknown-id' as PptxThemeId);
-    expect(fallback.id).toBe('sky-blue');
+    expect(fallback.id).toBe('academic-navy');
   });
 });

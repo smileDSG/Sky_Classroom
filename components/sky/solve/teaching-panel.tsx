@@ -174,12 +174,19 @@ interface SectionCardProps {
   index: number;
   jobId?: string;
   profile?: StudentProfile | null;
-  onRetry?: (sectionId: string) => void;
+  onRetry?: (sectionId: string) => void | Promise<void>;
   onAskQuestion?: (sectionId: string, sectionTitle: string) => void;
   onFeedback?: (
     type: 'mastered' | 'needs_review',
     profileUpdate: TeachingProfileUpdate | null,
   ) => void;
+}
+
+/** Rough detection of raw JSON that slipped through generation, so we never
+ *  render a JSON wrapper to the learner as if it were lesson content. */
+function looksLikeRawJson(text: string): boolean {
+  const t = (text || '').trim();
+  return /^[{[]/.test(t) && /"[A-Za-z_][A-Za-z0-9_]*"\s*:/.test(t);
 }
 
 const SectionCard = React.memo(function SectionCard({
@@ -193,7 +200,7 @@ const SectionCard = React.memo(function SectionCard({
   onFeedback,
 }: SectionCardProps) {
   const sortedChunks = [...chunks].sort((a, b) => a.order - b.order);
-  const hasFailed = sortedChunks.some((c) => c.failed);
+  const hasFailed = sortedChunks.some((c) => c.failed || looksLikeRawJson(c.content));
   const typeBadge = TYPE_BADGE[section.contentType] ?? TYPE_BADGE.explanation;
   const [feedbackLoading, setFeedbackLoading] = useState<'mastered' | 'needs_review' | null>(null);
   const [submittedFeedback, setSubmittedFeedback] = useState<'mastered' | 'needs_review' | null>(
@@ -202,10 +209,42 @@ const SectionCard = React.memo(function SectionCard({
   const [feedbackProfileUpdate, setFeedbackProfileUpdate] = useState<TeachingProfileUpdate | null>(
     null,
   );
+  const [retrying, setRetrying] = useState(false);
+  // Tab nav: group present chunk types into labelled tabs so each tab only
+  // shows its own content. 'text' and 'explanation' share the "讲解" label.
+  const CHUNK_NAV_ENTRIES: Array<{ type: string; label: string }> = [
+    { type: 'text', label: '讲解' },
+    { type: 'explanation', label: '讲解' },
+    { type: 'formula', label: '定义&公式' },
+    { type: 'example', label: '例题' },
+    { type: 'quiz', label: '练习' },
+    { type: 'diagram', label: '图示' },
+  ];
+  const chunkNav = CHUNK_NAV_ENTRIES.filter((entry) =>
+    sortedChunks.some((c) => c.type === entry.type),
+  ).reduce<Array<{ label: string; types: string[] }>>((acc, entry) => {
+    const group = acc.find((g) => g.label === entry.label);
+    if (group) group.types.push(entry.type);
+    else acc.push({ label: entry.label, types: [entry.type] });
+    return acc;
+  }, []);
+  const hasChunkNav = chunkNav.length > 0;
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+  const effectiveTab = !hasChunkNav ? null : (activeTab ?? chunkNav[0]?.label ?? null);
+  const activeGroup = chunkNav.find((g) => g.label === effectiveTab) ?? null;
+  const visibleChunks = activeGroup
+    ? sortedChunks.filter(
+        (c) => activeGroup.types.includes(c.type) || c.failed || looksLikeRawJson(c.content),
+      )
+    : sortedChunks;
 
-  const handleRetry = () => {
-    if (onRetry) {
-      onRetry(section.id);
+  const handleRetry = async () => {
+    if (!onRetry) return;
+    setRetrying(true);
+    try {
+      await onRetry(section.id);
+    } finally {
+      setRetrying(false);
     }
   };
 
@@ -298,154 +337,226 @@ const SectionCard = React.memo(function SectionCard({
           )}
         </CardHeader>
         <CardContent className="space-y-4">
-          {sortedChunks.map((chunk) => (
-            <div
-              key={chunk.order}
-              className={cn(
-                'rounded-xl p-4 border-l-2 transition-colors',
-                chunk.type === 'formula' &&
-                  'bg-indigo-50/50 dark:bg-indigo-950/20 border-l-indigo-400 border-indigo-100/60 dark:border-indigo-800/30',
-                chunk.type === 'example' &&
-                  'bg-violet-50/50 dark:bg-violet-950/20 border-l-violet-400 border-violet-100/60 dark:border-violet-800/30',
-                chunk.type === 'quiz' &&
-                  'bg-amber-50/50 dark:bg-amber-950/20 border-l-amber-400 border-amber-100/60 dark:border-amber-800/30',
-                chunk.type === 'diagram' &&
-                  'bg-sky-50/50 dark:bg-sky-950/20 border-l-sky-400 border-sky-100/60 dark:border-sky-800/30',
-                chunk.type === 'text' &&
-                  'bg-slate-50/70 dark:bg-slate-800/30 border-l-slate-300 dark:border-l-slate-600 border-slate-100/60 dark:border-slate-700/30',
-                chunk.failed &&
-                  'bg-red-50/50 dark:bg-red-950/20 border-l-red-400 border-red-100/60 dark:border-red-800/30',
-                chunk.isFollowUp &&
-                  'ml-4 border-l-indigo-400 bg-indigo-50/30 dark:bg-indigo-950/10',
-              )}
-            >
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                {chunk.type === 'example' && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
-                  >
-                    例题
-                  </Badge>
-                )}
-                {chunk.type === 'quiz' && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-                  >
-                    随堂测验
-                  </Badge>
-                )}
-                {chunk.type === 'formula' && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                  >
-                    核心公式
-                  </Badge>
-                )}
-                {chunk.failed && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-                  >
-                    生成失败
-                  </Badge>
-                )}
-                {chunk.isFollowUp && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                  >
-                    追问补充
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-start justify-between gap-3">
-                <div className={cn('flex-1 min-w-0', chunk.type === 'formula' && 'text-center')}>
-                  {chunk.type === 'quiz' && chunk.options && chunk.options.length > 0 ? (
-                    <QuizInteraction
-                      chunk={chunk}
-                      jobId={jobId}
-                      knowledgePoints={section.knowledgePoints}
-                    />
-                  ) : (
-                    <div
+          {hasChunkNav && (
+            <div className="flex flex-wrap items-center gap-2 -mb-2">
+              <span className="text-[11px] font-medium text-[var(--teaching-muted)] mr-0.5">
+                本节导航
+              </span>
+              <div className="relative inline-flex flex-wrap gap-1 rounded-xl bg-[var(--teaching-primary)]/6 p-1">
+                {chunkNav.map((g) => {
+                  const active = g.label === effectiveTab;
+                  return (
+                    <button
+                      key={g.label}
+                      type="button"
+                      onClick={() => setActiveTab(g.label)}
                       className={cn(
-                        'text-sm leading-relaxed text-slate-800 dark:text-slate-100',
-                        chunk.type === 'formula' && 'text-base',
+                        'relative rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-colors',
+                        active
+                          ? 'text-white'
+                          : 'text-[var(--teaching-muted)] hover:text-[var(--teaching-text)]',
                       )}
                     >
-                      <MathRenderer
-                        content={chunk.content}
-                        displayMode={chunk.type === 'formula'}
-                        highlights={
-                          chunk.type !== 'formula' && profile
-                            ? analyzeHighlights(chunk.content, profile)
-                            : undefined
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-                <TTSButton text={chunk.content} className="shrink-0 mt-0.5" />
+                      {active && (
+                        <motion.span
+                          layoutId={`sectionChunkActive-${section.id}`}
+                          className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 shadow-sm"
+                          transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                        />
+                      )}
+                      <span className="relative z-10">{g.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          ))}
+          )}
+          <motion.div
+            key={effectiveTab ?? 'all'}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="space-y-3"
+          >
+            {visibleChunks.map((chunk) => {
+              const chunkBroken = chunk.failed || looksLikeRawJson(chunk.content);
+              return (
+                <div
+                  key={chunk.order}
+                  id={`chunk-${section.id}-${chunk.order}`}
+                  className={cn(
+                    'rounded-xl p-4 border-l-2 transition-colors scroll-mt-28',
+                    chunk.type === 'formula' &&
+                      'bg-indigo-50/50 dark:bg-indigo-950/20 border-l-indigo-400 border-indigo-100/60 dark:border-indigo-800/30',
+                    chunk.type === 'example' &&
+                      'bg-violet-50/50 dark:bg-violet-950/20 border-l-violet-400 border-violet-100/60 dark:border-violet-800/30',
+                    chunk.type === 'quiz' &&
+                      'bg-amber-50/50 dark:bg-amber-950/20 border-l-amber-400 border-amber-100/60 dark:border-amber-800/30',
+                    chunk.type === 'diagram' &&
+                      'bg-sky-50/50 dark:bg-sky-950/20 border-l-sky-400 border-sky-100/60 dark:border-sky-800/30',
+                    chunk.type === 'text' &&
+                      'bg-slate-50/70 dark:bg-slate-800/30 border-l-slate-300 dark:border-l-slate-600 border-slate-100/60 dark:border-slate-700/30',
+                    chunkBroken &&
+                      'bg-red-50/50 dark:bg-red-950/20 border-l-red-400 border-red-100/60 dark:border-red-800/30',
+                    chunk.isFollowUp &&
+                      'ml-4 border-l-indigo-400 bg-indigo-50/30 dark:bg-indigo-950/10',
+                  )}
+                >
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    {chunk.type === 'example' && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
+                      >
+                        例题
+                      </Badge>
+                    )}
+                    {chunk.type === 'quiz' && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                      >
+                        随堂测验
+                      </Badge>
+                    )}
+                    {chunk.type === 'formula' && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                      >
+                        核心公式
+                      </Badge>
+                    )}
+                    {chunkBroken && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                      >
+                        生成失败
+                      </Badge>
+                    )}
+                    {chunk.isFollowUp && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                      >
+                        追问补充
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      {chunkBroken ? (
+                        <p className="text-sm text-red-500 dark:text-red-400">
+                          内容生成异常，请点击下方「重新生成」。
+                        </p>
+                      ) : chunk.type === 'quiz' && chunk.options && chunk.options.length > 0 ? (
+                        <QuizInteraction
+                          chunk={chunk}
+                          jobId={jobId}
+                          knowledgePoints={section.knowledgePoints}
+                          onAnswer={(correct) =>
+                            onFeedback?.(correct ? 'mastered' : 'needs_review', null)
+                          }
+                        />
+                      ) : (
+                        <div
+                          className={cn(
+                            'text-sm leading-relaxed text-slate-800 dark:text-slate-100',
+                            chunk.type === 'formula' && 'text-base leading-snug',
+                          )}
+                        >
+                          <MathRenderer
+                            content={
+                              chunk.type === 'formula'
+                                ? chunk.content
+                                    .replace(/\s*\n+\s*/g, ' ')
+                                    .replace(/\s{2,}/g, ' ')
+                                    .trim()
+                                : chunk.content
+                            }
+                            displayMode={false}
+                            highlights={
+                              chunk.type !== 'formula' && profile
+                                ? analyzeHighlights(chunk.content, profile)
+                                : undefined
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
+                    {!chunkBroken && <TTSButton text={chunk.content} className="shrink-0 mt-0.5" />}
+                  </div>
+                </div>
+              );
+            })}
+          </motion.div>
           {hasFailed && onRetry && (
             <div className="flex justify-end pt-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRetry}
+                onClick={() => void handleRetry()}
+                disabled={retrying}
                 className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
-                <RefreshCw className="h-3 w-3 mr-1" />
-                重新生成
+                {retrying ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                )}
+                {retrying ? '重新生成中...' : '重新生成'}
               </Button>
             </div>
           )}
 
-          {/* Learning feedback buttons */}
+          {/* Block-tail check-in: auto-asked at the end of every block */}
           {!hasFailed && (
-            <div className="flex justify-between items-center pt-3 border-t border-[var(--teaching-border)]">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onAskQuestion?.(section.id, section.title)}
-                className="text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
-              >
-                <MessageCircle className="h-3 w-3 mr-1" />
-                提问
-              </Button>
-              <div className="flex gap-2">
+            <div className="mt-4 rounded-xl border border-dashed border-[var(--teaching-border)] bg-gradient-to-br from-slate-50 to-indigo-50/40 p-4 dark:from-slate-900/60 dark:to-indigo-950/25">
+              <div className="flex items-center gap-2">
+                <Target className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  块尾检查：这一块掌握了吗？
+                </span>
+                {feedbackLoading && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-500" />
+                )}
+              </div>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                标记为需复习，会为你生成补充讲解，并自动调整后续内容。
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Button
-                  variant="outline"
                   size="sm"
                   onClick={() => void handleSectionFeedback('mastered')}
                   disabled={Boolean(feedbackLoading || submittedFeedback)}
-                  className="text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
-                  {feedbackLoading === 'mastered' ? (
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                  ) : (
-                    <ThumbsUp className="h-3 w-3 mr-1" />
-                  )}
-                  {submittedFeedback === 'mastered' ? '已记录' : '已掌握'}
+                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                  {submittedFeedback === 'mastered' ? '已记录掌握' : '掌握了，继续'}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => void handleSectionFeedback('needs_review')}
                   disabled={Boolean(feedbackLoading || submittedFeedback)}
-                  className="text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white border-transparent"
                 >
                   {feedbackLoading === 'needs_review' ? (
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
                   ) : (
-                    <ThumbsDown className="h-3 w-3 mr-1" />
+                    <Brain className="h-3.5 w-3.5 mr-1" />
                   )}
-                  {submittedFeedback === 'needs_review' ? '已记录' : '需复习'}
+                  {submittedFeedback === 'needs_review' ? '已生成补充' : '需复习，重新讲解'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onAskQuestion?.(section.id, section.title)}
+                  className="text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                >
+                  <MessageCircle className="h-3 w-3 mr-1" />
+                  向老师提问
                 </Button>
               </div>
             </div>
@@ -606,11 +717,18 @@ function TeachingPersonalizationPanel({
   const sectionCount = plan?.sections.length;
   const currentSection =
     displayIndex >= 0 && plan?.sections[displayIndex] ? plan.sections[displayIndex] : null;
-  const statusLabel = done ? '教案已生成' : loading ? '正在根据你的情况生成' : '已参考你的学习情况';
-  const judgement =
-    context?.learnerDecision?.summary ??
-    notice ??
-    '根据你的学习情况调整本次课堂的讲解顺序、难度和练习比例。';
+  const personalized = !!context?.learnerDecision;
+  const statusLabel = done
+    ? '教案已生成'
+    : loading
+      ? '正在根据你的情况生成'
+      : personalized
+        ? '已参考你的学习情况'
+        : '默认配置';
+  const judgement = personalized
+    ? (context?.learnerDecision?.summary ??
+      '根据你的学习情况调整本次课堂的讲解顺序、难度和练习比例。')
+    : (notice ?? '当前按默认配置讲解。可直接开始，授课中会依据你的作答逐步个性化。');
 
   if (!context && !effectivePolicy && !notice) return null;
 
@@ -628,7 +746,14 @@ function TeachingPersonalizationPanel({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h4 className="text-sm font-bold text-[var(--teaching-text)]">按你的情况授课</h4>
-              <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-300">
+              <span
+                className={cn(
+                  'rounded-full border px-2.5 py-1 text-[10px] font-semibold',
+                  personalized
+                    ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300'
+                    : 'border-amber-400/30 bg-amber-400/10 text-amber-300',
+                )}
+              >
                 {statusLabel}
               </span>
             </div>
@@ -730,7 +855,8 @@ function TeachingPersonalizationPanel({
           <span>
             {currentSection
               ? `当前第 ${displayIndex + 1} 节：${currentSection.title}。课堂反馈会继续修正后续推荐。`
-              : '生成后将按章节逐步讲解，并用“已掌握 / 需复习”反馈更新后续学习安排。'}
+              : '生成后将按章节逐步讲解，并用“已掌握 / 需复习”反馈更新后续学习安排。'}{' '}
+            核心知识点不会跳过，个性化只调整讲解顺序、深度与节奏。
           </span>
         </div>
         {(feedbackStats.mastered > 0 || feedbackStats.needsReview > 0) && (
@@ -765,6 +891,67 @@ interface TeachingPanelProps {
   personalizationNotice?: string | null;
   personalizationPolicy?: TeachingGenerationPolicy | null;
   personalizationContext?: PersonalizationContext | null;
+}
+
+interface LessonActiveBarProps {
+  topic: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  canSubmit: boolean;
+  title?: string;
+  current: number;
+  total: number;
+}
+
+/** Slim command bar shown while a lesson is already generated, replacing the
+ * full-size command console so it no longer hogs space above the content. */
+function LessonActiveBar({
+  topic,
+  onChange,
+  onSubmit,
+  canSubmit,
+  title,
+  current,
+  total,
+}: LessonActiveBarProps) {
+  return (
+    <div
+      className="flex flex-col gap-2.5 rounded-2xl border bg-[var(--teaching-surface)]/80 backdrop-blur-sm px-4 py-3 shadow-sm sm:flex-row sm:items-center"
+      style={{ borderColor: 'var(--teaching-border)' }}
+    >
+      <div className="flex min-w-0 items-center gap-2.5 sm:mr-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--teaching-primary)]/20 bg-[var(--teaching-primary)]/10">
+          <Sparkles className="h-4 w-4 text-[var(--teaching-primary)]" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-[var(--teaching-text)]">
+            {title ?? topic}
+          </p>
+          <p className="text-xs text-[var(--teaching-muted)]">
+            第 {current} / {total} 块 · 教学指令台
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-1 items-center gap-2.5">
+        <Input
+          value={topic}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && canSubmit) onSubmit();
+          }}
+          placeholder="换一个主题，重新授课"
+          className="h-10 rounded-lg border-[var(--teaching-border)] bg-white/70 px-3.5 text-sm text-[var(--teaching-text)] placeholder:text-[var(--teaching-muted)] dark:bg-slate-900/50 focus:border-[var(--teaching-primary)] focus:ring-[var(--teaching-primary)]/20"
+        />
+        <Button
+          onClick={onSubmit}
+          disabled={!canSubmit}
+          className="h-10 shrink-0 rounded-lg px-4 text-sm font-semibold text-[var(--teaching-text)]"
+        >
+          换主题授课
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function TeachingPanel({
@@ -825,6 +1012,9 @@ export function TeachingPanel({
   });
   const [feedbackProfileUpdates, setFeedbackProfileUpdates] = useState<TeachingProfileUpdate[]>([]);
   const latestFeedbackProfileUpdate = feedbackProfileUpdates.at(-1) ?? null;
+
+  // Adaptive supplementation: whether an on-demand adapt request is in flight.
+  const [adapting, setAdapting] = useState(false);
 
   // Diagnostic state
   const [diagnosticStep, setDiagnosticStep] = useState<'idle' | 'loading' | 'ready' | 'done'>(
@@ -1197,11 +1387,14 @@ export function TeachingPanel({
   const handleStart = useCallback(async () => {
     if (!topic.trim()) return;
 
-    // Skip diagnostic if no profile
-    if (!hasProfile) {
-      await startTeachingJob();
-      return;
-    }
+    // Non-blocking: start teaching right away with the current config. The
+    // diagnostic is an optional enhancement (runDiagnostic), never a gate.
+    await startTeachingJob();
+  }, [topic, startTeachingJob]);
+
+  // ── Optional diagnostic (postponed personalization) ──
+  const runDiagnostic = useCallback(async () => {
+    if (!topic.trim() || loading) return;
 
     setDiagnosticStep('loading');
     setDiagnosticSessionId(null);
@@ -1252,7 +1445,7 @@ export function TeachingPanel({
       toast.error('学习情况生成失败，直接开始授课');
       await startTeachingJob();
     }
-  }, [topic, hasProfile, startTeachingJob]);
+  }, [topic, loading, profile, startTeachingJob]);
 
   // ── Submit diagnostic answers ──
   const submitDiagnostic = useCallback(async () => {
@@ -1335,6 +1528,37 @@ export function TeachingPanel({
     },
     [currentJobId],
   );
+
+  // ── Adaptive Supplementation (on-demand; block-tail auto-ask adjusts pace) ──
+  const runAdaptation = useCallback(async () => {
+    const jobId = currentJobId;
+    if (!jobId || adapting) return;
+    setAdapting(true);
+    try {
+      const res = await fetch(`/api/sky/teaching/${jobId}/adapt`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || '自适应调整失败');
+      const data = json.data;
+      if (data.hasSupplement && Array.isArray(data.supplemental) && data.supplemental.length > 0) {
+        setSections((prev) => {
+          const next = [...prev];
+          const at =
+            displayIndex >= 0 && displayIndex < next.length ? displayIndex + 1 : next.length;
+          next.splice(at, 0, ...data.supplemental);
+          return next;
+        });
+        toast.success(data.reason || `已补充 ${data.supplemental.length} 个强化章节`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '自适应调整失败');
+    } finally {
+      setAdapting(false);
+    }
+  }, [currentJobId, displayIndex, adapting]);
 
   // ── Favorite ──
   const effectiveJobId = currentJobId ?? viewHistoryJobId;
@@ -1427,129 +1651,162 @@ export function TeachingPanel({
   const sectionsRatio = plan ? Math.round((sections.length / plan.sections.length) * 100) : 0;
   const progress = serverProgress ?? sectionsRatio;
   const canSubmit = !loading && topic.trim().length > 0;
+  // A lesson is already generated and being viewed — collapse the command
+  // console into a slim bar so it no longer hogs the top of the page.
+  const lessonActive = done && !loading;
 
   return (
     <div className="space-y-6">
       {/* ═══ 教学指令台 ═══ */}
-      <div
-        className="rounded-2xl border bg-[var(--teaching-surface)] backdrop-blur-sm overflow-hidden shadow-sm"
-        style={{ borderColor: 'var(--teaching-border)' }}
-      >
-        <div
-          className="px-5 pt-5 pb-4"
-          style={{
-            background:
-              'linear-gradient(135deg, color-mix(in srgb, var(--teaching-primary) 6%, transparent) 0%, transparent 100%)',
-            borderBottom: '1px solid var(--teaching-border)',
-          }}
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--teaching-primary)]/10 border border-[var(--teaching-primary)]/20">
-              <Sparkles className="h-4 w-4 text-[var(--teaching-primary)]" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-[var(--teaching-text)]">教学指令台</h3>
-              <p className="text-sm text-[var(--teaching-muted)]">
-                输入授课主题，AI 导师将根据你的学习情况生成个性化教案
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="px-5 py-5">
-          {!viewHistoryItem && (
-            <TeachingPersonalizationPanel
-              context={personalizationContext}
-              policy={personalizationPolicy}
-              notice={personalizationNotice}
-              topic={topic}
-              plan={plan}
-              loading={loading}
-              done={done}
-              displayIndex={displayIndex}
-              feedbackStats={feedbackStats}
-            />
-          )}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Input
-                value={topic}
-                onChange={(e) => handleTopicChange(e.target.value)}
-                placeholder="输入授课主题，例如：导数、牛顿定律..."
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && canSubmit) handleStart();
-                }}
-                disabled={loading}
-                className="h-12 rounded-xl border-[var(--teaching-border)] bg-white/70 dark:bg-slate-900/50 px-4 text-[var(--teaching-text)] placeholder:text-[var(--teaching-muted)] focus:border-[var(--teaching-primary)] focus:ring-[var(--teaching-primary)]/20"
-                onFocus={() => {
-                  if (suggestions.length > 0) setShowSuggestions(true);
-                }}
-                onBlur={() => {
-                  // Delay hide to allow click on suggestion
-                  setTimeout(() => setShowSuggestions(false), 200);
-                }}
-              />
-              {/* Search suggestions dropdown */}
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-10 top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
-                  {suggestions.map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      className="w-full text-left px-4 py-2.5 text-sm text-[var(--teaching-text)] hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-                      onMouseDown={() => handleSelectSuggestion(suggestion)}
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
+      {lessonActive ? (
+        <LessonActiveBar
+          topic={topic}
+          onChange={(value) => handleTopicChange(value)}
+          onSubmit={handleStart}
+          canSubmit={canSubmit}
+          title={plan?.title}
+          current={displayIndex + 1}
+          total={sections.length}
+        />
+      ) : (
+        <>
+          <div
+            className="rounded-2xl border bg-[var(--teaching-surface)] backdrop-blur-sm overflow-hidden shadow-sm"
+            style={{ borderColor: 'var(--teaching-border)' }}
+          >
+            <div
+              className="px-5 pt-5 pb-4"
+              style={{
+                background:
+                  'linear-gradient(135deg, color-mix(in srgb, var(--teaching-primary) 6%, transparent) 0%, transparent 100%)',
+                borderBottom: '1px solid var(--teaching-border)',
+              }}
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--teaching-primary)]/10 border border-[var(--teaching-primary)]/20">
+                  <Sparkles className="h-4 w-4 text-[var(--teaching-primary)]" />
                 </div>
-              )}
-            </div>
-            {loading ? (
-              <Button
-                onClick={handleCancel}
-                variant="outline"
-                className="min-w-[120px] h-12 rounded-xl border-red-500/30 text-red-400 hover:bg-red-900/20 hover:border-red-500/50"
-              >
-                <X className="h-4 w-4 mr-2" />
-                取消
-              </Button>
-            ) : (
-              <button
-                onClick={handleStart}
-                disabled={!canSubmit}
-                className="teaching-button-primary teaching-button-sweep min-w-[140px] h-12 rounded-xl px-5 text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-[var(--teaching-text)]"
-              >
-                <Sparkles className="h-4 w-4 text-[var(--teaching-primary)]" />
-                启动授课
-              </button>
-            )}
-          </div>
-
-          {/* Recommended topics */}
-          {recommendedTopics.length > 0 && !loading && !done && (
-            <div className="mt-4">
-              <p className="text-xs font-medium text-[var(--teaching-muted)] mb-2">
-                {hasProfile ? '根据你的学习情况推荐：' : '热门推荐：'}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {recommendedTopics.map((t) => (
-                  <Badge
-                    key={t}
-                    variant="outline"
-                    className="cursor-pointer rounded-full px-3 py-1 text-xs font-medium border-[var(--teaching-border)] text-[var(--teaching-text)] hover:border-[var(--teaching-border-strong)] hover:bg-[var(--teaching-primary)]/8 transition-colors"
-                    onClick={() => handleSelectRecommended(t)}
-                  >
-                    {t}
-                  </Badge>
-                ))}
+                <div>
+                  <h3 className="text-base font-semibold text-[var(--teaching-text)]">
+                    教学指令台
+                  </h3>
+                  <p className="text-sm text-[var(--teaching-muted)]">
+                    输入授课主题，AI 导师将根据你的学习情况生成个性化教案
+                  </p>
+                </div>
               </div>
             </div>
-          )}
+            <div className="px-5 py-5">
+              {!viewHistoryItem && (
+                <TeachingPersonalizationPanel
+                  context={personalizationContext}
+                  policy={personalizationPolicy}
+                  notice={personalizationNotice}
+                  topic={topic}
+                  plan={plan}
+                  loading={loading}
+                  done={done}
+                  displayIndex={displayIndex}
+                  feedbackStats={feedbackStats}
+                />
+              )}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1 relative">
+                  <Input
+                    value={topic}
+                    onChange={(e) => handleTopicChange(e.target.value)}
+                    placeholder="输入授课主题，例如：导数、牛顿定律..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && canSubmit) handleStart();
+                    }}
+                    disabled={loading}
+                    className="h-12 rounded-xl border-[var(--teaching-border)] bg-white/70 dark:bg-slate-900/50 px-4 text-[var(--teaching-text)] placeholder:text-[var(--teaching-muted)] focus:border-[var(--teaching-primary)] focus:ring-[var(--teaching-primary)]/20"
+                    onFocus={() => {
+                      if (suggestions.length > 0) setShowSuggestions(true);
+                    }}
+                    onBlur={() => {
+                      // Delay hide to allow click on suggestion
+                      setTimeout(() => setShowSuggestions(false), 200);
+                    }}
+                  />
+                  {/* Search suggestions dropdown */}
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="absolute z-10 top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
+                      {suggestions.map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          className="w-full text-left px-4 py-2.5 text-sm text-[var(--teaching-text)] hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                          onMouseDown={() => handleSelectSuggestion(suggestion)}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {loading ? (
+                  <Button
+                    onClick={handleCancel}
+                    variant="outline"
+                    className="min-w-[120px] h-12 rounded-xl border-red-500/30 text-red-400 hover:bg-red-900/20 hover:border-red-500/50"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    取消
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {hasProfile && (
+                      <Button
+                        variant="outline"
+                        onClick={() => void runDiagnostic()}
+                        title="先做一次可选摸底诊断，让课堂更贴合你的情况（不会阻止直接授课）"
+                        disabled={!canSubmit}
+                        className="h-12 shrink-0 rounded-xl border-[var(--teaching-border)] px-3 text-xs font-medium text-[var(--teaching-muted)] hover:text-[var(--teaching-text)] hover:bg-[var(--teaching-primary)]/5"
+                      >
+                        <Brain className="h-4 w-4 mr-1.5" />
+                        摸底诊断
+                      </Button>
+                    )}
+                    <button
+                      onClick={handleStart}
+                      disabled={!canSubmit}
+                      className="teaching-button-primary teaching-button-sweep min-w-[140px] h-12 rounded-xl px-5 text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-[var(--teaching-text)]"
+                    >
+                      <Sparkles className="h-4 w-4 text-[var(--teaching-primary)]" />
+                      启动授课
+                    </button>
+                  </div>
+                )}
+              </div>
 
-          {!user && (
-            <p className="text-xs mt-3 text-[var(--teaching-warm)]">请先登录后再使用授课功能</p>
-          )}
-        </div>
-      </div>
+              {/* Recommended topics */}
+              {recommendedTopics.length > 0 && !loading && !done && (
+                <div className="mt-4">
+                  <p className="text-xs font-medium text-[var(--teaching-muted)] mb-2">
+                    {hasProfile ? '根据你的学习情况推荐：' : '热门推荐：'}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {recommendedTopics.map((t) => (
+                      <Badge
+                        key={t}
+                        variant="outline"
+                        className="cursor-pointer rounded-full px-3 py-1 text-xs font-medium border-[var(--teaching-border)] text-[var(--teaching-text)] hover:border-[var(--teaching-border-strong)] hover:bg-[var(--teaching-primary)]/8 transition-colors"
+                        onClick={() => handleSelectRecommended(t)}
+                      >
+                        {t}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!user && (
+                <p className="text-xs mt-3 text-[var(--teaching-warm)]">请先登录后再使用授课功能</p>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ═══ 备课进度 ═══ */}
       <AnimatePresence>
@@ -2005,6 +2262,11 @@ export function TeachingPanel({
             }));
             if (profileUpdate) {
               setFeedbackProfileUpdates((prev) => [...prev, profileUpdate]);
+            }
+            // Block-tail adjust: mark for review → ask the adaptive engine to
+            // inject supplemental content for the weak point.
+            if (type === 'needs_review') {
+              void runAdaptation();
             }
           }}
         />

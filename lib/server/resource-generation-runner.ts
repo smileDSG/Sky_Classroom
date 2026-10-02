@@ -1,5 +1,6 @@
 import { createLogger } from '@/lib/logger';
 import { runSoftwareCupGeneration } from '@/lib/software-cup/demo-service';
+import { ingestGeneratedResources } from '@/lib/server/resource-generation-kb';
 import {
   markResourceGenerationJobFailedHybrid,
   markResourceGenerationJobRunningHybrid,
@@ -13,6 +14,7 @@ const runningJobs = new Map<string, Promise<void>>();
 
 export interface RunResourceGenerationJobOptions {
   enableLlm?: boolean;
+  resourceTypes?: string[];
 }
 
 export function runResourceGenerationJob(
@@ -38,9 +40,11 @@ export function runResourceGenerationJob(
       await markResourceGenerationJobRunningHybrid(jobId);
 
       const enableLlm = options.enableLlm ?? Boolean(job.userId);
+      const resourceTypes = options.resourceTypes ?? job.resourceTypes;
       const result = await runSoftwareCupGeneration(job.input, {
         userId: job.userId,
         enableLlm,
+        resourceTypes,
         onProgress: async (progress) => {
           await updateResourceGenerationJobProgressHybrid(
             jobId,
@@ -52,6 +56,18 @@ export function runResourceGenerationJob(
       });
 
       await markResourceGenerationJobSucceededHybrid(jobId, result);
+
+      // 产物入库为共享 RAG 素材源；写入失败不影响任务成功态，仅记录告警。
+      try {
+        const ingested = await ingestGeneratedResources({ jobId, result });
+        if (ingested.documents > 0) {
+          log.info(
+            `Ingested ${ingested.documents} generated resources into KB[course] for job ${jobId} (${ingested.chunks} chunks).`,
+          );
+        }
+      } catch (ingestError) {
+        log.warn(`Failed to ingest generated resources into KB for job ${jobId}:`, ingestError);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       log.error(`Resource generation job ${jobId} failed:`, error);

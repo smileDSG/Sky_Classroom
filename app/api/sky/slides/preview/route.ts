@@ -10,6 +10,7 @@ import { apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { generatePreviewFromPptx } from '@/lib/slides/pptx-preview';
 import { rateLimiters, rateLimitResponse, getClientIp } from '@/lib/api/middleware/rate-limiter';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('API:SkySlidesPreview');
 
@@ -79,11 +80,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     log.error('Preview generation failed:', err);
-    return apiError(
-      API_ERROR_CODES.INTERNAL_ERROR,
-      500,
-      err.message || 'Preview generation failed',
-    );
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, safeErrorMessage(err));
   }
 }
 

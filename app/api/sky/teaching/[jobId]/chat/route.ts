@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { readTeachingJob, updateTeachingJob } from '@/lib/server/teaching-job-store';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
@@ -6,19 +7,23 @@ import { resolveSolverModel } from '@/lib/solve/solver-constants';
 import { createLogger } from '@/lib/logger';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import type { ContentChunk } from '@/lib/teaching/content-types';
+import { safeErrorMessage } from '@/lib/server/sanitize-error';
 
 const log = createLogger('TeachingChatAPI');
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-interface ChatRequest {
-  message: string;
-  sectionId?: string;
-  history?: ChatMessage[];
-}
+const ChatSchema = z.object({
+  message: z.string().min(1).max(10000),
+  sectionId: z.string().max(200).optional(),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().max(10000),
+      }),
+    )
+    .max(50)
+    .optional(),
+});
 
 /**
  * POST /api/sky/teaching/[jobId]/chat
@@ -49,8 +54,16 @@ export async function POST(
       return NextResponse.json({ error: 'Job not completed yet' }, { status: 400 });
     }
 
-    const body: ChatRequest = await request.json();
-    const { message, sectionId, history = [] } = body;
+    const body = await request.json();
+    const parsed = ChatSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: `Validation failed: ${parsed.error.issues[0].message}` },
+        { status: 400 },
+      );
+    }
+
+    const { message, sectionId, history = [] } = parsed.data;
 
     if (!message || message.trim().length === 0) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
@@ -166,7 +179,7 @@ ${message}
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = safeErrorMessage(error);
     log.error('Teaching chat failed:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -27,6 +27,7 @@ import type {
   StrategyAlias,
 } from '@/lib/teaching/learning-path-types';
 import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-strip';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { cn } from '@/lib/utils';
 
 const STATUS_LABELS: Record<LearningPathNode['status'], string> = {
@@ -140,9 +141,9 @@ function getPrimaryTool(
 
 function StatusIcon({ status }: { status: LearningPathNode['status'] }) {
   if (status === 'completed')
-    return <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
+    return <CheckCircle2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />;
   if (status === 'in_progress')
-    return <PlayCircle className="h-4 w-4 text-amber-600 dark:text-amber-300" />;
+    return <PlayCircle className="h-4 w-4 text-blue-600 dark:text-blue-300" />;
   return <Circle className="h-4 w-4 text-slate-500" />;
 }
 
@@ -218,11 +219,6 @@ export function LearningPathPage() {
     (node) => node.status === 'in_progress' || node.status === 'pending',
   );
   const nextMastery = nextNode ? getNodeMastery(nextNode, context) : null;
-  const profileReason = context?.dueReviews.length
-    ? `当前有 ${context.dueReviews.length} 项到期内容，路线会优先插入复习节点。`
-    : context?.weakPoints[0]
-      ? `当前最薄弱的是「${context.weakPoints[0].knowledgePoint}」，路线会优先补足。`
-      : (context?.learnerDecision?.summary ?? '路线会随着新的学习记录自动调整。');
   const totalSections =
     path?.nodes.reduce((sum, node) => sum + Math.max(1, node.estimatedSections), 0) ?? 0;
   const planUpdatedAt = useMemo(
@@ -231,332 +227,307 @@ export function LearningPathPage() {
   );
 
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-slate-50 text-slate-900 dark:bg-[#07101f] dark:text-slate-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(14,165,233,0.1),transparent_32%),radial-gradient(circle_at_85%_25%,rgba(124,58,237,0.08),transparent_34%),linear-gradient(180deg,#f8fafc_0%,#eff6ff_50%,#f8fafc_100%)] dark:bg-[radial-gradient(circle_at_15%_10%,rgba(34,211,238,0.11),transparent_32%),radial-gradient(circle_at_85%_25%,rgba(139,92,246,0.12),transparent_34%),linear-gradient(180deg,#07101f_0%,#0a1426_50%,#07101f_100%)]" />
-      <div className="relative mx-auto max-w-6xl px-4 pb-6 pt-3 sm:px-6 lg:pb-10 lg:pt-4">
-        <div className="mb-3 flex justify-end">
-          <button
-            type="button"
-            onClick={() => setShowPlanner((value) => !value)}
-            className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/50 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-800 transition-colors hover:bg-cyan-100 dark:border-cyan-300/20 dark:bg-cyan-300/10 dark:text-cyan-100 dark:hover:bg-cyan-300/15"
-          >
-            <RefreshCw className="h-4 w-4" /> {path ? '重新规划' : '生成路线'}
-          </button>
-        </div>
-
-        <section className="relative overflow-hidden rounded-3xl border border-sky-200 bg-white/85 p-6 shadow-[0_18px_50px_-30px_rgba(14,165,233,0.35)] dark:border-cyan-300/15 dark:bg-white/[0.04] dark:shadow-[0_0_50px_-24px_rgba(34,211,238,0.45)] sm:p-8">
-          <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-violet-400/10 blur-3xl" />
-          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-700 dark:text-cyan-300">
-                <MapPinned className="h-4 w-4" /> Personal Learning Route
-              </div>
-              <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+    <div className="min-h-[calc(100dvh-4rem)] text-slate-900 dark:text-slate-100">
+      <div className=" px-4 pt-6 pb-12 sm:px-6">
+        <div data-tour-step="page-header" className="mb-6 flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300">
+              <MapPinned className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
                 {path?.title ?? '个人学习路线'}
               </h1>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+              <p className="mt-1 line-clamp-1 text-sm text-slate-500 dark:text-slate-400">
                 这不是固定课程表。每次测验、复习和课堂反馈都会更新你的学习情况，并调整内容顺序和推荐工具。
               </p>
             </div>
-            {path && (
-              <div className="min-w-48 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-black/15">
-                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                  <span>路线进度</span>
-                  <span>
-                    {completedCount}/{path.nodes.length}
-                  </span>
-                </div>
-                <div className="mt-2 text-3xl font-bold text-emerald-600 dark:text-emerald-300">
-                  {progress}%
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/5">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400"
-                  />
-                </div>
-              </div>
-            )}
           </div>
-        </section>
-
-        {(showPlanner || (!path && !loading)) && (
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-5 rounded-2xl border border-violet-200 bg-violet-50/80 p-5 dark:border-violet-300/20 dark:bg-violet-300/[0.06]"
-          >
-            <div className="flex items-center gap-2 text-sm font-semibold text-violet-800 dark:text-violet-200">
-              <Sparkles className="h-4 w-4" /> 选择规划策略
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {STRATEGIES.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => setStrategy(item.value)}
-                  className={cn(
-                    'rounded-xl border p-3 text-left transition-all',
-                    strategy === item.value
-                      ? 'border-violet-300 bg-violet-100 dark:border-violet-300/40 dark:bg-violet-300/12'
-                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/10 dark:bg-black/10 dark:hover:border-white/20',
-                  )}
-                >
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {item.label}
-                  </div>
-                  <div className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                    {item.description}
-                  </div>
-                </button>
-              ))}
-            </div>
-            {strategy === 'goal-topic' && (
-              <input
-                value={goalTopic}
-                onChange={(event) => setGoalTopic(event.target.value)}
-                placeholder="输入目标主题，例如：高考函数综合题"
-                className="mt-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-400 dark:border-white/10 dark:bg-black/15 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-violet-300/40"
-              />
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {path && (
+              <span className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm sm:inline-flex dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-100 dark:shadow-none">
+                路线进度 {progress}%
+              </span>
             )}
             <button
               type="button"
-              onClick={() => void handleGenerate()}
-              disabled={generating || (strategy === 'goal-topic' && !goalTopic.trim())}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-violet-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setShowPlanner((value) => !value)}
+              className="inline-flex items-center gap-2 rounded-xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-800 transition-colors hover:bg-sky-100 dark:border-sky-300/20 dark:bg-sky-300/10 dark:text-sky-100 dark:hover:bg-sky-300/15"
             >
-              {generating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Route className="h-4 w-4" />
-              )}
-              {generating ? '正在计算路线…' : '生成个人路线'}
+              <RefreshCw className="h-4 w-4" /> {path ? '重新规划' : '生成路线'}
             </button>
-          </motion.section>
-        )}
-
-        {error && (
-          <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-300/20 dark:bg-rose-300/10 dark:text-rose-200">
-            {error}
           </div>
-        )}
+        </div>
 
-        {loading ? (
-          <div className="mt-10 flex items-center justify-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-            <Loader2 className="h-5 w-5 animate-spin text-cyan-600 dark:text-cyan-300" />{' '}
-            正在读取个人路线…
-          </div>
-        ) : path ? (
-          <>
-            <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                {
-                  icon: Target,
-                  label: '下一站',
-                  value: nextNode?.topic ?? '路线已完成',
-                  detail:
-                    nextMastery === null
-                      ? '等待掌握情况'
-                      : `当前掌握情况 ${Math.round(nextMastery)}%`,
-                },
-                {
-                  icon: Route,
-                  label: '节点规模',
-                  value: `${path.nodes.length} 个节点`,
-                  detail: `预计 ${totalSections} 个学习章节`,
-                },
-                {
-                  icon: ShieldCheck,
-                  label: '完成条件',
-                  value: '掌握情况达到 80%',
-                  detail: '并完成一次结果验证',
-                },
-                {
-                  icon: Clock3,
-                  label: '最近更新',
-                  value: planUpdatedAt ?? '刚刚',
-                  detail: '新的学习记录会触发调整',
-                },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={item.label}
-                    className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none"
-                  >
-                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <Icon className="h-4 w-4 text-cyan-600 dark:text-cyan-300" /> {item.label}
-                    </div>
-                    <div className="mt-2 truncate text-base font-semibold text-slate-900 dark:text-white">
-                      {item.value}
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500">{item.detail}</div>
-                  </div>
-                );
-              })}
-            </section>
-
-            <section className="mt-5 rounded-2xl border border-cyan-200 bg-cyan-50/80 p-5 dark:border-cyan-300/15 dark:bg-cyan-300/[0.05]">
-              <div className="flex items-start gap-3">
-                <Brain className="mt-0.5 h-5 w-5 shrink-0 text-cyan-600 dark:text-cyan-300" />
-                <div>
-                  <div className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">
-                    为什么这样安排
-                  </div>
-                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                    {profileReason}
-                  </p>
-                </div>
+        <div className=" space-y-6">
+          {(showPlanner || (!path && !loading)) && (
+            <motion.section
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-sky-200 bg-sky-50/80 p-5 dark:border-sky-300/20 dark:bg-sky-300/[0.06]"
+            >
+              <div className="flex items-center gap-2 text-sm font-semibold text-sky-800 dark:text-sky-200">
+                <Sparkles className="h-4 w-4" /> 选择规划策略
               </div>
-            </section>
-
-            <MistakeReviewStrip className="mt-5" />
-
-            <section className="mt-6 space-y-4">
-              {path.nodes.map((node, index) => {
-                const mastery = getNodeMastery(node, context);
-                const primaryTool = getPrimaryTool(node, mastery, context);
-                const ToolIcon = primaryTool.icon;
-                const masteryBefore = node.masteryBefore;
-                const masteryAfter = node.masteryAfter ?? mastery;
-                return (
-                  <motion.article
-                    key={node.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(index * 0.04, 0.3) }}
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {STRATEGIES.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setStrategy(item.value)}
                     className={cn(
-                      'relative overflow-hidden rounded-2xl border p-5 sm:p-6',
-                      node.status === 'in_progress'
-                        ? 'border-amber-200 bg-amber-50/80 dark:border-amber-300/30 dark:bg-amber-300/[0.07]'
-                        : node.status === 'completed'
-                          ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-300/20 dark:bg-emerald-300/[0.05]'
-                          : 'border-slate-200 bg-white/85 shadow-sm dark:border-white/10 dark:bg-white/[0.035] dark:shadow-none',
+                      'rounded-xl border p-3 text-left transition-all',
+                      strategy === item.value
+                        ? 'border-sky-300 bg-sky-100 dark:border-sky-300/40 dark:bg-sky-300/12'
+                        : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/10 dark:bg-black/10 dark:hover:border-white/20',
                     )}
                   >
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-                      <div className="flex min-w-0 flex-1 gap-4">
-                        <div className="flex flex-col items-center">
-                          <span
-                            className={cn(
-                              'flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold',
-                              node.status === 'completed'
-                                ? 'border-emerald-300 bg-emerald-100 text-emerald-700 dark:border-emerald-300/30 dark:bg-emerald-300/15 dark:text-emerald-200'
-                                : node.status === 'in_progress'
-                                  ? 'border-amber-300 bg-amber-100 text-amber-700 dark:border-amber-300/30 dark:bg-amber-300/15 dark:text-amber-200'
-                                  : 'border-slate-200 bg-slate-100 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300',
-                            )}
-                          >
-                            {node.status === 'completed' ? (
-                              <CheckCircle2 className="h-5 w-5" />
-                            ) : (
-                              index + 1
-                            )}
-                          </span>
-                          {index < path.nodes.length - 1 && (
-                            <span className="mt-2 h-full min-h-12 w-px bg-gradient-to-b from-slate-300 to-transparent dark:from-white/20" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <StatusIcon status={node.status} />
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                              {node.topic}
-                            </h2>
-                            <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] text-slate-500 dark:border-white/10 dark:text-slate-400">
-                              {STATUS_LABELS[node.status]}
-                            </span>
-                          </div>
-                          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                            {getNodeReason(node, index, context)}
-                          </p>
-                          {node.knowledgePoints.length > 0 && (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {node.knowledgePoints.slice(0, 5).map((point) => (
-                                <span
-                                  key={point}
-                                  className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] text-violet-700 dark:border-violet-300/15 dark:bg-violet-300/[0.06] dark:text-violet-200"
-                                >
-                                  {point}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="w-full space-y-3 lg:w-80">
-                        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-black/10">
-                          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                            <span className="flex items-center gap-1.5">
-                              <Gauge className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-300" />{' '}
-                              掌握情况变化
-                            </span>
-                            <span>目标 80%</span>
-                          </div>
-                          <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-                            {masteryBefore !== undefined
-                              ? `${Math.round(masteryBefore)}%`
-                              : '待建立'}
-                            <span className="mx-2 text-cyan-600 dark:text-cyan-300">→</span>
-                            {masteryAfter !== null && masteryAfter !== undefined
-                              ? `${Math.round(masteryAfter)}%`
-                              : '学习后更新'}
-                          </div>
-                          <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/5">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400"
-                              style={{
-                                width: `${Math.max(3, Math.min(100, masteryAfter ?? masteryBefore ?? 3))}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        <Link
-                          href={primaryTool.href}
-                          className="flex items-center justify-between rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 transition-colors hover:bg-cyan-100 dark:border-cyan-300/20 dark:bg-cyan-300/[0.07] dark:hover:bg-cyan-300/12"
-                        >
-                          <span className="flex items-center gap-3">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700 dark:bg-cyan-300/10 dark:text-cyan-200">
-                              <ToolIcon className="h-4 w-4" />
-                            </span>
-                            <span>
-                              <span className="block text-sm font-semibold text-slate-900 dark:text-white">
-                                {primaryTool.label}
-                              </span>
-                              <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
-                                {primaryTool.detail}
-                              </span>
-                            </span>
-                          </span>
-                          <ArrowRight className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
-                        </Link>
-
-                        <div className="flex items-start gap-2 text-[11px] leading-5 text-slate-500 dark:text-slate-500">
-                          <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                          完成条件：掌握情况达到 80%，并通过专项练习确认；完成后自动进入下一项。
-                        </div>
-                      </div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {item.label}
                     </div>
-                  </motion.article>
-                );
-              })}
-            </section>
-          </>
-        ) : (
-          <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/75 p-8 text-center dark:border-white/15 dark:bg-white/[0.03]">
-            <Route className="mx-auto h-10 w-10 text-slate-400 dark:text-slate-500" />
-            <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
-              还没有个人学习路线
-            </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              先完善学习情况，或直接选择上面的方式生成第一条路线。
-            </p>
-          </div>
-        )}
+                    <div className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      {item.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {strategy === 'goal-topic' && (
+                <input
+                  value={goalTopic}
+                  onChange={(event) => setGoalTopic(event.target.value)}
+                  placeholder="输入目标主题，例如：高考函数综合题"
+                  className="mt-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-sky-400 dark:border-white/10 dark:bg-black/15 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-sky-300/40"
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => void handleGenerate()}
+                disabled={generating || (strategy === 'goal-topic' && !goalTopic.trim())}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {generating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Route className="h-4 w-4" />
+                )}
+                {generating ? '正在计算路线…' : '生成个人路线'}
+              </button>
+            </motion.section>
+          )}
+
+          {error && (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-300/20 dark:bg-rose-300/10 dark:text-rose-200">
+              {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="flex items-center justify-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+              <Loader2 className="h-5 w-5 animate-spin text-sky-600 dark:text-sky-300" />{' '}
+              正在读取个人路线…
+            </div>
+          ) : path ? (
+            <>
+              <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  {
+                    icon: Target,
+                    label: '下一站',
+                    value: nextNode?.topic ?? '路线已完成',
+                    detail:
+                      nextMastery === null
+                        ? '等待掌握情况'
+                        : `当前掌握情况 ${Math.round(nextMastery)}%`,
+                  },
+                  {
+                    icon: Route,
+                    label: '节点规模',
+                    value: `${path.nodes.length} 个节点`,
+                    detail: `预计 ${totalSections} 个学习章节`,
+                  },
+                  {
+                    icon: ShieldCheck,
+                    label: '完成条件',
+                    value: '掌握情况达到 80%',
+                    detail: '并完成一次结果验证',
+                  },
+                  {
+                    icon: Clock3,
+                    label: '最近更新',
+                    value: planUpdatedAt ?? '刚刚',
+                    detail: '新的学习记录会触发调整',
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.label}
+                      className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none"
+                    >
+                      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <Icon className="h-4 w-4 text-sky-600 dark:text-sky-300" /> {item.label}
+                      </div>
+                      <div className="mt-2 truncate text-base font-semibold text-slate-900 dark:text-white">
+                        {item.value}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">{item.detail}</div>
+                    </div>
+                  );
+                })}
+              </section>
+
+              <MistakeReviewStrip />
+
+              <section data-tour-step="page-primary" className=" space-y-4">
+                {path.nodes.map((node, index) => {
+                  const mastery = getNodeMastery(node, context);
+                  const primaryTool = getPrimaryTool(node, mastery, context);
+                  const ToolIcon = primaryTool.icon;
+                  const masteryBefore = node.masteryBefore;
+                  const masteryAfter = node.masteryAfter ?? mastery;
+                  return (
+                    <motion.article
+                      key={node.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: Math.min(index * 0.04, 0.3) }}
+                      className={cn(
+                        'relative overflow-hidden rounded-2xl border p-5 sm:p-6',
+                        node.status === 'in_progress'
+                          ? 'border-blue-200 bg-blue-50/80 dark:border-blue-300/30 dark:bg-blue-300/[0.07]'
+                          : node.status === 'completed'
+                            ? 'border-sky-200 bg-sky-50/70 dark:border-sky-300/20 dark:bg-sky-300/[0.05]'
+                            : 'border-slate-200 bg-white/85 shadow-sm dark:border-white/10 dark:bg-white/[0.035] dark:shadow-none',
+                      )}
+                    >
+                      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+                        <div className="flex min-w-0 flex-1 gap-4">
+                          <div className="flex flex-col items-center">
+                            <span
+                              className={cn(
+                                'flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold',
+                                node.status === 'completed'
+                                  ? 'border-sky-300 bg-sky-100 text-sky-700 dark:border-sky-300/30 dark:bg-sky-300/15 dark:text-sky-200'
+                                  : node.status === 'in_progress'
+                                    ? 'border-blue-300 bg-blue-100 text-blue-700 dark:border-blue-300/30 dark:bg-blue-300/15 dark:text-blue-200'
+                                    : 'border-slate-200 bg-slate-100 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300',
+                              )}
+                            >
+                              {node.status === 'completed' ? (
+                                <CheckCircle2 className="h-5 w-5" />
+                              ) : (
+                                index + 1
+                              )}
+                            </span>
+                            {index < path.nodes.length - 1 && (
+                              <span className="mt-2 h-full min-h-12 w-px bg-gradient-to-b from-slate-300 to-transparent dark:from-white/20" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <StatusIcon status={node.status} />
+                              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                                {node.topic}
+                              </h2>
+                              <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] text-slate-500 dark:border-white/10 dark:text-slate-400">
+                                {STATUS_LABELS[node.status]}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                              {getNodeReason(node, index, context)}
+                            </p>
+                            {node.knowledgePoints.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {node.knowledgePoints.slice(0, 5).map((point) => (
+                                  <span
+                                    key={point}
+                                    className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] text-sky-700 dark:border-sky-300/15 dark:bg-sky-300/[0.06] dark:text-sky-200"
+                                  >
+                                    {point}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="w-full space-y-3 lg:w-80">
+                          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-black/10">
+                            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                              <span className="flex items-center gap-1.5">
+                                <Gauge className="h-3.5 w-3.5 text-sky-600 dark:text-sky-300" />{' '}
+                                掌握情况变化
+                              </span>
+                              <span>目标 80%</span>
+                            </div>
+                            <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
+                              {masteryBefore !== undefined
+                                ? `${Math.round(masteryBefore)}%`
+                                : '待建立'}
+                              <span className="mx-2 text-sky-600 dark:text-sky-300">→</span>
+                              {masteryAfter !== null && masteryAfter !== undefined
+                                ? `${Math.round(masteryAfter)}%`
+                                : '学习后更新'}
+                            </div>
+                            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/5">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-400"
+                                style={{
+                                  width: `${Math.max(3, Math.min(100, masteryAfter ?? masteryBefore ?? 3))}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <Link
+                            href={primaryTool.href}
+                            className="flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 transition-colors hover:bg-sky-100 dark:border-sky-300/20 dark:bg-sky-300/[0.07] dark:hover:bg-sky-300/12"
+                          >
+                            <span className="flex items-center gap-3">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-300/10 dark:text-sky-200">
+                                <ToolIcon className="h-4 w-4" />
+                              </span>
+                              <span>
+                                <span className="block text-sm font-semibold text-slate-900 dark:text-white">
+                                  {primaryTool.label}
+                                </span>
+                                <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
+                                  {primaryTool.detail}
+                                </span>
+                              </span>
+                            </span>
+                            <ArrowRight className="h-4 w-4 text-sky-600 dark:text-sky-300" />
+                          </Link>
+
+                          <div className="flex items-start gap-2 text-[11px] leading-5 text-slate-500 dark:text-slate-500">
+                            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600 dark:text-sky-400" />
+                            完成条件：掌握情况达到 80%，并通过专项练习确认；完成后自动进入下一项。
+                          </div>
+                        </div>
+                      </div>
+                    </motion.article>
+                  );
+                })}
+              </section>
+            </>
+          ) : (
+            <div
+              data-tour-step="page-primary"
+              className="rounded-2xl border border-dashed border-slate-300 bg-white/75 p-8 text-center dark:border-white/15 dark:bg-white/[0.03]"
+            >
+              <Route className="mx-auto h-10 w-10 text-slate-400 dark:text-slate-500" />
+              <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
+                还没有个人学习路线
+              </h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                先完善学习情况，或直接选择上面的方式生成第一条路线。
+              </p>
+            </div>
+          )}
+        </div>
       </div>
+
+      <PageTour id="learning-path" />
     </div>
   );
 }

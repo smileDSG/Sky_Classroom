@@ -108,7 +108,7 @@ function LoginForm({ onToggle }: { onToggle: () => void }) {
   const { login, isGuest } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/';
+  const redirect = searchParams.get('redirect') || '/sky';
   const reason = searchParams.get('reason');
   const [emailOrUsername, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -305,7 +305,7 @@ function RegisterForm({ onToggle }: { onToggle: () => void }) {
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   useEffect(() => {
-    if (!isGuest) router.push(redirect || '/sky/onboarding');
+    if (!isGuest) router.push(redirect || '/');
   }, [isGuest, router, redirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -324,7 +324,7 @@ function RegisterForm({ onToggle }: { onToggle: () => void }) {
     setLoading(true);
     try {
       await register({ email: email || undefined, username, password });
-      router.push(redirect || '/sky/onboarding');
+      router.push(redirect || '/');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败，请稍后重试');
@@ -566,7 +566,7 @@ export function SkyLandingPage() {
 
   useEffect(() => {
     if (!isLoading && user && !user.role.includes('guest')) {
-      router.push('/');
+      router.replace('/sky');
     }
   }, [user, isLoading, router]);
 

@@ -78,14 +78,26 @@ export interface VotingResolution {
 
 // ── Four-part output ──────────────────────────────────────────────
 
+/** 解题单步的意图类型，用于差异化渲染与辅助导读。 */
+export type StepType = 'idea' | 'transform' | 'calc' | 'verify';
+
+/**
+ * 解题单步。type/summary 为可选增强字段：旧缓存/题库数据缺省时可按原样式渲染。
+ */
+export interface SolveStep {
+  label: string;
+  content: string;
+  keyPoints?: string[];
+  /** 本步意图类型（思路/变形/计算/验证）。 */
+  type?: StepType;
+  /** 本步结论一句话，用于「本步要点」导读。 */
+  summary?: string;
+}
+
 export interface FourPartOutput {
   answer: string;
   solution: string;
-  steps: {
-    label: string;
-    content: string;
-    keyPoints?: string[];
-  }[];
+  steps: SolveStep[];
   knowledgePoints: {
     name: string;
     description: string;
@@ -99,6 +111,10 @@ export interface FourPartOutput {
   }[];
   questionType?: 'choice' | 'fill' | 'solve' | 'judge';
   options?: string[];
+  /** 答案自校验结论（verified/corrected/pending-confirmation/skipped）。 */
+  answerReview?: 'verified' | 'corrected' | 'pending-confirmation' | 'skipped';
+  /** 简化布尔：最终答案是否经独立复核（answerReview ∈ verified/corrected）。 */
+  verified?: boolean;
 }
 
 export interface GradedFourPartOutput extends FourPartOutput {
@@ -132,7 +148,7 @@ export interface QuestionBankEntry {
   questionType?: 'choice' | 'fill' | 'solve' | 'judge';
   options?: string[];
   /** Solve step breakdown (solve-generated entries). */
-  steps?: { label: string; content: string; keyPoints?: string[] }[];
+  steps?: SolveStep[];
   /** Runtime-only similarity score (not persisted) */
   _similarity?: number;
 }

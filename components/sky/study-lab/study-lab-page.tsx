@@ -16,6 +16,7 @@ import {
 } from '@/lib/sky/study-lab-data';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { cn } from '@/lib/utils';
+import { PageTour } from '@/components/sky/tour/page-tour';
 import { LearningPathTimeline } from './learning-path-timeline';
 import { ProfileSummaryPanel } from './profile-summary-panel';
 import { TodayMissionPanel } from './today-mission-panel';
@@ -89,7 +90,7 @@ function LoadingState() {
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="min-h-[220px] animate-pulse rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-cyan-100/10 dark:bg-[#081423]/90"
+          className="min-h-[220px] animate-pulse rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-sky-100/10 dark:bg-[#081423]/90"
         >
           <div className="h-9 w-40 rounded-xl bg-slate-200 dark:bg-white/10" />
           <div className="mt-5 h-24 rounded-xl bg-slate-100 dark:bg-white/[0.06]" />
@@ -109,11 +110,11 @@ function MetricStrip({ viewModel }: { viewModel: StudyLabViewModel }) {
   ];
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric) => (
         <div
           key={metric.label}
-          className="min-h-[76px] rounded-xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm dark:border-cyan-100/10 dark:bg-[#081423]/90 dark:shadow-none"
+          className="min-h-[80px] rounded-xl border border-slate-200 bg-white/90 px-3 py-3.5 shadow-sm dark:border-sky-100/10 dark:bg-[#081423]/90 dark:shadow-none"
         >
           <div className="text-xs text-slate-500 dark:text-slate-400">{metric.label}</div>
           <div className="mt-1 flex items-baseline gap-1">
@@ -154,44 +155,35 @@ export function StudyLabPage() {
   );
 
   return (
-    <SkyAppShell>
-      <div className="mx-auto max-w-6xl space-y-4 pb-24 sm:pb-10">
-        <section className="overflow-hidden rounded-2xl border border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5_0%,#f0f9ff_58%,#ffffff_100%)] p-4 shadow-sm dark:border-emerald-200/15 dark:bg-[linear-gradient(135deg,#0e2f36_0%,#0b2035_58%,#07111f_100%)] dark:shadow-none sm:p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <SkyAppShell section="learning">
+      <div className=" pt-6 pb-12">
+        <div data-tour-step="page-header" className="mb-6 flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300">
+              <BrainCircuit className="h-5 w-5" />
+            </div>
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white dark:bg-emerald-300 dark:text-slate-950">
-                  <BrainCircuit className="h-4 w-4" />
-                </span>
-                <span className="rounded-full border border-emerald-200 bg-white/80 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-200/20 dark:bg-white/[0.08] dark:text-emerald-50">
-                  学习数据详情
-                </span>
-                <span className="rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-xs text-slate-500 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300">
-                  隐藏详情页
-                </span>
-              </div>
-              <h1 className="mt-3 text-2xl font-semibold leading-tight text-slate-950 dark:text-white sm:text-3xl">
-                学习情况、路线和资料来源
+              <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
+                今日计划
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-200">
-                这里保留个性化学习的详细数据，主流程请从摘星锦囊和天梯工坊进入。
+              <p className="mt-1 line-clamp-1 text-sm text-slate-500 dark:text-slate-400">
+                聚焦今天该做什么，从这里直接开始；完整学习路线请到「学习路径」查看。
               </p>
             </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button asChild className="min-h-11 justify-center">
-                <Link href="/sky/cloud-mind">
-                  <Sparkles className="h-4 w-4" />
-                  打开云端智囊
-                </Link>
-              </Button>
-            </div>
           </div>
-        </section>
+
+          <Button asChild className="min-h-11 shrink-0">
+            <Link href="/sky/cloud-mind">
+              <Sparkles className="h-4 w-4" />
+              打开云端智囊
+            </Link>
+          </Button>
+        </div>
 
         {viewModel && <MetricStrip viewModel={viewModel} />}
 
         <div
+          data-tour-step="page-primary"
           className={cn(
             'transition-opacity',
             loadState === 'loading' && !viewModel ? 'opacity-100' : 'opacity-100',
@@ -207,18 +199,22 @@ export function StudyLabPage() {
                 refreshing={refreshing}
                 error={viewModel.errors.learningPlan ?? viewModel.errors.workshop}
               />
-              <ProfileSummaryPanel
-                profile={viewModel.profile}
-                error={viewModel.errors.personalization}
-              />
-              <LearningPathTimeline
-                learningPath={viewModel.learningPath}
-                error={viewModel.errors.learningPath ?? viewModel.errors.learningPlan}
-              />
+              <div className=" space-y-4">
+                <ProfileSummaryPanel
+                  profile={viewModel.profile}
+                  error={viewModel.errors.personalization}
+                />
+                <LearningPathTimeline
+                  learningPath={viewModel.learningPath}
+                  error={viewModel.errors.learningPath ?? viewModel.errors.learningPlan}
+                />
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      <PageTour id="learning-today" />
     </SkyAppShell>
   );
 }

@@ -68,7 +68,7 @@ describe('DesignDNA', () => {
         },
       });
       const result = validateDesignDNA(dna);
-      expect(result.designDNA.components.cardStyle).toBe('accent-left-bar');
+      expect(result.designDNA.components.cardStyle).toBe('shadow-only');
     });
 
     it('fills missing fields from defaults', () => {
