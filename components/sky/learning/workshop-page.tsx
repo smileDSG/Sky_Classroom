@@ -21,6 +21,9 @@ import {
   Target,
 } from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { RecallNudge } from '@/components/sky/study-lab/recall-nudge';
+import type { WeakPointSummary } from '@/lib/cloud-mind/types';
+import { buildSuspense } from '@/lib/retention/recall-hook';
 import {
   LearningPlanPanel,
   type LearningPlanPanelData,
@@ -489,6 +492,29 @@ function WorkshopPageContent() {
     [effectiveMistakes, effectiveMemoryProgress, snapshot],
   );
   const missionSteps = useMemo(() => buildMissionSteps(insights), [insights]);
+
+  // 把 snapshot.profile 的薄弱点转成召回钩子需要的形状。
+  // 真实数据：weakPoints 给出点名单，masteryByKnowledge 给出每个的掌握度。
+  // 没有真实数据时返回空数组 → 召回提示不显示悬念（宁可不说，不编造）。
+  const profileWeakPoints = useMemo<WeakPointSummary[]>(() => {
+    const profile = snapshot?.profile;
+    const names = profile?.weakPoints ?? [];
+    const mastery = profile?.masteryByKnowledge ?? {};
+    return names
+      .filter((name: unknown): name is string => typeof name === 'string' && name.trim() !== '')
+      .map((name: string) => ({
+        knowledgePoint: name,
+        mastery: typeof mastery[name] === 'number' ? (mastery[name] as number) : 0,
+        recentMistakeCount: 0,
+        actionHref: '#daily-task',
+      }));
+  }, [snapshot?.profile]);
+
+  // 今日任务的悬念文案（来自同一批真实薄弱点；无数据则 undefined）
+  const dailyTaskSuspense = useMemo(
+    () => buildSuspense(profileWeakPoints),
+    [profileWeakPoints],
+  );
   const missionDuration = useMemo(
     () => sumDurations(missionSteps.map((step) => step.duration)),
     [missionSteps],
@@ -702,6 +728,12 @@ function WorkshopPageContent() {
         </div>
 
         <div className=" space-y-6">
+          {/* 召回提示（FR-12）：进站问一次服务端，仅在「该提醒」时显示一条轻提示。
+              刻意做轻——不做弹窗/红点/全屏，可关闭，12 秒后自动消失。
+              接在这里是因为「今日任务」卡片的真实位置是本组件（study-lab 那个面板已废弃并 redirect）。
+              薄弱点用 insights.profile 的真实数据（weakPoints + masteryByKnowledge），
+              拿不到就不给悬念，绝不编造。 */}
+          <RecallNudge weakPoints={profileWeakPoints} />
           <section
             id="daily-task"
             className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-sky-100/10 dark:bg-[#0b1729]/80 dark:shadow-none"
@@ -725,6 +757,12 @@ function WorkshopPageContent() {
                 <p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300">
                   {dailyTaskAction.detail}
                 </p>
+                {/* 未掌握点悬念（FR-11）：只来自真实薄弱点，没有真实数据时不会出现 */}
+                {dailyTaskSuspense && (
+                  <p className="mt-2 border-l-2 border-sky-300 pl-3 text-sm leading-6 text-sky-800 dark:border-sky-300/40 dark:text-sky-100">
+                    {dailyTaskSuspense}
+                  </p>
+                )}
               </div>
             </div>
             <div className="mt-5 flex flex-wrap gap-2">

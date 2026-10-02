@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X, Sparkles } from 'lucide-react';
 import { buildSuspense } from '@/lib/retention/recall-hook';
 import type { StreakState, RecallDecision } from '@/lib/retention/types';
@@ -58,9 +58,15 @@ export function RecallNudge({
   const [state, setState] = useState<RecallState | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [show, setShow] = useState(false);
+  // StrictMode 下 effect 会双跑：第一次跑完就把「今天已提醒」写进了 localStorage，
+  // 第二次跑读到今天 → 判sent-today → 什么都不显示。
+  // 用 ref 记住「本次挂载已消费过」，保证无论跑几次都只消费一次、且沿用同一次的结果。
+  const consumedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    if (consumedRef.current) return;
+    consumedRef.current = true;
 
     (async () => {
       try {
@@ -80,8 +86,6 @@ export function RecallNudge({
         setShow(true);
         // 记为"今天已提醒"，保证每日至多 1 次
         writeLastNotified(json.today);
-        const timer = setTimeout(() => setShow(false), AUTO_HIDE_MS);
-        return () => clearTimeout(timer);
       } catch {
         /* 网络失败就不打扰用户 */
       }
@@ -91,6 +95,13 @@ export function RecallNudge({
       cancelled = true;
     };
   }, [enabled]);
+
+  // 自动消失（独立 effect，卸载时能正确清理）
+  useEffect(() => {
+    if (!show) return;
+    const timer = setTimeout(() => setShow(false), AUTO_HIDE_MS);
+    return () => clearTimeout(timer);
+  }, [show]);
 
   if (!state || !show || dismissed) return null;
 
