@@ -26,14 +26,8 @@ const CAUSE_LABELS: Record<string, string> = {
   'format-error': '格式错误',
 };
 
-const MILESTONE_NAMES: Record<number, string> = {
-  3: '铜星',
-  7: '银星',
-  14: '金星',
-  30: '白金星',
-  60: '钻石星',
-  100: '传奇星',
-};
+// 注: 原先这里有MILESTONE_NAMES（铜星/银星/金星…）配合"解锁XX徽章"话术，
+// 与 PRD R-1/R-2「不做奖励徽章」冲突，已连同话术一并移除（2026-10-02）。
 
 function getTopCause(mistakes: MistakeRecord[]): string {
   const counts = new Map<string, number>();
@@ -83,15 +77,19 @@ export function generateSuggestions(mistakes: MistakeRecord[], stats: QuickStats
   }
 
   // ── 2. Streak milestone approaching ───────────────────────────
+  // PRD R-1/R-2：不做奖励徽章 / 虚拟奖励。这里改为**中性回顾**，
+  // 只陈述"你已经连续学了 N 天"这个事实 + 明天继续的落点，
+  // 不许诺"再坚持 X 天就能解锁 Y 徽章"这类奖励化表达。
   const streakMilestones = [3, 7, 14, 30, 60, 100];
   const nextMilestone = streakMilestones.find((m) => m > stats.streakDays);
   if (nextMilestone && nextMilestone - stats.streakDays <= 3) {
-    const remaining = nextMilestone - stats.streakDays;
-    const name = MILESTONE_NAMES[nextMilestone] ?? `${nextMilestone}天`;
     suggestions.push({
       icon: '🔥',
-      text: `连续打卡 ${stats.streakDays} 天了，再坚持 ${remaining} 天解锁${name}徽章！`,
-      action: { label: '查看详情', href: '/sky/learning/profile-dashboard' },
+      text:
+        stats.streakDays > 0
+          ? `已经连续学习 ${stats.streakDays} 天了，今天再复习一点，把这个节奏接住就好。`
+          : '今天还没有学习记录，从一道错题开始就挺好。',
+      action: { label: '去复习', href: '/sky/learning/mistakes' },
     });
   }
 
