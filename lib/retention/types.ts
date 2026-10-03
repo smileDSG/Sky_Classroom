@@ -79,7 +79,12 @@ export interface DifficultyTag {
 
 // ── 召回决策（§3.3，T05 复用） ──────────────────────────────────────
 
-export type RecallReason = 'active-today' | 'disabled' | 'sent-today' | 'auto-silenced';
+/**
+ * 召回原因。
+ * - `due`：该回来接着学了（决定发提醒）
+ * - 其余均为「不打扰」的原因，由 describeRecall 翻译成人话副文案
+ */
+export type RecallReason = 'active-today' | 'disabled' | 'sent-today' | 'auto-silenced' | 'due';
 
 export interface RecallDecision {
   shouldSend: boolean;

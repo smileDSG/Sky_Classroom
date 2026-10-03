@@ -10,6 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   evaluateRecall,
+  describeRecall,
   isAutoSilenced,
   isActiveToday,
   buildSuspense,
@@ -79,6 +80,7 @@ describe('evaluateRecall（召回决策）', () => {
       TODAY,
     );
     expect(d.shouldSend).toBe(true);
+    expect(d.reason).toBe('due');
   });
 
   it('打断1 天（2天前学过）仍可提醒，未达静默阈值', () => {
@@ -88,6 +90,23 @@ describe('evaluateRecall（召回决策）', () => {
       TODAY,
     );
     expect(d.shouldSend).toBe(true);
+    expect(d.reason).toBe('due');
+  });
+});
+
+describe('describeRecall（副文案与原因一致）', () => {
+  it('due → 正面不催促的短句，且不与 active-today 撞文案', () => {
+    const due = describeRecall('due');
+    expect(due).toBeTruthy();
+    expect(due).toBe('等你回来接着学');
+    expect(due).not.toBe(describeRecall('active-today'));
+  });
+
+  it('不打扰的原因各有各的文案', () => {
+    expect(describeRecall('active-today')).toBe('今天已经学过了');
+    expect(describeRecall('disabled')).toBe('你已关闭主动提醒');
+    expect(describeRecall('sent-today')).toBe('今天已经提醒过');
+    expect(describeRecall('auto-silenced')).toBe('好几天没来了，先不打扰');
   });
 });
 

@@ -179,7 +179,7 @@ export interface StudyLabTodayMission {
 export interface RecallDecision {
   shouldSend: boolean;        // 未当日活跃 && 已开启
   mission: StudyLabTodayMission;
-  reason: 'active-today' | 'disabled' | 'sent-today' | 'auto-silenced';
+  reason: 'active-today' | 'disabled' | 'sent-today' | 'auto-silenced' | 'due';
   nextSendAt?: number;
 }
 export function evaluateRecall(userId: string): Promise<RecallDecision>;

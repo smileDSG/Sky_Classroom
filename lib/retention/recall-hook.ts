@@ -57,8 +57,9 @@ export function evaluateRecall(
     return { shouldSend: false, reason: 'auto-silenced' };
   }
 
-  // 5. 可以提醒
-  return { shouldSend: true, reason: 'active-today' };
+  // 5. 可以提醒（reason 必须是 'due'：只有"该回来接着学了"才配得上正面文案，
+  //    复用 'active-today' 会让卡片自相矛盾——见 describeRecall）
+  return { shouldSend: true, reason: 'due' };
 }
 
 /** 今天是否已学（lastActiveDate === today）。 */
@@ -129,5 +130,9 @@ export function describeRecall(reason: RecallReason): string {
       return '今天已经提醒过';
     case 'auto-silenced':
       return '好几天没来了，先不打扰';
+    case 'due':
+      // 唯一一条「会真的弹卡片」的文案：陈述"我们在这等你"，不用祈使句、不带催促，
+      // 与上面几条同样保持"克制"（PRD R-3：产品目标是教育，不是施加压力）。
+      return '等你回来接着学';
   }
 }
