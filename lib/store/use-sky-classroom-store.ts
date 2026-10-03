@@ -215,7 +215,9 @@ interface MistakesSlice {
 }
 
 const createMistakesSlice = (
-  set: SetFn<MistakesSlice>,
+  // 用整站 set 而非 SetFn<MistakesSlice>：学习写入点要把 "streakCache" 一并回写，
+  // 而 streakCache 属于 RetentionSlice，窄类型下过不了编译。
+  set: SetFn<SkyClassroomStore>,
   get: () => SkyClassroomStore,
 ): MistakesSlice => ({
   mistakes: [],
@@ -228,7 +230,11 @@ const createMistakesSlice = (
     });
     syncAddToServer(m);
     // Q1: 做题产生错题即"当日完成 ≥1 知识点"的有效学习证据。
-    void recordLearningStreakClient();
+    // 回写服务端最新 streak：学习常发生在别的页面，跳槽回首页时卡片不会重挂载，
+    // 不回写就会一直显示旧缓存里的连续天数。
+    void recordLearningStreakClient().then((state) => {
+      if (state) set({ streakCache: state });
+    });
   },
   markReviewed: async (id, correct = true) => {
     const now = Date.now();
@@ -262,7 +268,10 @@ const createMistakesSlice = (
       }),
     }));
     // Q1: 复习一道错题（无论对错）都是真实学习证据，计入当日活跃。
-    void recordLearningStreakClient();
+    // 回写服务端最新 streak（同 addMistake，避免旧缓存被首屏继续复用）。
+    void recordLearningStreakClient().then((state) => {
+      if (state) set({ streakCache: state });
+    });
     return syncReviewToServer(id, correct);
   },
   setFilter: (filter) => set({ activeFilter: filter }),
