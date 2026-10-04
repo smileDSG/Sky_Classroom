@@ -44,6 +44,7 @@ describe('scriptSchema', () => {
 });
 
 describe('autoFixScript', () => {
+  // 该用例的输入结构合法（schema 可解析），走 repairReferences 的跨字段修复路径
   it('剔除指向未知演员的状态并 clamp 越界坐标', () => {
     const dirty = {
       ...validScript,
@@ -74,5 +75,21 @@ describe('autoFixScript', () => {
     };
     const { script } = autoFixScript(dirty);
     expect(script.steps[0].narration.length).toBeLessThanOrEqual(500);
+  });
+
+  it('剔除非法演员并保留其余脚本', () => {
+    const dirty = {
+      ...validScript,
+      actors: [...validScript.actors, { kind: 'dragon', id: 'd1', label: '龙' }],
+    };
+    const { script, fixes } = autoFixScript(dirty);
+    expect(fixes.length).toBeGreaterThan(0);
+    expect(script.actors.find((a) => a.id === 'd1')).toBeUndefined();
+    expect(script.actors.length).toBe(validScript.actors.length);
+    expect(scriptSchema.safeParse(script).success).toBe(true);
+  });
+
+  it('对完全不可用的输入抛错', () => {
+    expect(() => autoFixScript(null)).toThrow();
   });
 });

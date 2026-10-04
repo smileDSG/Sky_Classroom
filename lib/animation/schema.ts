@@ -3,8 +3,10 @@ import type { AnimationScript, AnimationStep } from './types';
 
 export const NARRATION_MAX_LENGTH = 500;
 export const LABEL_MAX_LENGTH = 20;
+const CONTENT_MAX_LENGTH = 200;
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 
-const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'must be #rrggbb');
+const hexColor = z.string().regex(HEX_COLOR_RE, 'must be #rrggbb');
 
 const actorSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -42,7 +44,7 @@ const actorSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('text'),
     id: z.string().min(1),
-    content: z.string().max(200),
+    content: z.string().max(CONTENT_MAX_LENGTH),
     size: z.number().positive(),
     color: hexColor,
   }),
@@ -121,11 +123,14 @@ export function autoFixScript(dirty: unknown): { script: AnimationScript; fixes:
 
   const d = (dirty ?? {}) as Record<string, unknown>;
   const fixes: string[] = [];
-  const stage = (d.stage ?? {}) as Record<string, unknown>;
-  const width = typeof stage.width === 'number' && stage.width > 0 ? stage.width : 1200;
-  const height = typeof stage.height === 'number' && stage.height > 0 ? stage.height : 675;
+  const rawStage = (d.stage ?? {}) as Record<string, unknown>;
+  const width = typeof rawStage.width === 'number' && rawStage.width > 0 ? rawStage.width : 1200;
+  const height = typeof rawStage.height === 'number' && rawStage.height > 0 ? rawStage.height : 675;
+  const stage: Record<string, unknown> = { width, height };
+  if (typeof rawStage.showGrid === 'boolean') stage.showGrid = rawStage.showGrid;
+  if (typeof rawStage.showAxes === 'boolean') stage.showAxes = rawStage.showAxes;
 
-  const actors = Array.isArray(d.actors) ? d.actors : [];
+  const actors = repairActors(d.actors, fixes);
   const knownIds = new Set(
     actors
       .map((a) => (a && typeof a === 'object' ? (a as Record<string, unknown>).id : null))
@@ -136,10 +141,11 @@ export function autoFixScript(dirty: unknown): { script: AnimationScript; fixes:
   const steps = rawSteps
     .map((raw, i) => {
       const s = (raw ?? {}) as Record<string, unknown>;
+      const ref = typeof s.id === 'string' && s.id.trim() ? s.id : `step[${i}]`;
       const narration =
         typeof s.narration === 'string' ? s.narration.slice(0, NARRATION_MAX_LENGTH) : '';
       if (!narration.trim()) {
-        fixes.push(`step[${i}]: narration 缺失，已丢弃该步`);
+        fixes.push(`${ref}: narration 缺失，已丢弃该步`);
         return null;
       }
       const rawStates = Array.isArray(s.actorStates) ? s.actorStates : [];
@@ -147,20 +153,36 @@ export function autoFixScript(dirty: unknown): { script: AnimationScript; fixes:
         .filter((st) => {
           const id = (st as Record<string, unknown> | null)?.actorId;
           if (typeof id === 'string' && knownIds.has(id)) return true;
-          fixes.push(`step[${i}]: 剔除未知演员状态 ${String(id)}`);
+          fixes.push(`${ref}: 剔除未知演员状态 ${String(id)}`);
           return false;
         })
         .map((st) => {
           const o = (st as Record<string, unknown>) ?? {};
           const clamp = (v: unknown, max: number) => Math.min(Math.max(Number(v) || 0, 0), max);
-          return {
+          const state: Record<string, unknown> = {
             actorId: String(o.actorId),
             x: clamp(o.x, width),
             y: clamp(o.y, height),
           };
+          // 可选字段仅在存在且合法时保留，避免丢失真实运动数据
+          if (typeof o.opacity === 'number' && Number.isFinite(o.opacity)) {
+            state.opacity = Math.min(Math.max(o.opacity, 0), 1);
+          }
+          if (typeof o.scale === 'number' && Number.isFinite(o.scale) && o.scale > 0) {
+            state.scale = o.scale;
+          }
+          if (typeof o.labelOverride === 'string') {
+            state.labelOverride = o.labelOverride.slice(0, LABEL_MAX_LENGTH);
+          }
+          if (typeof o.colorOverride === 'string' && HEX_COLOR_RE.test(o.colorOverride)) {
+            state.colorOverride = o.colorOverride;
+          }
+          if (typeof o.entering === 'boolean') state.entering = o.entering;
+          if (typeof o.exiting === 'boolean') state.exiting = o.exiting;
+          return state;
         });
       if (actorStates.length === 0) {
-        fixes.push(`step[${i}]: 修复后无有效状态，已丢弃该步`);
+        fixes.push(`${ref}: 修复后无有效状态，已丢弃该步`);
         return null;
       }
       return {
@@ -184,14 +206,19 @@ export function autoFixScript(dirty: unknown): { script: AnimationScript; fixes:
     )
       ? d.subjectArea
       : 'algorithm',
-    stage: { width, height },
+    stage,
     actors,
     steps,
   };
 
   const reparsed = scriptSchema.safeParse(candidate);
   if (!reparsed.success) {
-    throw new Error(`autoFix 后仍不合法: ${reparsed.error.issues[0]?.message ?? 'unknown'}`);
+    const issues = reparsed.error.issues;
+    const first = issues[0];
+    const where = first && first.path.length > 0 ? first.path.join('.') : '(root)';
+    throw new Error(
+      `autoFix 后仍不合法: 共 ${issues.length} 个问题，首个位于 ${where}: ${first?.message ?? 'unknown'}`,
+    );
   }
   return { script: reparsed.data, fixes };
 }
@@ -202,30 +229,82 @@ function repairReferences(script: AnimationScript): { script: AnimationScript; f
   const fixes: string[] = [];
   const steps = script.steps
     .map((step, i) => {
+      const ref = step.id.trim() ? step.id : `step[${i}]`;
+      // z.string().min(1) 放行纯空白，这里按缺失处理
+      if (!step.narration.trim()) {
+        fixes.push(`${ref}: narration 缺失，已丢弃该步`);
+        return null;
+      }
       const actorStates = step.actorStates
         .filter((st) => {
           if (knownIds.has(st.actorId)) return true;
-          fixes.push(`step[${i}]: 剔除未知演员状态 ${st.actorId}`);
+          fixes.push(`${ref}: 剔除未知演员状态 ${st.actorId}`);
           return false;
         })
         .map((st) => {
           const x = Math.min(Math.max(st.x, 0), script.stage.width);
           const y = Math.min(Math.max(st.y, 0), script.stage.height);
           if (x !== st.x || y !== st.y) {
-            fixes.push(
-              `step[${i}]: clamp 越界坐标 ${st.actorId} (${st.x}, ${st.y}) → (${x}, ${y})`,
-            );
+            fixes.push(`${ref}: clamp 越界坐标 ${st.actorId} (${st.x}, ${st.y}) → (${x}, ${y})`);
           }
           return { ...st, x, y };
         });
       if (actorStates.length === 0) {
-        fixes.push(`step[${i}]: 修复后无有效状态，已丢弃该步`);
+        fixes.push(`${ref}: 修复后无有效状态，已丢弃该步`);
         return null;
       }
-      return { ...step, actorStates };
+      const title = step.title.trim() ? step.title : `第 ${i + 1} 步`;
+      if (title !== step.title) {
+        fixes.push(`${ref}: title 为纯空白，已替换为「${title}」`);
+      }
+      return { ...step, title, actorStates };
     })
     .filter((s): s is AnimationStep => s !== null);
 
   if (steps.length === 0) throw new Error('autoFix 后仍无有效步骤');
   return { script: { ...script, steps }, fixes };
+}
+
+const ACTOR_KINDS = new Set([
+  'node',
+  'array-cell',
+  'arrow',
+  'pointer',
+  'text',
+  'highlight',
+  'bar',
+  'axes',
+]);
+const ACTOR_KINDS_REQUIRING_COLOR = new Set(['node', 'array-cell', 'text', 'highlight', 'bar']);
+
+/** 脏路径演员修复：剔除未知 kind 或颜色缺失/不合法的演员，截断超长 label/content */
+function repairActors(raw: unknown, fixes: string[]): unknown[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((a, i): unknown[] => {
+    if (!a || typeof a !== 'object') {
+      fixes.push(`actor[${i}]: 非对象，已剔除`);
+      return [];
+    }
+    const o = { ...(a as Record<string, unknown>) };
+    if (typeof o.kind !== 'string' || !ACTOR_KINDS.has(o.kind)) {
+      fixes.push(`actor[${i}]: 未知 kind ${String(o.kind)}，已剔除`);
+      return [];
+    }
+    if (typeof o.label === 'string' && o.label.length > LABEL_MAX_LENGTH) {
+      fixes.push(`actor[${i}]: label 超长，已截断至 ${LABEL_MAX_LENGTH}`);
+      o.label = o.label.slice(0, LABEL_MAX_LENGTH);
+    }
+    if (typeof o.content === 'string' && o.content.length > CONTENT_MAX_LENGTH) {
+      fixes.push(`actor[${i}]: content 超长，已截断至 ${CONTENT_MAX_LENGTH}`);
+      o.content = o.content.slice(0, CONTENT_MAX_LENGTH);
+    }
+    if (
+      ACTOR_KINDS_REQUIRING_COLOR.has(o.kind) &&
+      (typeof o.color !== 'string' || !HEX_COLOR_RE.test(o.color))
+    ) {
+      fixes.push(`actor[${i}]: 颜色缺失或不合法，已剔除`);
+      return [];
+    }
+    return [o];
+  });
 }
