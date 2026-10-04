@@ -182,7 +182,10 @@ export type PromptId =
   | 'generators/diagram-content'
   | 'generators/code-content'
   | 'generators/game-content'
-  | 'generators/visualization3d-content';
+  | 'generators/visualization3d-content'
+  // Animation explainer
+  | 'generators/animation-plan'
+  | 'generators/animation-script';
 
 /**
  * Legacy snippet identifier — kept for backward compatibility.
