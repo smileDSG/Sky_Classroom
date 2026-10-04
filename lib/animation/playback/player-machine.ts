@@ -45,13 +45,19 @@ export function reducePlayer(state: PlayerState, event: PlayerEvent): PlayerStat
     }
     case 'prev':
       return { ...state, stepIndex: Math.max(0, state.stepIndex - 1), status: 'paused' };
-    case 'seek':
+    case 'seek': {
+      // 非法 index 忽略；同 index 拖回原步为 no-op（不打断自动播放）
+      if (!Number.isFinite(event.index)) return state;
+      if (event.index === state.stepIndex) return state;
       return {
         ...state,
         stepIndex: Math.max(0, Math.min(event.index, state.totalSteps - 1)),
         status: 'paused',
       };
+    }
     case 'speed':
+      // 忽略非法倍速（非有限值或非正数）
+      if (!Number.isFinite(event.value) || event.value <= 0) return state;
       return { ...state, speed: event.value };
     case 'ended': {
       if (state.status !== 'playing') return state;

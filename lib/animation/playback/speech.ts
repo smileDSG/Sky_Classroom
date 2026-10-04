@@ -19,6 +19,8 @@ export function cancelSpeech(): void {
 }
 
 export async function speak(text: string, opts: SpeakOptions = {}): Promise<void> {
+  // 已中止的 signal：立即返回，避免启动无法取消的朗读/定时器
+  if (opts.signal?.aborted) return;
   const speed = opts.speed ?? 1;
   if (!isSpeechSynthesisAvailable()) {
     await delay(estimateSpeechDurationMs(text, speed), opts.signal);
@@ -33,11 +35,11 @@ export async function speak(text: string, opts: SpeakOptions = {}): Promise<void
     utterance.rate = speed;
     let done = false;
     const finish = () => {
-      if (!done) {
-        done = true;
-        opts.signal?.removeEventListener('abort', onAbort);
-        resolve();
-      }
+      if (done) return;
+      done = true;
+      clearTimeout(fallback);
+      opts.signal?.removeEventListener('abort', onAbort);
+      resolve();
     };
     const onAbort = () => {
       synth.cancel();
@@ -46,28 +48,22 @@ export async function speak(text: string, opts: SpeakOptions = {}): Promise<void
     opts.signal?.addEventListener('abort', onAbort, { once: true });
     // 某些浏览器 end 事件不触发：以估算时长 + 2s 兜底
     const fallback = setTimeout(finish, estimateSpeechDurationMs(text, speed) + 2000);
-    utterance.onend = () => {
-      clearTimeout(fallback);
-      finish();
-    };
-    utterance.onerror = () => {
-      clearTimeout(fallback);
-      finish();
-    };
+    utterance.onend = () => finish();
+    utterance.onerror = () => finish();
     synth.speak(utterance);
   });
 }
 
 function delay(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
-    const t = setTimeout(resolve, ms);
-    signal?.addEventListener(
-      'abort',
-      () => {
-        clearTimeout(t);
-        resolve();
-      },
-      { once: true },
-    );
+    const onAbort = () => {
+      clearTimeout(t);
+      resolve();
+    };
+    const t = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
   });
 }
