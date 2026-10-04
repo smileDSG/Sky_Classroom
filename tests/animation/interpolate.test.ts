@@ -55,6 +55,47 @@ describe('resolveStepView', () => {
     const view = resolveStepView(script, 0);
     expect(view.visible.every((v) => v.isEntering)).toBe(true);
   });
+
+  it('exiting 视图携带上一步坐标', () => {
+    const view = resolveStepView(script, 1);
+    const b = view.exiting.find((v) => v.actor.id === 'b')!;
+    expect(b.state.x).toBe(800);
+    expect(b.state.y).toBe(300);
+  });
+
+  it('stepIndex 越界时钳制到末步，视图与最后一步一致（无重复入场）', () => {
+    expect(resolveStepView(script, script.steps.length)).toEqual(resolveStepView(script, 1));
+    expect(resolveStepView(script, -1)).toEqual(resolveStepView(script, 0));
+  });
+
+  it('步内重复 actorId 仅保留第一个（可见与退场均防御）', () => {
+    const dup: AnimationScript = {
+      ...script,
+      steps: [
+        {
+          id: 'd1',
+          title: 'd',
+          narration: 'n',
+          actorStates: [
+            { actorId: 'b', x: 111, y: 222 },
+            { actorId: 'b', x: 333, y: 444 },
+          ],
+        },
+        {
+          id: 'd2',
+          title: 'd',
+          narration: 'n',
+          actorStates: [{ actorId: 'a', x: 10, y: 20 }],
+        },
+      ],
+    };
+    const v0 = resolveStepView(dup, 0);
+    expect(v0.visible).toHaveLength(1);
+    expect(v0.visible[0].state.x).toBe(111);
+    const v1 = resolveStepView(dup, 1);
+    expect(v1.exiting).toHaveLength(1);
+    expect(v1.exiting[0].state.x).toBe(111);
+  });
 });
 
 describe('approxActorRadius', () => {
@@ -77,5 +118,55 @@ describe('buildArrowPath', () => {
   it('曲线箭头返回 Q 命令', () => {
     const d = buildArrowPath({ x1: 200, y1: 300, x2: 800, y2: 300, r1: 28, r2: 20, curved: true });
     expect(d).toContain('Q');
+  });
+
+  it('两端过近时端点坍缩到中点，不产生反向箭头', () => {
+    // 两 r=28 圆相距 50px：收缩总量 (28+6)+(28+16)=78 > 50，若不钳制会反向（M 234 → L 206）
+    const straight = buildArrowPath({
+      x1: 200,
+      y1: 300,
+      x2: 250,
+      y2: 300,
+      r1: 28,
+      r2: 28,
+      curved: false,
+    });
+    expect(straight).toBe('M 225.0 300.0 L 225.0 300.0');
+    const curved = buildArrowPath({
+      x1: 200,
+      y1: 300,
+      x2: 250,
+      y2: 300,
+      r1: 28,
+      r2: 28,
+      curved: true,
+    });
+    expect(curved).toMatch(
+      /^M 225(\.0)? 300(\.0)? Q -?\d+(\.\d+)? -?\d+(\.\d+)? 225(\.0)? 300(\.0)?$/,
+    );
+  });
+
+  it('零距离箭头不产生 NaN，路径合法', () => {
+    const straight = buildArrowPath({
+      x1: 400,
+      y1: 300,
+      x2: 400,
+      y2: 300,
+      r1: 28,
+      r2: 28,
+      curved: false,
+    });
+    expect(straight).toBe('M 400.0 300.0 L 400.0 300.0');
+    const curved = buildArrowPath({
+      x1: 400,
+      y1: 300,
+      x2: 400,
+      y2: 300,
+      r1: 28,
+      r2: 28,
+      curved: true,
+    });
+    expect(curved).not.toContain('NaN');
+    expect(curved).toMatch(/^M 400(\.0)? 300(\.0)? Q 400(\.0)? 300(\.0)? 400(\.0)? 300(\.0)?$/);
   });
 });

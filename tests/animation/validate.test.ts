@@ -113,6 +113,17 @@ describe('validateScript', () => {
     expect(r.errors.some((e) => e.code === 'duplicate-actor-id' && e.actorId === 'a')).toBe(true);
   });
 
+  it('步内重复 actorId 状态报错', () => {
+    const s = makeScript();
+    s.steps[0].actorStates.push({ actorId: 'a', x: 400, y: 300 });
+    const r = validateScript(s);
+    const dup = r.errors.find((e) => e.code === 'duplicate-state');
+    expect(dup).toBeDefined();
+    expect(dup?.actorId).toBe('a');
+    expect(dup?.stepId).toBe('st1');
+    expect(dup?.message).toContain('仅保留第一个');
+  });
+
   it('箭头端点为不可定位演员报错', () => {
     const s = makeScript();
     s.actors.push({ kind: 'arrow', id: 'arr2', fromActorId: 'a', toActorId: 'arr' });

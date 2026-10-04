@@ -8,6 +8,7 @@ export interface ValidationIssue {
     | 'out-of-bounds'
     | 'large-displacement'
     | 'duplicate-actor-id'
+    | 'duplicate-state'
     | 'cell-overlap';
   message: string;
   stepId?: string;
@@ -99,7 +100,12 @@ export function validateScript(script: AnimationScript): ValidationResult {
 
   for (const step of script.steps) {
     const cells: CellBox[] = [];
+    const seenIds = new Set<string>();
+    const duplicatedIds = new Set<string>();
     for (const st of step.actorStates) {
+      if (seenIds.has(st.actorId)) duplicatedIds.add(st.actorId);
+      seenIds.add(st.actorId);
+
       const actor = byId.get(st.actorId);
       if (!actor) {
         errors.push({
@@ -135,6 +141,16 @@ export function validateScript(script: AnimationScript): ValidationResult {
       if (actor.kind === 'array-cell') {
         cells.push({ state: st, actor });
       }
+    }
+
+    // 步内同一演员状态重复 → 报错（渲染端仅保留第一个）
+    for (const id of duplicatedIds) {
+      errors.push({
+        code: 'duplicate-state',
+        message: `步骤 ${step.id} 演员 ${id} 的状态重复出现（仅保留第一个）`,
+        stepId: step.id,
+        actorId: id,
+      });
     }
 
     // 格子间不重叠（容差内警告，spec §6）

@@ -14,28 +14,38 @@ export interface StepView {
 }
 
 /**
- * 全量快照解析（spec §3.2）：演员是否入场/出场由相邻步状态隐式推导，
- * LLM 显式给的 entering/exiting 标记仅作补充（隐式推导优先，全量快照必然自洽）。
+ * 全量快照解析（spec §3.2）：入场/出场一律由相邻步快照隐式推导；
+ * ActorState 上 LLM 显式给的 entering/exiting 标记被忽略（全量快照必然自洽）。
+ * 步内重复的 actorId 仅保留第一个状态（防御未过 validate 的脚本）。
  */
 export function resolveStepView(script: AnimationScript, stepIndex: number): StepView {
   const byId = new Map(script.actors.map((a) => [a.id, a]));
-  const current = script.steps[Math.max(0, Math.min(stepIndex, script.steps.length - 1))];
-  const prev = stepIndex > 0 ? script.steps[stepIndex - 1] : null;
+  const idx = Math.max(0, Math.min(stepIndex, script.steps.length - 1));
+  const current = script.steps[idx];
+  const prev = idx > 0 ? script.steps[idx - 1] : null;
 
-  const currentIds = new Set(current.actorStates.map((s) => s.actorId));
-  const visible: ActorView[] = current.actorStates
-    .filter((s) => byId.has(s.actorId))
-    .map((state) => ({
+  const currentIds = new Set<string>();
+  const visible: ActorView[] = [];
+  for (const state of current.actorStates) {
+    if (!byId.has(state.actorId) || currentIds.has(state.actorId)) continue;
+    currentIds.add(state.actorId);
+    visible.push({
       actor: byId.get(state.actorId)!,
       state,
       isEntering: !prev || !prev.actorStates.some((p) => p.actorId === state.actorId),
-    }));
+    });
+  }
 
-  const exiting: ActorView[] = prev
-    ? prev.actorStates
-        .filter((s) => byId.has(s.actorId) && !currentIds.has(s.actorId))
-        .map((state) => ({ actor: byId.get(state.actorId)!, state, isEntering: false }))
-    : [];
+  const prevIds = new Set<string>();
+  const exiting: ActorView[] = [];
+  if (prev) {
+    for (const state of prev.actorStates) {
+      if (!byId.has(state.actorId) || prevIds.has(state.actorId) || currentIds.has(state.actorId))
+        continue;
+      prevIds.add(state.actorId);
+      exiting.push({ actor: byId.get(state.actorId)!, state, isEntering: false });
+    }
+  }
 
   return { visible, exiting };
 }
@@ -72,6 +82,7 @@ export interface ArrowGeometry {
 
 /**
  * 箭头路径：从 from 中心指向 to 中心，两端各收缩 半径+6px（尾部再 +10px 给箭头 marker）。
+ * 两端过近导致收缩后反向时，端点坍缩到两中心中点（避免画出反向箭头）。
  * 直线返回 "M x1 y1 L x2 y2"；曲线返回 "M x1 y1 Q cx cy x2 y2"
  * （控制点取中点法向偏移，偏移量 = 距离 * 0.18）。
  */
@@ -81,10 +92,15 @@ export function buildArrowPath(g: ArrowGeometry): string {
   const len = Math.hypot(dx, dy) || 1;
   const ux = dx / len;
   const uy = dy / len;
-  const x1 = g.x1 + ux * (g.r1 + 6);
-  const y1 = g.y1 + uy * (g.r1 + 6);
-  const x2 = g.x2 - ux * (g.r2 + 6 + 10);
-  const y2 = g.y2 - uy * (g.r2 + 6 + 10);
+  let x1 = g.x1 + ux * (g.r1 + 6);
+  let y1 = g.y1 + uy * (g.r1 + 6);
+  let x2 = g.x2 - ux * (g.r2 + 6 + 10);
+  let y2 = g.y2 - uy * (g.r2 + 6 + 10);
+  // 收缩后沿单位方向的跨度为负 → 两端太近导致箭头反向：坍缩到两中心中点
+  if ((x2 - x1) * ux + (y2 - y1) * uy < 0) {
+    x1 = x2 = (g.x1 + g.x2) / 2;
+    y1 = y2 = (g.y1 + g.y2) / 2;
+  }
   if (!g.curved) return `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)}`;
   const mx = (x1 + x2) / 2;
   const my = (y1 + y2) / 2;
