@@ -1,4 +1,4 @@
-import type { Actor, AnimationScript, ActorState } from './types';
+import type { Actor, AnimationScript, ActorState, ArrayCellActor } from './types';
 
 export interface ValidationIssue {
   code:
@@ -6,7 +6,9 @@ export interface ValidationIssue {
     | 'arrow-endpoint-missing'
     | 'target-missing'
     | 'out-of-bounds'
-    | 'large-displacement';
+    | 'large-displacement'
+    | 'duplicate-actor-id'
+    | 'cell-overlap';
   message: string;
   stepId?: string;
   actorId?: string;
@@ -20,8 +22,17 @@ export interface ValidationResult {
 /** 相邻步之间单演员位移超过该值（对角线比例）视为跳变，给 warning */
 const DISPLACEMENT_WARNING_RATIO = 0.6;
 
+/** 格子包围盒重叠深度在两轴上均超过该值（px）视为挤压，给 warning */
+const CELL_OVERLAP_TOLERANCE_PX = 2;
+
 /** 拥有语义坐标（可被箭头/指针/高亮引用定位）的演员种类 */
 const POSITIONED = new Set(['node', 'array-cell', 'text', 'bar', 'axes']);
+
+/** 格子状态 + 其定义（用于计算包围盒） */
+interface CellBox {
+  state: ActorState;
+  actor: ArrayCellActor;
+}
 
 /**
  * 0-LLM 结构校验（spec §6）。errors 阻断（触发 Script Agent 重试），
@@ -32,7 +43,19 @@ export function validateScript(script: AnimationScript): ValidationResult {
   const warnings: ValidationIssue[] = [];
   const { width, height } = script.stage;
 
-  const byId = new Map<string, Actor>(script.actors.map((a) => [a.id, a]));
+  const byId = new Map<string, Actor>();
+  const duplicateIds = new Set<string>();
+  for (const actor of script.actors) {
+    if (byId.has(actor.id)) duplicateIds.add(actor.id);
+    byId.set(actor.id, actor);
+  }
+  for (const id of duplicateIds) {
+    errors.push({
+      code: 'duplicate-actor-id',
+      message: `演员 id 重复：${id}（重复者仅保留最后一个）`,
+      actorId: id,
+    });
+  }
 
   for (const actor of script.actors) {
     if (actor.kind === 'arrow') {
@@ -64,7 +87,7 @@ export function validateScript(script: AnimationScript): ValidationResult {
       } else if (!POSITIONED.has(target.kind)) {
         errors.push({
           code: 'target-missing',
-          message: `${actor.kind} ${actor.id} 的目标 ${actor.targetActorId} 不是可定位演员`,
+          message: `${actor.kind} ${actor.id} 的目标 ${actor.targetActorId} 不是可定位演员（${target.kind}）`,
           actorId: actor.id,
         });
       }
@@ -75,8 +98,10 @@ export function validateScript(script: AnimationScript): ValidationResult {
   let prev: Map<string, ActorState> | null = null;
 
   for (const step of script.steps) {
+    const cells: CellBox[] = [];
     for (const st of step.actorStates) {
-      if (!byId.has(st.actorId)) {
+      const actor = byId.get(st.actorId);
+      if (!actor) {
         errors.push({
           code: 'unknown-actor',
           message: `步骤 ${step.id} 引用未知演员 ${st.actorId}`,
@@ -88,7 +113,7 @@ export function validateScript(script: AnimationScript): ValidationResult {
       if (st.x < 0 || st.x > width || st.y < 0 || st.y > height) {
         errors.push({
           code: 'out-of-bounds',
-          message: `步骤 ${step.id} 演员 ${st.actorId} 坐标 (${st.x}, ${st.y}) 越界`,
+          message: `步骤 ${step.id} 演员 ${st.actorId} 坐标 (${st.x}, ${st.y}) 越界（舞台 ${width}×${height}）`,
           stepId: step.id,
           actorId: st.actorId,
         });
@@ -104,6 +129,31 @@ export function validateScript(script: AnimationScript): ValidationResult {
             message: `步骤 ${step.id} 演员 ${st.actorId} 位移过大，建议增加中间过渡步`,
             stepId: step.id,
             actorId: st.actorId,
+          });
+        }
+      }
+      if (actor.kind === 'array-cell') {
+        cells.push({ state: st, actor });
+      }
+    }
+
+    // 格子间不重叠（容差内警告，spec §6）
+    for (let i = 0; i < cells.length; i++) {
+      for (let j = i + 1; j < cells.length; j++) {
+        const a = cells[i];
+        const b = cells[j];
+        const overlapX =
+          Math.min(a.state.x + a.actor.w / 2, b.state.x + b.actor.w / 2) -
+          Math.max(a.state.x - a.actor.w / 2, b.state.x - b.actor.w / 2);
+        const overlapY =
+          Math.min(a.state.y + a.actor.h / 2, b.state.y + b.actor.h / 2) -
+          Math.max(a.state.y - a.actor.h / 2, b.state.y - b.actor.h / 2);
+        if (overlapX > CELL_OVERLAP_TOLERANCE_PX && overlapY > CELL_OVERLAP_TOLERANCE_PX) {
+          warnings.push({
+            code: 'cell-overlap',
+            message: `步骤 ${step.id} 格子 ${a.actor.id} 与 ${b.actor.id} 包围盒重叠（x=${overlapX}px, y=${overlapY}px），建议错开或缩小`,
+            stepId: step.id,
+            actorId: a.actor.id,
           });
         }
       }
