@@ -31,24 +31,30 @@ export interface ResolveEnv {
   [key: string]: string | undefined;
 }
 
-/** 动画讲解用模型：DEFAULT_MODEL=provider:model-id 优先，否则第一个有 key 的候选。 */
+/**
+ * 动画讲解用模型：DEFAULT_MODEL=provider:model-id 仅当 provider 是候选之一时优先
+ * （动画管线仅认候选 provider 的 DEFAULT_MODEL，未知 provider 不误路由——
+ * 否则会把未知 provider 硬套 openai 类型打向 api.openai.com——回退到候选列表），
+ * 否则取第一个配置了 key 的候选。
+ */
 export function resolveAnimationModel(opts?: { env?: ResolveEnv }): ModelConfig | null {
   const env = opts?.env ?? process.env;
 
-  const def = env.DEFAULT_MODEL;
+  const def = env.DEFAULT_MODEL?.trim();
   if (def && def.includes(':')) {
     const [providerId, modelId] = def.split(':', 2);
     const cand = CANDIDATES.find((c) => c.providerId === providerId);
-    const envKey = cand?.envKey ?? `${providerId.toUpperCase()}_API_KEY`;
-    const key = env[envKey];
-    if (key) {
-      return {
-        providerId: providerId as ModelConfig['providerId'],
-        modelId,
-        apiKey: key,
-        baseUrl: cand?.baseUrlEnv ? env[cand.baseUrlEnv] || undefined : undefined,
-        providerType: 'openai',
-      };
+    if (cand) {
+      const key = env[cand.envKey];
+      if (key) {
+        return {
+          providerId: cand.providerId,
+          modelId,
+          apiKey: key,
+          baseUrl: cand.baseUrlEnv ? env[cand.baseUrlEnv] || undefined : undefined,
+          providerType: 'openai',
+        };
+      }
     }
   }
 
