@@ -37,14 +37,13 @@ export function NodeActorView({ actor, state, mode }: ActorProps) {
   return (
     <motion.g
       data-actor-id={actor.id}
-      initial={enterInitial(mode)}
+      initial={{ ...enterInitial(mode), x: state.x, y: state.y }}
       animate={{
         x: state.x,
         y: state.y,
         opacity: state.exiting ? 0 : (state.opacity ?? 1),
         scale: state.scale ?? 1,
       }}
-      exit={{ opacity: 0, scale: 0.6 }}
       transition={STEP_TRANSITION}
     >
       {actor.shape === 'circle' ? (
@@ -80,14 +79,13 @@ export function ArrayCellActorView({ actor, state, mode }: ActorProps) {
   return (
     <motion.g
       data-actor-id={actor.id}
-      initial={enterInitial(mode)}
+      initial={{ ...enterInitial(mode), x: state.x, y: state.y }}
       animate={{
         x: state.x,
         y: state.y,
         opacity: state.exiting ? 0 : (state.opacity ?? 1),
         scale: state.scale ?? 1,
       }}
-      exit={{ opacity: 0, scale: 0.6 }}
       transition={STEP_TRANSITION}
     >
       <rect
@@ -119,12 +117,11 @@ export function BarActorView({ actor, state, mode }: ActorProps) {
   return (
     <motion.g
       data-actor-id={actor.id}
-      initial={{ opacity: mode === 'exiting' ? 1 : 0 }}
+      initial={{ opacity: mode === 'exiting' ? 1 : 0, x: state.x, y: state.y }}
       animate={{ x: state.x, y: state.y, opacity: state.exiting ? 0 : (state.opacity ?? 1) }}
-      exit={{ opacity: 0 }}
       transition={STEP_TRANSITION}
     >
-      {/* v1 柱高固定 200，高低差异用 state.scale 表达 */}
+      {/* v1 柱高固定 200px；scale 语义留待后续 */}
       <rect x={-actor.w / 2} y={-200} width={actor.w} height={200} rx={4} fill={color} />
       <text textAnchor="middle" y={-210} fontSize={18} fill={color} fontWeight={600}>
         {labelOf(actor, state)}
@@ -141,9 +138,8 @@ export function TextActorView({ actor, state, mode }: ActorProps) {
       textAnchor="middle"
       fontSize={actor.size}
       fontWeight={600}
-      initial={{ opacity: mode === 'exiting' ? 1 : 0 }}
+      initial={{ opacity: mode === 'exiting' ? 1 : 0, x: state.x, y: state.y }}
       animate={{ x: state.x, y: state.y, opacity: state.exiting ? 0 : (state.opacity ?? 1) }}
-      exit={{ opacity: 0 }}
       transition={STEP_TRANSITION}
       fill={colorOf(actor, state)}
     >
@@ -162,9 +158,8 @@ export function PointerActorView({ actor, state, mode, stateOf, actorOf }: Actor
   return (
     <motion.g
       data-actor-id={actor.id}
-      initial={{ opacity: mode === 'exiting' ? 1 : 0 }}
+      initial={{ opacity: mode === 'exiting' ? 1 : 0, x: tx, y: ty + r + 22 }}
       animate={{ x: tx, y: ty + r + 22, opacity: state.exiting ? 0 : 1 }}
-      exit={{ opacity: 0 }}
       transition={STEP_TRANSITION}
     >
       <path d="M -8 -14 L 8 -14 L 0 0 Z" fill="#e8590c" />
@@ -180,24 +175,21 @@ export function HighlightActorView({ actor, state, mode, stateOf, actorOf }: Act
   const target = stateOf(actor.targetActorId);
   const targetActor = actorOf(actor.targetActorId);
   const r = (targetActor ? approxActorRadius(targetActor) : 24) + 12;
+  // 高亮框定位只靠 transform 平移（rect 几何原点在 (0,0)，覆盖 [0,2r]）：
+  // 勿再加静态 x/y 属性——SVG 几何属性与 motion 的 transform 叠加会使整体偏移 -r
+  const cx = (target?.x ?? state.x) - r;
+  const cy = (target?.y ?? state.y) - r;
   return (
     <motion.rect
       data-actor-id={actor.id}
       width={r * 2}
       height={r * 2}
-      x={-r}
-      y={-r}
       rx={12}
       fill="none"
       stroke={state.colorOverride ?? actor.color}
       strokeWidth={3.5}
-      initial={{ opacity: mode === 'exiting' ? 1 : 0 }}
-      animate={{
-        x: (target?.x ?? state.x) - r,
-        y: (target?.y ?? state.y) - r,
-        opacity: state.exiting ? 0 : 1,
-      }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: mode === 'exiting' ? 1 : 0, x: cx, y: cy }}
+      animate={{ x: cx, y: cy, opacity: state.exiting ? 0 : 1 }}
       transition={STEP_TRANSITION}
     />
   );
@@ -228,7 +220,6 @@ export function ArrowActorView({ actor, state, mode, stateOf, actorOf }: ActorPr
         d={d}
         initial={{ opacity: mode === 'exiting' ? 1 : 0, d }}
         animate={{ opacity: state.exiting ? 0 : 1, d }}
-        exit={{ opacity: 0 }}
         transition={STEP_TRANSITION}
         fill="none"
         stroke="#495057"
@@ -237,9 +228,8 @@ export function ArrowActorView({ actor, state, mode, stateOf, actorOf }: ActorPr
       />
       {actor.label ? (
         <motion.text
-          initial={{ opacity: mode === 'exiting' ? 1 : 0 }}
+          initial={{ opacity: mode === 'exiting' ? 1 : 0, x: midX, y: midY - 10 }}
           animate={{ x: midX, y: midY - 10, opacity: state.exiting ? 0 : 1 }}
-          exit={{ opacity: 0 }}
           fontSize={16}
           fill="#495057"
           textAnchor="middle"
@@ -256,9 +246,8 @@ export function AxesActorView({ actor, state, mode }: ActorProps) {
   return (
     <motion.g
       data-actor-id={actor.id}
-      initial={{ opacity: mode === 'exiting' ? 1 : 0 }}
+      initial={{ opacity: mode === 'exiting' ? 1 : 0, x: state.x, y: state.y }}
       animate={{ x: state.x, y: state.y, opacity: state.exiting ? 0 : 1 }}
-      exit={{ opacity: 0 }}
       transition={STEP_TRANSITION}
       stroke="#868e96"
       strokeWidth={1.5}
