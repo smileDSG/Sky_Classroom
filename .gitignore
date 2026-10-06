@@ -23,6 +23,8 @@ tsconfig.tsbuildinfo
 .data
 tmp/
 # Local runtime data (generated jobs, classrooms, teaching sessions)
+data/animation-jobs/
+data/animation-scripts/
 data/classroom-jobs/
 data/classrooms/
 data/slides-jobs/

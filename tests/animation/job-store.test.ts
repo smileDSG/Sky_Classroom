@@ -1,7 +1,7 @@
 // 说明：store 通过 path.join(process.cwd(), 'data', 'animation-jobs') 定位目录，
 // 并优先读环境变量 ANIMATION_JOBS_DIR / ANIMATION_SCRIPTS_DIR —— 测试用它指向临时目录。
 import { describe, it, expect, beforeEach } from 'vitest';
-import { mkdtempSync } from 'fs';
+import { mkdtempSync, promises as fsp } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import {
@@ -52,5 +52,22 @@ describe('animation job store', () => {
     expect(read?.status).toBe('failed');
     expect(read?.error).toBe('LLM 超时');
     expect(read?.planOutline?.steps).toHaveLength(1);
+  });
+
+  it('非法 job id 读取返回 null', async () => {
+    expect(await readAnimationJob('../etc')).toBeNull();
+  });
+
+  it('超过 30 分钟无更新的任务读取时被标记为 stale 失败', async () => {
+    const job = await createAnimationJob('归并排序');
+    const jobPath = join(process.env.ANIMATION_JOBS_DIR ?? '', `${job.jobId}.json`);
+    const raw = JSON.parse(await fsp.readFile(jobPath, 'utf-8')) as { updatedAt: string };
+    raw.updatedAt = new Date(Date.now() - 31 * 60 * 1000).toISOString();
+    await fsp.writeFile(jobPath, JSON.stringify(raw));
+
+    const read = await readAnimationJob(job.jobId);
+    expect(read?.status).toBe('failed');
+    expect(read?.message).toBe('任务超时（可能因进程重启中断）');
+    expect(read?.completedAt).toBeTruthy();
   });
 });

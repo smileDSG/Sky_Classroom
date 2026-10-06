@@ -39,4 +39,22 @@ describe('script store', () => {
   it('读取不存在的脚本返回 null', async () => {
     expect(await readAnimationScript('nope')).toBeNull();
   });
+
+  it('非法 id 读取返回 null', async () => {
+    expect(await readAnimationScript('../x')).toBeNull();
+  });
+
+  it('保存非法 id 脚本时重新生成合法 id 并可读回', async () => {
+    const bad: AnimationScript = { ...script, id: 'bad/id' };
+    const savedId = await saveAnimationScript(bad);
+    expect(savedId).not.toBe('bad/id');
+    expect(savedId).toMatch(/^anim-[A-Za-z0-9_-]{8}$/);
+
+    const list = await listAnimationScripts();
+    expect(list).toHaveLength(1);
+    expect(list[0].scriptId).toBe(savedId);
+
+    const read = await readAnimationScript(savedId);
+    expect(read?.title).toBe('堆的插入');
+  });
 });

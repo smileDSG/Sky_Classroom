@@ -1,7 +1,12 @@
 /** 生成完成的分镜脚本持久化：data/animation-scripts/{scriptId}.json（spec §7） */
 import fsp from 'fs/promises';
 import path from 'path';
+import { nanoid } from 'nanoid';
+import { createLogger } from '@/lib/logger';
+import { writeJsonFileAtomic } from '@/lib/server/classroom-storage';
 import type { AnimationScript, ScriptMeta } from './types';
+
+const log = createLogger('AnimationScriptStore');
 
 function scriptsDir(): string {
   return process.env.ANIMATION_SCRIPTS_DIR ?? path.join(process.cwd(), 'data', 'animation-scripts');
@@ -15,11 +20,12 @@ export function isValidScriptId(scriptId: string): boolean {
   return /^[A-Za-z0-9_-]{4,64}$/.test(scriptId);
 }
 
-export async function saveAnimationScript(script: AnimationScript): Promise<void> {
-  const dir = scriptsDir();
-  await fsp.mkdir(dir, { recursive: true });
-  const payload = { ...script, savedAt: new Date().toISOString() };
-  await fsp.writeFile(scriptFilePath(script.id), JSON.stringify(payload, null, 2));
+export async function saveAnimationScript(script: AnimationScript): Promise<string> {
+  // id 非法时重新生成，避免 succeeded job 指向无法读取的脚本文件
+  const id = isValidScriptId(script.id) ? script.id : `anim-${nanoid(8)}`;
+  const payload = { ...script, id, savedAt: new Date().toISOString() };
+  await writeJsonFileAtomic(scriptFilePath(id), payload);
+  return id;
 }
 
 export async function readAnimationScript(scriptId: string): Promise<AnimationScript | null> {
@@ -29,7 +35,11 @@ export async function readAnimationScript(scriptId: string): Promise<AnimationSc
     const parsed = JSON.parse(raw) as AnimationScript & { savedAt?: string };
     const { savedAt: _savedAt, ...script } = parsed;
     return script;
-  } catch {
+  } catch (error) {
+    // ENOENT 是正常的不存在；其他错误（权限/损坏）记录日志以便排查
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      log.warn(`读取脚本失败（文件可能损坏）: ${scriptFilePath(scriptId)}`, error);
+    }
     return null;
   }
 }

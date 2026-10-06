@@ -3,11 +3,11 @@
  * data/animation-jobs/{jobId}.json，stale 30 分钟、终态保留 24 小时。
  * 测试可通过 ANIMATION_JOBS_DIR 覆盖目录。
  */
-import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 import { nanoid } from 'nanoid';
 import { createLogger } from '@/lib/logger';
+import { writeJsonFileAtomic } from '@/lib/server/classroom-storage';
 
 const log = createLogger('AnimationJobStore');
 
@@ -45,18 +45,19 @@ export function isValidAnimationJobId(jobId: string): boolean {
   return /^[A-Za-z0-9_-]{6,64}$/.test(jobId);
 }
 
-function markStaleIfNeeded(job: AnimationJob): AnimationJob {
+async function markStaleIfNeeded(job: AnimationJob): Promise<AnimationJob> {
   if (job.status !== 'running' && job.status !== 'queued') return job;
   if (Date.now() - new Date(job.updatedAt).getTime() < STALE_JOB_TIMEOUT_MS) return job;
   const stale: AnimationJob = {
     ...job,
     status: 'failed',
     stage: 'failed',
+    message: '任务超时（可能因进程重启中断）',
     error: '任务超时（可能因进程重启中断）',
     completedAt: new Date().toISOString(),
   };
   try {
-    fs.writeFileSync(jobFilePath(job.jobId), JSON.stringify(stale, null, 2));
+    await writeJsonFileAtomic(jobFilePath(job.jobId), stale);
   } catch (err) {
     log.error('标记 stale 失败', err);
   }
@@ -89,7 +90,6 @@ async function cleanupTerminalJobs(): Promise<void> {
 }
 
 export async function createAnimationJob(topic: string): Promise<AnimationJob> {
-  await fsp.mkdir(jobsDir(), { recursive: true });
   const now = new Date().toISOString();
   const job: AnimationJob = {
     jobId: `animjob-${nanoid(12)}`,
@@ -101,7 +101,7 @@ export async function createAnimationJob(topic: string): Promise<AnimationJob> {
     createdAt: now,
     updatedAt: now,
   };
-  await fsp.writeFile(jobFilePath(job.jobId), JSON.stringify(job, null, 2));
+  await writeJsonFileAtomic(jobFilePath(job.jobId), job);
   void cleanupTerminalJobs();
   return job;
 }
@@ -110,8 +110,12 @@ export async function readAnimationJob(jobId: string): Promise<AnimationJob | nu
   if (!isValidAnimationJobId(jobId)) return null;
   try {
     const raw = await fsp.readFile(jobFilePath(jobId), 'utf-8');
-    return markStaleIfNeeded(JSON.parse(raw) as AnimationJob);
-  } catch {
+    return await markStaleIfNeeded(JSON.parse(raw) as AnimationJob);
+  } catch (error) {
+    // ENOENT 是正常的不存在；其他错误（权限/损坏）记录日志以便排查
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      log.warn(`读取 job 失败（文件可能损坏）: ${jobFilePath(jobId)}`, error);
+    }
     return null;
   }
 }
@@ -123,7 +127,7 @@ export async function updateAnimationJob(
   const job = await readAnimationJob(jobId);
   if (!job) return null;
   const next: AnimationJob = { ...job, ...update, updatedAt: new Date().toISOString() };
-  await fsp.writeFile(jobFilePath(jobId), JSON.stringify(next, null, 2));
+  await writeJsonFileAtomic(jobFilePath(jobId), next);
   return next;
 }
 

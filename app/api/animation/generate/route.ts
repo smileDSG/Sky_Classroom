@@ -31,26 +31,34 @@ export async function POST(request: NextRequest) {
   const job = await createAnimationJob(topic);
 
   after(async () => {
+    const progressPromises: Promise<unknown>[] = [];
     try {
       await markAnimationJobRunning(job.jobId, 'planning');
       const { script, warnings } = await runAnimationGeneration(topic, {
         onProgress: (stage, progress, message) => {
-          void updateAnimationJob(job.jobId, {
-            // pipeline 的 'done' 只代表脚本校验完成，落库前映射为 'validating'
-            stage: stage === 'done' ? 'validating' : stage,
-            progress,
-            message: message ?? '',
-          });
+          progressPromises.push(
+            updateAnimationJob(job.jobId, {
+              // pipeline 的 'done' 只代表脚本校验完成，落库前映射为 'validating'
+              stage: stage === 'done' ? 'validating' : stage,
+              progress,
+              message: message ?? '',
+            }).catch((err) => {
+              log.warn('动画生成进度写入失败', err);
+            }),
+          );
         },
       });
-      await saveAnimationScript(script);
+      // 先等所有进度写落盘再写终态，避免 fire-and-forget 进度写覆盖终态（丢失 §8.1 planOutline）
+      await Promise.allSettled(progressPromises);
+      const savedScriptId = await saveAnimationScript(script);
       if (warnings.length) log.warn('生成完成但有警告', warnings);
       await markAnimationJobSucceeded(job.jobId, {
-        scriptId: script.id,
+        scriptId: savedScriptId,
         title: script.title,
         stepCount: script.steps.length,
       });
     } catch (err) {
+      await Promise.allSettled(progressPromises);
       const msg = err instanceof Error ? err.message : String(err);
       log.error(`生成失败: ${msg}`);
       // plan 成功而 script 失败：保留大纲供前端降级展示（spec §8.1）
