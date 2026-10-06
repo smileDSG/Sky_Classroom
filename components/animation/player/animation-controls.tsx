@@ -58,6 +58,7 @@ export function AnimationControls({ player }: { player: UseAnimationPlayerReturn
         {speedOptions.map((s) => (
           <button
             key={s}
+            aria-pressed={speed === s}
             onClick={() => player.setSpeed(s)}
             className={cn(
               'rounded-md px-2 py-1 text-xs',

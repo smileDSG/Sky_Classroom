@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
 const speakMock = vi.fn(async () => {});
+const cancelSpeechMock = vi.fn();
 vi.mock('@/lib/animation/playback/speech', () => ({
   speak: (...args: unknown[]) => speakMock(...(args as [])),
-  cancelSpeech: vi.fn(),
+  cancelSpeech: (...args: unknown[]) => cancelSpeechMock(...(args as [])),
   isSpeechSynthesisAvailable: vi.fn(() => false),
 }));
 
@@ -28,6 +29,7 @@ const script: AnimationScript = {
 describe('useAnimationPlayer', () => {
   beforeEach(() => {
     speakMock.mockReset().mockImplementation(async () => {});
+    cancelSpeechMock.mockClear();
   });
 
   it('初始 idle，play 后 playing 且朗读第一步', async () => {
@@ -79,5 +81,57 @@ describe('useAnimationPlayer', () => {
     const { result } = renderHook(() => useAnimationPlayer(script));
     act(() => result.current.setSpeed(1.5));
     expect(result.current.speed).toBe(1.5);
+  });
+
+  it('卸载时调用 cancelSpeech 取消朗读', async () => {
+    const { result, unmount } = renderHook(() => useAnimationPlayer(script));
+    let resolveCurrent!: () => void;
+    speakMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveCurrent = resolve;
+        }),
+    );
+    act(() => result.current.toggle());
+    expect(result.current.status).toBe('playing');
+    expect(cancelSpeechMock).not.toHaveBeenCalled();
+    unmount();
+    expect(cancelSpeechMock).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      resolveCurrent();
+    });
+    expect(result.current.stepIndex).toBe(0); // 卸载后不推进
+  });
+
+  it('pause 中断朗读；中断后的完成不推进，重新 play 重读当前步', async () => {
+    const { result } = renderHook(() => useAnimationPlayer(script));
+    let resolveCurrent!: () => void;
+    speakMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveCurrent = resolve;
+        }),
+    );
+    act(() => result.current.toggle());
+    expect(speakMock).toHaveBeenCalledTimes(1);
+    act(() => result.current.toggle()); // 中途暂停
+    expect(result.current.status).toBe('paused');
+    await act(async () => {
+      resolveCurrent(); // 被打断的朗读此时才结束
+    });
+    expect(result.current.stepIndex).toBe(0);
+    act(() => result.current.toggle());
+    expect(result.current.status).toBe('playing');
+    expect(speakMock).toHaveBeenCalledTimes(2);
+    expect(speakMock).toHaveBeenLastCalledWith('第一句', expect.anything());
+  });
+
+  it('playing 中 seek 到同一步为 no-op：不重读、状态不变', () => {
+    const { result } = renderHook(() => useAnimationPlayer(script));
+    speakMock.mockImplementation(() => new Promise<void>(() => {}));
+    act(() => result.current.toggle());
+    act(() => result.current.seek(0)); // 与当前 stepIndex 相同
+    expect(result.current).toMatchObject({ status: 'playing', stepIndex: 0 });
+    expect(speakMock).toHaveBeenCalledTimes(1);
   });
 });
