@@ -16,7 +16,8 @@ export type TaskType =
   | 'quiz'
   | 'write'
   | 'memory'
-  | 'teaching';
+  | 'teaching'
+  | 'animation';
 export type TaskStatus = 'running' | 'completed' | 'failed';
 
 export interface BackgroundTask {

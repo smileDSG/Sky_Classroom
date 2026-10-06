@@ -16,6 +16,7 @@ import {
   FileQuestion,
   PenTool,
   Brain,
+  Clapperboard,
 } from 'lucide-react';
 import { useTaskStore, type BackgroundTask, type TaskType } from '@/lib/store/use-task-store';
 
@@ -27,6 +28,7 @@ const TASK_ICONS: Record<TaskType, React.ComponentType<{ className?: string }>> 
   write: PenTool,
   memory: Brain,
   teaching: Brain,
+  animation: Clapperboard,
   general: Zap,
 };
 
@@ -38,6 +40,7 @@ const TASK_COLORS: Record<TaskType, string> = {
   write: 'text-emerald-500',
   memory: 'text-rose-500',
   teaching: 'text-purple-500',
+  animation: 'text-sky-500',
   general: 'text-sky-500',
 };
 
@@ -49,6 +52,7 @@ const TASK_ROUTES: Record<TaskType, string> = {
   write: '/sky/cloud-mind',
   memory: '/sky/cloud-mind/memory',
   teaching: '/sky/teaching',
+  animation: '/sky/animation',
   general: '/sky/cloud-mind',
 };
 
