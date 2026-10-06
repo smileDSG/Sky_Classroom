@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { BookOpenCheck, LibraryBig, Presentation, Search } from 'lucide-react';
+import { BookOpenCheck, Clapperboard, LibraryBig, Presentation, Search } from 'lucide-react';
 
 const quickAccessItems = [
   {
@@ -40,6 +40,15 @@ const quickAccessItems = [
     bg: 'bg-sky-500/10 hover:bg-sky-500/20',
     border: 'border-sky-200/50 dark:border-sky-800/30',
     href: '/sky/cloud-mind/course-studio',
+  },
+  {
+    icon: Clapperboard,
+    title: '动画讲解',
+    desc: '输入话题，生成动画演示',
+    color: 'text-sky-500',
+    bg: 'bg-sky-500/10 hover:bg-sky-500/20',
+    border: 'border-sky-200/50 dark:border-sky-800/30',
+    href: '/sky/animation',
   },
 ];
 
