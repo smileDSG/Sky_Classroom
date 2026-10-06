@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, PlayCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,14 @@ const EXAMPLES = [
   '单摆的运动规律',
 ];
 
+const POLL_INTERVAL_MS = 2000;
+/** 轮询连续失败容忍次数（5 次 ≈ 10s），超过后停止轮询并将任务标记失败 */
+const MAX_POLL_FAILURES = 5;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default function AnimationPage() {
   const router = useRouter();
   const [topic, setTopic] = useState('');
@@ -27,11 +35,23 @@ export default function AnimationPage() {
   const addTask = useTaskStore((s) => s.addTask);
   const updateTask = useTaskStore((s) => s.updateTask);
 
+  // 卸载标记：轮询循环据此停止写状态 / 跳转（避免离开页面后被成功跳转“拉回”）。
+  // effect body 内重置为 true 以兼容 StrictMode 的卸载-重挂模拟。
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     fetch('/api/animation/scripts')
       .then((r) => unwrap<{ scripts: ScriptMeta[] }>(r))
       .then((d) => setHistory(d.scripts ?? []))
-      .catch(() => {});
+      .catch((err) => {
+        console.warn('[AnimationPage] 历史记录加载失败', err);
+      });
   }, []);
 
   const startGeneration = useCallback(async () => {
@@ -46,6 +66,7 @@ export default function AnimationPage() {
         body: JSON.stringify({ topic: t }),
       });
       const { jobId } = await unwrap<{ jobId: string }>(res);
+      if (!mountedRef.current) return;
       addTask({
         id: jobId,
         type: 'animation',
@@ -57,9 +78,39 @@ export default function AnimationPage() {
         updatedAt: Date.now(),
         jobId,
       });
+      let consecutivePollFailures = 0;
       for (;;) {
-        const r = await fetch(`/api/animation/jobs/${jobId}`);
-        const { job } = await unwrap<{ job: AnimationJob }>(r);
+        let job: AnimationJob;
+        try {
+          const r = await fetch(`/api/animation/jobs/${jobId}`);
+          ({ job } = await unwrap<{ job: AnimationJob }>(r));
+          consecutivePollFailures = 0;
+        } catch (err) {
+          // 单次瞬时失败（网络抖动等）不终止轮询、不翻转任务状态；
+          // 连续超过阈值才判定轮询不可用并停止（job 本身可能仍在后台正常生成）。
+          consecutivePollFailures += 1;
+          console.warn(
+            `[AnimationPage] 进度查询失败（${consecutivePollFailures}/${MAX_POLL_FAILURES}），jobId=${jobId}`,
+            err,
+          );
+          if (consecutivePollFailures >= MAX_POLL_FAILURES) {
+            if (mountedRef.current) {
+              updateTask(jobId, {
+                status: 'failed',
+                phase: '进度查询中断',
+                error: '进度查询连续失败，已停止轮询',
+              });
+              setSubmitError(
+                '生成进度查询连续失败，已停止轮询。生成可能仍在后台进行，稍后可在历史记录中查看，或重新生成。',
+              );
+            }
+            return;
+          }
+          await sleep(POLL_INTERVAL_MS);
+          continue;
+        }
+        // 卸载后不再写任何状态、不再发生跳转
+        if (!mountedRef.current) return;
         setActiveJob(job);
         updateTask(jobId, {
           progress: job.progress,
@@ -71,17 +122,23 @@ export default function AnimationPage() {
                 ? 'completed'
                 : 'running',
         });
-        if (job.status === 'succeeded' && job.result) {
-          router.push(`/sky/animation/${job.result.scriptId}`);
+        if (job.status === 'succeeded') {
+          if (job.result) {
+            router.push(`/sky/animation/${job.result.scriptId}`);
+          } else {
+            // 数据异常兜底：succeeded 却缺 result，按失败处理避免卡在 running
+            updateTask(jobId, { status: 'failed', phase: '生成结果缺失', error: '生成结果缺失' });
+            setSubmitError('生成完成但结果缺失，请重新生成。');
+          }
           return;
         }
         if (job.status === 'failed' || job.status === 'cancelled') return;
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await sleep(POLL_INTERVAL_MS);
       }
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : '生成请求失败');
+      if (mountedRef.current) setSubmitError(err instanceof Error ? err.message : '生成请求失败');
     } finally {
-      setSubmitting(false);
+      if (mountedRef.current) setSubmitting(false);
     }
   }, [topic, submitting, addTask, updateTask, router]);
 
@@ -102,7 +159,8 @@ export default function AnimationPage() {
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') startGeneration();
+            // isComposing：中文等 IME 组词期间的 Enter 不触发提交（与 components/stage.tsx 一致）
+            if (e.key === 'Enter' && !e.nativeEvent.isComposing) startGeneration();
           }}
           placeholder="例如：二叉堆的插入与上浮"
           maxLength={120}
@@ -145,6 +203,10 @@ export default function AnimationPage() {
             <div
               className="h-full bg-primary transition-all"
               style={{ width: `${activeJob.progress}%` }}
+              role="progressbar"
+              aria-valuenow={activeJob.progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
             />
           </div>
           {activeJob.status === 'failed' ? (

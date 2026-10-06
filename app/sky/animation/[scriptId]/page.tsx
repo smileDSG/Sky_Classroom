@@ -11,17 +11,6 @@ import { useAnimationPlayer } from '@/components/animation/player/use-animation-
 import { unwrap } from '@/lib/animation/client-api';
 import type { AnimationScript } from '@/lib/animation/types';
 
-// script 未加载前给 hook 一个空壳避免条件调用 hook——此时页面处于 loading 分支
-const FALLBACK_SCRIPT: AnimationScript = {
-  id: 'loading',
-  title: '',
-  topic: '',
-  subjectArea: 'algorithm',
-  stage: { width: 1200, height: 675 },
-  actors: [],
-  steps: [{ id: 's0', title: '', narration: '', actorStates: [{ actorId: 'none', x: 0, y: 0 }] }],
-};
-
 export default function AnimationPlayerPage({ params }: { params: Promise<{ scriptId: string }> }) {
   const { scriptId } = use(params);
   const [script, setScript] = useState<AnimationScript | null>(null);
@@ -46,8 +35,6 @@ export default function AnimationPlayerPage({ params }: { params: Promise<{ scri
     };
   }, [scriptId]);
 
-  const player = useAnimationPlayer(script ?? FALLBACK_SCRIPT);
-
   if (notFound) {
     return (
       <div className="flex h-svh flex-col items-center justify-center gap-4">
@@ -66,6 +53,18 @@ export default function AnimationPlayerPage({ params }: { params: Promise<{ scri
       </div>
     );
   }
+
+  return <PlayerView key={script.id} script={script} />;
+}
+
+/**
+ * 播放器视图。必须在 script 就绪后挂载：
+ * useAnimationPlayer 内部 useReducer 的步数边界只在首次挂载时由传入脚本初始化，
+ * 之后即使脚本 prop 替换，reducer 仍按挂载时的 totalSteps 钳制 next/seek/ended。
+ * 因此这里由父级以 key={script.id} 控制挂载/重挂载，禁止在脚本未就绪时用占位脚本提前挂载。
+ */
+function PlayerView({ script }: { script: AnimationScript }) {
+  const player = useAnimationPlayer(script);
 
   return (
     <div className="mx-auto flex h-svh w-full max-w-5xl flex-col gap-4 p-4 sm:p-6">

@@ -134,4 +134,23 @@ describe('useAnimationPlayer', () => {
     expect(result.current).toMatchObject({ status: 'playing', stepIndex: 0 });
     expect(speakMock).toHaveBeenCalledTimes(1);
   });
+
+  it('挂载后替换为不同步数的脚本：reducer 边界冻结于挂载脚本，页面须以 key 重新挂载', () => {
+    // 不变式（源自播放页 C1 缺陷）：useReducer 的 init 只在首次挂载执行，步数边界
+    // 来自「挂载时传入的脚本」。之后即使脚本 prop 替换，hook 返回的 totalSteps 虽
+    // 反映新脚本（UI 计数显示正确），但 next/seek/ended 全部按旧边界钳制——表现为
+    // 多步播放失效（next 直接 finished、seek 被钳回 0）。
+    // 因此使用本 hook 的页面必须在脚本就绪后才挂载，并以 key={script.id} 强制重挂载
+    // （见 app/sky/animation/[scriptId]/page.tsx 的 PlayerView）。
+    const oneStepScript: AnimationScript = { ...script, id: 'one-step', steps: [script.steps[0]] };
+    const { result, rerender } = renderHook((s: AnimationScript) => useAnimationPlayer(s), {
+      initialProps: oneStepScript,
+    });
+    rerender(script);
+    expect(result.current.totalSteps).toBe(3); // 返回值已反映新脚本（掩盖问题的表象）
+    act(() => result.current.next()); // reducer 仍按挂载时的 1 步钳制 → 直接 finished
+    expect(result.current).toMatchObject({ status: 'finished', stepIndex: 0 });
+    act(() => result.current.seek(2)); // 越界 seek 被钳回 0
+    expect(result.current.stepIndex).toBe(0);
+  });
 });
