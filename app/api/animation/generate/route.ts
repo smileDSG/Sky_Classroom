@@ -1,6 +1,7 @@
 import { after, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
+import { requireAuth } from '@/lib/server/auth/helpers';
 import {
   createAnimationJob,
   markAnimationJobRunning,
@@ -20,6 +21,9 @@ const log = createLogger('AnimationGenerateAPI');
 const bodySchema = z.object({ topic: z.string().trim().min(2).max(120) });
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   let topic: string;
   try {
     const body = bodySchema.parse(await request.json());

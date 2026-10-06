@@ -6,7 +6,7 @@ import { Loader2, PlayCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTaskStore } from '@/lib/store/use-task-store';
-import { unwrap } from '@/lib/animation/client-api';
+import { HttpError, unwrap } from '@/lib/animation/client-api';
 import type { ScriptMeta } from '@/lib/animation/types';
 import type { AnimationJob } from '@/lib/animation/animation-job-store';
 
@@ -54,30 +54,9 @@ export default function AnimationPage() {
       });
   }, []);
 
-  const startGeneration = useCallback(async () => {
-    const t = topic.trim();
-    if (t.length < 2 || submitting) return;
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
-      const res = await fetch('/api/animation/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: t }),
-      });
-      const { jobId } = await unwrap<{ jobId: string }>(res);
-      if (!mountedRef.current) return;
-      addTask({
-        id: jobId,
-        type: 'animation',
-        label: t,
-        status: 'running',
-        progress: 0,
-        phase: '排队中',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        jobId,
-      });
+  // 轮询单个 job 直到终态。可从「提交生成」和「挂载恢复」两个入口进入。
+  const pollJob = useCallback(
+    async (jobId: string) => {
       let consecutivePollFailures = 0;
       for (;;) {
         let job: AnimationJob;
@@ -86,6 +65,18 @@ export default function AnimationPage() {
           ({ job } = await unwrap<{ job: AnimationJob }>(r));
           consecutivePollFailures = 0;
         } catch (err) {
+          // 404：job 文件已不存在（被清理/丢失），重试无意义，立即终止
+          if (err instanceof HttpError && err.status === 404) {
+            if (mountedRef.current) {
+              updateTask(jobId, {
+                status: 'failed',
+                phase: '任务不存在',
+                error: '任务不存在或已被清理',
+              });
+              setSubmitError('任务不存在或已被清理，请重新生成。');
+            }
+            return;
+          }
           // 单次瞬时失败（网络抖动等）不终止轮询、不翻转任务状态；
           // 连续超过阈值才判定轮询不可用并停止（job 本身可能仍在后台正常生成）。
           consecutivePollFailures += 1;
@@ -135,12 +126,53 @@ export default function AnimationPage() {
         if (job.status === 'failed' || job.status === 'cancelled') return;
         await sleep(POLL_INTERVAL_MS);
       }
+    },
+    [updateTask, router],
+  );
+
+  const startGeneration = useCallback(async () => {
+    const t = topic.trim();
+    if (t.length < 2 || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch('/api/animation/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: t }),
+      });
+      const { jobId } = await unwrap<{ jobId: string }>(res);
+      if (!mountedRef.current) return;
+      addTask({
+        id: jobId,
+        type: 'animation',
+        label: t,
+        status: 'running',
+        progress: 0,
+        phase: '排队中',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        jobId,
+      });
+      await pollJob(jobId);
     } catch (err) {
       if (mountedRef.current) setSubmitError(err instanceof Error ? err.message : '生成请求失败');
     } finally {
       if (mountedRef.current) setSubmitting(false);
     }
-  }, [topic, submitting, addTask, updateTask, router]);
+  }, [topic, submitting, addTask, pollJob]);
+
+  // 挂载恢复：store 里存在进行中的动画任务时接续轮询，
+  // 避免「离开页面再回来后任务芯片永远转圈」（后台任务 store 的既有契约）。
+  const resumedJobRef = useRef<string | null>(null);
+  useEffect(() => {
+    const running = Object.values(useTaskStore.getState().tasks).find(
+      (t) => t.type === 'animation' && t.status === 'running' && t.jobId,
+    );
+    if (!running?.jobId || resumedJobRef.current === running.jobId) return;
+    resumedJobRef.current = running.jobId;
+    void pollJob(running.jobId);
+  }, [pollJob]);
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-8 p-6">
