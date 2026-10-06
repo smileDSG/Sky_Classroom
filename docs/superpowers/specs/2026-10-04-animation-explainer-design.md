@@ -149,7 +149,14 @@ app/api/animation/generate/route.ts
 tests/animation/…
 ```
 
-## 10. 未来演进（不在 v1）
+## 10. 实现期偏差备注
+
+- **Prompt 路径**：§9 原拟 `lib/prompts/animation/plan.md · script.md`；实现遵循仓库 loader 的既定约定，落在 `lib/prompts/generators/animation-plan.md · animation-script.md`（PromptId 联合类型注册）。
+- **持久化**：§7 所述"存 DB"按 slides job 的文件式持久化模式实现（`data/animation-jobs/`、`data/animation-scripts/`，原子写），未新增 SQL 迁移。
+- **播放核心**：§5 的"播放核心逻辑"实现为 `lib/animation/playback/player-machine.ts`（纯 reducer）+ `duration.ts`（时长估算）+ `speech.ts`（TTS 适配器），UI hook 为 `components/animation/player/use-animation-player.ts`。
+- **API 鉴权**：实现期审查发现 4 个 /api/animation 路由缺少与兄弟路由一致的 `requireAuth()`，已补齐。
+
+## 11. 未来演进（不在 v1）
 
 - **课堂接入**：动画讲解作为课堂生成管线中的新场景类型，在课程难点处自动穿插。
 - **通用概念**：DSL 演员类型扩展（或预留 `custom` 演员嵌入 LLM 生成的 SVG 片段）以覆盖历史、生物、经济等叙事型内容。

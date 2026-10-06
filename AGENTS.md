@@ -30,6 +30,8 @@ Run locally before pushing.
 app/                    # Next.js App Router (pages + API routes)
 lib/                    # Core business logic (47 modules)
   ai/                   #   LLM provider abstraction, key pool, cost tracking
+  animation/            #   Animation explainer: DSL schema/validate, plan/script
+    generate/           #     agents pipeline, playback (player machine, TTS)
   generation/           #   Two-stage lesson pipeline (outline → scenes)
   orchestration/        #   LangGraph multi-agent director graph
   playback/             #   Playback state machine
@@ -40,6 +42,7 @@ lib/                    # Core business logic (47 modules)
   store/                #   Zustand state stores
   prompts/              #   File-based markdown prompt templates
 components/             # React UI (shadcn/ui + Radix primitives)
+  animation/            #   SVG renderer (8 actor kinds) + player hook/controls
 packages/               # Workspace packages
   pptxgenjs/            #   Customized PowerPoint generation (built via rollup)
   mathml2omml/          #   MathML → Office Math conversion (built via rollup)
