@@ -52,14 +52,22 @@ export async function generateAnimationScript(
       if (errors.length === 0) {
         return { script, warnings: warnings.map((w) => w.message) };
       }
-      lastError = errors.map((e) => e.message).join('；');
+      // 反馈串封顶：退化输出可能产生大量校验错误，全量拼接会撑爆重试 prompt
+      const feedback = errors
+        .slice(0, 20)
+        .map((e) => e.message)
+        .join('；');
+      lastError = errors.length > 20 ? `${feedback}；…等共 ${errors.length} 个错误` : feedback;
       log.warn(`attempt ${attempt}: ${errors.length} 个校验错误，将重试`, lastError);
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);
       log.warn(`attempt ${attempt} 抛错: ${lastError}`);
     }
-    await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
+    // 末次尝试后不再等待，立即上抛
+    if (attempt < MAX_RETRIES) {
+      await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
+    }
   }
 
-  throw new Error(`分镜脚本生成失败（已重试 ${MAX_RETRIES} 次）：${lastError}`);
+  throw new Error(`分镜脚本生成失败（共尝试 ${MAX_RETRIES} 次）：${lastError}`);
 }

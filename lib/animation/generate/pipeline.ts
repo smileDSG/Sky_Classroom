@@ -45,6 +45,7 @@ export async function runAnimationGeneration(
     scriptResult = await generateAnimationScript(topic, plan);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    onProgress('failed', 100, msg);
     throw new AnimationGenerationError(msg, plan);
   }
   onProgress('scripting', 70, '分镜脚本完成，正在校验');

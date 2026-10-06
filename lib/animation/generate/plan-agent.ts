@@ -24,6 +24,7 @@ export interface AnimationPlan {
 
 /** 话题 → 讲解大纲（5~20 步，每步一句意图）。schema 校验失败即抛错（spec §6）。 */
 export async function planAnimation(topic: string): Promise<AnimationPlan> {
+  if (!topic.trim()) throw new Error('话题不能为空');
   const modelConfig = resolveAnimationModel();
   if (!modelConfig) {
     throw new Error('未配置任何可用的 LLM provider（检查 .env 中的 API key 或 DEFAULT_MODEL）');
