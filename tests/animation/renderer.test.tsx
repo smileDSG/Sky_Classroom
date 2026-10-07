@@ -97,14 +97,14 @@ describe('AnimationCanvas', () => {
 
   it('showGrid=false 时不渲染网格线（showGrid=true 时渲染）', () => {
     const grid = render(<AnimationCanvas script={script} stepIndex={0} />);
-    expect(grid.container.querySelectorAll('line[stroke="#e9ecef"]').length).toBeGreaterThan(0);
+    expect(grid.container.querySelectorAll('line.stroke-neutral-200').length).toBeGreaterThan(0);
     const noGrid = render(
       <AnimationCanvas
         script={{ ...script, stage: { ...script.stage, showGrid: false } }}
         stepIndex={0}
       />,
     );
-    expect(noGrid.container.querySelectorAll('line[stroke="#e9ecef"]')).toHaveLength(0);
+    expect(noGrid.container.querySelectorAll('line.stroke-neutral-200')).toHaveLength(0);
   });
 
   it('defs 中包含 anim-arrowhead marker', () => {

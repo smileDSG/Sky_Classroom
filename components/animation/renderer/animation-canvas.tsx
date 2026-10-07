@@ -81,7 +81,7 @@ export function AnimationCanvas({ script, stepIndex }: AnimationCanvasProps) {
           refY="4"
           orient="auto"
         >
-          <path d="M0,0 L8,4 L0,8 Z" fill="#495057" />
+          <path d="M0,0 L8,4 L0,8 Z" className="fill-neutral-600 dark:fill-neutral-300" />
         </marker>
       </defs>
       {showGrid ? <GridPattern width={width} height={height} /> : null}
@@ -113,12 +113,28 @@ function GridPattern({ width, height }: { width: number; height: number }) {
   const lines: ReactNode[] = [];
   for (let x = 0; x <= width; x += 60) {
     lines.push(
-      <line key={`v${x}`} x1={x} y1={0} x2={x} y2={height} stroke="#e9ecef" strokeWidth={1} />,
+      <line
+        key={`v${x}`}
+        x1={x}
+        y1={0}
+        x2={x}
+        y2={height}
+        className="stroke-neutral-200 dark:stroke-neutral-800"
+        strokeWidth={1}
+      />,
     );
   }
   for (let y = 0; y <= height; y += 60) {
     lines.push(
-      <line key={`h${y}`} x1={0} y1={y} x2={width} y2={y} stroke="#e9ecef" strokeWidth={1} />,
+      <line
+        key={`h${y}`}
+        x1={0}
+        y1={y}
+        x2={width}
+        y2={y}
+        className="stroke-neutral-200 dark:stroke-neutral-800"
+        strokeWidth={1}
+      />,
     );
   }
   return <g aria-hidden>{lines}</g>;

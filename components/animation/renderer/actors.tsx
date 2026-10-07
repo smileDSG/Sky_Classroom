@@ -7,6 +7,9 @@ import type { Actor, ActorState } from '@/lib/animation/types';
 /** 公共补间配置（spec §4：~700ms 弹簧） */
 export const STEP_TRANSITION = { type: 'spring' as const, stiffness: 120, damping: 20 };
 
+/** 高亮框描边脉冲（spec §4：attention 效果），1.4s 循环 */
+const PULSE_TRANSITION = { duration: 1.4, repeat: Infinity, ease: 'easeInOut' as const };
+
 interface ActorProps {
   actor: Actor;
   state: ActorState;
@@ -34,6 +37,12 @@ export function NodeActorView({ actor, state, mode }: ActorProps) {
   if (actor.kind !== 'node') return null;
   const color = colorOf(actor, state);
   const fill = `${color}26`; // 14% 透明底
+  const shapeProps = {
+    initial: { stroke: color, fill },
+    animate: { stroke: color, fill },
+    transition: STEP_TRANSITION,
+    strokeWidth: 3,
+  };
   return (
     <motion.g
       data-actor-id={actor.id}
@@ -47,28 +56,28 @@ export function NodeActorView({ actor, state, mode }: ActorProps) {
       transition={STEP_TRANSITION}
     >
       {actor.shape === 'circle' ? (
-        <circle r={actor.r ?? 28} fill={fill} stroke={color} strokeWidth={3} />
+        <motion.circle r={actor.r ?? 28} {...shapeProps} />
       ) : (
-        <rect
+        <motion.rect
           x={-(actor.w ?? 80) / 2}
           y={-(actor.h ?? 40) / 2}
           width={actor.w ?? 80}
           height={actor.h ?? 40}
           rx={8}
-          fill={fill}
-          stroke={color}
-          strokeWidth={3}
+          {...shapeProps}
         />
       )}
-      <text
+      <motion.text
         textAnchor="middle"
         dominantBaseline="central"
         fontSize={20}
-        fill={color}
         fontWeight={600}
+        initial={{ fill: color }}
+        animate={{ fill: color }}
+        transition={STEP_TRANSITION}
       >
         {labelOf(actor, state)}
-      </text>
+      </motion.text>
     </motion.g>
   );
 }
@@ -88,25 +97,28 @@ export function ArrayCellActorView({ actor, state, mode }: ActorProps) {
       }}
       transition={STEP_TRANSITION}
     >
-      <rect
+      <motion.rect
         x={-actor.w / 2}
         y={-actor.h / 2}
         width={actor.w}
         height={actor.h}
         rx={6}
-        fill={`${color}1a`}
-        stroke={color}
         strokeWidth={2.5}
+        initial={{ stroke: color, fill: `${color}1a` }}
+        animate={{ stroke: color, fill: `${color}1a` }}
+        transition={STEP_TRANSITION}
       />
-      <text
+      <motion.text
         textAnchor="middle"
         dominantBaseline="central"
         fontSize={22}
-        fill={color}
         fontWeight={600}
+        initial={{ fill: color }}
+        animate={{ fill: color }}
+        transition={STEP_TRANSITION}
       >
         {labelOf(actor, state)}
-      </text>
+      </motion.text>
     </motion.g>
   );
 }
@@ -122,10 +134,27 @@ export function BarActorView({ actor, state, mode }: ActorProps) {
       transition={STEP_TRANSITION}
     >
       {/* v1 柱高固定 200px；scale 语义留待后续 */}
-      <rect x={-actor.w / 2} y={-200} width={actor.w} height={200} rx={4} fill={color} />
-      <text textAnchor="middle" y={-210} fontSize={18} fill={color} fontWeight={600}>
+      <motion.rect
+        x={-actor.w / 2}
+        y={-200}
+        width={actor.w}
+        height={200}
+        rx={4}
+        initial={{ fill: color }}
+        animate={{ fill: color }}
+        transition={STEP_TRANSITION}
+      />
+      <motion.text
+        textAnchor="middle"
+        y={-210}
+        fontSize={18}
+        fontWeight={600}
+        initial={{ fill: color }}
+        animate={{ fill: color }}
+        transition={STEP_TRANSITION}
+      >
         {labelOf(actor, state)}
-      </text>
+      </motion.text>
     </motion.g>
   );
 }
@@ -138,10 +167,19 @@ export function TextActorView({ actor, state, mode }: ActorProps) {
       textAnchor="middle"
       fontSize={actor.size}
       fontWeight={600}
-      initial={{ opacity: mode === 'exiting' ? 1 : 0, x: state.x, y: state.y }}
-      animate={{ x: state.x, y: state.y, opacity: state.exiting ? 0 : (state.opacity ?? 1) }}
+      initial={{
+        opacity: mode === 'exiting' ? 1 : 0,
+        x: state.x,
+        y: state.y,
+        fill: colorOf(actor, state),
+      }}
+      animate={{
+        x: state.x,
+        y: state.y,
+        opacity: state.exiting ? 0 : (state.opacity ?? 1),
+        fill: colorOf(actor, state),
+      }}
       transition={STEP_TRANSITION}
-      fill={colorOf(actor, state)}
     >
       {state.labelOverride ?? actor.content}
     </motion.text>
@@ -179,6 +217,8 @@ export function HighlightActorView({ actor, state, mode, stateOf, actorOf }: Act
   // 勿再加静态 x/y 属性——SVG 几何属性与 motion 的 transform 叠加会使整体偏移 -r
   const cx = (target?.x ?? state.x) - r;
   const cy = (target?.y ?? state.y) - r;
+  const isExiting = state.exiting || mode === 'exiting';
+  const color = state.colorOverride ?? actor.color;
   return (
     <motion.rect
       data-actor-id={actor.id}
@@ -186,11 +226,20 @@ export function HighlightActorView({ actor, state, mode, stateOf, actorOf }: Act
       height={r * 2}
       rx={12}
       fill="none"
-      stroke={state.colorOverride ?? actor.color}
       strokeWidth={3.5}
-      initial={{ opacity: mode === 'exiting' ? 1 : 0, x: cx, y: cy }}
-      animate={{ x: cx, y: cy, opacity: state.exiting ? 0 : 1 }}
-      transition={STEP_TRANSITION}
+      initial={{ opacity: isExiting ? 1 : 0, x: cx, y: cy, stroke: color, strokeOpacity: 1 }}
+      animate={{
+        x: cx,
+        y: cy,
+        opacity: isExiting ? 0 : 1,
+        stroke: color,
+        // 描边脉冲仅在可见态循环；退场时保持常亮随整体淡出
+        strokeOpacity: isExiting ? 1 : [1, 0.3, 1],
+      }}
+      transition={{
+        ...STEP_TRANSITION,
+        strokeOpacity: isExiting ? STEP_TRANSITION : PULSE_TRANSITION,
+      }}
     />
   );
 }
@@ -222,7 +271,7 @@ export function ArrowActorView({ actor, state, mode, stateOf, actorOf }: ActorPr
         animate={{ opacity: state.exiting ? 0 : 1, d }}
         transition={STEP_TRANSITION}
         fill="none"
-        stroke="#495057"
+        className="stroke-neutral-600 dark:stroke-neutral-300"
         strokeWidth={2.5}
         markerEnd="url(#anim-arrowhead)"
       />
@@ -231,7 +280,7 @@ export function ArrowActorView({ actor, state, mode, stateOf, actorOf }: ActorPr
           initial={{ opacity: mode === 'exiting' ? 1 : 0, x: midX, y: midY - 10 }}
           animate={{ x: midX, y: midY - 10, opacity: state.exiting ? 0 : 1 }}
           fontSize={16}
-          fill="#495057"
+          className="fill-neutral-600 dark:fill-neutral-300"
           textAnchor="middle"
         >
           {actor.label}
@@ -249,7 +298,7 @@ export function AxesActorView({ actor, state, mode }: ActorProps) {
       initial={{ opacity: mode === 'exiting' ? 1 : 0, x: state.x, y: state.y }}
       animate={{ x: state.x, y: state.y, opacity: state.exiting ? 0 : 1 }}
       transition={STEP_TRANSITION}
-      stroke="#868e96"
+      className="stroke-neutral-400 dark:stroke-neutral-500"
       strokeWidth={1.5}
     >
       <line x1={-450} y1={0} x2={450} y2={0} markerEnd="url(#anim-arrowhead)" />
