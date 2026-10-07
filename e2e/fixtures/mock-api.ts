@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import { mockOutlines } from './test-data/scene-outlines';
 import { mockSceneContentResponse } from './test-data/scene-content';
 import { createMockSceneActionsResponse } from './test-data/scene-actions';
+import { mockAnimationScript, mockAnimationScriptMeta } from './test-data/animation-script';
 
 /**
  * Wraps Playwright's page.route() to mock OpenMAIC API endpoints.
@@ -143,6 +144,52 @@ export class MockApi {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ success: true, classroom }),
+      }),
+    );
+  }
+
+  /** Mock the animation explainer flow: generate → job poll → script fetch → history. */
+  async mockAnimationFlow(script = mockAnimationScript) {
+    const jobId = 'e2e-anim-job-1';
+    await this.page.route('**/api/animation/generate', (route) =>
+      route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, jobId }),
+      }),
+    );
+    await this.page.route('**/api/animation/jobs/*', (route) =>
+      route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: true,
+          job: {
+            jobId,
+            topic: script.topic,
+            status: 'succeeded',
+            stage: 'done',
+            progress: 100,
+            message: '生成完成',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            result: { scriptId: script.id, title: script.title, stepCount: script.steps.length },
+          },
+        }),
+      }),
+    );
+    await this.page.route(new RegExp(`**/api/animation/scripts/${script.id}$`), (route) =>
+      route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, script }),
+      }),
+    );
+    await this.page.route('**/api/animation/scripts', (route) =>
+      route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, scripts: [mockAnimationScriptMeta] }),
       }),
     );
   }
